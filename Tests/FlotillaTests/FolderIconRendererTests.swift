@@ -5,7 +5,7 @@ import Testing
 
 // MARK: - FolderIconRendererTests
 
-/// 文件夹图标渲染（需求 2）：预览网格的几何，以及不同预览数量下的输出
+/// 文件夹图标渲染（需求 2）：底板的形状、预览网格的几何，以及不同预览数量下的输出
 ///
 /// 放在主线程串行执行：并发栅格化同一个 App 图标时，偶尔会画出不同的像素
 @MainActor
@@ -15,24 +15,46 @@ struct FolderIconRendererTests {
         URL(filePath: "/System/Applications/\($0).app")
     }
 
-    /// 单元格按左上、右上、左下、右下排列，边长 0.23、间距 0.04，外框为 x ∈ [0.25, 0.75]、y ∈ [0.36, 0.86]
+    /// 单元格按左上、右上、左下、右下排列：边长 0.35，左上格原点 (0.152, 0.152)，格距 0.346
     @Test
     func previewCellsFollowGridGeometry() {
-        let canvas = CGRect(x: 0, y: 0, width: 100, height: 100)
+        let canvas = CGRect(x: 0, y: 0, width: 1000, height: 1000)
         let frames = (0 ..< 4).map {
             FolderIconRenderer.previewCellFrame(at: $0, in: canvas)
         }
 
         let expected = [
-            CGRect(x: 25, y: 36, width: 23, height: 23),
-            CGRect(x: 52, y: 36, width: 23, height: 23),
-            CGRect(x: 25, y: 63, width: 23, height: 23),
-            CGRect(x: 52, y: 63, width: 23, height: 23),
+            CGRect(x: 152, y: 152, width: 350, height: 350),
+            CGRect(x: 498, y: 152, width: 350, height: 350),
+            CGRect(x: 152, y: 498, width: 350, height: 350),
+            CGRect(x: 498, y: 498, width: 350, height: 350),
         ]
 
         for (frame, expectedFrame) in zip(frames, expected) {
             #expect(isClose(frame, expectedFrame))
         }
+    }
+
+    /// App 图标四边各有 100/1024 的透明边；扣掉之后，四个预览的可见底板合起来在画布上居中，
+    /// 范围约为 [0.186, 0.814]，相邻两个之间约隔 0.064，整体落在文件夹底板 [100/1024, 924/1024] 之内
+    @Test
+    func visiblePreviewPlatesAreCentered() {
+        let canvas = CGRect(x: 0, y: 0, width: 1, height: 1)
+        let visiblePlates = (0 ..< 4).map {
+            let cell = FolderIconRenderer.previewCellFrame(at: $0, in: canvas)
+            let margin = cell.width * 100 / 1024
+
+            return cell.insetBy(dx: margin, dy: margin)
+        }
+
+        let union = visiblePlates.reduce(CGRect.null) { $0.union($1) }
+        let gap = visiblePlates[1].minX - visiblePlates[0].maxX
+
+        #expect(abs(union.midX - 0.5) < 1e-9)
+        #expect(abs(union.midY - 0.5) < 1e-9)
+        #expect(abs(union.minX - 0.186) < 0.001)
+        #expect(abs(union.maxX - 0.814) < 0.001)
+        #expect(abs(gap - 0.064) < 0.001)
     }
 
     /// 非正方形的图标等比缩放后在单元格内居中
@@ -48,7 +70,7 @@ struct FolderIconRendererTests {
     }
 
     /// 输出图像的点尺寸等于请求的边长
-    @Test(arguments: [16, 64, 512] as [CGFloat])
+    @Test(arguments: [16, 64, 512, 1024] as [CGFloat])
     func outputMatchesPointSize(pointSize: CGFloat) {
         let image = FolderIconRenderer.render(
             folder: makeFolder(appCount: 4),
@@ -101,6 +123,59 @@ struct FolderIconRendererTests {
         #expect(mixed == plain)
     }
 
+    /// 预览数量为 0 与文件夹里没有 App 时都只画底板，两者画面相同
+    @Test
+    func emptyPreviewDrawsPlateOnly() throws {
+        let countZero = try renderedPixels(of: makeFolder(appCount: 4), previewIconCount: 0)
+        let noApps = try renderedPixels(of: makeFolder(appCount: 0), previewIconCount: 4)
+
+        #expect(countZero == noApps)
+    }
+
+    /// 底板与系统 App 图标的底板重合：按 1024 像素栅格化后，不透明部分的包围盒是 [100, 923]
+    @Test
+    func plateMatchesSystemIconPlate() throws {
+        let bitmap = try rasterizedPlate()
+        var bounds = (minX: Int.max, maxX: Int.min, minY: Int.max, maxY: Int.min)
+
+        for y in 0 ..< bitmap.pixelsHigh {
+            for x in 0 ..< bitmap.pixelsWide where alpha(of: bitmap, x: x, y: y) > 128 {
+                bounds.minX = min(bounds.minX, x)
+                bounds.maxX = max(bounds.maxX, x)
+                bounds.minY = min(bounds.minY, y)
+                bounds.maxY = max(bounds.maxY, y)
+            }
+        }
+
+        #expect(bounds.minX == 100)
+        #expect(bounds.maxX == 923)
+        #expect(bounds.minY == 100)
+        #expect(bounds.maxY == 923)
+    }
+
+    /// 底板是圆角方形：包围盒的四个角外侧，沿对角线往里 40 像素以内都是透明的
+    @Test
+    func plateCornersAreTransparent() throws {
+        let bitmap = try rasterizedPlate()
+
+        // 每个角是（角点、沿对角线往里的方向）
+        let corners = [
+            (100, 100, 1, 1),
+            (923, 100, -1, 1),
+            (100, 923, 1, -1),
+            (923, 923, -1, -1),
+        ]
+
+        for (cornerX, cornerY, stepX, stepY) in corners {
+            for distance in 0 ... 40 {
+                let x = cornerX + stepX * distance
+                let y = cornerY + stepY * distance
+
+                #expect(alpha(of: bitmap, x: x, y: y) == 0)
+            }
+        }
+    }
+
     /// 构造包含前 appCount 个系统 App 的文件夹
     private func makeFolder(appCount: Int) -> Folder {
         Folder(
@@ -133,7 +208,24 @@ struct FolderIconRendererTests {
             pointSize: 64
         )
 
-        let pixelSide = Int(image.size.width) * 2
+        let bitmap = try rasterize(image, pixelSide: 128)
+
+        return try #require(bitmap.tiffRepresentation)
+    }
+
+    /// 只有底板的文件夹图标，以 1024 点渲染、按 1024 像素栅格化
+    private func rasterizedPlate() throws -> NSBitmapImageRep {
+        let image = FolderIconRenderer.render(
+            folder: makeFolder(appCount: 0),
+            previewIconCount: 0,
+            pointSize: 1024
+        )
+
+        return try rasterize(image, pixelSide: 1024)
+    }
+
+    /// 把图像栅格化为边长 pixelSide 像素的位图
+    private func rasterize(_ image: NSImage, pixelSide: Int) throws -> NSBitmapImageRep {
         let bitmap = try #require(
             NSBitmapImageRep(
                 bitmapDataPlanes: nil,
@@ -156,6 +248,14 @@ struct FolderIconRendererTests {
         image.draw(in: NSRect(origin: .zero, size: image.size))
         NSGraphicsContext.restoreGraphicsState()
 
-        return try #require(bitmap.tiffRepresentation)
+        return bitmap
+    }
+
+    /// 位图上一个像素的不透明度，0–255；y 轴自上而下
+    private func alpha(of bitmap: NSBitmapImageRep, x: Int, y: Int) -> Int {
+        var pixel = [Int](repeating: 0, count: 4)
+        bitmap.getPixel(&pixel, atX: x, y: y)
+
+        return pixel[3]
     }
 }
