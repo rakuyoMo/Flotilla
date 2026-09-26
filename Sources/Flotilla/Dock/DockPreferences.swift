@@ -100,7 +100,7 @@ extension DockPreferences {
         let entry = Self.tileEntry(
             tileURL: tileURL,
             label: label,
-            guid: Int.random(in: 1 ... Int(UInt32.max))
+            guid: Self.makeGUID()
         )
 
         try save(tiles + [entry])
@@ -122,12 +122,15 @@ extension DockPreferences {
     /// 让 tile 指向 stub 的当前位置、显示文件夹的当前名称；条目原地替换，Dock 里用户拖出来的顺序保持不变
     ///
     /// 文件夹改名后 stub 随之改名，URL 变化时一并删掉 Dock 按旧位置生成的书签 `book`，由 Dock 重启后按新 URL 重新生成
+    ///
+    /// 实测（macOS 27）Dock 按条目的 `GUID` 缓存 tile 图标，GUID 不变时重启后仍显示旧图标；stub 改写过就换一个新的 GUID
     /// - Parameters:
     ///   - tileURL: stub bundle 的当前位置
     ///   - label: tile 的名称
+    ///   - isStubRewritten: stub 是否刚被改写
     /// - Returns: 是否确实改动了条目
     @discardableResult
-    func update(tileURL: URL, label: String) throws -> Bool {
+    func update(tileURL: URL, label: String, isStubRewritten: Bool) throws -> Bool {
         var tiles = tiles
         guard
             let index = index(of: tileURL, in: tiles),
@@ -142,7 +145,18 @@ extension DockPreferences {
         let isURLChanged = currentPath != tilePath
         let isLabelChanged = tileData["file-label"] as? String != label
 
-        guard isURLChanged || isLabelChanged else { return false }
+        guard
+            isURLChanged
+            || isLabelChanged
+            || isStubRewritten
+        else {
+            return false
+        }
+
+        // 新的 GUID 让 Dock 丢掉按旧 GUID 缓存的图标，重启后从 stub 重新读取
+        if isStubRewritten {
+            tiles[index]["GUID"] = Self.makeGUID()
+        }
 
         // 只替换 URL 本身，`file-data` 里 Dock 补全的其它字段保留
         if isURLChanged {
@@ -275,5 +289,14 @@ extension DockPreferences {
         }
 
         return normalized(url)
+    }
+}
+
+// MARK: - Helpers
+
+extension DockPreferences {
+    /// 生成条目的 `GUID`：随机的 32 位正整数，与 Dock 自己写出的取值范围一致
+    private static func makeGUID() -> Int {
+        Int.random(in: 1 ... Int(UInt32.max))
     }
 }

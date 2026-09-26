@@ -124,18 +124,21 @@ final class DockPreferencesTests {
         #expect(!preferences.contains(tileURL: other))
     }
 
-    /// 只改名称时条目原地替换：位置不变，Dock 补全的字段保留
+    /// 只改名称时条目原地替换：位置与 GUID 不变，Dock 补全的字段保留
     @Test
     func updateLabelReplacesInPlace() throws {
         try addOwnTileBetweenUserTiles()
 
-        #expect(try preferences.update(tileURL: tileURL, label: "日常"))
-        #expect(try !preferences.update(tileURL: tileURL, label: "日常"))
+        let originalGUID = try #require(storedTiles()[1]["GUID"] as? Int)
+
+        #expect(try preferences.update(tileURL: tileURL, label: "日常", isStubRewritten: false))
+        #expect(try !preferences.update(tileURL: tileURL, label: "日常", isStubRewritten: false))
 
         let updated = storedTiles()
         let updatedTileData = try #require(updated[1]["tile-data"] as? [String: Any])
 
         #expect(updated.count == 3)
+        #expect(updated[1]["GUID"] as? Int == originalGUID)
         #expect(label(of: updated[1]) == "日常")
         #expect(updatedTileData["book"] as? Data == Data([9, 9]))
         #expect(label(of: updated[0]) == "计算器")
@@ -149,8 +152,8 @@ final class DockPreferencesTests {
 
         let renamed = stubDirectory.appending(path: "日常.app")
 
-        #expect(try preferences.update(tileURL: renamed, label: "日常"))
-        #expect(try !preferences.update(tileURL: renamed, label: "日常"))
+        #expect(try preferences.update(tileURL: renamed, label: "日常", isStubRewritten: false))
+        #expect(try !preferences.update(tileURL: renamed, label: "日常", isStubRewritten: false))
 
         let updated = storedTiles()
         let updatedTileData = try #require(updated[1]["tile-data"] as? [String: Any])
@@ -164,6 +167,30 @@ final class DockPreferencesTests {
         #expect(updatedTileData["book"] == nil)
         #expect(updatedTileData["bundle-identifier"] as? String == "com.rakuyo.flotilla.tile.test")
         #expect(fileData["_CFURLString"] as? String == expectedURL)
+    }
+
+    /// stub 改写过时条目原地换一个新的 GUID：Dock 按 GUID 缓存 tile 图标，GUID 不变就一直显示旧图标
+    @Test
+    func updateRenewsGUIDAfterStubRewrite() throws {
+        try addOwnTileBetweenUserTiles()
+
+        let originalGUID = try #require(storedTiles()[1]["GUID"] as? Int)
+
+        #expect(try preferences.update(tileURL: tileURL, label: "工作", isStubRewritten: true))
+
+        let updated = storedTiles()
+        let renewedGUID = try #require(updated[1]["GUID"] as? Int)
+        let updatedTileData = try #require(updated[1]["tile-data"] as? [String: Any])
+
+        #expect(updated.count == 3)
+        #expect(renewedGUID != originalGUID)
+        #expect((1 ... Int(UInt32.max)).contains(renewedGUID))
+        #expect(label(of: updated[1]) == "工作")
+        #expect(updatedTileData["book"] as? Data == Data([9, 9]))
+
+        // 用户的 tile 一个字段都不变
+        #expect(try plistData(updated[0]) == plistData(calculatorTile))
+        #expect(try plistData(updated[2]) == plistData(calculatorTile))
     }
 
     /// 删除只按 URL 匹配：与 Flotilla 的 tile 同名的用户 tile 不受影响
@@ -194,7 +221,7 @@ final class DockPreferencesTests {
         defaults.set(true, forKey: "autohide")
 
         try preferences.add(tileURL: tileURL, label: "工作")
-        try preferences.update(tileURL: tileURL, label: "日常")
+        try preferences.update(tileURL: tileURL, label: "日常", isStubRewritten: false)
 
         let backups = try backupFiles()
         let backupURL = try #require(backups.first)

@@ -127,13 +127,13 @@ extension DockTileSynchronizer {
                 return true
             }
 
-            let isTileChanged = try dockPreferences.update(
+            // Dock 按条目的 GUID 缓存 tile 图标，stub 改写后只重启 Dock 仍显示旧图标；
+            // update 在 stub 改写过时给条目换一个新的 GUID 并返回 true，由调用方重启 Dock
+            return try dockPreferences.update(
                 tileURL: tileURL,
-                label: folder.name
+                label: folder.name,
+                isStubRewritten: isBundleChanged
             )
-
-            // Dock 不会因为 stub 的图标文件变化而刷新 tile，touch、重新注册 Launch Services 都不行，stub 改写后必须重启
-            return isBundleChanged || isTileChanged
         } catch {
             Self.logger.error(
                 "同步 tile 失败（\(folder.id.uuidString, privacy: .public)）：\(error.localizedDescription, privacy: .public)"
