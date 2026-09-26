@@ -61,6 +61,8 @@ struct FolderPanelPlacement: Equatable {
     ///
     /// 沿 Dock 方向是屏幕可用区域减去两侧边距；垂直 Dock 方向是从尾巴末端到屏幕另一侧边距为止
     static func availableBodySize(tileFrame: CGRect, edge: DockEdge, visibleFrame: CGRect) -> CGSize {
+        #warning("TODO: 未能实测 屏幕较小时按可用尺寸减少列数与显示行数、多显示器下面板保持在 tile 所在屏幕内（本机只有一块 1470 × 956 pt 的屏幕）")
+
         let tip = tailTip(tileFrame: tileFrame, edge: edge)
         let tailHeight = FolderPanelMetrics.tailHeight
         let sideMargin = FolderPanelMetrics.screenSideMargin

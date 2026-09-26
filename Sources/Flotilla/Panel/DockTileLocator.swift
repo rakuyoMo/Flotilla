@@ -9,8 +9,6 @@ import os
 /// AX 的坐标以主屏左上角为原点、y 向下，交给 AppKit 之前都要换算
 @MainActor
 final class DockTileLocator {
-    #warning("TODO: 待实测 Dock 区域估算的余量 dockAreaPadding 在其它 tile 尺寸下是否成立、缺省 tile 尺寸 64；放大、自动隐藏开启时 Dock 与面板的表现")
-
     /// AX 调用的超时（秒）：Dock 重启期间调用会失败，失败要快，不能长时间阻塞主线程
     private static let messagingTimeout: Float = 0.5
 

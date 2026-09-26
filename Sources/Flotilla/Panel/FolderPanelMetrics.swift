@@ -22,6 +22,8 @@ enum FolderPanelMetrics {
     /// 面板主体面向 Dock 的边到尾巴尖端的距离
     static let tailHeight: CGFloat = 8
 
+    #warning("TODO: 待实测 tailTipOffset 在 Dock 右侧区域的原生文件夹上测得，Flotilla 的 tile 在左侧 App 区域，需截图核对尖端与 tile 图标的对齐")
+
     /// 尾巴尖端沿 Dock 方向相对 tile frame 中心的偏移
     static let tailTipOffset: CGFloat = -5
 
@@ -43,7 +45,9 @@ enum FolderPanelMetrics {
     /// 阴影的不透明度
     static let shadowOpacity: Float = 0.17
 
-    /// 阴影的模糊半径
+    #warning("TODO: 待校准 shadowRadius 按原生阴影拟合出的 σ ≈ 18 pt 取 2σ，Core Animation 的模糊半径与 σ 的换算未验证，需与原生截图对照")
+
+    /// 阴影的模糊半径：原生阴影拟合为 σ ≈ 18 pt 的高斯模糊
     static let shadowRadius: CGFloat = 36
 
     /// 阴影向屏幕下方的偏移
@@ -51,6 +55,8 @@ enum FolderPanelMetrics {
 
     /// 窗口在面板轮廓之外为阴影留出的距离
     static let shadowMargin: CGFloat = 60
+
+    #warning("TODO: 待校准 edgeShadeOpacity 与 edgeHighlightOpacity 需在灰度 128 的背景上与原生边缘线读数（暗线约 50，亮线约 157）对照")
 
     /// 边缘暗线的不透明度（竖直边上最强）
     static let edgeShadeOpacity: CGFloat = 0.6
