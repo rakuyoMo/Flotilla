@@ -277,7 +277,8 @@ extension FolderPanelController {
             bodySize: layout.bodySize,
             tileFrame: anchor.tileFrame,
             edge: anchor.edge,
-            visibleFrame: visibleFrame
+            visibleFrame: visibleFrame,
+            scale: anchor.screen.backingScaleFactor
         )
 
         // 视图是轮廓（主体加尾巴尖端）的外接矩形四周再扩出阴影留白，同时盖住 tile 图标中心的缩放锚点
@@ -408,8 +409,11 @@ extension FolderPanelController {
 
         panel.setFrame(frame, display: false)
 
+        // AppKit 会把窗口原点取整到整数 pt，层级按取整后的实际原点摆放，内容才留在算出的屏幕位置
+        let origin = panel.frame.origin
+
         for level in levels {
-            level.view.frame = level.screenFrame.offsetBy(dx: -frame.minX, dy: -frame.minY)
+            level.view.frame = level.screenFrame.offsetBy(dx: -origin.x, dy: -origin.y)
         }
     }
 

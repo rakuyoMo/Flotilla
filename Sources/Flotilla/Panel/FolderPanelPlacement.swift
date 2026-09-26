@@ -17,19 +17,27 @@ struct FolderPanelPlacement: Equatable {
     /// 展开、收起时整个面板缩放的锚点：tile 图标中心，位于尾巴尖端向 Dock 内 `anchorDepth` 处
     let anchor: CGPoint
 
-    /// 计算面板位置：主体沿 Dock 方向对准 tile，并夹在屏幕可用区域两侧的边距之内
+    /// 计算面板位置：主体沿 Dock 方向对准 tile，并夹在屏幕可用区域两侧的边距之内；尾巴尖端对齐到屏幕的像素格
     /// - Parameters:
     ///   - bodySize: 面板主体（不含尾巴）的尺寸
     ///   - tileFrame: tile 的 frame
     ///   - edge: Dock 所贴的屏幕边
     ///   - visibleFrame: tile 所在屏幕的 `visibleFrame`
+    ///   - scale: tile 所在屏幕每 pt 的像素数
     init(
         bodySize: CGSize,
         tileFrame: CGRect,
         edge: DockEdge,
-        visibleFrame: CGRect
+        visibleFrame: CGRect,
+        scale: CGFloat
     ) {
-        let tip = Self.tailTip(tileFrame: tileFrame, edge: edge)
+        // 放大时 AX 给出的 tile frame 带小数；主体尺寸与各项偏移都是整像素，
+        // 尖端落在像素格上，轮廓与 1 像素的边缘线才不会被分到相邻两个像素
+        let tip = Self.pixelAligned(
+            Self.tailTip(tileFrame: tileFrame, edge: edge),
+            scale: scale
+        )
+
         let tailHeight = FolderPanelMetrics.tailHeight
         let margin = FolderPanelMetrics.screenSideMargin
         let anchorDepth = FolderPanelMetrics.anchorDepth
@@ -127,6 +135,14 @@ extension FolderPanelPlacement {
         case .right:
             CGPoint(x: tileFrame.minX + inset, y: tileFrame.midY + offset)
         }
+    }
+
+    /// 把点按四舍五入对齐到像素格
+    private static func pixelAligned(_ point: CGPoint, scale: CGFloat) -> CGPoint {
+        CGPoint(
+            x: (point.x * scale).rounded() / scale,
+            y: (point.y * scale).rounded() / scale
+        )
     }
 
     /// 把 value 夹到 `[lower, upper]`；区间为空（面板比可用区域还大）时取 lower，保证面板的起始边留在屏幕内

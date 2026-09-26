@@ -35,7 +35,8 @@ struct FolderPanelPlacementTests {
             bodySize: bodySize,
             tileFrame: bottomTile,
             edge: .bottom,
-            visibleFrame: bottomVisibleFrame
+            visibleFrame: bottomVisibleFrame,
+            scale: 2
         )
 
         #expect(placement.tailTip == CGPoint(x: bottomTile.midX - 5, y: bottomTile.maxY - 1))
@@ -54,7 +55,8 @@ struct FolderPanelPlacementTests {
             bodySize: bodySize,
             tileFrame: bottomTile,
             edge: .bottom,
-            visibleFrame: bottomVisibleFrame
+            visibleFrame: bottomVisibleFrame,
+            scale: 2
         )
 
         #expect(placement.anchor == CGPoint(x: bottomTile.midX, y: placement.tailTip.y - 35))
@@ -69,7 +71,8 @@ struct FolderPanelPlacementTests {
             bodySize: bodySize,
             tileFrame: tile,
             edge: .bottom,
-            visibleFrame: bottomVisibleFrame
+            visibleFrame: bottomVisibleFrame,
+            scale: 2
         )
 
         #expect(placement.bodyFrame.maxX == bottomVisibleFrame.maxX - margin)
@@ -85,7 +88,8 @@ struct FolderPanelPlacementTests {
             bodySize: bodySize,
             tileFrame: tile,
             edge: .bottom,
-            visibleFrame: bottomVisibleFrame
+            visibleFrame: bottomVisibleFrame,
+            scale: 2
         )
 
         #expect(placement.bodyFrame.minX == bottomVisibleFrame.minX + margin)
@@ -101,7 +105,8 @@ struct FolderPanelPlacementTests {
             bodySize: bodySize,
             tileFrame: tile,
             edge: .left,
-            visibleFrame: leftVisibleFrame
+            visibleFrame: leftVisibleFrame,
+            scale: 2
         )
 
         #expect(placement.tailTip == CGPoint(x: tile.maxX - 1, y: tile.midY - 5))
@@ -119,7 +124,8 @@ struct FolderPanelPlacementTests {
             bodySize: bodySize,
             tileFrame: tile,
             edge: .right,
-            visibleFrame: rightVisibleFrame
+            visibleFrame: rightVisibleFrame,
+            scale: 2
         )
 
         #expect(placement.tailTip == CGPoint(x: tile.minX + 1, y: tile.midY - 5))
@@ -136,11 +142,37 @@ struct FolderPanelPlacementTests {
             bodySize: bodySize,
             tileFrame: tile,
             edge: .left,
-            visibleFrame: leftVisibleFrame
+            visibleFrame: leftVisibleFrame,
+            scale: 2
         )
 
         #expect(placement.bodyFrame.minY == leftVisibleFrame.minY + margin)
         #expect(placement.tailTip.y == tile.midY - 5)
+    }
+
+    /// 放大时 tile frame 带小数：尖端按屏幕像素格取整，与理论位置相差不超过半个像素；
+    /// 主体随尖端落在像素格上，1 像素的边缘线才不会被分到相邻两个像素而发虚
+    @Test(arguments: [
+        (scale: CGFloat(2), tipX: CGFloat(986.5)),
+        (scale: 1, tipX: 987),
+    ])
+    func tipSnapsToPixelGrid(scale: CGFloat, tipX: CGFloat) {
+        // 中心 991.7、顶边 89.1：理论尖端 (986.7, 88.1)
+        let tile = CGRect(x: 954.7, y: 5.1, width: 74, height: 84)
+
+        let placement = FolderPanelPlacement(
+            bodySize: bodySize,
+            tileFrame: tile,
+            edge: .bottom,
+            visibleFrame: bottomVisibleFrame,
+            scale: scale
+        )
+
+        let body = placement.bodyFrame
+
+        #expect(placement.tailTip == CGPoint(x: tipX, y: 88))
+        #expect((body.minX * scale).rounded() == body.minX * scale)
+        #expect((body.minY * scale).rounded() == body.minY * scale)
     }
 
     /// 可用尺寸：沿 Dock 方向是屏幕减两侧边距；垂直 Dock 方向从主体底边起，到屏幕另一侧留 16 pt 为止
