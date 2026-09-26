@@ -31,6 +31,7 @@ final class FolderNavigationHeaderView: NSView {
         titleField.alignment = .center
         titleField.usesSingleLineMode = true
         titleField.lineBreakMode = .byTruncatingTail
+
         addSubview(titleField)
 
         if let backButton {
@@ -53,6 +54,7 @@ final class FolderNavigationHeaderView: NSView {
 
         let inset = buttonFrame.maxX
         let titleHeight = titleField.intrinsicContentSize.height
+
         titleField.frame = CGRect(
             x: inset,
             y: 0,
@@ -60,6 +62,7 @@ final class FolderNavigationHeaderView: NSView {
             height: titleHeight
         )
 
-        titleField.frame.origin.y = FolderPanelMetrics.headerTitleBaselineY - titleField.firstBaselineOffsetFromTop
+        titleField.frame.origin.y = FolderPanelMetrics.headerTitleBaselineY
+            - titleField.firstBaselineOffsetFromTop
     }
 }

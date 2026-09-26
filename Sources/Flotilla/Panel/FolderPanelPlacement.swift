@@ -23,7 +23,12 @@ struct FolderPanelPlacement: Equatable {
     ///   - tileFrame: tile 的 frame
     ///   - edge: Dock 所贴的屏幕边
     ///   - visibleFrame: tile 所在屏幕的 `visibleFrame`
-    init(bodySize: CGSize, tileFrame: CGRect, edge: DockEdge, visibleFrame: CGRect) {
+    init(
+        bodySize: CGSize,
+        tileFrame: CGRect,
+        edge: DockEdge,
+        visibleFrame: CGRect
+    ) {
         let tip = Self.tailTip(tileFrame: tileFrame, edge: edge)
         let tailHeight = FolderPanelMetrics.tailHeight
         let margin = FolderPanelMetrics.screenSideMargin
@@ -37,7 +42,11 @@ struct FolderPanelPlacement: Equatable {
                 lower: visibleFrame.minX + margin,
                 upper: visibleFrame.maxX - margin - bodySize.width
             )
-            bodyFrame = CGRect(origin: CGPoint(x: x, y: tip.y + tailHeight), size: bodySize)
+
+            bodyFrame = CGRect(
+                origin: CGPoint(x: x, y: tip.y + tailHeight),
+                size: bodySize
+            )
             anchor = CGPoint(x: tileFrame.midX, y: tip.y - anchorDepth)
 
         // 尾巴朝左或朝右：主体贴着尖端所在的竖直线，竖直方向对准尖端后夹在屏幕上下边距之内
@@ -47,7 +56,10 @@ struct FolderPanelPlacement: Equatable {
                 lower: visibleFrame.minY + margin,
                 upper: visibleFrame.maxY - margin - bodySize.height
             )
-            let x = edge == .left ? tip.x + tailHeight : tip.x - tailHeight - bodySize.width
+
+            let x = edge == .left
+                ? tip.x + tailHeight
+                : tip.x - tailHeight - bodySize.width
             let anchorX = edge == .left ? tip.x - anchorDepth : tip.x + anchorDepth
 
             bodyFrame = CGRect(origin: CGPoint(x: x, y: y), size: bodySize)
@@ -60,7 +72,11 @@ struct FolderPanelPlacement: Equatable {
     /// 面板主体在该 tile 旁可用的最大尺寸，用来决定网格的列数上限与显示的行数
     ///
     /// 沿 Dock 方向是屏幕可用区域减去两侧边距；垂直 Dock 方向是从尾巴末端到屏幕另一侧边距为止
-    static func availableBodySize(tileFrame: CGRect, edge: DockEdge, visibleFrame: CGRect) -> CGSize {
+    static func availableBodySize(
+        tileFrame: CGRect,
+        edge: DockEdge,
+        visibleFrame: CGRect
+    ) -> CGSize {
         #warning("TODO: 未能实测 屏幕较小时按可用尺寸减少列数与显示行数、多显示器下面板保持在 tile 所在屏幕内（本机只有一块 1470 × 956 pt 的屏幕）")
 
         let tip = tailTip(tileFrame: tileFrame, edge: edge)
@@ -114,7 +130,11 @@ extension FolderPanelPlacement {
     }
 
     /// 把 value 夹到 `[lower, upper]`；区间为空（面板比可用区域还大）时取 lower，保证面板的起始边留在屏幕内
-    private static func clamped(_ value: CGFloat, lower: CGFloat, upper: CGFloat) -> CGFloat {
+    private static func clamped(
+        _ value: CGFloat,
+        lower: CGFloat,
+        upper: CGFloat
+    ) -> CGFloat {
         max(lower, min(value, upper))
     }
 }

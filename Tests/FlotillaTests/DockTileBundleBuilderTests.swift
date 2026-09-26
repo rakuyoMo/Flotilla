@@ -12,14 +12,20 @@ import Testing
 final class DockTileBundleBuilderTests {
     /// 本用例独占的临时目录，充当 stub 目录
     private let directory = FileManager.default.temporaryDirectory
-        .appending(path: "FlotillaTests-\(UUID().uuidString)", directoryHint: .isDirectory)
+        .appending(
+            path: "FlotillaTests-\(UUID().uuidString)",
+            directoryHint: .isDirectory
+        )
 
     /// 以系统自带的 `true` 代替 stub 可执行文件：它是可以重新签名的真实 Mach-O
     private let builder: DockTileBundleBuilder
 
     /// 用作图标预览的系统 App
     private let apps = ["Calculator", "Chess"].map {
-        FolderItem.app(AppReference(id: UUID(), url: URL(filePath: "/System/Applications/\($0).app")))
+        FolderItem.app(AppReference(
+            id: UUID(),
+            url: URL(filePath: "/System/Applications/\($0).app")
+        ))
     }
 
     /// 创建指向临时目录的 stub 生成器
@@ -49,11 +55,14 @@ final class DockTileBundleBuilderTests {
             "Icon\r",
         ]
 
+        let builtURL = builder.bundleURL(for: folder).standardizedFileURL
+
         #expect(changed)
-        #expect(builder.bundleURL(for: folder).standardizedFileURL == bundleURL.standardizedFileURL)
+        #expect(builtURL == bundleURL.standardizedFileURL)
 
         for relativePath in relativePaths {
             let fileURL = bundleURL.appending(path: relativePath)
+
             #expect(FileManager.default.fileExists(atPath: fileURL.path(percentEncoded: false)))
         }
 
@@ -113,6 +122,7 @@ final class DockTileBundleBuilderTests {
     func renameMovesBundleAndRewritesInfo() throws {
         var folder = makeFolder(name: "工作")
         try builder.write(folder: folder, icon: makeIcon(for: folder))
+
         let originalURL = builder.bundleURL(for: folder)
 
         folder.name = "日常"
@@ -146,21 +156,26 @@ final class DockTileBundleBuilderTests {
     func fileNameEscapesSlashAndFallsBackToID() {
         let slashed = makeFolder(name: "工作/学习")
         let unnamed = makeFolder(name: "")
+        let unnamedFileName = builder.bundleURL(for: unnamed).lastPathComponent
 
         #expect(builder.bundleURL(for: slashed).lastPathComponent == "工作:学习.app")
-        #expect(builder.bundleURL(for: unnamed).lastPathComponent == "\(unnamed.id.uuidString).app")
+        #expect(unnamedFileName == "\(unnamed.id.uuidString).app")
     }
 
     /// 预览数量变化让图标变化时，改写图标
     @Test
     func iconChangeRewritesIcon() throws {
         let folder = makeFolder(name: "工作")
-        let iconURL = builder.bundleURL(for: folder).appending(path: "Contents/Resources/Icon.icns")
+        let iconURL = builder.bundleURL(for: folder)
+            .appending(path: "Contents/Resources/Icon.icns")
 
         try builder.write(folder: folder, icon: makeIcon(for: folder))
         let original = try Data(contentsOf: iconURL)
 
-        let changed = try builder.write(folder: folder, icon: makeIcon(for: folder, previewIconCount: 0))
+        let changed = try builder.write(
+            folder: folder,
+            icon: makeIcon(for: folder, previewIconCount: 0)
+        )
 
         #expect(changed)
         #expect(try Data(contentsOf: iconURL) != original)
@@ -171,6 +186,7 @@ final class DockTileBundleBuilderTests {
     func existingFolderIDsTracksWritesAndRemovals() throws {
         let first = makeFolder(name: "工作")
         let second = makeFolder(name: "娱乐")
+
         try builder.write(folder: first, icon: makeIcon(for: first))
         try builder.write(folder: second, icon: makeIcon(for: second))
 
@@ -185,18 +201,22 @@ final class DockTileBundleBuilderTests {
 
         try builder.remove(folderID: first.id)
 
-        let removedDirectory = directory.appending(path: first.id.uuidString)
+        let removedPath = directory
+            .appending(path: first.id.uuidString)
+            .path(percentEncoded: false)
 
         #expect(builder.existingFolderIDs() == [second.id])
         #expect(builder.existingBundleURL(for: first.id) == nil)
-        #expect(!FileManager.default.fileExists(atPath: removedDirectory.path(percentEncoded: false)))
+        #expect(!FileManager.default.fileExists(atPath: removedPath))
     }
 
     /// AX 给出的 tile URL 以 `/` 结尾：解析出所属根文件夹；不在 stub 目录结构里的 URL 一律不认
     @Test
     func folderIDIsParsedFromBundleURL() {
         let folderID = UUID()
-        let tileURL = URL(string: "\(directory.absoluteString)\(folderID.uuidString)/%E5%B7%A5%E4%BD%9C.app/")
+        let tileURL = URL(
+            string: "\(directory.absoluteString)\(folderID.uuidString)/%E5%B7%A5%E4%BD%9C.app/"
+        )
 
         let foreignURLs = [
             URL(filePath: "/Applications/Calculator.app"),
@@ -220,6 +240,7 @@ final class DockTileBundleBuilderTests {
     /// 读取文件夹对应 stub 的 Info.plist
     private func readInfo(of folder: Folder) throws -> [String: Any] {
         let infoURL = builder.bundleURL(for: folder).appending(path: "Contents/Info.plist")
+
         let plist = try PropertyListSerialization.propertyList(
             from: Data(contentsOf: infoURL),
             format: nil
@@ -230,6 +251,10 @@ final class DockTileBundleBuilderTests {
 
     /// 按需求 2 渲染文件夹图标
     private func makeIcon(for folder: Folder, previewIconCount: Int = 4) -> NSImage {
-        FolderIconRenderer.render(folder: folder, previewIconCount: previewIconCount, pointSize: 512)
+        FolderIconRenderer.render(
+            folder: folder,
+            previewIconCount: previewIconCount,
+            pointSize: 512
+        )
     }
 }

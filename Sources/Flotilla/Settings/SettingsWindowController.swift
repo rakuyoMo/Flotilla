@@ -12,7 +12,9 @@ final class SettingsWindowController: NSWindowController {
     )
 
     /// 通用区
-    private let generalSettingsViewController = GeneralSettingsViewController(preferences: .shared)
+    private let generalSettingsViewController = GeneralSettingsViewController(
+        preferences: .shared
+    )
 
     /// 创建设置窗口；窗口关闭时只隐藏，不释放
     init() {
@@ -22,6 +24,7 @@ final class SettingsWindowController: NSWindowController {
             backing: .buffered,
             defer: true
         )
+
         window.title = "Flotilla 设置"
         window.isReleasedWhenClosed = false
         window.contentMinSize = NSSize(width: 460, height: 480)
@@ -68,6 +71,7 @@ extension SettingsWindowController: NSWindowDelegate {
         let hasOtherVisibleWindow = NSApp.windows.contains {
             $0 !== window && $0.isVisible && $0.canBecomeMain
         }
+
         guard !hasOtherVisibleWindow else { return }
 
         NSApp.setActivationPolicy(.accessory)

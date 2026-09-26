@@ -50,6 +50,7 @@ final class FolderGridItemView: NSView {
 
         imageView.image = icon
         imageView.imageScaling = .scaleProportionallyUpOrDown
+
         addSubview(imageView)
 
         // 名称只显示一行，过长时在中间省略
@@ -59,6 +60,7 @@ final class FolderGridItemView: NSView {
         titleField.alignment = .center
         titleField.usesSingleLineMode = true
         titleField.lineBreakMode = .byTruncatingMiddle
+
         addSubview(titleField)
     }
 
@@ -73,6 +75,7 @@ final class FolderGridItemView: NSView {
         super.layout()
 
         let iconSize = FolderPanelMetrics.iconSize
+
         imageView.frame = CGRect(
             x: iconCenter.x - iconSize / 2,
             y: iconCenter.y - iconSize / 2,
@@ -83,6 +86,7 @@ final class FolderGridItemView: NSView {
         // 文本框在文字两侧各留有内边距，frame 要比文字的最大宽度宽出这部分
         let titleWidth = FolderPanelMetrics.titleMaximumWidth + 2 * Self.titlePadding
         let titleHeight = titleField.intrinsicContentSize.height
+
         titleField.frame = CGRect(
             x: (bounds.width - titleWidth) / 2,
             y: 0,
@@ -90,7 +94,8 @@ final class FolderGridItemView: NSView {
             height: titleHeight
         )
 
-        titleField.frame.origin.y = FolderPanelMetrics.titleBaselineY - titleField.firstBaselineOffsetFromTop
+        titleField.frame.origin.y = FolderPanelMetrics.titleBaselineY
+            - titleField.firstBaselineOffsetFromTop
     }
 
     /// 整个单元格作为一个点击目标，图标与名称不单独响应鼠标
@@ -145,6 +150,7 @@ extension FolderGridItemView {
 
             NSColor(white: 0, alpha: 1 - FolderPanelMetrics.pressedIconBrightness).setFill()
             rect.fill(using: .sourceAtop)
+
             return true
         }
     }

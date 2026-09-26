@@ -46,6 +46,7 @@ extension StatusBarController {
                 keyEquivalent: "q"
             ),
         ]
+
         return menu
     }
 

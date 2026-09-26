@@ -100,6 +100,7 @@ final class FolderStoreTests {
         let root = store.addRootFolder(named: "根")
         let child = try #require(store.addSubfolder(named: "子", to: root.id))
         let grandchild = try #require(store.addSubfolder(named: "孙", to: child.id))
+
         store.addApps([chess], to: grandchild.id)
 
         store.remove(itemID: child.id)
@@ -114,6 +115,7 @@ final class FolderStoreTests {
     func removesApp() throws {
         let store = FolderStore(fileURL: fileURL)
         let root = store.addRootFolder(named: "根")
+
         store.addApps([chess, calendar], to: root.id)
         let chessID = try #require(store.folder(id: root.id)?.items.first?.id)
 
@@ -129,6 +131,7 @@ final class FolderStoreTests {
     func movesForwardWithinSameFolder() throws {
         let store = FolderStore(fileURL: fileURL)
         let root = store.addRootFolder(named: "根")
+
         store.addApps([chess, calendar, calculator], to: root.id)
         let chessID = try #require(store.folder(id: root.id)?.items.first?.id)
 
@@ -142,6 +145,7 @@ final class FolderStoreTests {
     func movesBackwardWithinSameFolder() throws {
         let store = FolderStore(fileURL: fileURL)
         let root = store.addRootFolder(named: "根")
+
         store.addApps([chess, calendar, calculator], to: root.id)
         let calculatorID = try #require(store.folder(id: root.id)?.items.last?.id)
 
@@ -156,6 +160,7 @@ final class FolderStoreTests {
         let store = FolderStore(fileURL: fileURL)
         let source = store.addRootFolder(named: "源")
         let target = store.addRootFolder(named: "目标")
+
         store.addApps([chess], to: source.id)
         store.addApps([calendar], to: target.id)
         let chessID = try #require(store.folder(id: source.id)?.items.first?.id)
@@ -184,6 +189,7 @@ final class FolderStoreTests {
     func rejectsAppAtRoot() throws {
         let store = FolderStore(fileURL: fileURL)
         let root = store.addRootFolder(named: "根")
+
         store.addApps([chess], to: root.id)
         let chessID = try #require(store.folder(id: root.id)?.items.first?.id)
 
@@ -202,6 +208,7 @@ final class FolderStoreTests {
         let root = store.addRootFolder(named: "根")
         let child = try #require(store.addSubfolder(named: "子", to: root.id))
         let grandchild = try #require(store.addSubfolder(named: "孙", to: child.id))
+
         let before = store.rootFolders
 
         #expect(!store.canMove(itemID: root.id, to: root.id))
@@ -222,6 +229,7 @@ final class FolderStoreTests {
         let store = FolderStore(fileURL: fileURL)
         let root = store.addRootFolder(named: "根")
         let child = try #require(store.addSubfolder(named: "子", to: root.id))
+
         store.addApps([chess], to: child.id)
         store.addApps([calendar], to: root.id)
 
@@ -239,7 +247,11 @@ final class FolderStoreTests {
     /// 文件损坏时改名保留原文件并从空开始，用户数据不会被下一次写入覆盖
     @Test
     func preservesBrokenFile() throws {
-        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(
+            at: directory,
+            withIntermediateDirectories: true
+        )
+
         let brokenContent = Data("{ 这不是 JSON".utf8)
         try brokenContent.write(to: fileURL)
 
@@ -248,6 +260,7 @@ final class FolderStoreTests {
         let files = try FileManager.default.contentsOfDirectory(
             atPath: directory.path(percentEncoded: false)
         )
+
         let brokenFile = try #require(files.first { $0.hasPrefix("folders.json.broken-") })
 
         #expect(store.rootFolders.isEmpty)
@@ -268,6 +281,7 @@ final class FolderStoreTests {
             ) { _ in
                 changed()
             }
+
             defer { NotificationCenter.default.removeObserver(observer) }
 
             let root = store.addRootFolder(named: "根")

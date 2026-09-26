@@ -38,15 +38,18 @@ struct FolderGridLayout: Equatable {
         let verticalPadding = FolderPanelMetrics.headerHeight + FolderPanelMetrics.gridBottomInset
 
         // 屏幕放不下规则给出的列数时减少列数，至少保留 1 列
-        let fittingColumnCount = Int(((availableSize.width - horizontalPadding) / cell).rounded(.down))
+        let availableGridWidth = availableSize.width - horizontalPadding
+        let fittingColumnCount = Int((availableGridWidth / cell).rounded(.down))
         let columnCount = min(
             Self.preferredColumnCount(itemCount: itemCount),
             max(1, fittingColumnCount)
         )
+
         let rowCount = Self.rowCount(itemCount: itemCount, columnCount: columnCount)
 
         // 最多显示 5 行，屏幕更矮时显示能完整放下的行数，至少 1 行
-        let fittingRowCount = Int(((availableSize.height - verticalPadding) / cell).rounded(.down))
+        let availableGridHeight = availableSize.height - verticalPadding
+        let fittingRowCount = Int((availableGridHeight / cell).rounded(.down))
         let visibleRowCount = max(
             1,
             min(rowCount, FolderPanelMetrics.maximumVisibleRowCount, fittingRowCount)
@@ -66,7 +69,10 @@ struct FolderGridLayout: Equatable {
         self.rowCount = rowCount
         self.visibleRowCount = visibleRowCount
 
-        gridSize = CGSize(width: CGFloat(columnCount) * cell, height: CGFloat(rowCount) * cell)
+        gridSize = CGSize(
+            width: CGFloat(columnCount) * cell,
+            height: CGFloat(rowCount) * cell
+        )
         needsScrolling = rowCount > visibleRowCount
 
         bodySize = CGSize(
@@ -89,6 +95,7 @@ extension FolderGridLayout {
         let cellCount = { (columnCount: Int) in
             columnCount * rowCount(itemCount: itemCount, columnCount: columnCount)
         }
+
         let columnCount = cellCount(n) <= cellCount(n + 1) ? n : n + 1
 
         let preferredRowCount = rowCount(itemCount: itemCount, columnCount: columnCount)

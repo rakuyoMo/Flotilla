@@ -15,6 +15,7 @@ struct FolderItemCodingTests {
             name: "最内层",
             items: [.app(makeApp("Chess"))]
         )
+
         let middle = Folder(
             id: UUID(),
             name: "中间层",
@@ -23,6 +24,7 @@ struct FolderItemCodingTests {
                 .app(makeApp("Calendar")),
             ]
         )
+
         let root = Folder(
             id: UUID(),
             name: "根",
@@ -47,7 +49,8 @@ struct FolderItemCodingTests {
         ]
 
         let data = try JSONEncoder().encode(items)
-        let objects = try #require(JSONSerialization.jsonObject(with: data) as? [[String: Any]])
+        let object = try JSONSerialization.jsonObject(with: data)
+        let objects = try #require(object as? [[String: Any]])
 
         #expect(objects.map { $0["type"] as? String } == ["app", "folder"])
     }

@@ -40,6 +40,7 @@ final class FolderNavigationBackButton: NSView {
         let opacity = isPressed
             ? FolderPanelMetrics.backButtonPressedOpacity
             : FolderPanelMetrics.backButtonOpacity
+
         let radius = FolderPanelMetrics.backButtonCornerRadius
 
         NSColor(white: 1, alpha: opacity).setFill()
@@ -51,6 +52,7 @@ final class FolderNavigationBackButton: NSView {
         chevron.move(to: CGPoint(x: bounds.midX + height / 4, y: bounds.midY + height / 2))
         chevron.line(to: CGPoint(x: bounds.midX - height / 4, y: bounds.midY))
         chevron.line(to: CGPoint(x: bounds.midX + height / 4, y: bounds.midY - height / 2))
+
         chevron.lineWidth = Self.chevronLineWidth
         chevron.lineCapStyle = .round
         chevron.lineJoinStyle = .round

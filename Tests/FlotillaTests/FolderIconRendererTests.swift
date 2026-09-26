@@ -19,7 +19,9 @@ struct FolderIconRendererTests {
     @Test
     func previewCellsFollowGridGeometry() {
         let canvas = CGRect(x: 0, y: 0, width: 100, height: 100)
-        let frames = (0 ..< 4).map { FolderIconRenderer.previewCellFrame(at: $0, in: canvas) }
+        let frames = (0 ..< 4).map {
+            FolderIconRenderer.previewCellFrame(at: $0, in: canvas)
+        }
 
         let expected = [
             CGRect(x: 25, y: 36, width: 23, height: 23),
@@ -27,6 +29,7 @@ struct FolderIconRendererTests {
             CGRect(x: 25, y: 63, width: 23, height: 23),
             CGRect(x: 52, y: 63, width: 23, height: 23),
         ]
+
         for (frame, expectedFrame) in zip(frames, expected) {
             #expect(isClose(frame, expectedFrame))
         }
@@ -36,7 +39,10 @@ struct FolderIconRendererTests {
     @Test
     func aspectFitCentersContent() {
         let cell = CGRect(x: 10, y: 10, width: 20, height: 20)
-        let fitted = FolderIconRenderer.aspectFitFrame(for: CGSize(width: 40, height: 20), in: cell)
+        let fitted = FolderIconRenderer.aspectFitFrame(
+            for: CGSize(width: 40, height: 20),
+            in: cell
+        )
 
         #expect(isClose(fitted, CGRect(x: 10, y: 15, width: 20, height: 10)))
     }
@@ -86,6 +92,7 @@ struct FolderIconRendererTests {
             name: "混排",
             items: [.folder(Folder(id: UUID(), name: "子文件夹", items: []))] + apps
         )
+
         let appsOnly = Folder(id: UUID(), name: "仅 App", items: apps)
 
         let mixed = try renderedPixels(of: withSubfolder, previewIconCount: 1)
@@ -99,7 +106,9 @@ struct FolderIconRendererTests {
         Folder(
             id: UUID(),
             name: "测试",
-            items: appURLs.prefix(appCount).map { .app(AppReference(id: UUID(), url: $0)) }
+            items: appURLs.prefix(appCount).map {
+                .app(AppReference(id: UUID(), url: $0))
+            }
         )
     }
 
@@ -114,7 +123,10 @@ struct FolderIconRendererTests {
     }
 
     /// 以 64 点渲染文件夹图标，再按 2 倍像素栅格化，返回像素数据用于比较
-    private func renderedPixels(of folder: Folder, previewIconCount: Int) throws -> Data {
+    private func renderedPixels(
+        of folder: Folder,
+        previewIconCount: Int
+    ) throws -> Data {
         let image = FolderIconRenderer.render(
             folder: folder,
             previewIconCount: previewIconCount,
@@ -136,6 +148,7 @@ struct FolderIconRendererTests {
                 bitsPerPixel: 0
             )
         )
+
         bitmap.size = image.size
 
         NSGraphicsContext.saveGraphicsState()

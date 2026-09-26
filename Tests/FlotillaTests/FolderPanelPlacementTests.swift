@@ -153,6 +153,7 @@ struct FolderPanelPlacementTests {
             edge: .bottom,
             visibleFrame: bottomVisibleFrame
         )
+
         let left = FolderPanelPlacement.availableBodySize(
             tileFrame: leftTile,
             edge: .left,
@@ -163,6 +164,7 @@ struct FolderPanelPlacementTests {
             width: bottomVisibleFrame.width - 2 * margin,
             height: bottomVisibleFrame.maxY - 16 - (bottomTile.maxY - 1 + tailHeight)
         ))
+
         #expect(left == CGSize(
             width: leftVisibleFrame.maxX - 16 - (leftTile.maxX - 1 + tailHeight),
             height: leftVisibleFrame.height - 2 * margin

@@ -17,7 +17,10 @@ final class FolderStore {
     static let shared = FolderStore(fileURL: defaultFileURL)
 
     /// 持久化相关的日志
-    private static let logger = Logger(subsystem: "com.rakuyo.flotilla", category: "FolderStore")
+    private static let logger = Logger(
+        subsystem: "com.rakuyo.flotilla",
+        category: "FolderStore"
+    )
 
     /// 根文件夹，每个对应 Dock 上的一个 tile
     private(set) var rootFolders: [Folder]
@@ -51,7 +54,10 @@ final class FolderStore {
 extension FolderStore {
     /// 在任意层级中查找文件夹
     func folder(id: UUID) -> Folder? {
-        guard case .folder(let folder) = Self.findItem(id: id, in: rootItems) else { return nil }
+        guard case .folder(let folder) = Self.findItem(id: id, in: rootItems) else {
+            return nil
+        }
+
         return folder
     }
 
@@ -93,6 +99,7 @@ extension FolderStore {
         let folder = Folder(id: UUID(), name: name, items: [])
         rootFolders.append(folder)
         commit()
+
         return folder
     }
 
@@ -104,10 +111,12 @@ extension FolderStore {
         let found = Self.modifyFolder(id: parentID, in: &items) {
             $0.items.append(.folder(folder))
         }
+
         guard found else { return nil }
 
         rootItems = items
         commit()
+
         return folder
     }
 
@@ -137,6 +146,7 @@ extension FolderStore {
                 added = true
             }
         }
+
         guard found, added else { return }
 
         rootItems = items
@@ -182,7 +192,11 @@ extension FolderStore {
         guard let item = Self.removeItem(id: itemID, from: &items) else { return }
 
         var targetIndex = index
-        if sourceParent?.id == folderID, let sourceIndex, sourceIndex < index {
+        if
+            sourceParent?.id == folderID,
+            let sourceIndex,
+            sourceIndex < index
+        {
             targetIndex -= 1
         }
 
@@ -258,10 +272,14 @@ extension FolderStore {
                 return item
             }
 
-            if case .folder(let folder) = item, let found = findItem(id: id, in: folder.items) {
+            if
+                case .folder(let folder) = item,
+                let found = findItem(id: id, in: folder.items)
+            {
                 return found
             }
         }
+
         return nil
     }
 
@@ -276,6 +294,7 @@ extension FolderStore {
                 return found
             }
         }
+
         return nil
     }
 
@@ -298,6 +317,7 @@ extension FolderStore {
             items[index] = .folder(folder)
             return true
         }
+
         return false
     }
 
@@ -314,6 +334,7 @@ extension FolderStore {
             items[index] = .folder(folder)
             return removed
         }
+
         return nil
     }
 

@@ -16,7 +16,11 @@ enum FolderIconRenderer {
     ///   - previewIconCount: 叠加的 App 图标数量上限，超出 `0...Preferences.maximumPreviewIconCount` 时夹取
     ///   - pointSize: 输出图像的边长（点）
     /// - Returns: 用绘制闭包构造的图像，与分辨率无关，调用方可按任意像素尺寸栅格化
-    static func render(folder: Folder, previewIconCount: Int, pointSize: CGFloat) -> NSImage {
+    static func render(
+        folder: Folder,
+        previewIconCount: Int,
+        pointSize: CGFloat
+    ) -> NSImage {
         let count = min(max(previewIconCount, 0), Preferences.maximumPreviewIconCount)
 
         // 按顺序取前几个 App，跳过子文件夹
@@ -31,13 +35,17 @@ enum FolderIconRenderer {
         let baseIcon = NSWorkspace.shared.icon(for: .folder)
 
         // 绘制闭包在每次栅格化时按目标分辨率重新执行；翻转坐标系，让预览网格按 y 轴自上而下计算
-        return NSImage(size: NSSize(width: pointSize, height: pointSize), flipped: true) { canvas in
+        return NSImage(
+            size: NSSize(width: pointSize, height: pointSize),
+            flipped: true
+        ) { canvas in
             draw(baseIcon, in: canvas)
 
             for (index, icon) in previewIcons.enumerated() {
                 let cell = previewCellFrame(at: index, in: canvas)
                 draw(icon, in: aspectFitFrame(for: icon.size, in: cell))
             }
+
             return true
         }
     }

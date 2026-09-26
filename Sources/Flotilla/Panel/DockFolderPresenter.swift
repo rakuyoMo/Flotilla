@@ -10,7 +10,10 @@ import os
 @MainActor
 final class DockFolderPresenter: NSObject {
     /// 面板相关的日志
-    private static let logger = Logger(subsystem: "com.rakuyo.flotilla", category: "DockFolderPresenter")
+    private static let logger = Logger(
+        subsystem: "com.rakuyo.flotilla",
+        category: "DockFolderPresenter"
+    )
 
     /// 文件夹树的唯一数据源
     private let store: FolderStore
@@ -54,6 +57,7 @@ final class DockFolderPresenter: NSObject {
             name: FolderStore.didChangeNotification,
             object: store
         )
+
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(dismiss),
@@ -99,14 +103,25 @@ extension DockFolderPresenter {
             .rightMouseDown,
             .otherMouseDown,
         ]
-        let globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: globalMask) { [weak self] event in
+
+        let globalMonitor = NSEvent.addGlobalMonitorForEvents(
+            matching: globalMask
+        ) { [weak self] event in
             self?.handleGlobalMouseEvent(event)
         }
 
         // 状态栏图标、设置窗口也是面板以外的位置；面板自己的点击交给面板处理
-        let localMask: NSEvent.EventTypeMask = [.leftMouseDown, .rightMouseDown, .otherMouseDown]
-        let localMonitor = NSEvent.addLocalMonitorForEvents(matching: localMask) { [weak self] event in
+        let localMask: NSEvent.EventTypeMask = [
+            .leftMouseDown,
+            .rightMouseDown,
+            .otherMouseDown,
+        ]
+
+        let localMonitor = NSEvent.addLocalMonitorForEvents(
+            matching: localMask
+        ) { [weak self] event in
             self?.handleLocalMouseDown(event)
+
             return event
         }
 
@@ -150,7 +165,12 @@ extension DockFolderPresenter {
     private func handleLocalMouseDown(_ event: NSEvent) {
         guard event.window !== panelController.panel else { return }
 
-        apply(state.mouseDown(onTile: nil, at: NSEvent.mouseLocation, isInDockArea: false, time: Self.now))
+        apply(state.mouseDown(
+            onTile: nil,
+            at: NSEvent.mouseLocation,
+            isInDockArea: false,
+            time: Self.now
+        ))
     }
 }
 

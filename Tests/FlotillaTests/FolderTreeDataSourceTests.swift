@@ -30,10 +30,13 @@ final class FolderTreeDataSourceTests {
     /// 建立“工作 / [开发, Chess]”的树
     init() throws {
         store = FolderStore(fileURL: directory.appending(path: "folders.json"))
+
         work = store.addRootFolder(named: "工作")
         development = try #require(store.addSubfolder(named: "开发", to: work.id))
+
         store.addApps([URL(filePath: "/System/Applications/Chess.app")], to: work.id)
         appID = try #require(store.folder(id: work.id)?.items.last?.id)
+
         dataSource = FolderTreeDataSource(store: store)
     }
 
@@ -100,15 +103,22 @@ final class FolderTreeDataSourceTests {
     /// 根层级只接受文件夹
     @Test
     func rootAcceptsFoldersOnly() {
-        #expect(dataSource.moveDestination(for: appID, proposedParent: nil, childIndex: 0) == nil)
+        let appDestination = dataSource.moveDestination(
+            for: appID,
+            proposedParent: nil,
+            childIndex: 0
+        )
 
-        let destination = dataSource.moveDestination(
+        #expect(appDestination == nil)
+
+        let folderDestination = dataSource.moveDestination(
             for: development.id,
             proposedParent: nil,
             childIndex: 1
         )
-        #expect(destination?.folderID == nil)
-        #expect(destination?.index == 1)
+
+        #expect(folderDestination?.folderID == nil)
+        #expect(folderDestination?.index == 1)
     }
 
     /// 文件夹不能拖进自己的子孙

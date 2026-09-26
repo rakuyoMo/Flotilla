@@ -53,6 +53,7 @@ final class FolderPanelBackgroundView: NSView {
         wantsLayer = true
 
         let bounds = CGRect(origin: .zero, size: frame.size)
+
         for decorationView in [shadowView, materialView, edgeView] {
             decorationView.frame = bounds
             decorationView.autoresizingMask = [.width, .height]
@@ -82,7 +83,11 @@ final class FolderPanelBackgroundView: NSView {
     ///   - bodyRect: 主体区域
     ///   - tailTip: 尾巴尖端，与 bodyRect 同一坐标系
     ///   - edge: Dock 所贴的屏幕边
-    static func outlinePath(bodyRect: CGRect, tailTip: CGPoint, edge: DockEdge) -> CGPath {
+    static func outlinePath(
+        bodyRect: CGRect,
+        tailTip: CGPoint,
+        edge: DockEdge
+    ) -> CGPath {
         var transform = canonicalTransform(bodyRect: bodyRect, edge: edge)
         let canonicalTip = tailTip.applying(transform.inverted())
 
@@ -91,39 +96,19 @@ final class FolderPanelBackgroundView: NSView {
             ? (bodyRect.width, bodyRect.height)
             : (bodyRect.height, bodyRect.width)
 
-        let path = CGMutablePath()
-        let radius = min(FolderPanelMetrics.cornerRadius, min(length, depth) / 2 / Self.cornerExtent)
+        let radius = min(
+            FolderPanelMetrics.cornerRadius,
+            min(length, depth) / 2 / Self.cornerExtent
+        )
         let cornerLength = radius * Self.cornerExtent
 
+        let path = CGMutablePath()
         path.move(to: CGPoint(x: cornerLength, y: 0))
+
         addTail(to: path, tip: canonicalTip, edgeLength: length, cornerLength: cornerLength)
         path.addLine(to: CGPoint(x: length - cornerLength, y: 0))
 
-        // 逆时针依次绕过右下、右上、左上、左下四个角
-        let corners = [
-            (CGPoint(x: length, y: 0), CGVector(dx: 1, dy: 0), CGVector(dx: 0, dy: 1)),
-            (CGPoint(x: length, y: depth), CGVector(dx: 0, dy: 1), CGVector(dx: -1, dy: 0)),
-            (CGPoint(x: 0, y: depth), CGVector(dx: -1, dy: 0), CGVector(dx: 0, dy: -1)),
-            (CGPoint.zero, CGVector(dx: 0, dy: -1), CGVector(dx: 1, dy: 0)),
-        ]
-        for (index, (corner, incoming, outgoing)) in corners.enumerated() {
-            addContinuousCorner(
-                to: path,
-                at: corner,
-                incoming: incoming,
-                outgoing: outgoing,
-                radius: radius
-            )
-
-            // 每个角之后沿下一条边走到下一个角的起点；最后一个角回到起点
-            guard index < corners.count - 1 else { break }
-
-            let next = corners[index + 1]
-            path.addLine(to: CGPoint(
-                x: next.0.x - next.1.dx * cornerLength,
-                y: next.0.y - next.1.dy * cornerLength
-            ))
-        }
+        addBodyCorners(to: path, length: length, depth: depth, radius: radius)
         path.closeSubpath()
 
         return path.copy(using: &transform) ?? path
@@ -161,6 +146,7 @@ extension FolderPanelBackgroundView {
         let maskPath = CGMutablePath()
         maskPath.addRect(bounds)
         maskPath.addPath(outline)
+
         outsideMask.path = maskPath
         outsideMask.fillRule = .evenOdd
         shadowLayer.mask = outsideMask
@@ -170,8 +156,16 @@ extension FolderPanelBackgroundView {
 
     /// 边缘线：暗线在轮廓外侧，两道亮线在轮廓内侧，外面一道更亮
     private func buildEdges(in bounds: CGRect) {
-        shadeLayer.fillColor = NSColor(white: 0, alpha: FolderPanelMetrics.edgeShadeOpacity).cgColor
-        highlightLayer.fillColor = NSColor(white: 1, alpha: FolderPanelMetrics.edgeHighlightOpacity).cgColor
+        shadeLayer.fillColor = NSColor(
+            white: 0,
+            alpha: FolderPanelMetrics.edgeShadeOpacity
+        ).cgColor
+
+        highlightLayer.fillColor = NSColor(
+            white: 1,
+            alpha: FolderPanelMetrics.edgeHighlightOpacity
+        ).cgColor
+
         innerHighlightLayer.fillColor = NSColor(
             white: 1,
             alpha: FolderPanelMetrics.edgeInnerHighlightOpacity
@@ -206,6 +200,7 @@ extension FolderPanelBackgroundView {
         shadeLayer.path = shifted(-pixel, 0)
             .union(shifted(pixel, 0))
             .subtracting(outline)
+
         highlightLayer.path = outline.subtracting(core(1))
 
         // 第二道亮线紧贴第一道的内侧，同样宽 1 像素
@@ -226,7 +221,10 @@ extension FolderPanelBackgroundView {
 
         // 玻璃把内容放进它的 contentView，整体用图层遮罩裁成轮廓；
         // behind-window 的 popover 材质由窗口服务器合成，图层遮罩对它无效，只能用 maskImage
-        if #available(macOS 26, *), let glassView = materialView as? NSGlassEffectView {
+        if
+            #available(macOS 26, *),
+            let glassView = materialView as? NSGlassEffectView
+        {
             let mask = CAShapeLayer()
             mask.frame = bounds
             mask.path = outline
@@ -270,18 +268,35 @@ extension FolderPanelBackgroundView {
     /// 从“尾巴朝下”的标准坐标系到 bodyRect 所在坐标系的变换
     ///
     /// 标准坐标系里主体占据 `[0, length] × [0, depth]`，面向 Dock 的边在 y = 0，尾巴朝 y 负方向
-    private static func canonicalTransform(bodyRect: CGRect, edge: DockEdge) -> CGAffineTransform {
+    private static func canonicalTransform(
+        bodyRect: CGRect,
+        edge: DockEdge
+    ) -> CGAffineTransform {
         switch edge {
         case .bottom:
             CGAffineTransform(translationX: bodyRect.minX, y: bodyRect.minY)
 
         // 面向 Dock 的边是主体左边，自上而下：(x, y) → (minX + y, maxY - x)
         case .left:
-            CGAffineTransform(a: 0, b: -1, c: 1, d: 0, tx: bodyRect.minX, ty: bodyRect.maxY)
+            CGAffineTransform(
+                a: 0,
+                b: -1,
+                c: 1,
+                d: 0,
+                tx: bodyRect.minX,
+                ty: bodyRect.maxY
+            )
 
         // 面向 Dock 的边是主体右边，自下而上：(x, y) → (maxX - y, minY + x)
         case .right:
-            CGAffineTransform(a: 0, b: 1, c: -1, d: 0, tx: bodyRect.maxX, ty: bodyRect.minY)
+            CGAffineTransform(
+                a: 0,
+                b: 1,
+                c: -1,
+                d: 0,
+                tx: bodyRect.maxX,
+                ty: bodyRect.minY
+            )
         }
     }
 
@@ -312,16 +327,55 @@ extension FolderPanelBackgroundView {
             tangent2End: apex,
             radius: filletRadius
         )
+
         path.addArc(
             tangent1End: apex,
             tangent2End: CGPoint(x: center + halfBase, y: 0),
             radius: tipRadius
         )
+
         path.addArc(
             tangent1End: CGPoint(x: center + halfBase, y: 0),
             tangent2End: CGPoint(x: edgeLength, y: 0),
             radius: filletRadius
         )
+    }
+
+    /// 从面向 Dock 的边的右端起，逆时针依次绕过右下、右上、左上、左下四个角，回到这条边的左端
+    private static func addBodyCorners(
+        to path: CGMutablePath,
+        length: CGFloat,
+        depth: CGFloat,
+        radius: CGFloat
+    ) {
+        let cornerLength = radius * cornerExtent
+
+        // 每个角是（角点、来路方向、去路方向）
+        let corners = [
+            (CGPoint(x: length, y: 0), CGVector(dx: 1, dy: 0), CGVector(dx: 0, dy: 1)),
+            (CGPoint(x: length, y: depth), CGVector(dx: 0, dy: 1), CGVector(dx: -1, dy: 0)),
+            (CGPoint(x: 0, y: depth), CGVector(dx: -1, dy: 0), CGVector(dx: 0, dy: -1)),
+            (CGPoint.zero, CGVector(dx: 0, dy: -1), CGVector(dx: 1, dy: 0)),
+        ]
+
+        for (index, (corner, incoming, outgoing)) in corners.enumerated() {
+            addContinuousCorner(
+                to: path,
+                at: corner,
+                incoming: incoming,
+                outgoing: outgoing,
+                radius: radius
+            )
+
+            // 每个角之后沿下一条边走到下一个角的起点；最后一个角回到起点
+            guard index < corners.count - 1 else { break }
+
+            let next = corners[index + 1]
+            path.addLine(to: CGPoint(
+                x: next.0.x - next.1.dx * cornerLength,
+                y: next.0.y - next.1.dy * cornerLength
+            ))
+        }
     }
 
     /// 添加一个连续曲率的圆角：当前点位于 corner 沿来路往回 `cornerExtent × radius` 处，结束于沿去路同样距离处
@@ -340,7 +394,11 @@ extension FolderPanelBackgroundView {
         }
 
         for (end, control1, control2) in cornerCurves {
-            path.addCurve(to: point(end), control1: point(control1), control2: point(control2))
+            path.addCurve(
+                to: point(end),
+                control1: point(control1),
+                control2: point(control2)
+            )
         }
     }
 
@@ -349,6 +407,7 @@ extension FolderPanelBackgroundView {
         if #available(macOS 26, *) {
             let glassView = NSGlassEffectView()
             glassView.style = .regular
+
             return glassView
         }
 
@@ -356,6 +415,7 @@ extension FolderPanelBackgroundView {
         effectView.material = .popover
         effectView.blendingMode = .behindWindow
         effectView.state = .active
+
         return effectView
     }
 
@@ -367,6 +427,7 @@ extension FolderPanelBackgroundView {
             context.addPath(path)
             context.setFillColor(.black)
             context.fillPath()
+
             return true
         }
     }

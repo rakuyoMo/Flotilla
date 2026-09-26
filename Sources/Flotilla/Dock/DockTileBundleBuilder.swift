@@ -70,6 +70,7 @@ extension DockTileBundleBuilder {
         // 先把图标写到临时位置，与现有图标逐字节比对；一致时直接丢弃
         let renderedIconURL = fileManager.temporaryDirectory
             .appending(path: "Flotilla-\(UUID().uuidString).icns")
+
         try IconFileWriter.write(icon, to: renderedIconURL)
         defer { try? fileManager.removeItem(at: renderedIconURL) }
 
@@ -79,6 +80,7 @@ extension DockTileBundleBuilder {
             format: .xml,
             options: 0
         )
+
         let renderedIcon = try Data(contentsOf: renderedIconURL)
 
         let isInfoChanged = (try? Data(contentsOf: infoURL)) != infoData
@@ -106,6 +108,7 @@ extension DockTileBundleBuilder {
         try replaceItem(at: stubExecutableURL, withCopyOf: executableURL)
 
         try seal(bundleURL, iconURL: iconURL)
+
         return true
     }
 
@@ -113,7 +116,9 @@ extension DockTileBundleBuilder {
     func remove(folderID: UUID) throws {
         let fileManager = FileManager.default
         let folderDirectory = folderDirectory(for: folderID)
-        guard fileManager.fileExists(atPath: folderDirectory.path(percentEncoded: false)) else { return }
+        let path = folderDirectory.path(percentEncoded: false)
+
+        guard fileManager.fileExists(atPath: path) else { return }
 
         try fileManager.removeItem(at: folderDirectory)
     }
@@ -128,7 +133,10 @@ extension DockTileBundleBuilder {
     /// 因此文件名必须是文件夹名；同名的根文件夹靠各自独占的 `<id>` 目录区分
     func bundleURL(for folder: Folder) -> URL {
         folderDirectory(for: folder.id)
-            .appending(path: "\(Self.fileName(for: folder)).app", directoryHint: .isDirectory)
+            .appending(
+                path: "\(Self.fileName(for: folder)).app",
+                directoryHint: .isDirectory
+            )
     }
 
     /// 根文件夹已有 stub 的位置；还没有生成时为 nil
@@ -156,11 +164,12 @@ extension DockTileBundleBuilder {
     /// stub 所属的根文件夹：URL 形如 `<directory>/<id>/<文件夹名>.app` 时解析出 id，其它 URL 一律为 nil
     func folderID(forBundleURL url: URL) -> UUID? {
         let components = url.standardizedFileURL.pathComponents
+        let directoryComponents = directory.standardizedFileURL.pathComponents
 
         guard
             components.count > 2,
             components.last?.hasSuffix(".app") ?? false,
-            Array(components.dropLast(2)) == directory.standardizedFileURL.pathComponents
+            Array(components.dropLast(2)) == directoryComponents
         else {
             return nil
         }
@@ -213,6 +222,7 @@ extension DockTileBundleBuilder {
         if fileManager.fileExists(atPath: destination.path(percentEncoded: false)) {
             try fileManager.removeItem(at: destination)
         }
+
         try fileManager.copyItem(at: source, to: destination)
     }
 }

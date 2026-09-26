@@ -67,6 +67,7 @@ final class PreferencesTests {
             ) { _ in
                 changed()
             }
+
             defer { NotificationCenter.default.removeObserver(observer) }
 
             preferences.previewIconCount = 4

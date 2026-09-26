@@ -49,9 +49,11 @@ extension AppDelegate: NSApplicationDelegate {
     /// 搭好主菜单与状态栏，把当前这份 App 注册为 `flotilla` scheme 的处理者
     func applicationDidFinishLaunching(_: Notification) {
         NSApp.mainMenu = makeMainMenu()
+
         statusBarController = StatusBarController(
             settingsWindowController: SettingsWindowController()
         )
+
         registerAsURLHandler()
     }
 
@@ -87,28 +89,58 @@ extension AppDelegate {
             ),
         ]
 
-        let redoItem = NSMenuItem(title: "重做", action: Selector(("redo:")), keyEquivalent: "z")
-        redoItem.keyEquivalentModifierMask = [.command, .shift]
-
-        let editMenu = NSMenu(title: "编辑")
-        editMenu.items = [
-            NSMenuItem(title: "撤销", action: Selector(("undo:")), keyEquivalent: "z"),
-            redoItem,
-            .separator(),
-            NSMenuItem(title: "剪切", action: #selector(NSText.cut(_:)), keyEquivalent: "x"),
-            NSMenuItem(title: "复制", action: #selector(NSText.copy(_:)), keyEquivalent: "c"),
-            NSMenuItem(title: "粘贴", action: #selector(NSText.paste(_:)), keyEquivalent: "v"),
-            NSMenuItem(title: "全选", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a"),
-        ]
-
         // 主菜单的每一项只是子菜单的容器，App 菜单的标题由系统显示为 App 名称
         let mainMenu = NSMenu()
-        for submenu in [appMenu, editMenu] {
+        for submenu in [appMenu, makeEditMenu()] {
             let item = NSMenuItem()
             item.submenu = submenu
             mainMenu.addItem(item)
         }
+
         return mainMenu
+    }
+
+    /// “编辑”菜单：撤销、重做、剪切、复制、粘贴、全选，动作沿响应链交给当前的文本框
+    private func makeEditMenu() -> NSMenu {
+        let redoItem = NSMenuItem(
+            title: "重做",
+            action: Selector(("redo:")),
+            keyEquivalent: "z"
+        )
+        redoItem.keyEquivalentModifierMask = [.command, .shift]
+
+        let editMenu = NSMenu(title: "编辑")
+        editMenu.items = [
+            NSMenuItem(
+                title: "撤销",
+                action: Selector(("undo:")),
+                keyEquivalent: "z"
+            ),
+            redoItem,
+            .separator(),
+            NSMenuItem(
+                title: "剪切",
+                action: #selector(NSText.cut(_:)),
+                keyEquivalent: "x"
+            ),
+            NSMenuItem(
+                title: "复制",
+                action: #selector(NSText.copy(_:)),
+                keyEquivalent: "c"
+            ),
+            NSMenuItem(
+                title: "粘贴",
+                action: #selector(NSText.paste(_:)),
+                keyEquivalent: "v"
+            ),
+            NSMenuItem(
+                title: "全选",
+                action: #selector(NSText.selectAll(_:)),
+                keyEquivalent: "a"
+            ),
+        ]
+
+        return editMenu
     }
 
     /// 创建 stub 生成器，据此启动 Dock tile 同步器与面板；缺少 stub 可执行文件时 Dock 上不会有 tile，两者都不启动

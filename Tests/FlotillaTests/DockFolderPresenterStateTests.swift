@@ -37,7 +37,10 @@ struct DockFolderPresenterStateTests {
     @Test
     func draggingTileDoesNotExpand() {
         var state = DockFolderPresenterState()
-        let farPoint = CGPoint(x: tilePoint.x + FolderPanelMetrics.dragThreshold + 1, y: tilePoint.y)
+        let farPoint = CGPoint(
+            x: tilePoint.x + FolderPanelMetrics.dragThreshold + 1,
+            y: tilePoint.y
+        )
 
         _ = pressTile(folderA, at: 0, in: &state)
 
@@ -50,7 +53,10 @@ struct DockFolderPresenterStateTests {
     @Test
     func jitterWithinThresholdStillClicks() {
         var state = DockFolderPresenterState()
-        let nearPoint = CGPoint(x: tilePoint.x + FolderPanelMetrics.dragThreshold, y: tilePoint.y)
+        let nearPoint = CGPoint(
+            x: tilePoint.x + FolderPanelMetrics.dragThreshold,
+            y: tilePoint.y
+        )
 
         _ = pressTile(folderA, at: 0, in: &state)
 
@@ -99,8 +105,23 @@ struct DockFolderPresenterStateTests {
         var state = DockFolderPresenterState()
         clickTile(folderA, at: 0, in: &state)
 
-        #expect(state.mouseDown(onTile: nil, at: .zero, isInDockArea: false, time: 1) == .collapse)
-        #expect(state.mouseDown(onTile: nil, at: .zero, isInDockArea: false, time: 2) == .unchanged)
+        let firstClick = state.mouseDown(
+            onTile: nil,
+            at: .zero,
+            isInDockArea: false,
+            time: 1
+        )
+
+        #expect(firstClick == .collapse)
+
+        let secondClick = state.mouseDown(
+            onTile: nil,
+            at: .zero,
+            isInDockArea: false,
+            time: 2
+        )
+
+        #expect(secondClick == .unchanged)
     }
 
     // MARK: 长按
@@ -112,7 +133,9 @@ struct DockFolderPresenterStateTests {
 
         _ = pressTile(folderA, at: 0, in: &state)
 
-        #expect(state.mouseUp(time: FolderPanelMetrics.longPressDuration + 0.1) == .unchanged)
+        let release = FolderPanelMetrics.longPressDuration + 0.1
+
+        #expect(state.mouseUp(time: release) == .unchanged)
         #expect(state.presentedFolderID == nil)
     }
 
@@ -123,7 +146,9 @@ struct DockFolderPresenterStateTests {
 
         _ = pressTile(folderA, at: 0, in: &state)
 
-        #expect(state.mouseUp(time: FolderPanelMetrics.longPressDuration) == .expand(folderA))
+        let release = FolderPanelMetrics.longPressDuration
+
+        #expect(state.mouseUp(time: release) == .expand(folderA))
     }
 
     /// 展开时长按同一 tile：视同点击其它位置而收起，随后到达的同一文件夹 URL 不会再展开
@@ -133,6 +158,7 @@ struct DockFolderPresenterStateTests {
         clickTile(folderA, at: 0, in: &state)
 
         _ = pressTile(folderA, at: 5, in: &state)
+
         let release = 5 + FolderPanelMetrics.longPressDuration + 0.1
 
         #expect(state.mouseUp(time: release) == .collapse)
@@ -148,7 +174,9 @@ struct DockFolderPresenterStateTests {
 
         _ = pressTile(folderB, at: 5, in: &state)
 
-        #expect(state.mouseUp(time: 5 + FolderPanelMetrics.longPressDuration + 0.1) == .collapse)
+        let release = 5 + FolderPanelMetrics.longPressDuration + 0.1
+
+        #expect(state.mouseUp(time: release) == .collapse)
         #expect(state.presentedFolderID == nil)
     }
 
@@ -213,7 +241,14 @@ struct DockFolderPresenterStateTests {
         var state = DockFolderPresenterState()
         _ = state.receiveURL(folderID: folderA, time: 0)
 
-        #expect(state.mouseDown(onTile: nil, at: tilePoint, isInDockArea: true, time: 5) == .collapse)
+        let dockAreaClick = state.mouseDown(
+            onTile: nil,
+            at: tilePoint,
+            isInDockArea: true,
+            time: 5
+        )
+
+        #expect(dockAreaClick == .collapse)
         #expect(state.receiveURL(folderID: folderA, time: 5.3) == .unchanged)
         #expect(state.presentedFolderID == nil)
     }

@@ -7,7 +7,9 @@ import UniformTypeIdentifiers
 @MainActor
 final class FolderTreeDataSource: NSObject {
     /// 树内拖动时写进剪贴板的类型，内容为被拖动项的 id
-    static let itemIDPasteboardType = NSPasteboard.PasteboardType("com.rakuyo.flotilla.folder-item-id")
+    static let itemIDPasteboardType = NSPasteboard.PasteboardType(
+        "com.rakuyo.flotilla.folder-item-id"
+    )
 
     /// 根文件夹对应的节点
     private(set) var rootNodes: [FolderTreeNode] = []
@@ -26,7 +28,9 @@ final class FolderTreeDataSource: NSObject {
 
     /// 按 store 的当前内容重建全部节点
     func reloadNodes() {
-        rootNodes = store.rootFolders.map { FolderTreeNode(item: .folder($0), parent: nil) }
+        rootNodes = store.rootFolders.map {
+            FolderTreeNode(item: .folder($0), parent: nil)
+        }
     }
 
     /// 按 id 查找节点
@@ -36,11 +40,14 @@ final class FolderTreeDataSource: NSObject {
         // 广度优先遍历整棵树
         while !pending.isEmpty {
             let node = pending.removeFirst()
+
             if node.item.id == id {
                 return node
             }
+
             pending += node.children
         }
+
         return nil
     }
 
@@ -64,7 +71,9 @@ final class FolderTreeDataSource: NSObject {
         guard store.canMove(itemID: itemID, to: folderID) else { return nil }
 
         // 落在文件夹这一行上时追加到末尾
-        guard childIndex == NSOutlineViewDropOnItemIndex else { return (folderID, childIndex) }
+        guard childIndex == NSOutlineViewDropOnItemIndex else {
+            return (folderID, childIndex)
+        }
 
         return (folderID, proposedParent?.children.count ?? rootNodes.count)
     }
@@ -89,11 +98,15 @@ extension FolderTreeDataSource: NSOutlineViewDataSource {
     }
 
     /// 树内拖动时把被拖动项的 id 写进剪贴板
-    func outlineView(_: NSOutlineView, pasteboardWriterForItem item: Any) -> (any NSPasteboardWriting)? {
+    func outlineView(
+        _: NSOutlineView,
+        pasteboardWriterForItem item: Any
+    ) -> (any NSPasteboardWriting)? {
         guard let node = item as? FolderTreeNode else { return nil }
 
         let pasteboardItem = NSPasteboardItem()
         pasteboardItem.setString(node.item.id.uuidString, forType: Self.itemIDPasteboardType)
+
         return pasteboardItem
     }
 
@@ -112,6 +125,7 @@ extension FolderTreeDataSource: NSOutlineViewDataSource {
                 proposedParent: proposedParent,
                 childIndex: index
             )
+
             return destination == nil ? [] : .move
         }
 
@@ -125,6 +139,7 @@ extension FolderTreeDataSource: NSOutlineViewDataSource {
 
         // 拖入的 App 总是追加到文件夹末尾，因此高亮整个文件夹行，而不是显示插入线
         outlineView.setDropItem(proposedParent, dropChildIndex: NSOutlineViewDropOnItemIndex)
+
         return .copy
     }
 
@@ -143,9 +158,11 @@ extension FolderTreeDataSource: NSOutlineViewDataSource {
                 proposedParent: proposedParent,
                 childIndex: index
             )
+
             guard let destination else { return false }
 
             store.move(itemID: itemID, to: destination.folderID, at: destination.index)
+
             return true
         }
 
@@ -153,6 +170,7 @@ extension FolderTreeDataSource: NSOutlineViewDataSource {
         guard let folder = proposedParent?.folder, !urls.isEmpty else { return false }
 
         store.addApps(urls, to: folder.id)
+
         return true
     }
 }
@@ -162,7 +180,9 @@ extension FolderTreeDataSource: NSOutlineViewDataSource {
 extension FolderTreeDataSource {
     /// 剪贴板里树内拖动的项 id；不是树内拖动时返回 nil
     private static func draggedItemID(in pasteboard: NSPasteboard) -> UUID? {
-        pasteboard.string(forType: itemIDPasteboardType).flatMap(UUID.init(uuidString:))
+        pasteboard
+            .string(forType: itemIDPasteboardType)
+            .flatMap(UUID.init(uuidString:))
     }
 
     /// 剪贴板里的 App bundle URL，其它文件忽略
@@ -172,7 +192,10 @@ extension FolderTreeDataSource {
             .compactMap { URL(string: $0) }
 
         return urls.filter {
-            let contentType = try? $0.resourceValues(forKeys: [.contentTypeKey]).contentType
+            let contentType = try? $0
+                .resourceValues(forKeys: [.contentTypeKey])
+                .contentType
+
             return contentType?.conforms(to: .applicationBundle) ?? false
         }
     }
@@ -180,6 +203,7 @@ extension FolderTreeDataSource {
     /// item 的子节点；item 为 nil 时是根层级
     private func children(of item: Any?) -> [FolderTreeNode] {
         guard let node = item as? FolderTreeNode else { return rootNodes }
+
         return node.children
     }
 }

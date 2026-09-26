@@ -35,7 +35,11 @@ struct FolderGridLayoutTests {
         (36, 7, 6),
         (101, 7, 15),
     ])
-    func columnsAndRowsMatchNativeGrid(itemCount: Int, columnCount: Int, rowCount: Int) {
+    func columnsAndRowsMatchNativeGrid(
+        itemCount: Int,
+        columnCount: Int,
+        rowCount: Int
+    ) {
         let layout = FolderGridLayout(itemCount: itemCount, availableSize: roomySize)
 
         #expect(layout.columnCount == columnCount)
@@ -61,10 +65,12 @@ struct FolderGridLayoutTests {
         let layout = FolderGridLayout(itemCount: 7, availableSize: roomySize)
 
         #expect(layout.cellFrames.count == 7)
+
         #expect(layout.cellFrames[0] == CGRect(x: 0, y: 0, width: cell, height: cell))
         #expect(layout.cellFrames[3] == CGRect(x: 3 * cell, y: 0, width: cell, height: cell))
         #expect(layout.cellFrames[4] == CGRect(x: 0, y: cell, width: cell, height: cell))
         #expect(layout.cellFrames[6] == CGRect(x: 2 * cell, y: cell, width: cell, height: cell))
+
         #expect(layout.gridSize == CGSize(width: 4 * cell, height: 2 * cell))
     }
 
@@ -116,7 +122,10 @@ struct FolderGridLayoutTests {
     /// 可用尺寸连一格都放不下时仍保留一列、显示一行
     @Test
     func keepsAtLeastOneCell() {
-        let layout = FolderGridLayout(itemCount: 3, availableSize: CGSize(width: 10, height: 10))
+        let layout = FolderGridLayout(
+            itemCount: 3,
+            availableSize: CGSize(width: 10, height: 10)
+        )
 
         #expect(layout.columnCount == 1)
         #expect(layout.rowCount == 3)

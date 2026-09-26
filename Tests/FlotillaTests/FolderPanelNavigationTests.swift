@@ -18,7 +18,10 @@ struct FolderPanelNavigationTests {
     private let grandchild = Folder(id: UUID(), name: "孙", items: [])
 
     /// 一个 App 项
-    private let app = FolderItem.app(AppReference(id: UUID(), url: URL(filePath: "/System/Applications/Chess.app")))
+    private let app = FolderItem.app(AppReference(
+        id: UUID(),
+        url: URL(filePath: "/System/Applications/Chess.app")
+    ))
 
     /// 根文件夹下的子文件夹
     private var child: Folder {
@@ -34,10 +37,11 @@ struct FolderPanelNavigationTests {
     @Test
     func resolvesEachLevelAlongPath() {
         let rootFolders = [root]
+        let grandchildPath = [rootID, childID, grandchild.id]
 
         #expect(FolderPanelController.folder(at: [rootID], in: rootFolders) == root)
         #expect(FolderPanelController.folder(at: [rootID, childID], in: rootFolders) == child)
-        #expect(FolderPanelController.folder(at: [rootID, childID, grandchild.id], in: rootFolders) == grandchild)
+        #expect(FolderPanelController.folder(at: grandchildPath, in: rootFolders) == grandchild)
     }
 
     /// 当前层级的内容变化后，解析出的是变化后的文件夹，层级保持不变
@@ -48,8 +52,9 @@ struct FolderPanelNavigationTests {
         renamedChild.items.append(app)
 
         let changedRoot = Folder(id: rootID, name: "根", items: [.folder(renamedChild)])
+        let resolved = FolderPanelController.folder(at: [rootID, childID], in: [changedRoot])
 
-        #expect(FolderPanelController.folder(at: [rootID, childID], in: [changedRoot]) == renamedChild)
+        #expect(resolved == renamedChild)
     }
 
     /// 当前文件夹被删除：无法解析，面板收起
@@ -66,7 +71,12 @@ struct FolderPanelNavigationTests {
         let prunedRoot = Folder(id: rootID, name: "根", items: [app])
         let otherRoot = Folder(id: UUID(), name: "别处", items: [.folder(child)])
 
-        #expect(FolderPanelController.folder(at: [rootID, childID], in: [prunedRoot, otherRoot]) == nil)
+        let resolved = FolderPanelController.folder(
+            at: [rootID, childID],
+            in: [prunedRoot, otherRoot]
+        )
+
+        #expect(resolved == nil)
     }
 
     /// 根文件夹被删除或拖成子文件夹：无法解析

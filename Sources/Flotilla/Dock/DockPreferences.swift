@@ -27,7 +27,10 @@ final class DockPreferences {
     private static let backupPrefix = "com.apple.dock-"
 
     /// Dock 偏好相关的日志
-    private static let logger = Logger(subsystem: "com.rakuyo.flotilla", category: "DockPreferences")
+    private static let logger = Logger(
+        subsystem: "com.rakuyo.flotilla",
+        category: "DockPreferences"
+    )
 
     /// 读写偏好的 `UserDefaults`
     private let defaults: UserDefaults
@@ -112,6 +115,7 @@ extension DockPreferences {
 
         tiles.remove(at: index)
         try save(tiles)
+
         return true
     }
 
@@ -134,8 +138,10 @@ extension DockPreferences {
 
         // 按路径字符串比较：Swift 的字符串相等按 Unicode 规范等价判断，不受 Dock 写回时的编码形式影响
         let tilePath = Self.normalized(tileURL).path(percentEncoded: false)
-        let isURLChanged = Self.fileURL(of: tiles[index])?.path(percentEncoded: false) != tilePath
+        let currentPath = Self.fileURL(of: tiles[index])?.path(percentEncoded: false)
+        let isURLChanged = currentPath != tilePath
         let isLabelChanged = tileData["file-label"] as? String != label
+
         guard isURLChanged || isLabelChanged else { return false }
 
         // 只替换 URL 本身，`file-data` 里 Dock 补全的其它字段保留
@@ -150,12 +156,17 @@ extension DockPreferences {
         tiles[index]["tile-data"] = tileData
 
         try save(tiles)
+
         return true
     }
 
     /// 终止 Dock 进程，由 launchd 自动拉起；Dock 只在启动时读取偏好，改动要靠重启生效
     func restartDock() {
-        for dock in NSRunningApplication.runningApplications(withBundleIdentifier: Self.dockDomain) {
+        let docks = NSRunningApplication.runningApplications(
+            withBundleIdentifier: Self.dockDomain
+        )
+
+        for dock in docks {
             kill(dock.processIdentifier, SIGTERM)
         }
     }
@@ -188,8 +199,9 @@ extension DockPreferences {
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "yyyyMMdd-HHmmss"
 
-        let backupURL = backupDirectory
-            .appending(path: "\(Self.backupPrefix)\(formatter.string(from: Date())).plist")
+        let fileName = "\(Self.backupPrefix)\(formatter.string(from: Date())).plist"
+        let backupURL = backupDirectory.appending(path: fileName)
+
         let data = try PropertyListSerialization.data(
             fromPropertyList: defaults.persistentDomain(forName: domainName) ?? [:],
             format: .xml,
@@ -224,10 +236,16 @@ extension DockPreferences {
     ///
     /// 每个根文件夹的 stub 独占一个目录，文件夹改名时 stub 在目录里改名，按目录匹配才能找到改名前的 tile
     private func index(of tileURL: URL, in tiles: [[String: Any]]) -> Int? {
-        let target = Self.normalized(tileURL).deletingLastPathComponent().path(percentEncoded: false)
+        let target = Self.normalized(tileURL)
+            .deletingLastPathComponent()
+            .path(percentEncoded: false)
 
         return tiles.firstIndex {
-            Self.fileURL(of: $0)?.deletingLastPathComponent().path(percentEncoded: false) == target
+            let directory = Self.fileURL(of: $0)?
+                .deletingLastPathComponent()
+                .path(percentEncoded: false)
+
+            return directory == target
         }
     }
 }

@@ -13,7 +13,10 @@ final class DockTileSynchronizer: NSObject {
     private static let iconPointSize: CGFloat = 512
 
     /// 同步相关的日志
-    private static let logger = Logger(subsystem: "com.rakuyo.flotilla", category: "DockTileSynchronizer")
+    private static let logger = Logger(
+        subsystem: "com.rakuyo.flotilla",
+        category: "DockTileSynchronizer"
+    )
 
     /// 文件夹树的唯一数据源
     private let store: FolderStore
@@ -58,6 +61,7 @@ final class DockTileSynchronizer: NSObject {
             name: FolderStore.didChangeNotification,
             object: store
         )
+
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(scheduleSynchronization),
@@ -107,6 +111,7 @@ extension DockTileSynchronizer {
     /// - Returns: 是否需要重启 Dock
     private func synchronizeTile(of folder: Folder, previewIconCount: Int) -> Bool {
         let tileURL = builder.bundleURL(for: folder)
+
         let icon = FolderIconRenderer.render(
             folder: folder,
             previewIconCount: previewIconCount,
@@ -133,13 +138,16 @@ extension DockTileSynchronizer {
             Self.logger.error(
                 "同步 tile 失败（\(folder.id.uuidString, privacy: .public)）：\(error.localizedDescription, privacy: .public)"
             )
+
             return false
         }
     }
 
     /// 从 Dock 偏好中删除这些根文件夹的 tile
     /// - Returns: tile 已不在 Dock 上、可以删除 stub 的根文件夹，以及是否需要重启 Dock
-    private func removeTiles(of folderIDs: Set<UUID>) -> (removableIDs: [UUID], needsDockRestart: Bool) {
+    private func removeTiles(
+        of folderIDs: Set<UUID>
+    ) -> (removableIDs: [UUID], needsDockRestart: Bool) {
         var removableIDs: [UUID] = []
         var needsDockRestart = false
 
@@ -152,6 +160,7 @@ extension DockTileSynchronizer {
                 {
                     needsDockRestart = true
                 }
+
                 removableIDs.append(folderID)
             } catch {
                 // tile 删除失败时保留 stub，让 Dock 上残留的 tile 仍然可用，下次对账再删
@@ -160,6 +169,7 @@ extension DockTileSynchronizer {
                 )
             }
         }
+
         return (removableIDs, needsDockRestart)
     }
 

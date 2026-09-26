@@ -28,7 +28,10 @@ final class DockTileLocator {
     private static let trustPromptOptionKey = "AXTrustedCheckOptionPrompt"
 
     /// 定位相关的日志
-    private static let logger = Logger(subsystem: "com.rakuyo.flotilla", category: "DockTileLocator")
+    private static let logger = Logger(
+        subsystem: "com.rakuyo.flotilla",
+        category: "DockTileLocator"
+    )
 
     /// 从 AX 树里 tile 的 `AXURL`（指向 stub）解析出根文件夹 id
     private let builder: DockTileBundleBuilder
@@ -60,12 +63,15 @@ extension DockTileLocator {
         if
             requestTrustIfNeeded(),
             let tileFrame = tileFrame(of: folderID),
-            let screen = Self.screen(containing: CGPoint(x: tileFrame.midX, y: tileFrame.midY))
+            let screen = Self.screen(
+                containing: CGPoint(x: tileFrame.midX, y: tileFrame.midY)
+            )
         {
             return DockTileAnchor(tileFrame: tileFrame, edge: edge, screen: screen)
         }
 
         Self.logger.notice("未能通过辅助功能定位 tile，改用鼠标位置：\(folderID.uuidString, privacy: .public)")
+
         return fallbackAnchor(edge: edge)
     }
 
@@ -82,10 +88,19 @@ extension DockTileLocator {
             return nil
         }
 
-        let axPoint = Self.topLeftPoint(fromAppKitPoint: point, primaryScreenHeight: primaryScreenHeight)
+        let axPoint = Self.topLeftPoint(
+            fromAppKitPoint: point,
+            primaryScreenHeight: primaryScreenHeight
+        )
 
         var element: AXUIElement? = nil
-        let error = AXUIElementCopyElementAtPosition(dockElement, Float(axPoint.x), Float(axPoint.y), &element)
+        let error = AXUIElementCopyElementAtPosition(
+            dockElement,
+            Float(axPoint.x),
+            Float(axPoint.y),
+            &element
+        )
+
         guard
             error == .success,
             let element,
@@ -103,7 +118,13 @@ extension DockTileLocator {
     func isInDockArea(_ point: CGPoint) -> Bool {
         guard let screen = Self.screen(containing: point) else { return false }
 
-        return Self.dockArea(in: screen.frame, edge: dockEdge(), tileSize: dockTileSize()).contains(point)
+        let dockArea = Self.dockArea(
+            in: screen.frame,
+            edge: dockEdge(),
+            tileSize: dockTileSize()
+        )
+
+        return dockArea.contains(point)
     }
 }
 
@@ -111,7 +132,10 @@ extension DockTileLocator {
 
 extension DockTileLocator {
     /// 把以主屏左上角为原点、y 向下的矩形换算为 AppKit 屏幕坐标（以主屏左下角为原点、y 向上）
-    static func appKitRect(fromTopLeftRect rect: CGRect, primaryScreenHeight: CGFloat) -> CGRect {
+    static func appKitRect(
+        fromTopLeftRect rect: CGRect,
+        primaryScreenHeight: CGFloat
+    ) -> CGRect {
         CGRect(
             x: rect.minX,
             y: primaryScreenHeight - rect.maxY,
@@ -121,7 +145,10 @@ extension DockTileLocator {
     }
 
     /// 把 AppKit 屏幕坐标的点换算为以主屏左上角为原点、y 向下的点
-    static func topLeftPoint(fromAppKitPoint point: CGPoint, primaryScreenHeight: CGFloat) -> CGPoint {
+    static func topLeftPoint(
+        fromAppKitPoint point: CGPoint,
+        primaryScreenHeight: CGFloat
+    ) -> CGPoint {
         CGPoint(x: point.x, y: primaryScreenHeight - point.y)
     }
 
@@ -132,7 +159,11 @@ extension DockTileLocator {
     ///   - screenFrame: Dock 所在屏幕的 frame
     ///   - edge: Dock 所贴的屏幕边
     ///   - tileSize: Dock 偏好里的 tile 尺寸
-    static func dockArea(in screenFrame: CGRect, edge: DockEdge, tileSize: CGFloat) -> CGRect {
+    static func dockArea(
+        in screenFrame: CGRect,
+        edge: DockEdge,
+        tileSize: CGFloat
+    ) -> CGRect {
         screenFrame.divided(atDistance: tileSize + dockAreaPadding, from: edge.rectEdge).slice
     }
 
@@ -141,7 +172,11 @@ extension DockTileLocator {
     ///   - point: 鼠标位置
     ///   - dockArea: Dock 占据的区域
     ///   - edge: Dock 所贴的屏幕边
-    static func projection(of point: CGPoint, onto dockArea: CGRect, edge: DockEdge) -> CGPoint {
+    static func projection(
+        of point: CGPoint,
+        onto dockArea: CGRect,
+        edge: DockEdge
+    ) -> CGPoint {
         switch edge {
         case .bottom:
             CGPoint(x: point.x, y: dockArea.maxY)
@@ -161,6 +196,7 @@ extension DockTileLocator {
     /// Dock 所贴的屏幕边，取自 Dock 偏好
     private func dockEdge() -> DockEdge {
         let defaults = UserDefaults(suiteName: DockPreferences.dockDomain)
+
         return DockEdge(orientation: defaults?.string(forKey: Self.orientationKey))
     }
 
@@ -177,7 +213,9 @@ extension DockTileLocator {
         guard !hasPromptedForTrust else { return AXIsProcessTrusted() }
 
         hasPromptedForTrust = true
+
         let options = [Self.trustPromptOptionKey: true] as CFDictionary
+
         return AXIsProcessTrustedWithOptions(options)
     }
 
@@ -198,17 +236,29 @@ extension DockTileLocator {
         let tile = tiles.first {
             Self.url(of: $0).flatMap { builder.folderID(forBundleURL: $0) } == folderID
         }
-        guard let tile, let frame = Self.frame(of: tile), !frame.isEmpty else { return nil }
 
-        return Self.appKitRect(fromTopLeftRect: frame, primaryScreenHeight: primaryScreenHeight)
+        guard
+            let tile,
+            let frame = Self.frame(of: tile),
+            !frame.isEmpty
+        else {
+            return nil
+        }
+
+        return Self.appKitRect(
+            fromTopLeftRect: frame,
+            primaryScreenHeight: primaryScreenHeight
+        )
     }
 
     /// 退化锚点：鼠标所在屏幕上，鼠标位置在估算的 Dock 区域上的投影，表示为宽高为 0 的 tile frame
     private func fallbackAnchor(edge: DockEdge) -> DockTileAnchor? {
         let mouseLocation = NSEvent.mouseLocation
-        guard let screen = Self.screen(containing: mouseLocation) ?? NSScreen.main ?? NSScreen.screens.first else {
-            return nil
-        }
+        let screen = Self.screen(containing: mouseLocation)
+            ?? NSScreen.main
+            ?? NSScreen.screens.first
+
+        guard let screen else { return nil }
 
         let dockArea = Self.dockArea(in: screen.frame, edge: edge, tileSize: dockTileSize())
         let point = Self.projection(of: mouseLocation, onto: dockArea, edge: edge)
@@ -236,7 +286,8 @@ extension DockTileLocator {
 
     /// Dock 进程的 AX 应用元素；每次重新创建，Dock 重启后不会拿着失效的元素；Dock 重启期间可能暂时没有
     private static func dockApplicationElement() -> AXUIElement? {
-        NSRunningApplication.runningApplications(withBundleIdentifier: DockPreferences.dockDomain)
+        NSRunningApplication
+            .runningApplications(withBundleIdentifier: DockPreferences.dockDomain)
             .first
             .map { AXUIElementCreateApplication($0.processIdentifier) }
     }
@@ -258,8 +309,18 @@ extension DockTileLocator {
     /// 元素的位置与尺寸，以主屏左上角为原点、y 向下
     private static func frame(of element: AXUIElement) -> CGRect? {
         guard
-            let origin = value(of: kAXPositionAttribute, in: element, type: .cgPoint, initial: CGPoint.zero),
-            let size = value(of: kAXSizeAttribute, in: element, type: .cgSize, initial: CGSize.zero)
+            let origin = value(
+                of: kAXPositionAttribute,
+                in: element,
+                type: .cgPoint,
+                initial: CGPoint.zero
+            ),
+            let size = value(
+                of: kAXSizeAttribute,
+                in: element,
+                type: .cgSize,
+                initial: CGSize.zero
+            )
         else {
             return nil
         }
@@ -282,7 +343,9 @@ extension DockTileLocator {
         }
 
         var result = initial
-        guard AXValueGetValue(unsafeDowncast(rawValue, to: AXValue.self), type, &result) else { return nil }
+        let axValue = unsafeDowncast(rawValue, to: AXValue.self)
+
+        guard AXValueGetValue(axValue, type, &result) else { return nil }
 
         return result
     }
@@ -290,7 +353,9 @@ extension DockTileLocator {
     /// 读取元素的一个属性；元素失效、超时或没有该属性时为 nil
     private static func attribute(_ name: String, of element: AXUIElement) -> CFTypeRef? {
         var value: CFTypeRef? = nil
-        guard AXUIElementCopyAttributeValue(element, name as CFString, &value) == .success else { return nil }
+        let error = AXUIElementCopyAttributeValue(element, name as CFString, &value)
+
+        guard error == .success else { return nil }
 
         return value
     }

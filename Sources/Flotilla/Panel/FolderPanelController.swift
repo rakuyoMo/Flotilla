@@ -11,7 +11,10 @@ import QuartzCore
 @MainActor
 final class FolderPanelController {
     /// 面板相关的日志
-    private nonisolated static let logger = Logger(subsystem: "com.rakuyo.flotilla", category: "FolderPanelController")
+    private nonisolated static let logger = Logger(
+        subsystem: "com.rakuyo.flotilla",
+        category: "FolderPanelController"
+    )
 
     /// 面板窗口
     let panel = FolderPanel()
@@ -81,14 +84,22 @@ final class FolderPanelController {
         for folderID in path.dropFirst() {
             let subfolder = folder.items.lazy
                 .compactMap { item -> Folder? in
-                    guard case .folder(let subfolder) = item, subfolder.id == folderID else { return nil }
+                    guard
+                        case .folder(let subfolder) = item,
+                        subfolder.id == folderID
+                    else {
+                        return nil
+                    }
+
                     return subfolder
                 }
                 .first
+
             guard let subfolder else { return nil }
 
             folder = subfolder
         }
+
         return folder
     }
 }
@@ -140,7 +151,12 @@ extension FolderPanelController {
     /// 文件夹树变化后按新数据重建当前层级，保留滚动位置，不带动画
     /// - Returns: 当前文件夹已不在该根文件夹之下时为 false，由调用方收起面板
     func reload() -> Bool {
-        guard let anchor, let folder = Self.folder(at: path, in: store.rootFolders) else { return false }
+        guard
+            let anchor,
+            let folder = Self.folder(at: path, in: store.rootFolders)
+        else {
+            return false
+        }
 
         if let currentLevel {
             saveScrollOffset(of: currentLevel)
@@ -194,7 +210,13 @@ extension FolderPanelController {
 
     /// 返回上一层：当前层级缩回父层级里该子文件夹的图标并淡出，父层级原地淡入；上一层已不存在时收起面板
     private func goBack() {
-        guard let anchor, let child = currentLevel, path.count > 1 else { return }
+        guard
+            let anchor,
+            let child = currentLevel,
+            path.count > 1
+        else {
+            return
+        }
 
         path.removeLast()
 
@@ -217,7 +239,10 @@ extension FolderPanelController {
     private func launch(_ app: AppReference) {
         let name = app.displayName
 
-        NSWorkspace.shared.openApplication(at: app.url, configuration: NSWorkspace.OpenConfiguration()) { _, error in
+        NSWorkspace.shared.openApplication(
+            at: app.url,
+            configuration: NSWorkspace.OpenConfiguration()
+        ) { _, error in
             guard let error else { return }
 
             Self.logger.error("启动 \(name, privacy: .public) 失败：\(error.localizedDescription, privacy: .public)")
@@ -247,6 +272,7 @@ extension FolderPanelController {
                 visibleFrame: visibleFrame
             )
         )
+
         let placement = FolderPanelPlacement(
             bodySize: layout.bodySize,
             tileFrame: anchor.tileFrame,
@@ -264,13 +290,20 @@ extension FolderPanelController {
         let view = FolderPanelBackgroundView(
             frame: CGRect(origin: .zero, size: screenFrame.size),
             bodyRect: placement.bodyFrame.offsetBy(dx: -origin.x, dy: -origin.y),
-            tailTip: CGPoint(x: placement.tailTip.x - origin.x, y: placement.tailTip.y - origin.y),
+            tailTip: CGPoint(
+                x: placement.tailTip.x - origin.x,
+                y: placement.tailTip.y - origin.y
+            ),
             edge: anchor.edge
         )
+
         view.bodyView.addSubview(makeHeader(for: folder, bodySize: layout.bodySize))
 
         // 空文件夹只有标题区，格内为空
-        let scrollView = folder.items.isEmpty ? nil : makeScrollView(for: folder, layout: layout)
+        let scrollView = folder.items.isEmpty
+            ? nil
+            : makeScrollView(for: folder, layout: layout)
+
         if let scrollView {
             view.bodyView.addSubview(scrollView)
         }
@@ -282,24 +315,37 @@ extension FolderPanelController {
             scrollView: scrollView,
             gridView: scrollView?.documentView as? FolderGridView
         )
+
         return (level, placement)
     }
 
     /// 标题区：占面板主体顶部，子层级带返回按钮
-    private func makeHeader(for folder: Folder, bodySize: CGSize) -> FolderNavigationHeaderView {
+    private func makeHeader(
+        for folder: Folder,
+        bodySize: CGSize
+    ) -> FolderNavigationHeaderView {
         let backHandler: (() -> Void)? = path.count > 1
             ? { [weak self] in self?.goBack() }
             : nil
 
         let header = FolderNavigationHeaderView(title: folder.name, backHandler: backHandler)
         let height = FolderPanelMetrics.headerHeight
-        header.frame = CGRect(x: 0, y: bodySize.height - height, width: bodySize.width, height: height)
+
+        header.frame = CGRect(
+            x: 0,
+            y: bodySize.height - height,
+            width: bodySize.width,
+            height: height
+        )
 
         return header
     }
 
     /// 网格所在的滚动视图：向右伸进主体右侧的留白，overlay 滚动条落在留白里；恢复这个文件夹上次的滚动位置
-    private func makeScrollView(for folder: Folder, layout: FolderGridLayout) -> NSScrollView {
+    private func makeScrollView(
+        for folder: Folder,
+        layout: FolderGridLayout
+    ) -> NSScrollView {
         let cell = FolderPanelMetrics.cellSize
         let sideInset = FolderPanelMetrics.gridSideInset
 
@@ -344,6 +390,7 @@ extension FolderPanelController {
             positioned: sibling == nil ? .above : .below,
             relativeTo: sibling
         )
+
         currentLevel = level
 
         fitWindow()
@@ -353,7 +400,11 @@ extension FolderPanelController {
     private func fitWindow() {
         let levels = departingLevels + [currentLevel].compactMap(\.self)
 
-        guard let frame = levels.map(\.screenFrame).reduce(nil, { $0?.union($1) ?? $1 }) else { return }
+        let frame: CGRect? = levels
+            .map(\.screenFrame)
+            .reduce(nil) { $0?.union($1) ?? $1 }
+
+        guard let frame else { return }
 
         panel.setFrame(frame, display: false)
 
@@ -363,7 +414,10 @@ extension FolderPanelController {
     }
 
     /// 转场结束后移除离开的层级，窗口收缩到剩下的层级
-    private func removeDepartingLevel(_ level: FolderPanelLevel, after delay: CFTimeInterval) {
+    private func removeDepartingLevel(
+        _ level: FolderPanelLevel,
+        after delay: CFTimeInterval
+    ) {
         afterAnimation(delay) { [weak self] in
             guard
                 let self,
@@ -420,11 +474,17 @@ extension FolderPanelController {
         guard mouseMonitors.isEmpty else { return }
 
         // 鼠标不在面板上时移动事件发往其它 App，在面板上时发往面板自己
-        let globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .mouseMoved) { [weak self] _ in
+        let globalMonitor = NSEvent.addGlobalMonitorForEvents(
+            matching: .mouseMoved
+        ) { [weak self] _ in
             self?.updateMousePassthrough()
         }
-        let localMonitor = NSEvent.addLocalMonitorForEvents(matching: .mouseMoved) { [weak self] event in
+
+        let localMonitor = NSEvent.addLocalMonitorForEvents(
+            matching: .mouseMoved
+        ) { [weak self] event in
             self?.updateMousePassthrough()
+
             return event
         }
 
@@ -471,6 +531,7 @@ extension FolderPanelController {
             duration: FolderPanelMetrics.expandDuration,
             timing: Self.timingFunction(FolderPanelMetrics.expandTimingControlPoints)
         )
+
         let opacity = Self.animation(
             keyPath: "opacity",
             from: 0,
@@ -503,6 +564,7 @@ extension FolderPanelController {
             duration: FolderPanelMetrics.collapseDuration,
             timing: Self.timingFunction(FolderPanelMetrics.collapseTimingControlPoints)
         )
+
         let opacity = Self.animation(
             keyPath: "opacity",
             from: currentOpacity,
@@ -539,6 +601,7 @@ extension FolderPanelController {
             duration: FolderPanelMetrics.expandDuration,
             timing: Self.timingFunction(FolderPanelMetrics.expandTimingControlPoints)
         )
+
         let opacity = Self.animation(
             keyPath: "opacity",
             from: 0,
@@ -631,7 +694,10 @@ extension FolderPanelController {
     /// 动画时长过后在主线程收尾
     ///
     /// 按时长而不是 Core Animation 的完成回调收尾：屏幕锁定、显示器休眠时回调可能一直不来，面板会停在透明却仍挡住点击的状态
-    private func afterAnimation(_ duration: CFTimeInterval, _ completion: @escaping @MainActor () -> Void) {
+    private func afterAnimation(
+        _ duration: CFTimeInterval,
+        _ completion: @escaping @MainActor () -> Void
+    ) {
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(duration))
             completion()
@@ -650,11 +716,17 @@ extension FolderPanelController {
     /// 以图层坐标系中的 point 为中心缩放的变换
     ///
     /// 图层变换以 anchorPoint 为原点：先把 point 平移到 anchorPoint，缩放后再移回去
-    private static func scaleTransform(_ scale: CGFloat, around point: CGPoint, of layer: CALayer) -> CATransform3D {
+    private static func scaleTransform(
+        _ scale: CGFloat,
+        around point: CGPoint,
+        of layer: CALayer
+    ) -> CATransform3D {
         let offsetX = point.x - (layer.bounds.minX + layer.bounds.width * layer.anchorPoint.x)
         let offsetY = point.y - (layer.bounds.minY + layer.bounds.height * layer.anchorPoint.y)
 
-        let transform = CATransform3DScale(CATransform3DMakeTranslation(offsetX, offsetY, 0), scale, scale, 1)
+        let translation = CATransform3DMakeTranslation(offsetX, offsetY, 0)
+        let transform = CATransform3DScale(translation, scale, scale, 1)
+
         return CATransform3DTranslate(transform, -offsetX, -offsetY, 0)
     }
 
@@ -681,6 +753,7 @@ extension FolderPanelController {
         animation.toValue = toValue
         animation.duration = duration
         animation.timingFunction = timing
+
         return animation
     }
 }

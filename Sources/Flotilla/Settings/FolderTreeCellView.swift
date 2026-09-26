@@ -26,6 +26,7 @@ final class FolderTreeCellView: NSTableCellView {
 
         addSubview(iconView)
         addSubview(nameField)
+
         imageView = iconView
         textField = nameField
 
@@ -64,6 +65,7 @@ final class FolderTreeCellView: NSTableCellView {
                 previewIconCount: previewIconCount,
                 pointSize: Self.iconSize
             )
+
             textField?.stringValue = folder.name
             textField?.isEditable = true
         }

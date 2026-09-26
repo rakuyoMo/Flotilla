@@ -21,14 +21,21 @@ struct FolderPanelBackgroundViewTests {
     func tailGrowsTowardDock(edge: DockEdge) {
         let tip = tip(facing: edge)
 
-        let path = FolderPanelBackgroundView.outlinePath(bodyRect: body, tailTip: tip, edge: edge)
+        let path = FolderPanelBackgroundView.outlinePath(
+            bodyRect: body,
+            tailTip: tip,
+            edge: edge
+        )
+
         let insideTip = Self.point(
             from: tip,
             towards: CGPoint(x: body.midX, y: body.midY),
             distance: 1
         )
 
-        #expect(isClose(path.boundingBoxOfPath, body.union(CGRect(origin: tip, size: .zero))))
+        let expectedBox = body.union(CGRect(origin: tip, size: .zero))
+
+        #expect(isClose(path.boundingBoxOfPath, expectedBox))
         #expect(path.contains(insideTip))
     }
 
@@ -37,9 +44,15 @@ struct FolderPanelBackgroundViewTests {
     func skewedTailKeepsTipOnTile() {
         let tip = CGPoint(x: body.minX + 50, y: body.minY - tailHeight)
 
-        let path = FolderPanelBackgroundView.outlinePath(bodyRect: body, tailTip: tip, edge: .bottom)
+        let path = FolderPanelBackgroundView.outlinePath(
+            bodyRect: body,
+            tailTip: tip,
+            edge: .bottom
+        )
 
-        #expect(isClose(path.boundingBoxOfPath, body.union(CGRect(origin: tip, size: .zero))))
+        let expectedBox = body.union(CGRect(origin: tip, size: .zero))
+
+        #expect(isClose(path.boundingBoxOfPath, expectedBox))
         #expect(path.contains(CGPoint(x: tip.x, y: tip.y + 1)))
         #expect(path.contains(CGPoint(x: tip.x, y: body.minY + 1)))
     }
@@ -49,7 +62,12 @@ struct FolderPanelBackgroundViewTests {
     func tailStopsAtSkewLimitNearCorner() {
         let tip = CGPoint(x: body.minX + 10, y: body.minY - tailHeight)
 
-        let path = FolderPanelBackgroundView.outlinePath(bodyRect: body, tailTip: tip, edge: .bottom)
+        let path = FolderPanelBackgroundView.outlinePath(
+            bodyRect: body,
+            tailTip: tip,
+            edge: .bottom
+        )
+
         let box = path.boundingBoxOfPath
 
         // 斜到极限的尾巴尖角更尖，倒圆后比给定尖端略浅，但仍伸向 tile
@@ -116,7 +134,11 @@ struct FolderPanelBackgroundViewTests {
 
 extension FolderPanelBackgroundViewTests {
     /// 从 start 朝 target 走 distance 后的点
-    private static func point(from start: CGPoint, towards target: CGPoint, distance: CGFloat) -> CGPoint {
+    private static func point(
+        from start: CGPoint,
+        towards target: CGPoint,
+        distance: CGFloat
+    ) -> CGPoint {
         let length = hypot(target.x - start.x, target.y - start.y)
 
         return CGPoint(

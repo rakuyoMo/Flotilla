@@ -50,15 +50,18 @@ extension DockFolderPresenterState {
     }
 
     /// 左键拖动：从 tile 上按下后移动超过阈值即视为拖动 tile，不再展开，并按点击其它位置收起
-    mutating func mouseDragged(to location: CGPoint, time: TimeInterval) -> DockFolderPresenterTransition {
-        guard
-            let press = pendingPress,
-            Self.distance(from: press.location, to: location) > FolderPanelMetrics.dragThreshold
-        else {
-            return .unchanged
-        }
+    mutating func mouseDragged(
+        to location: CGPoint,
+        time: TimeInterval
+    ) -> DockFolderPresenterTransition {
+        guard let press = pendingPress else { return .unchanged }
+
+        let distance = Self.distance(from: press.location, to: location)
+
+        guard distance > FolderPanelMetrics.dragThreshold else { return .unchanged }
 
         pendingPress = nil
+
         return dismissForOutsideClick(isInDockArea: true, time: time)
     }
 
@@ -76,11 +79,15 @@ extension DockFolderPresenterState {
         }
 
         lastTileClick = (press.folderID, time)
+
         return toggle(folderID: press.folderID)
     }
 
     /// stub 打开的 `flotilla://folder/<id>` 到达
-    mutating func receiveURL(folderID: UUID, time: TimeInterval) -> DockFolderPresenterTransition {
+    mutating func receiveURL(
+        folderID: UUID,
+        time: TimeInterval
+    ) -> DockFolderPresenterTransition {
         // 快速路径已处理过这次点击，随后到达的 URL 属于同一次点击
         if
             let click = lastTileClick,
@@ -109,6 +116,7 @@ extension DockFolderPresenterState {
         guard presentedFolderID != nil else { return .unchanged }
 
         presentedFolderID = nil
+
         return .collapse
     }
 }
@@ -124,6 +132,7 @@ extension DockFolderPresenterState {
         }
 
         presentedFolderID = folderID
+
         return .expand(folderID)
     }
 
@@ -139,6 +148,7 @@ extension DockFolderPresenterState {
         }
 
         presentedFolderID = nil
+
         return .collapse
     }
 }

@@ -62,6 +62,7 @@ final class FolderTreeViewController: NSViewController {
             name: FolderStore.didChangeNotification,
             object: store
         )
+
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(reloadTree),
@@ -75,7 +76,11 @@ final class FolderTreeViewController: NSViewController {
 
 extension FolderTreeViewController: NSOutlineViewDelegate {
     /// 每一行显示图标与名称
-    func outlineView(_ outlineView: NSOutlineView, viewFor _: NSTableColumn?, item: Any) -> NSView? {
+    func outlineView(
+        _ outlineView: NSOutlineView,
+        viewFor _: NSTableColumn?,
+        item: Any
+    ) -> NSView? {
         guard let node = item as? FolderTreeNode else { return nil }
 
         let reusedCell = outlineView.makeView(
@@ -103,7 +108,9 @@ extension FolderTreeViewController: NSTextFieldDelegate {
         guard let textField = notification.object as? NSTextField else { return }
 
         let row = outlineView.row(for: textField)
-        guard let folder = (outlineView.item(atRow: row) as? FolderTreeNode)?.folder else { return }
+        let node = outlineView.item(atRow: row) as? FolderTreeNode
+
+        guard let folder = node?.folder else { return }
 
         store.rename(folderID: folder.id, to: textField.stringValue)
     }
@@ -121,6 +128,7 @@ extension FolderTreeViewController {
             } else {
                 store.addRootFolder(named: Self.untitledFolderName)
             }
+
         guard let folder else { return }
 
         beginRenaming(folderID: folder.id)
@@ -162,6 +170,7 @@ extension FolderTreeViewController {
     private func renameClickedFolder() {
         let row = outlineView.clickedRow
         let node = outlineView.item(atRow: row) as? FolderTreeNode
+
         guard node?.folder != nil else { return }
 
         outlineView.editColumn(0, row: row, with: nil, select: true)
@@ -183,6 +192,7 @@ extension FolderTreeViewController {
         let selectedRow = selectedID
             .flatMap { dataSource.node(withID: $0) }
             .map { outlineView.row(forItem: $0) } ?? -1
+
         outlineView.selectRowIndexes(
             selectedRow >= 0 ? [selectedRow] : [],
             byExtendingSelection: false
@@ -199,6 +209,7 @@ extension FolderTreeViewController {
     private func configureOutlineView() {
         let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("name"))
         column.resizingMask = .autoresizingMask
+
         outlineView.addTableColumn(column)
         outlineView.outlineTableColumn = column
         outlineView.columnAutoresizingStyle = .uniformColumnAutoresizingStyle
@@ -211,7 +222,10 @@ extension FolderTreeViewController {
         outlineView.target = self
         outlineView.doubleAction = #selector(renameClickedFolder)
 
-        outlineView.registerForDraggedTypes([FolderTreeDataSource.itemIDPasteboardType, .fileURL])
+        outlineView.registerForDraggedTypes([
+            FolderTreeDataSource.itemIDPasteboardType,
+            .fileURL,
+        ])
         outlineView.setDraggingSourceOperationMask(.move, forLocal: true)
     }
 
@@ -226,9 +240,15 @@ extension FolderTreeViewController {
         scrollView.autohidesScrollers = true
         scrollView.borderType = .bezelBorder
 
-        let newFolderButton = NSButton(title: "新建文件夹", target: self, action: #selector(addFolder))
+        let newFolderButton = NSButton(
+            title: "新建文件夹",
+            target: self,
+            action: #selector(addFolder)
+        )
+
         addAppsButton.target = self
         addAppsButton.action = #selector(addApps)
+
         removeButton.target = self
         removeButton.action = #selector(removeSelectedItem)
 
@@ -247,6 +267,7 @@ extension FolderTreeViewController {
             scrollView.heightAnchor.constraint(greaterThanOrEqualToConstant: 240),
             buttonRow.widthAnchor.constraint(equalTo: stackView.widthAnchor),
         ])
+
         return stackView
     }
 

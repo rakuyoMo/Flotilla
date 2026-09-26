@@ -47,13 +47,18 @@ final class GeneralSettingsViewController: NSViewController {
             target: self,
             action: #selector(openAccessibilitySettings)
         )
+
         let accessibilityRow = NSStackView(views: [accessibilityStatusLabel, openSettingsButton])
+
+        let previewIconCountLabel = NSTextField(labelWithString: "文件夹图标内显示的 App 图标数量：")
+        let accessibilityLabel = NSTextField(labelWithString: "辅助功能权限：")
 
         // 两列网格：左列标签右对齐，右列控件左对齐，各行按首行基线对齐
         let gridView = NSGridView(views: [
-            [NSTextField(labelWithString: "文件夹图标内显示的 App 图标数量："), previewIconCountPopUp],
-            [NSTextField(labelWithString: "辅助功能权限："), accessibilityRow],
+            [previewIconCountLabel, previewIconCountPopUp],
+            [accessibilityLabel, accessibilityRow],
         ])
+
         gridView.column(at: 0).xPlacement = .trailing
         gridView.rowAlignment = .firstBaseline
         gridView.rowSpacing = 12

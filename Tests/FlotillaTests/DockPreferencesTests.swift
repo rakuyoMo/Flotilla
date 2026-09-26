@@ -10,7 +10,10 @@ import Testing
 final class DockPreferencesTests {
     /// 本用例独占的临时目录
     private let directory = FileManager.default.temporaryDirectory
-        .appending(path: "FlotillaTests-\(UUID().uuidString)", directoryHint: .isDirectory)
+        .appending(
+            path: "FlotillaTests-\(UUID().uuidString)",
+            directoryHint: .isDirectory
+        )
 
     /// 以临时目录下的绝对路径充当 Dock 偏好的域
     private let domainName: String
@@ -55,7 +58,11 @@ final class DockPreferencesTests {
             )
         )
 
-        stubDirectory = directory.appending(path: "Dock Tiles/\(UUID().uuidString)", directoryHint: .isDirectory)
+        stubDirectory = directory.appending(
+            path: "Dock Tiles/\(UUID().uuidString)",
+            directoryHint: .isDirectory
+        )
+
         tileURL = stubDirectory.appending(path: "工作.app")
     }
 
@@ -71,7 +78,9 @@ final class DockPreferencesTests {
 
         let tileData = try #require(entry["tile-data"] as? [String: Any])
         let fileData = try #require(tileData["file-data"] as? [String: Any])
-        let expectedURL = "file://\(stubDirectory.path(percentEncoded: true))%E5%B7%A5%E4%BD%9C.app/"
+
+        let stubPath = stubDirectory.path(percentEncoded: true)
+        let expectedURL = "file://\(stubPath)%E5%B7%A5%E4%BD%9C.app/"
 
         #expect(entry["GUID"] as? Int == 42)
         #expect(entry["tile-type"] as? String == "file-tile")
@@ -103,13 +112,16 @@ final class DockPreferencesTests {
     func containsMatchesStubDirectory() throws {
         try preferences.add(tileURL: tileURL, label: "工作")
 
-        let variant = directory.appending(path: "Dock Tiles/./\(stubDirectory.lastPathComponent)/工作.app/")
+        let variant = directory.appending(
+            path: "Dock Tiles/./\(stubDirectory.lastPathComponent)/工作.app/"
+        )
         let renamed = stubDirectory.appending(path: "日常.app")
+        let other = directory.appending(path: "Dock Tiles/Other/工作.app")
 
         #expect(preferences.contains(tileURL: tileURL))
         #expect(preferences.contains(tileURL: variant))
         #expect(preferences.contains(tileURL: renamed))
-        #expect(!preferences.contains(tileURL: directory.appending(path: "Dock Tiles/Other/工作.app")))
+        #expect(!preferences.contains(tileURL: other))
     }
 
     /// 只改名称时条目原地替换：位置不变，Dock 补全的字段保留
@@ -134,6 +146,7 @@ final class DockPreferencesTests {
     @Test
     func updateURLReplacesInPlaceAndDropsBookmark() throws {
         try addOwnTileBetweenUserTiles()
+
         let renamed = stubDirectory.appending(path: "日常.app")
 
         #expect(try preferences.update(tileURL: renamed, label: "日常"))
@@ -142,7 +155,9 @@ final class DockPreferencesTests {
         let updated = storedTiles()
         let updatedTileData = try #require(updated[1]["tile-data"] as? [String: Any])
         let fileData = try #require(updatedTileData["file-data"] as? [String: Any])
-        let expectedURL = "file://\(stubDirectory.path(percentEncoded: true))%E6%97%A5%E5%B8%B8.app/"
+
+        let stubPath = stubDirectory.path(percentEncoded: true)
+        let expectedURL = "file://\(stubPath)%E6%97%A5%E5%B8%B8.app/"
 
         #expect(updated.count == 3)
         #expect(label(of: updated[1]) == "日常")
@@ -158,6 +173,7 @@ final class DockPreferencesTests {
         var namesakeData = try #require(namesake["tile-data"] as? [String: Any])
         namesakeData["file-label"] = "工作"
         namesake["tile-data"] = namesakeData
+
         defaults.set([namesake], forKey: "persistent-apps")
 
         try preferences.add(tileURL: tileURL, label: "工作")
@@ -186,11 +202,13 @@ final class DockPreferencesTests {
             from: Data(contentsOf: backupURL),
             format: nil
         )
+
         let domain = try #require(backup as? [String: Any])
         let tiles = try #require(domain["persistent-apps"] as? [[String: Any]])
+        let backupName = backupURL.lastPathComponent
 
         #expect(backups.count == 1)
-        #expect(backupURL.lastPathComponent.wholeMatch(of: /com\.apple\.dock-\d{8}-\d{6}\.plist/) != nil)
+        #expect(backupName.wholeMatch(of: /com\.apple\.dock-\d{8}-\d{6}\.plist/) != nil)
         #expect(domain["autohide"] as? Bool ?? false)
         #expect(tiles.count == 1)
     }
@@ -199,9 +217,14 @@ final class DockPreferencesTests {
     @Test
     func backupsAreCappedAtFive() throws {
         let backupDirectory = directory.appending(path: "Backups")
-        try FileManager.default.createDirectory(at: backupDirectory, withIntermediateDirectories: true)
+
+        try FileManager.default.createDirectory(
+            at: backupDirectory,
+            withIntermediateDirectories: true
+        )
 
         let oldNames = (1 ... 6).map { "com.apple.dock-2020010\($0)-000000.plist" }
+
         for name in oldNames {
             try Data().write(to: backupDirectory.appending(path: name))
         }
@@ -219,14 +242,17 @@ final class DockPreferencesTests {
     /// 布置 [用户 tile, 本用例的 tile, 用户 tile]，并模拟 Dock 重启后为本用例的 tile 补全的字段
     private func addOwnTileBetweenUserTiles() throws {
         defaults.set([calculatorTile], forKey: "persistent-apps")
+
         try preferences.add(tileURL: tileURL, label: "工作")
 
         var tiles = storedTiles()
         var ownTileData = try #require(tiles[1]["tile-data"] as? [String: Any])
         ownTileData["book"] = Data([9, 9])
         ownTileData["bundle-identifier"] = "com.rakuyo.flotilla.tile.test"
+
         tiles[1]["tile-data"] = ownTileData
         tiles.append(calculatorTile)
+
         defaults.set(tiles, forKey: "persistent-apps")
     }
 

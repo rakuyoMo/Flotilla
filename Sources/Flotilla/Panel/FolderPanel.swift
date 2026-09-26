@@ -28,7 +28,13 @@ final class FolderPanel: NSPanel {
 
         // 鼠标在面板上移动时要判断是否仍在轮廓之内，决定点击是否穿透到下面
         acceptsMouseMovedEvents = true
-        collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .transient, .ignoresCycle]
+
+        collectionBehavior = [
+            .canJoinAllSpaces,
+            .fullScreenAuxiliary,
+            .transient,
+            .ignoresCycle,
+        ]
         hidesOnDeactivate = false
         isFloatingPanel = true
         animationBehavior = .none

@@ -16,7 +16,10 @@ struct DockTileLocatorTests {
     func convertsTileNearBottomOfPrimaryScreen() {
         let axFrame = CGRect(x: 100, y: 800, width: 64, height: 64)
 
-        let frame = DockTileLocator.appKitRect(fromTopLeftRect: axFrame, primaryScreenHeight: primaryScreenHeight)
+        let frame = DockTileLocator.appKitRect(
+            fromTopLeftRect: axFrame,
+            primaryScreenHeight: primaryScreenHeight
+        )
 
         #expect(frame == CGRect(x: 100, y: 36, width: 64, height: 64))
     }
@@ -26,7 +29,10 @@ struct DockTileLocatorTests {
     func convertsRectOnScreenAbovePrimary() {
         let axFrame = CGRect(x: 0, y: -1000, width: 100, height: 100)
 
-        let frame = DockTileLocator.appKitRect(fromTopLeftRect: axFrame, primaryScreenHeight: primaryScreenHeight)
+        let frame = DockTileLocator.appKitRect(
+            fromTopLeftRect: axFrame,
+            primaryScreenHeight: primaryScreenHeight
+        )
 
         #expect(frame == CGRect(x: 0, y: 1800, width: 100, height: 100))
     }
@@ -40,6 +46,7 @@ struct DockTileLocatorTests {
             fromAppKitPoint: mouseLocation,
             primaryScreenHeight: primaryScreenHeight
         )
+
         let roundTrip = DockTileLocator.appKitRect(
             fromTopLeftRect: CGRect(origin: axPoint, size: .zero),
             primaryScreenHeight: primaryScreenHeight
@@ -57,11 +64,13 @@ struct DockTileLocatorTests {
             onto: CGRect(x: 0, y: 0, width: 1440, height: 80),
             edge: .bottom
         )
+
         let left = DockTileLocator.projection(
             of: CGPoint(x: 40, y: 300),
             onto: CGRect(x: 0, y: 0, width: 80, height: 900),
             edge: .left
         )
+
         let right = DockTileLocator.projection(
             of: CGPoint(x: 1400, y: 300),
             onto: CGRect(x: 1360, y: 0, width: 80, height: 900),

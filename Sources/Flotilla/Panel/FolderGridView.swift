@@ -57,7 +57,10 @@ final class FolderGridView: NSView {
 
 extension FolderGridView {
     /// 一项显示的名称与图标：App 用自己的图标与显示名，子文件夹用渲染出的文件夹图标与文件夹名
-    private static func content(of item: FolderItem, previewIconCount: Int) -> (title: String, icon: NSImage) {
+    private static func content(
+        of item: FolderItem,
+        previewIconCount: Int
+    ) -> (title: String, icon: NSImage) {
         switch item {
         case .app(let app):
             (app.displayName, app.icon)

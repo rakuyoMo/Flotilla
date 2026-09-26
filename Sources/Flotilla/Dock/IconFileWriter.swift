@@ -16,7 +16,11 @@ enum IconFileWriter {
 
         // iconutil 只接受目录名以 .iconset 结尾的输入，放在临时目录里用完即删
         let iconsetURL = fileManager.temporaryDirectory
-            .appending(path: "Flotilla-\(UUID().uuidString).iconset", directoryHint: .isDirectory)
+            .appending(
+                path: "Flotilla-\(UUID().uuidString).iconset",
+                directoryHint: .isDirectory
+            )
+
         try fileManager.createDirectory(at: iconsetURL, withIntermediateDirectories: true)
         defer { try? fileManager.removeItem(at: iconsetURL) }
 
@@ -72,6 +76,7 @@ enum IconFileWriter {
         guard let data = bitmap.representation(using: .png, properties: [:]) else {
             throw DockTileError.rasterizationFailed(pixelSide: pixelSide)
         }
+
         return data
     }
 }

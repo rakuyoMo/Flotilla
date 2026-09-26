@@ -12,11 +12,17 @@ import Testing
 final class IconFileWriterTests {
     /// 本用例独占的临时目录
     private let directory = FileManager.default.temporaryDirectory
-        .appending(path: "FlotillaTests-\(UUID().uuidString)", directoryHint: .isDirectory)
+        .appending(
+            path: "FlotillaTests-\(UUID().uuidString)",
+            directoryHint: .isDirectory
+        )
 
     /// 创建本用例的临时目录
     init() throws {
-        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(
+            at: directory,
+            withIntermediateDirectories: true
+        )
     }
 
     /// 删除本用例的临时目录
@@ -28,6 +34,7 @@ final class IconFileWriterTests {
     @Test
     func writtenFileContainsAllSizes() throws {
         let url = directory.appending(path: "Icon.icns")
+
         try IconFileWriter.write(makeIcon(), to: url)
 
         let image = try #require(NSImage(contentsOf: url))
@@ -52,7 +59,10 @@ final class IconFileWriterTests {
     /// 渲染一个带两个 App 预览的文件夹图标
     private func makeIcon() -> NSImage {
         let apps = ["Calculator", "Chess"].map {
-            FolderItem.app(AppReference(id: UUID(), url: URL(filePath: "/System/Applications/\($0).app")))
+            FolderItem.app(AppReference(
+                id: UUID(),
+                url: URL(filePath: "/System/Applications/\($0).app")
+            ))
         }
 
         return FolderIconRenderer.render(
