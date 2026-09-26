@@ -84,5 +84,6 @@ Flotilla 是一个无 Dock 图标的常驻后台 App（`LSUIElement`），只有
 - 新建或编辑 `.swift` 文件后必须运行 `mise run swift:lint`，不通过就 `mise run swift:format` 后再查。
 - 纯逻辑（模型、持久化、几何计算、plist 条目构造）必须有 Swift Testing 单元测试，`swift test` 全部通过。
 - 拿不准或靠推测写下的地方，用 `#warning("TODO: ...")` 标记，并在完成汇报里列出。
-- 修改 Dock 偏好之前必须先备份 `com.apple.dock`；只增删 Flotilla 自己的 tile，不碰其它任何 tile。
+- 修改 Dock 偏好之前必须先备份 `com.apple.dock`；只增删 Flotilla 自己的 tile，不碰其它任何 tile。唯一例外是 03 阶段测量用的临时原生文件夹 tile，测完必须删除。
+- 不得修改 Dock 的其它偏好（自动隐藏、放大、尺寸、位置等）。
 - 不增加需求清单之外的设置项、菜单项与功能。
