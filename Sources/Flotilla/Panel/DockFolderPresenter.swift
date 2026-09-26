@@ -190,7 +190,7 @@ extension DockFolderPresenter {
         panelController.expand(rootFolder: folder, anchor: anchor)
     }
 
-    /// 面板展开时判断点击是否落在 Dock 区域；未展开时不需要，省去一次窗口列表查询
+    /// 面板展开时判断点击是否落在 Dock 区域；未展开时不需要，省去一次读取 Dock 偏好
     private func isInDockAreaWhilePresenting(_ location: CGPoint) -> Bool {
         state.presentedFolderID != nil && locator.isInDockArea(location)
     }
