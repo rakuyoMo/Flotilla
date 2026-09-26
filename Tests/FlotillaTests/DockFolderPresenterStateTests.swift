@@ -222,6 +222,19 @@ struct DockFolderPresenterStateTests {
         #expect(state.receiveURL(folderID: folderB, time: 10.2) == .expand(folderB))
     }
 
+    /// 1 秒内先点 A 再点 B、两个 URL 随后才到达：每个 URL 只与自己那次点击合并，最终展示最后点击的 B
+    @Test
+    func urlsOfConsecutiveClicksOnDifferentTilesAreMerged() {
+        var state = DockFolderPresenterState()
+
+        clickTile(folderA, at: 10, in: &state)
+        clickTile(folderB, at: 10.3, in: &state)
+
+        #expect(state.receiveURL(folderID: folderA, time: 10.5) == .unchanged)
+        #expect(state.receiveURL(folderID: folderB, time: 10.6) == .unchanged)
+        #expect(state.presentedFolderID == folderB)
+    }
+
     // MARK: URL 路径（无辅助功能权限）
 
     /// URL 依次到达：展开、收起；展开时到达另一个文件夹的 URL 则切换
