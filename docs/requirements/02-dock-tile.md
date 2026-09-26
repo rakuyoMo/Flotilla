@@ -61,10 +61,11 @@
   - `tile-data.file-type`（对照实测取值）
   - `tile-type = file-tile`
   - 不写 `book`，由 Dock 自行生成
-- API：`contains(tileURL:)`、`add(tileURL:label:)`、`remove(tileURL:)`、`update(tileURL:label:)`、`restartDock()`。
+- API：`contains(tileURL:)`、`add(tileURL:label:)`、`remove(tileURL:)`、`update(tileURL:label:isStubRewritten:)`、`restartDock()`。
 - 匹配 tile 按标准化后 URL 的所在目录（即 stub 独占的 `<id>` 目录），不按名称：文件夹改名后 stub 的文件名变了，仍要找到原来的 tile。
 - 更新已有条目时原地替换，不删除再追加：Dock 里的排序是用户自己拖出来的，重启后必须保持。
   - stub 改名后 `_CFURLString` 换成新位置，并删掉 Dock 按旧位置生成的 `book`，由 Dock 重启后重新生成。
+  - stub 改写过时换一个新的 `GUID`：实测（macOS 27）Dock 按 `GUID` 缓存 tile 图标，`GUID` 不变时重启后仍显示旧图标。
 - `restartDock()`：终止 `com.apple.dock` 进程，launchd 会自动拉起。
 
 ## 同步器（`Sources/Flotilla/Dock/DockTileSynchronizer.swift`）
@@ -75,7 +76,7 @@
 - 变更后合并处理（防抖 0.5 秒）：
   1. 重新渲染每个根文件夹的图标，按需更新 stub 的 icns 与 plist
   2. tile 集合或名称有变化：改 Dock 偏好，然后 `restartDock()`
-  3. 只有图标变化：实测（macOS 27）Dock 不会自动刷新，`touch` bundle、重新注册 Launch Services、替换自定义图标都无效，因此同样 `restartDock()`
+  3. 只有图标变化：实测（macOS 27）Dock 不会自动刷新，`touch` bundle、重新注册 Launch Services、替换自定义图标都无效，因此 tile 换新的 `GUID` 后同样 `restartDock()`
 - 根文件夹被删除、或被拖成子文件夹：删掉 tile 与 stub；子文件夹被拖成根文件夹：新建 tile 与 stub。
 
 ## 信号链路验证
