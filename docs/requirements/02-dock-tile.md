@@ -84,7 +84,7 @@
 
 - 点击 tile：stub 被启动，Flotilla 收到 URL，`DockFolderPresenter` 收到对应 id。
 - Flotilla 未运行时点击 tile：Flotilla 被拉起并收到 URL。
-- 实测（macOS 27，tile 在左侧 App 区域）：点击 tile 时 Dock 不弹跳、不显示运行指示灯，前台 App 保持前台；图标是文件夹原本的形状，没有灰色底板。
+- 实测（macOS 27，tile 在左侧 App 区域）：点击 tile 时 Dock 不弹跳、不显示运行指示灯，前台 App 保持前台；图标按渲染结果原样显示，系统没有另套灰色底板。
 
 ## 单元测试
 
