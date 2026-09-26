@@ -23,6 +23,9 @@ let package = Package(
             ]
         ),
 
+        // Dock tile 的 stub 可执行文件：由打包脚本拷入 Flotilla.app，再由 Flotilla 拷进每个 stub bundle
+        .executableTarget(name: "FlotillaDockTile"),
+
         .testTarget(
             name: "FlotillaTests",
             dependencies: ["Flotilla"]

@@ -10,6 +10,9 @@ cd "$(dirname "$0")/.."
 # App 名称：可执行文件与源码目录都按它查找，须与 Package.swift 中的 target 名一致
 readonly APP_NAME="Flotilla"
 
+# Dock tile 的 stub 可执行文件名，须与 Package.swift 中的 target 名一致
+readonly TILE_NAME="FlotillaDockTile"
+
 # 打包产物的路径
 readonly APP_PATH="build/$APP_NAME.app"
 
@@ -21,7 +24,11 @@ BIN_DIR="$(swift build -c release --show-bin-path)"
 rm -rf "$APP_PATH"
 mkdir -p "$APP_PATH/Contents/MacOS"
 cp "$BIN_DIR/$APP_NAME" "$APP_PATH/Contents/MacOS/$APP_NAME"
+cp "$BIN_DIR/$TILE_NAME" "$APP_PATH/Contents/MacOS/$TILE_NAME"
 cp "Sources/$APP_NAME/Info.plist" "$APP_PATH/Contents/Info.plist"
+
+# 嵌套代码要先于外层签名：stub 可执行文件单独签一次
+codesign --force --sign - "$APP_PATH/Contents/MacOS/$TILE_NAME"
 
 # 组装后重新签名，把 Info.plist 一并纳入签名
 codesign --force --sign - "$APP_PATH"
