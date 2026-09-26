@@ -18,6 +18,9 @@ final class AppDelegate: NSObject {
     /// 状态栏图标与菜单；启动完成后创建
     private var statusBarController: StatusBarController?
 
+    /// 让 Dock 上的 tile 与根文件夹保持一致；启动完成后创建
+    private var dockTileSynchronizer: DockTileSynchronizer?
+
     /// 从 URL 中解析根文件夹 id，只接受 `flotilla://folder/<uuid>`
     static func folderID(from url: URL) -> UUID? {
         guard url.scheme == urlScheme, url.host() == "folder" else { return nil }
@@ -33,13 +36,14 @@ final class AppDelegate: NSObject {
 // MARK: NSApplicationDelegate
 
 extension AppDelegate: NSApplicationDelegate {
-    /// 搭好主菜单与状态栏，并把当前这份 App 注册为 `flotilla` scheme 的处理者
+    /// 搭好主菜单与状态栏，把当前这份 App 注册为 `flotilla` scheme 的处理者，并开始同步 Dock tile
     func applicationDidFinishLaunching(_: Notification) {
         NSApp.mainMenu = makeMainMenu()
         statusBarController = StatusBarController(
             settingsWindowController: SettingsWindowController()
         )
         registerAsURLHandler()
+        startDockTileSynchronizer()
     }
 
     /// 把 `flotilla://folder/<uuid>` 交给面板处理；整个过程不激活 Flotilla
@@ -91,6 +95,39 @@ extension AppDelegate {
             mainMenu.addItem(item)
         }
         return mainMenu
+    }
+
+    /// 创建并启动 Dock tile 同步器；缺少 stub 可执行文件或无法读写 Dock 偏好时只记录日志
+    private func startDockTileSynchronizer() {
+        let executableName = DockTileBundleBuilder.executableName
+
+        // 打包脚本把 stub 可执行文件放在 Flotilla.app/Contents/MacOS 下
+        guard let executableURL = Bundle.main.url(forAuxiliaryExecutable: executableName) else {
+            Self.logger.error("找不到 \(executableName, privacy: .public)，无法生成 Dock tile")
+            return
+        }
+
+        guard
+            let dockPreferences = DockPreferences(
+                domainName: DockPreferences.dockDomain,
+                backupDirectory: DockPreferences.defaultBackupDirectory
+            )
+        else {
+            Self.logger.error("无法读写 Dock 偏好，无法生成 Dock tile")
+            return
+        }
+
+        let synchronizer = DockTileSynchronizer(
+            store: .shared,
+            preferences: .shared,
+            builder: DockTileBundleBuilder(
+                directory: DockTileBundleBuilder.defaultDirectory,
+                executableURL: executableURL
+            ),
+            dockPreferences: dockPreferences
+        )
+        synchronizer.start()
+        dockTileSynchronizer = synchronizer
     }
 
     /// 让当前这份 App 成为 `flotilla` scheme 的处理者：重新打包后 bundle 内容变了，Launch Services 的旧注册可能失效
