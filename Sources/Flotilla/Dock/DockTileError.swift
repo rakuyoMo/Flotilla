@@ -9,6 +9,9 @@ enum DockTileError: Error {
 
     /// 外部命令以非零状态退出
     case commandFailed(path: String, status: Int32, message: String)
+
+    /// 无法为 stub 设置自定义图标
+    case customIconFailed(path: String)
 }
 
 // MARK: LocalizedError
@@ -22,6 +25,9 @@ extension DockTileError: LocalizedError {
 
         case .commandFailed(let path, let status, let message):
             "\(path) 以状态 \(status) 退出：\(message)"
+
+        case .customIconFailed(let path):
+            "无法为 \(path) 设置自定义图标"
         }
     }
 }

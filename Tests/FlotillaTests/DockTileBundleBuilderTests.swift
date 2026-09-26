@@ -35,26 +35,32 @@ final class DockTileBundleBuilderTests {
         try? FileManager.default.removeItem(at: directory)
     }
 
-    /// stub 位于 `<目录>/<id>.app`，包含 Info.plist、可执行文件与图标，并且签名有效
+    /// stub 位于 `<目录>/<id>.app`，包含 Info.plist、可执行文件、图标与自定义图标，并且签名有效
     @Test
     func writeCreatesSignedBundle() throws {
         let folder = makeFolder(name: "工作")
         let changed = try builder.write(folder: folder, icon: makeIcon(for: folder))
 
         let bundleURL = directory.appending(path: "\(folder.id.uuidString).app")
-        let contentsURL = bundleURL.appending(path: "Contents")
+        let relativePaths = [
+            "Contents/Info.plist",
+            "Contents/MacOS/FlotillaDockTile",
+            "Contents/Resources/Icon.icns",
+            "Icon\r",
+        ]
 
         #expect(changed)
         #expect(builder.bundleURL(for: folder.id).standardizedFileURL == bundleURL.standardizedFileURL)
 
-        for relativePath in ["Info.plist", "MacOS/FlotillaDockTile", "Resources/Icon.icns"] {
-            let fileURL = contentsURL.appending(path: relativePath)
+        for relativePath in relativePaths {
+            let fileURL = bundleURL.appending(path: relativePath)
             #expect(FileManager.default.fileExists(atPath: fileURL.path(percentEncoded: false)))
         }
 
+        // 自定义图标位于 bundle 根目录，只能通过不带 `--strict` 的校验
         try CommandRunner.run(
             "/usr/bin/codesign",
-            arguments: ["--verify", "--strict", bundleURL.path(percentEncoded: false)]
+            arguments: ["--verify", bundleURL.path(percentEncoded: false)]
         )
     }
 
@@ -87,6 +93,19 @@ final class DockTileBundleBuilderTests {
         try builder.write(folder: folder, icon: makeIcon(for: folder))
 
         #expect(try !builder.write(folder: folder, icon: makeIcon(for: folder)))
+    }
+
+    /// 缺少可执行文件或自定义图标的 stub 即使名称与图标没变也要补全，否则 Dock 上的 tile 点不开或图标不对
+    @Test(arguments: ["Contents/MacOS/FlotillaDockTile", "Icon\r"])
+    func incompleteBundleIsRewritten(missingPath: String) throws {
+        let folder = makeFolder(name: "工作")
+        try builder.write(folder: folder, icon: makeIcon(for: folder))
+
+        let missingURL = builder.bundleURL(for: folder.id).appending(path: missingPath)
+        try FileManager.default.removeItem(at: missingURL)
+
+        #expect(try builder.write(folder: folder, icon: makeIcon(for: folder)))
+        #expect(FileManager.default.fileExists(atPath: missingURL.path(percentEncoded: false)))
     }
 
     /// 重命名后改写 Info.plist 中的名称

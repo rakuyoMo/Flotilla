@@ -14,6 +14,9 @@ struct DockTileBundleBuilder {
     /// stub 图标在 `Contents/Resources` 下的文件名（不含扩展名），同时是 `CFBundleIconFile` 的取值
     private static let iconName = "Icon"
 
+    /// 自定义图标在 bundle 根目录下的文件名，由 `NSWorkspace.setIcon` 生成
+    private static let customIconFileName = "Icon\r"
+
     /// 存放所有 stub 的目录
     let directory: URL
 
@@ -72,14 +75,20 @@ extension DockTileBundleBuilder {
 
         let isInfoChanged = (try? Data(contentsOf: infoURL)) != infoData
         let isIconChanged = (try? Data(contentsOf: iconURL)) != renderedIcon
-        let isExecutableMissing = !fileManager.fileExists(
-            atPath: stubExecutableURL.path(percentEncoded: false)
-        )
 
-        guard isInfoChanged || isIconChanged || isExecutableMissing else { return false }
+        // 缺少可执行文件或自定义图标的 stub 视为残缺，同样要重新生成
+        let isIncomplete = [
+            stubExecutableURL,
+            bundleURL.appending(path: Self.customIconFileName),
+        ].contains {
+            !fileManager.fileExists(atPath: $0.path(percentEncoded: false))
+        }
+
+        guard isInfoChanged || isIconChanged || isIncomplete else { return false }
 
         // 按 App bundle 的结构写入三个文件；可执行文件每次都从 Flotilla.app 重新拷贝，与当前版本保持一致
-        for subdirectory in [iconURL, stubExecutableURL].map({ $0.deletingLastPathComponent() }) {
+        let subdirectories = [iconURL, stubExecutableURL].map { $0.deletingLastPathComponent() }
+        for subdirectory in subdirectories {
             try fileManager.createDirectory(at: subdirectory, withIntermediateDirectories: true)
         }
 
@@ -88,17 +97,7 @@ extension DockTileBundleBuilder {
         try replaceItem(at: iconURL, withCopyOf: renderedIconURL)
         try replaceItem(at: stubExecutableURL, withCopyOf: executableURL)
 
-        // 更新 bundle 自身的修改时间，让依赖它的缓存（Launch Services、图标缓存）知道内容变了
-        try fileManager.setAttributes(
-            [.modificationDate: Date()],
-            ofItemAtPath: bundleURL.path(percentEncoded: false)
-        )
-
-        // 改动 Info.plist 与可执行文件都会让原签名失效，每次改写后重新 ad-hoc 签名
-        try CommandRunner.run(
-            "/usr/bin/codesign",
-            arguments: ["--force", "--sign", "-", bundleURL.path(percentEncoded: false)]
-        )
+        try seal(bundleURL, iconURL: iconURL)
         return true
     }
 
@@ -138,6 +137,35 @@ extension DockTileBundleBuilder {
 // MARK: - Private
 
 extension DockTileBundleBuilder {
+    /// 重新签名，并把图标设为 bundle 的自定义图标
+    ///
+    /// macOS 26 起，系统把 icns 形式的 App 图标装进灰色圆角底板，bundle 的自定义图标不受影响，Dock 上才能显示文件夹原本的形状
+    private func seal(_ bundleURL: URL, iconURL: URL) throws {
+        let bundlePath = bundleURL.path(percentEncoded: false)
+
+        // 自定义图标写在 bundle 根目录，codesign 会拒绝为这样的 bundle 签名，先清除
+        NSWorkspace.shared.setIcon(nil, forFile: bundlePath)
+
+        // 更新 bundle 自身的修改时间，让依赖它的缓存（Launch Services、图标缓存）知道内容变了
+        try FileManager.default.setAttributes(
+            [.modificationDate: Date()],
+            ofItemAtPath: bundlePath
+        )
+
+        // 改动 Info.plist 与可执行文件都会让原签名失效，每次改写后重新 ad-hoc 签名
+        try CommandRunner.run(
+            "/usr/bin/codesign",
+            arguments: ["--force", "--sign", "-", bundlePath]
+        )
+
+        guard
+            let icon = NSImage(contentsOf: iconURL),
+            NSWorkspace.shared.setIcon(icon, forFile: bundlePath)
+        else {
+            throw DockTileError.customIconFailed(path: bundlePath)
+        }
+    }
+
     /// 用 source 的副本替换 destination；destination 不存在时直接拷贝
     private func replaceItem(at destination: URL, withCopyOf source: URL) throws {
         let fileManager = FileManager.default
