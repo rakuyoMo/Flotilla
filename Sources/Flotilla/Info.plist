@@ -12,7 +12,20 @@
 	<string>Flotilla</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.rakuyo.flotilla.url</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>flotilla</string>
+			</array>
+		</dict>
+	</array>
 	<key>LSMinimumSystemVersion</key>
 	<string>15.0</string>
+	<key>LSUIElement</key>
+	<true/>
 </dict>
 </plist>
