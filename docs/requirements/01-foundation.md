@@ -10,12 +10,16 @@
 - `Sources/Flotilla/Info.plist` 新增：
   - `LSUIElement = true`：Flotilla 没有 Dock 图标（需求 6）
   - `CFBundleURLTypes`：注册 scheme `flotilla`，`CFBundleURLName = com.rakuyo.flotilla.url`
-  - `CFBundleAllowMixedLocalizations = true`：Flotilla 自己没有本地化资源，缺少这个键时进程语言固定为英文，`FileManager.displayName` 给出 “Calculator” 而不是“计算器”；加上后 App 名称跟随系统语言，与原生一致
-- 启动时调用 `NSWorkspace.shared.setDefaultApplication(at: Bundle.main.bundleURL, toOpenURLsWithScheme: "flotilla")`，让当前这份 App 成为 scheme 的处理者。原因：重新打包后 bundle 内容变了，Launch Services 的旧注册可能失效。
+  - `CFBundleAllowMixedLocalizations = true`：Flotilla 自己没有本地化资源，缺少这个键时进程语言固定为英文，`FileManager.displayName` 给出 “Calculator” 而不是“计算器”
+    - 加上后 App 名称跟随系统语言，与原生一致
+- 启动时调用 `NSWorkspace.shared.setDefaultApplication(at: Bundle.main.bundleURL, toOpenURLsWithScheme: "flotilla")`，让当前这份 App 成为 scheme 的处理者。
+  - 原因：重新打包后 bundle 内容变了，Launch Services 的旧注册可能失效。
 
 ### 激活策略
 
-需求 6 的参照物是陛下自己的 Hassan-macOS（`Components/AppPresentation/Sources/Internal/Operations/ActivationPolicyOperations.swift`）：有可见窗口时用 `.regular`，窗口全部关闭后回到 `.accessory`。Flotilla 照此办理：
+需求 6 的参照物是陛下自己的 Hassan-macOS（`Components/AppPresentation/Sources/Internal/Operations/ActivationPolicyOperations.swift`）：有可见窗口时用 `.regular`，窗口全部关闭后回到 `.accessory`。
+
+Flotilla 照此办理：
 
 - 启动即 `.accessory`（`LSUIElement`），此时没有任何窗口
 - 显示设置窗口前切到 `.regular`，切换后延迟到下一个 run loop 再激活并把窗口带到最前：从 `.accessory` 切到 `.regular` 后系统需要时间准备 Dock 图标
@@ -39,7 +43,9 @@
 
 ### `DockFolderPresenter` 占位
 
-`Sources/Flotilla/Panel/DockFolderPresenter.swift`：`@MainActor final class`，`static let shared`，`func toggle(folderID: UUID)`。本阶段方法体只打一条包含 id 的日志，并加 `#warning("TODO: 面板由 03 阶段实现")`。
+`Sources/Flotilla/Panel/DockFolderPresenter.swift`：`@MainActor final class`，`static let shared`，`func toggle(folderID: UUID)`。
+
+本阶段方法体只打一条包含 id 的日志，并加 `#warning("TODO: 面板由 03 阶段实现")`。
 
 ## 数据模型（`Sources/Flotilla/Model/`）
 
@@ -79,7 +85,9 @@ struct AppReference: Codable, Hashable, Identifiable {
   - `remove(itemID:)`：文件夹连同内容一起删
   - `move(itemID:to folderID: UUID?, at index: Int)`：`folderID` 为 nil 表示移到根层级（只允许文件夹）；禁止把文件夹移入自身或自己的子孙
 - 每次变更后：原子写入持久化文件，并在主线程发出 `FolderStore.didChangeNotification`。
-- 持久化：`~/Library/Application Support/Flotilla/folders.json`，可读的 JSON。启动时加载；文件不存在则为空；解析失败时把原文件改名为 `folders.json.broken-<时间戳>` 保留，然后从空开始。
+- 持久化：`~/Library/Application Support/Flotilla/folders.json`，可读的 JSON。
+  - 启动时加载；文件不存在则为空
+  - 解析失败时把原文件改名为 `folders.json.broken-<时间戳>` 保留，然后从空开始
 - 文件位置可通过构造函数注入，`shared` 使用默认位置；单元测试用临时目录。
 
 ### `Preferences`（`Sources/Flotilla/Preferences/`）
@@ -103,8 +111,13 @@ enum FolderIconRenderer {
 
 - 返回的 `NSImage` 必须与分辨率无关（用绘制闭包构造），调用方可按任意像素尺寸栅格化。
 - 底图：系统通用文件夹图标（`NSWorkspace.shared.icon(for: .folder)`），铺满画布。
-- 预览：取 `folder.items` 里前 `previewIconCount` 个 `.app` 项（保持顺序，跳过子文件夹）的图标，按 2×2 网格叠在文件夹正面；`previewIconCount` 为 0 或文件夹内没有 App 时只画底图。
-- 网格几何（以画布边长为 1，y 轴自上而下）：外框 x ∈ [0.25, 0.75]、y ∈ [0.36, 0.86]；单元格之间留 0.04 间距；填充顺序左上、右上、左下、右下；每个图标在单元格内等比缩放居中。
+- 预览：取 `folder.items` 里前 `previewIconCount` 个 `.app` 项（保持顺序，跳过子文件夹）的图标，按 2×2 网格叠在文件夹正面
+  - `previewIconCount` 为 0 或文件夹内没有 App 时只画底图。
+- 网格几何（以画布边长为 1，y 轴自上而下）：
+  - 外框 x ∈ [0.25, 0.75]、y ∈ [0.36, 0.86]
+  - 单元格之间留 0.04 间距
+  - 填充顺序左上、右上、左下、右下
+  - 每个图标在单元格内等比缩放居中
 
 ## 状态栏（`Sources/Flotilla/StatusBar/StatusBarController.swift`）
 
@@ -120,10 +133,12 @@ enum FolderIconRenderer {
 
 ### 文件夹区
 
-- `NSOutlineView` 展示完整的树：根文件夹、子文件夹、App。每行显示图标与名称；文件夹图标用 `FolderIconRenderer` 渲染，App 图标用 `AppReference.icon`。
+- `NSOutlineView` 展示完整的树：根文件夹、子文件夹、App。
+  - 每行显示图标与名称；文件夹图标用 `FolderIconRenderer` 渲染，App 图标用 `AppReference.icon`。
 - 树随 `FolderStore.didChangeNotification` 刷新，尽量保留展开状态与选中项。
 - 底部按钮：
-  - “新建文件夹”：有选中项时在其所属文件夹内新建子文件夹（选中的是文件夹则在该文件夹内），无选中项时新建根文件夹；默认名“未命名文件夹”，新建后立即进入重命名编辑
+  - “新建文件夹”：有选中项时在其所属文件夹内新建子文件夹（选中的是文件夹则在该文件夹内），无选中项时新建根文件夹
+    - 默认名“未命名文件夹”，新建后立即进入重命名编辑
   - “添加 App…”：`NSOpenPanel`，只允许 `.applicationBundle`，允许多选，起始目录 `/Applications`；加入选中项所属的文件夹；无选中项时按钮禁用
   - “删除”：删除选中项；无选中项时禁用
 - 重命名：双击文件夹名进入编辑；App 名不可编辑。
@@ -134,7 +149,9 @@ enum FolderIconRenderer {
 ### 通用区
 
 - “文件夹图标内显示的 App 图标数量”：`NSPopUpButton`，选项 0–4，绑定 `Preferences.previewIconCount`
-- “辅助功能权限”：显示“已授权”或“未授权”（`AXIsProcessTrusted()`），旁边一个“打开系统设置”按钮，打开 `x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility`；窗口每次显示时刷新状态
+- “辅助功能权限”：显示“已授权”或“未授权”（`AXIsProcessTrusted()`）
+  - 旁边一个“打开系统设置”按钮，打开 `x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility`
+  - 窗口每次显示时刷新状态
 
 ## 工程
 

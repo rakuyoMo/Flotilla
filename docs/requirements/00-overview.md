@@ -4,9 +4,14 @@
 
 ## 目标
 
-在 Dock 左侧的 App 区域放置“文件夹”，把 App 分类收纳进去。点击文件夹，在 Dock 上方以“网格”样式展开其中的 App；展开后的交互、动效与位置以 macOS 原生 Dock 文件夹（原生文件夹只能放在 Dock 右侧区域，查看方式为网格）为准，一比一还原。
+在 Dock 左侧的 App 区域放置“文件夹”，把 App 分类收纳进去。
 
-原生行为里明确**不做**的两处：展开内容中不提供“在访达中打开”；展开时 Dock 上的文件夹图标不做外观变化。
+点击文件夹，在 Dock 上方以“网格”样式展开其中的 App；展开后的交互、动效与位置以 macOS 原生 Dock 文件夹（原生文件夹只能放在 Dock 右侧区域，查看方式为网格）为准，一比一还原。
+
+原生行为里明确**不做**的两处：
+
+- 展开内容中不提供“在访达中打开”
+- 展开时 Dock 上的文件夹图标不做外观变化
 
 ## 需求清单
 
@@ -39,14 +44,20 @@
 
 Flotilla 是一个无 Dock 图标的常驻后台 App（`LSUIElement`），只有状态栏图标与设置窗口。
 
-- **Dock 集成**：Dock 只能放 App 与文件，因此每个根文件夹对应一个由 Flotilla 生成的 stub App bundle，写入 Dock 偏好（`com.apple.dock`）左侧 App 区域后重启 Dock 使其出现。stub 的图标即按需求 2 渲染的文件夹图标。
-- **点击信号**：点击 tile 时 Dock 启动 stub；stub 以不激活任何 App 的方式打开 `flotilla://folder/<根文件夹 id>`，随即退出。Flotilla 作为该 URL scheme 的处理者收到事件，展开或收起面板。Flotilla 未运行时，Launch Services 会先启动它。
-- **面板定位**：通过 Accessibility API 读取 Dock 进程里该 tile 的屏幕位置与尺寸，面板居中对准 tile。未获得辅助功能权限时，退化为以收到点击信号时的鼠标位置为锚点。
+- **Dock 集成**：Dock 只能放 App 与文件，因此每个根文件夹对应一个由 Flotilla 生成的 stub App bundle，写入 Dock 偏好（`com.apple.dock`）左侧 App 区域后重启 Dock 使其出现。
+  - stub 的图标即按需求 2 渲染的文件夹图标。
+- **点击信号**：点击 tile 时 Dock 启动 stub；stub 以不激活任何 App 的方式打开 `flotilla://folder/<根文件夹 id>`，随即退出。
+  - Flotilla 作为该 URL scheme 的处理者收到事件，展开或收起面板。
+  - Flotilla 未运行时，Launch Services 会先启动它。
+- **面板定位**：通过 Accessibility API 读取 Dock 进程里该 tile 的屏幕位置与尺寸，面板居中对准 tile。
+  - 未获得辅助功能权限时，退化为以收到点击信号时的鼠标位置为锚点。
 - **面板本身**：不激活 Flotilla 的悬浮面板（`NSPanel`，nonactivating），窗口层级高于 Dock；外观、几何、动效对照原生逐项还原。
 
 ## 模块划分
 
-代码全部在 `Sources/Flotilla/` 下，按职责分子目录；每个文件一个类型。下表是各阶段共同遵守的接口契约，类型名与职责不得私自更改；实现细节由各阶段文档规定。
+代码全部在 `Sources/Flotilla/` 下，按职责分子目录；每个文件一个类型。
+
+下表是各阶段共同遵守的接口契约，类型名与职责不得私自更改；实现细节由各阶段文档规定。
 
 | 目录 | 类型 | 职责 | 阶段 |
 |---|---|---|---|
@@ -84,6 +95,7 @@ Flotilla 是一个无 Dock 图标的常驻后台 App（`LSUIElement`），只有
 - 新建或编辑 `.swift` 文件后必须运行 `mise run swift:lint`，不通过就 `mise run swift:format` 后再查。
 - 纯逻辑（模型、持久化、几何计算、plist 条目构造）必须有 Swift Testing 单元测试，`swift test` 全部通过。
 - 拿不准或靠推测写下的地方，用 `#warning("TODO: ...")` 标记，并在完成汇报里列出。
-- 修改 Dock 偏好之前必须先备份 `com.apple.dock`；只增删 Flotilla 自己的 tile，不碰其它任何 tile。唯一例外是 03 阶段测量用的临时原生文件夹 tile，测完必须删除。
+- 修改 Dock 偏好之前必须先备份 `com.apple.dock`；只增删 Flotilla 自己的 tile，不碰其它任何 tile。
+  - 唯一例外是 03 阶段测量用的临时原生文件夹 tile，测完必须删除。
 - 不得修改 Dock 的其它偏好（自动隐藏、放大、尺寸、位置等）。
 - 不增加需求清单之外的设置项、菜单项与功能。
