@@ -32,14 +32,14 @@ final class DockTileLocator {
     /// 定位相关的日志
     private static let logger = Logger(subsystem: "com.rakuyo.flotilla", category: "DockTileLocator")
 
-    /// 由根文件夹 id 得到 stub 的位置，AX 树里 tile 的 `AXURL` 指向它
+    /// 从 AX 树里 tile 的 `AXURL`（指向 stub）解析出根文件夹 id
     private let builder: DockTileBundleBuilder
 
     /// 本次启动是否已经带提示地请求过辅助功能权限
     private var hasPromptedForTrust = false
 
     /// 创建定位器，并设置 AX 调用的全局超时
-    /// - Parameter builder: 由根文件夹 id 得到 stub 位置的生成器
+    /// - Parameter builder: 从 stub 位置解析根文件夹 id 的生成器
     init(builder: DockTileBundleBuilder) {
         self.builder = builder
 
@@ -88,12 +88,16 @@ extension DockTileLocator {
 
         var element: AXUIElement? = nil
         let error = AXUIElementCopyElementAtPosition(dockElement, Float(axPoint.x), Float(axPoint.y), &element)
-        guard error == .success, let element, let url = Self.url(of: element) else { return nil }
-
-        let target = DockPreferences.normalized(url)
-        return folderIDs.first {
-            DockPreferences.normalized(builder.bundleURL(for: $0)) == target
+        guard
+            error == .success,
+            let element,
+            let url = Self.url(of: element),
+            let folderID = builder.folderID(forBundleURL: url)
+        else {
+            return nil
         }
+
+        return folderIDs.contains(folderID) ? folderID : nil
     }
 
     /// 一次点击是否落在 Dock 区域，按 `dockArea(in:edge:tileSize:)` 估算
@@ -191,11 +195,10 @@ extension DockTileLocator {
             return nil
         }
 
-        let target = DockPreferences.normalized(builder.bundleURL(for: folderID))
         let tiles = Self.children(of: dockElement).flatMap { Self.children(of: $0) }
 
         let tile = tiles.first {
-            Self.url(of: $0).map { DockPreferences.normalized($0) } == target
+            Self.url(of: $0).flatMap { builder.folderID(forBundleURL: $0) } == folderID
         }
         guard let tile, let frame = Self.frame(of: tile), !frame.isEmpty else { return nil }
 

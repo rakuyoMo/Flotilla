@@ -29,7 +29,7 @@
 
 ## 定位（`Sources/Flotilla/Panel/DockTileLocator.swift`）
 
-- 输入根文件夹 id，通过 `DockTileBundleBuilder.bundleURL(for:)` 得到 stub URL，在 Dock 进程的 AX 树里找 `AXURL` 与之相同（标准化后比较）的 tile。
+- 输入根文件夹 id，在 Dock 进程的 AX 树里找 `AXURL` 经 `DockTileBundleBuilder.folderID(forBundleURL:)` 解析出同一 id 的 tile。
 - 输出 `DockTileAnchor`：tile 在 AppKit 屏幕坐标系里的 frame、Dock 所贴的屏幕边（下、左、右）、所在的 `NSScreen`。AX 给出的坐标以主屏左上角为原点、y 向下，必须换算。
 - 权限：第一次需要时用 `AXIsProcessTrustedWithOptions` 带提示地请求，每次启动最多提示一次。
 - Dock 方向取自 Dock 偏好（`com.apple.dock`）的 `orientation`，缺省为底部。
@@ -45,7 +45,7 @@
 
 两条路径最终都交给 `DockFolderPresenter`：
 
-1. 快速路径（有辅助功能权限时）：全局鼠标事件监听（`NSEvent.addGlobalMonitorForEvents`）配合 `AXUIElementCopyElementAtPosition`，识别点击是否落在 Flotilla 的 tile 上（按 `AXURL` 与 stub URL 比对）。stub 要等 Dock 拉起进程才发出信号，快速路径让面板出现的时机与原生一致。
+1. 快速路径（有辅助功能权限时）：全局鼠标事件监听（`NSEvent.addGlobalMonitorForEvents`）配合 `AXUIElementCopyElementAtPosition`，识别点击是否落在 Flotilla 的 tile 上（按 `AXURL` 解析出的根文件夹 id 判断）。stub 要等 Dock 拉起进程才发出信号，快速路径让面板出现的时机与原生一致。
 2. URL 路径：02 阶段的 stub 打开 `flotilla://folder/<id>`。无权限时这是唯一路径。
 
 必须满足的行为：

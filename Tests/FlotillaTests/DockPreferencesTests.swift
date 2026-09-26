@@ -21,6 +21,9 @@ final class DockPreferencesTests {
     /// 被测对象
     private let preferences: DockPreferences
 
+    /// 本用例的 stub 所在的目录，每个根文件夹独占一个
+    private let stubDirectory: URL
+
     /// 本用例的 stub 位置，路径里带空格，检验 URL 编码与标准化
     private let tileURL: URL
 
@@ -52,7 +55,8 @@ final class DockPreferencesTests {
             )
         )
 
-        tileURL = directory.appending(path: "Dock Tiles/\(UUID().uuidString).app")
+        stubDirectory = directory.appending(path: "Dock Tiles/\(UUID().uuidString)", directoryHint: .isDirectory)
+        tileURL = stubDirectory.appending(path: "工作.app")
     }
 
     /// 删除本用例的临时目录
@@ -67,7 +71,7 @@ final class DockPreferencesTests {
 
         let tileData = try #require(entry["tile-data"] as? [String: Any])
         let fileData = try #require(tileData["file-data"] as? [String: Any])
-        let expectedURL = "file://\(directory.path(percentEncoded: true))Dock%20Tiles/\(tileURL.lastPathComponent)/"
+        let expectedURL = "file://\(stubDirectory.path(percentEncoded: true))%E5%B7%A5%E4%BD%9C.app/"
 
         #expect(entry["GUID"] as? Int == 42)
         #expect(entry["tile-type"] as? String == "file-tile")
@@ -94,34 +98,27 @@ final class DockPreferencesTests {
         #expect(label(of: tiles[1]) == "工作")
     }
 
-    /// 按标准化后的 URL 匹配：有无结尾斜杠、路径里多余的 `.` 都视为同一个 stub
+    /// 按标准化后 URL 的所在目录匹配：有无结尾斜杠、路径里多余的 `.` 都视为同一个 stub；改名后的 stub 仍能找到原来的 tile
     @Test
-    func containsMatchesNormalizedURL() throws {
+    func containsMatchesStubDirectory() throws {
         try preferences.add(tileURL: tileURL, label: "工作")
 
-        let variant = directory.appending(path: "Dock Tiles/./\(tileURL.lastPathComponent)/")
+        let variant = directory.appending(path: "Dock Tiles/./\(stubDirectory.lastPathComponent)/工作.app/")
+        let renamed = stubDirectory.appending(path: "日常.app")
 
         #expect(preferences.contains(tileURL: tileURL))
         #expect(preferences.contains(tileURL: variant))
-        #expect(!preferences.contains(tileURL: directory.appending(path: "Other.app")))
+        #expect(preferences.contains(tileURL: renamed))
+        #expect(!preferences.contains(tileURL: directory.appending(path: "Dock Tiles/Other/工作.app")))
     }
 
-    /// 改名时条目原地替换：位置不变，Dock 补全的字段保留
+    /// 只改名称时条目原地替换：位置不变，Dock 补全的字段保留
     @Test
     func updateLabelReplacesInPlace() throws {
-        defaults.set([calculatorTile], forKey: "persistent-apps")
-        try preferences.add(tileURL: tileURL, label: "工作")
+        try addOwnTileBetweenUserTiles()
 
-        // 模拟 Dock 重启后补全字段，并在我们的 tile 后面还有用户的 tile
-        var tiles = storedTiles()
-        var ownTileData = try #require(tiles[1]["tile-data"] as? [String: Any])
-        ownTileData["book"] = Data([9, 9])
-        tiles[1]["tile-data"] = ownTileData
-        tiles.append(calculatorTile)
-        defaults.set(tiles, forKey: "persistent-apps")
-
-        #expect(try preferences.updateLabel(tileURL: tileURL, label: "日常"))
-        #expect(try !preferences.updateLabel(tileURL: tileURL, label: "日常"))
+        #expect(try preferences.update(tileURL: tileURL, label: "日常"))
+        #expect(try !preferences.update(tileURL: tileURL, label: "日常"))
 
         let updated = storedTiles()
         let updatedTileData = try #require(updated[1]["tile-data"] as? [String: Any])
@@ -131,6 +128,27 @@ final class DockPreferencesTests {
         #expect(updatedTileData["book"] as? Data == Data([9, 9]))
         #expect(label(of: updated[0]) == "计算器")
         #expect(label(of: updated[2]) == "计算器")
+    }
+
+    /// stub 改名后条目原地指向新位置，并删掉指向旧位置的书签，其余字段保留
+    @Test
+    func updateURLReplacesInPlaceAndDropsBookmark() throws {
+        try addOwnTileBetweenUserTiles()
+        let renamed = stubDirectory.appending(path: "日常.app")
+
+        #expect(try preferences.update(tileURL: renamed, label: "日常"))
+        #expect(try !preferences.update(tileURL: renamed, label: "日常"))
+
+        let updated = storedTiles()
+        let updatedTileData = try #require(updated[1]["tile-data"] as? [String: Any])
+        let fileData = try #require(updatedTileData["file-data"] as? [String: Any])
+        let expectedURL = "file://\(stubDirectory.path(percentEncoded: true))%E6%97%A5%E5%B8%B8.app/"
+
+        #expect(updated.count == 3)
+        #expect(label(of: updated[1]) == "日常")
+        #expect(updatedTileData["book"] == nil)
+        #expect(updatedTileData["bundle-identifier"] as? String == "com.rakuyo.flotilla.tile.test")
+        #expect(fileData["_CFURLString"] as? String == expectedURL)
     }
 
     /// 删除只按 URL 匹配：与 Flotilla 的 tile 同名的用户 tile 不受影响
@@ -160,7 +178,7 @@ final class DockPreferencesTests {
         defaults.set(true, forKey: "autohide")
 
         try preferences.add(tileURL: tileURL, label: "工作")
-        try preferences.updateLabel(tileURL: tileURL, label: "日常")
+        try preferences.update(tileURL: tileURL, label: "日常")
 
         let backups = try backupFiles()
         let backupURL = try #require(backups.first)
@@ -196,6 +214,20 @@ final class DockPreferencesTests {
         #expect(names.count == 5)
         #expect(Array(names.prefix(4)) == Array(oldNames.suffix(4)))
         #expect(!newest.hasPrefix("com.apple.dock-2020"))
+    }
+
+    /// 布置 [用户 tile, 本用例的 tile, 用户 tile]，并模拟 Dock 重启后为本用例的 tile 补全的字段
+    private func addOwnTileBetweenUserTiles() throws {
+        defaults.set([calculatorTile], forKey: "persistent-apps")
+        try preferences.add(tileURL: tileURL, label: "工作")
+
+        var tiles = storedTiles()
+        var ownTileData = try #require(tiles[1]["tile-data"] as? [String: Any])
+        ownTileData["book"] = Data([9, 9])
+        ownTileData["bundle-identifier"] = "com.rakuyo.flotilla.tile.test"
+        tiles[1]["tile-data"] = ownTileData
+        tiles.append(calculatorTile)
+        defaults.set(tiles, forKey: "persistent-apps")
     }
 
     /// 读出测试域里的全部条目

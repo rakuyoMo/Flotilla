@@ -106,7 +106,7 @@ extension DockTileSynchronizer {
     /// 让一个根文件夹的 stub 与 tile 与数据一致
     /// - Returns: 是否需要重启 Dock
     private func synchronizeTile(of folder: Folder, previewIconCount: Int) -> Bool {
-        let tileURL = builder.bundleURL(for: folder.id)
+        let tileURL = builder.bundleURL(for: folder)
         let icon = FolderIconRenderer.render(
             folder: folder,
             previewIconCount: previewIconCount,
@@ -122,15 +122,13 @@ extension DockTileSynchronizer {
                 return true
             }
 
-            let isLabelChanged = try dockPreferences.updateLabel(
+            let isTileChanged = try dockPreferences.update(
                 tileURL: tileURL,
                 label: folder.name
             )
 
-            #warning("TODO: 解锁后实测只改图标时，Dock 是否要重启才会刷新 tile")
-
-            // stub 改写后重启 Dock，确保 tile 显示新的图标与名称
-            return isBundleChanged || isLabelChanged
+            // Dock 不会因为 stub 的图标文件变化而刷新 tile，touch、重新注册 Launch Services 都不行，stub 改写后必须重启
+            return isBundleChanged || isTileChanged
         } catch {
             Self.logger.error(
                 "同步 tile 失败（\(folder.id.uuidString, privacy: .public)）：\(error.localizedDescription, privacy: .public)"
@@ -147,7 +145,11 @@ extension DockTileSynchronizer {
 
         for folderID in folderIDs {
             do {
-                if try dockPreferences.remove(tileURL: builder.bundleURL(for: folderID)) {
+                // tile 按 stub 的位置匹配，目录里已没有 stub bundle 时无从匹配，只删除残留的目录
+                if
+                    let tileURL = builder.existingBundleURL(for: folderID),
+                    try dockPreferences.remove(tileURL: tileURL)
+                {
                     needsDockRestart = true
                 }
                 removableIDs.append(folderID)

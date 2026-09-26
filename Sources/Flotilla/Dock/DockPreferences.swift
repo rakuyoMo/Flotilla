@@ -15,9 +15,9 @@ final class DockPreferences {
     nonisolated static let defaultBackupDirectory = URL.applicationSupportDirectory
         .appending(path: "Flotilla/Backups", directoryHint: .isDirectory)
 
-    #warning("TODO: 实测 persistent-apps 中的 tile 点击能启动 stub，图标与名称显示正确")
-
     /// tile 所在的区域：Dock 左侧的 App 区域
+    ///
+    /// 实测（macOS 27）这里的 stub 条目在 Dock 重启后保留，显示自定义图标与条目名称，点击即启动 stub
     private static let sectionKey = "persistent-apps"
 
     /// 备份最多保留的份数
@@ -80,7 +80,7 @@ final class DockPreferences {
 // MARK: - Query
 
 extension DockPreferences {
-    /// Dock 上是否已有指向该 stub 的 tile
+    /// Dock 上是否已有该 stub 所属根文件夹的 tile，按 stub 所在的目录匹配
     func contains(tileURL: URL) -> Bool {
         index(of: tileURL, in: tiles) != nil
     }
@@ -103,7 +103,7 @@ extension DockPreferences {
         try save(tiles + [entry])
     }
 
-    /// 删除指向该 stub 的 tile
+    /// 删除该 stub 所属根文件夹的 tile，按 stub 所在的目录匹配
     /// - Returns: 是否确实删除了条目
     @discardableResult
     func remove(tileURL: URL) throws -> Bool {
@@ -115,17 +115,35 @@ extension DockPreferences {
         return true
     }
 
-    /// 修改 tile 的名称；条目原地替换，Dock 里用户拖出来的顺序保持不变
-    /// - Returns: 是否确实改动了名称
+    /// 让 tile 指向 stub 的当前位置、显示文件夹的当前名称；条目原地替换，Dock 里用户拖出来的顺序保持不变
+    ///
+    /// 文件夹改名后 stub 随之改名，URL 变化时一并删掉 Dock 按旧位置生成的书签 `book`，由 Dock 重启后按新 URL 重新生成
+    /// - Parameters:
+    ///   - tileURL: stub bundle 的当前位置
+    ///   - label: tile 的名称
+    /// - Returns: 是否确实改动了条目
     @discardableResult
-    func updateLabel(tileURL: URL, label: String) throws -> Bool {
+    func update(tileURL: URL, label: String) throws -> Bool {
         var tiles = tiles
         guard
             let index = index(of: tileURL, in: tiles),
-            var tileData = tiles[index]["tile-data"] as? [String: Any],
-            tileData["file-label"] as? String != label
+            var tileData = tiles[index]["tile-data"] as? [String: Any]
         else {
             return false
+        }
+
+        // 按路径字符串比较：Swift 的字符串相等按 Unicode 规范等价判断，不受 Dock 写回时的编码形式影响
+        let tilePath = Self.normalized(tileURL).path(percentEncoded: false)
+        let isURLChanged = Self.fileURL(of: tiles[index])?.path(percentEncoded: false) != tilePath
+        let isLabelChanged = tileData["file-label"] as? String != label
+        guard isURLChanged || isLabelChanged else { return false }
+
+        // 只替换 URL 本身，`file-data` 里 Dock 补全的其它字段保留
+        if isURLChanged {
+            var fileData = tileData["file-data"] as? [String: Any] ?? [:]
+            fileData["_CFURLString"] = Self.normalized(tileURL).absoluteString
+            tileData["file-data"] = fileData
+            tileData["book"] = nil
         }
 
         tileData["file-label"] = label
@@ -202,22 +220,14 @@ extension DockPreferences {
         }
     }
 
-    /// 在条目中按标准化后的 URL 查找指向该 stub 的 tile，不按名称匹配
+    /// 在条目中查找与该 stub 位于同一目录的 tile，不按名称匹配
+    ///
+    /// 每个根文件夹的 stub 独占一个目录，文件夹改名时 stub 在目录里改名，按目录匹配才能找到改名前的 tile
     private func index(of tileURL: URL, in tiles: [[String: Any]]) -> Int? {
-        let target = Self.normalized(tileURL)
+        let target = Self.normalized(tileURL).deletingLastPathComponent().path(percentEncoded: false)
 
         return tiles.firstIndex {
-            guard
-                let tileData = $0["tile-data"] as? [String: Any],
-                let fileData = tileData["file-data"] as? [String: Any],
-                let urlString = fileData["_CFURLString"] as? String,
-                let url = URL(string: urlString),
-                url.isFileURL
-            else {
-                return false
-            }
-
-            return Self.normalized(url) == target
+            Self.fileURL(of: $0)?.deletingLastPathComponent().path(percentEncoded: false) == target
         }
     }
 }
@@ -226,10 +236,26 @@ extension DockPreferences {
 
 extension DockPreferences {
     /// 把 stub 的 URL 统一成以 `/` 结尾的标准文件 URL，与 Dock 写出的格式一致
-    static func normalized(_ url: URL) -> URL {
+    private static func normalized(_ url: URL) -> URL {
         URL(
             filePath: url.standardizedFileURL.path(percentEncoded: false),
             directoryHint: .isDirectory
         )
+    }
+
+    /// 条目记录的文件 URL，经过标准化；缺失或不是文件 URL 时为 nil
+    private static func fileURL(of tile: [String: Any]) -> URL? {
+        let tileData = tile["tile-data"] as? [String: Any]
+        let fileData = tileData?["file-data"] as? [String: Any]
+
+        guard
+            let urlString = fileData?["_CFURLString"] as? String,
+            let url = URL(string: urlString),
+            url.isFileURL
+        else {
+            return nil
+        }
+
+        return normalized(url)
     }
 }

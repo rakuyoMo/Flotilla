@@ -18,9 +18,9 @@ else {
     exit(EXIT_FAILURE)
 }
 
-#warning("TODO: 解锁后实测点击 tile 时 Dock 是否弹跳、前台 App 是否保持前台")
-
 /// 打开 URL 的配置：不激活 URL 的处理者，点击 tile 前的前台 App 保持前台
+///
+/// 实测（macOS 27）stub 是 `LSBackgroundOnly` 的后台 App，点击 tile 时 Dock 不弹跳、不显示运行指示灯
 let configuration = NSWorkspace.OpenConfiguration()
 configuration.activates = false
 

@@ -39,14 +39,20 @@ final class AppDelegate: NSObject {
 // MARK: NSApplicationDelegate
 
 extension AppDelegate: NSApplicationDelegate {
-    /// 搭好主菜单与状态栏，把当前这份 App 注册为 `flotilla` scheme 的处理者，并开始同步 Dock tile、监听 tile 的点击
+    /// 开始同步 Dock tile、监听 tile 的点击
+    ///
+    /// 被 stub 拉起时，AppKit 在 `applicationDidFinishLaunching` 之前就送来 URL，面板必须在此之前就绪
+    func applicationWillFinishLaunching(_: Notification) {
+        startDockIntegration()
+    }
+
+    /// 搭好主菜单与状态栏，把当前这份 App 注册为 `flotilla` scheme 的处理者
     func applicationDidFinishLaunching(_: Notification) {
         NSApp.mainMenu = makeMainMenu()
         statusBarController = StatusBarController(
             settingsWindowController: SettingsWindowController()
         )
         registerAsURLHandler()
-        startDockIntegration()
     }
 
     /// 把 `flotilla://folder/<uuid>` 交给面板处理；整个过程不激活 Flotilla
