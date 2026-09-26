@@ -24,20 +24,20 @@ final class DockPreferencesTests {
     /// 本用例的 stub 位置，路径里带空格，检验 URL 编码与标准化
     private let tileURL: URL
 
-    /// 用户自己的“下载”文件夹 tile，带有 Dock 补全的字段
-    private let downloadsTile: [String: Any] = [
+    /// 用户自己的“计算器” tile，带有 Dock 补全的字段
+    private let calculatorTile: [String: Any] = [
         "GUID": 685_773_939,
         "tile-data": [
-            "arrangement": 2,
             "book": Data([1, 2, 3]),
+            "bundle-identifier": "com.apple.calculator",
             "file-data": [
-                "_CFURLString": "file:///Users/test/Downloads/",
+                "_CFURLString": "file:///System/Applications/Calculator.app/",
                 "_CFURLStringType": 15,
             ],
-            "file-label": "下载",
-            "file-type": 2,
+            "file-label": "计算器",
+            "file-type": 41,
         ],
-        "tile-type": "directory-tile",
+        "tile-type": "file-tile",
     ]
 
     /// 创建指向临时域与临时备份目录的被测对象
@@ -81,7 +81,7 @@ final class DockPreferencesTests {
     /// 新 tile 追加在末尾，已有的 tile 原样保留；GUID 是 32 位正整数
     @Test
     func addAppendsAfterExistingTiles() throws {
-        defaults.set([downloadsTile], forKey: "persistent-others")
+        defaults.set([calculatorTile], forKey: "persistent-apps")
 
         try preferences.add(tileURL: tileURL, label: "工作")
 
@@ -89,7 +89,7 @@ final class DockPreferencesTests {
         let guid = try #require(tiles.last?["GUID"] as? Int)
 
         #expect(tiles.count == 2)
-        #expect(try plistData(tiles[0]) == plistData(downloadsTile))
+        #expect(try plistData(tiles[0]) == plistData(calculatorTile))
         #expect((1 ... Int(UInt32.max)).contains(guid))
         #expect(label(of: tiles[1]) == "工作")
     }
@@ -109,7 +109,7 @@ final class DockPreferencesTests {
     /// 改名时条目原地替换：位置不变，Dock 补全的字段保留
     @Test
     func updateLabelReplacesInPlace() throws {
-        defaults.set([downloadsTile], forKey: "persistent-others")
+        defaults.set([calculatorTile], forKey: "persistent-apps")
         try preferences.add(tileURL: tileURL, label: "工作")
 
         // 模拟 Dock 重启后补全字段，并在我们的 tile 后面还有用户的 tile
@@ -117,8 +117,8 @@ final class DockPreferencesTests {
         var ownTileData = try #require(tiles[1]["tile-data"] as? [String: Any])
         ownTileData["book"] = Data([9, 9])
         tiles[1]["tile-data"] = ownTileData
-        tiles.append(downloadsTile)
-        defaults.set(tiles, forKey: "persistent-others")
+        tiles.append(calculatorTile)
+        defaults.set(tiles, forKey: "persistent-apps")
 
         #expect(try preferences.updateLabel(tileURL: tileURL, label: "日常"))
         #expect(try !preferences.updateLabel(tileURL: tileURL, label: "日常"))
@@ -129,18 +129,18 @@ final class DockPreferencesTests {
         #expect(updated.count == 3)
         #expect(label(of: updated[1]) == "日常")
         #expect(updatedTileData["book"] as? Data == Data([9, 9]))
-        #expect(label(of: updated[0]) == "下载")
-        #expect(label(of: updated[2]) == "下载")
+        #expect(label(of: updated[0]) == "计算器")
+        #expect(label(of: updated[2]) == "计算器")
     }
 
     /// 删除只按 URL 匹配：与 Flotilla 的 tile 同名的用户 tile 不受影响
     @Test
     func removeDeletesOnlyMatchingTile() throws {
-        var namesake = downloadsTile
+        var namesake = calculatorTile
         var namesakeData = try #require(namesake["tile-data"] as? [String: Any])
         namesakeData["file-label"] = "工作"
         namesake["tile-data"] = namesakeData
-        defaults.set([namesake], forKey: "persistent-others")
+        defaults.set([namesake], forKey: "persistent-apps")
 
         try preferences.add(tileURL: tileURL, label: "工作")
 
@@ -156,7 +156,7 @@ final class DockPreferencesTests {
     /// 首次写入前导出改动前的整个域，同一次运行里只备份一次
     @Test
     func firstWriteBacksUpOriginalDomain() throws {
-        defaults.set([downloadsTile], forKey: "persistent-others")
+        defaults.set([calculatorTile], forKey: "persistent-apps")
         defaults.set(true, forKey: "autohide")
 
         try preferences.add(tileURL: tileURL, label: "工作")
@@ -169,7 +169,7 @@ final class DockPreferencesTests {
             format: nil
         )
         let domain = try #require(backup as? [String: Any])
-        let tiles = try #require(domain["persistent-others"] as? [[String: Any]])
+        let tiles = try #require(domain["persistent-apps"] as? [[String: Any]])
 
         #expect(backups.count == 1)
         #expect(backupURL.lastPathComponent.wholeMatch(of: /com\.apple\.dock-\d{8}-\d{6}\.plist/) != nil)
@@ -200,7 +200,7 @@ final class DockPreferencesTests {
 
     /// 读出测试域里的全部条目
     private func storedTiles() -> [[String: Any]] {
-        defaults.array(forKey: "persistent-others") as? [[String: Any]] ?? []
+        defaults.array(forKey: "persistent-apps") as? [[String: Any]] ?? []
     }
 
     /// 条目的名称

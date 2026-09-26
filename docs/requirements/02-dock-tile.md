@@ -33,7 +33,7 @@
 
 - 读写域 `com.apple.dock`（`UserDefaults(suiteName:)`），条目字段沿用 Dock 自己写出的结构。
 - 备份：首次写入前把当前全部内容导出到 `~/Library/Application Support/Flotilla/Backups/com.apple.dock-<yyyyMMdd-HHmmss>.plist`，最多保留 5 份。
-- 放置区域：优先 `persistent-others`（与原生文件夹同一区域，`tile-type = file-tile`）。实测 Dock 是否接受：重启 Dock 后 tile 仍在该区域、点击能启动 stub、图标与名称正确。不接受则放 `persistent-apps`。结论写成一句注释。
+- 放置区域：`persistent-apps`，即 Dock 左侧的 App 区域（`tile-type = file-tile`）；新 tile 追加在该区域末尾。
 - 条目字段对照本机 Dock 已有 App 条目：`GUID`（随机 32 位正整数）、`tile-data.file-data._CFURLString`（stub 的 `file://` URL，以 `/` 结尾）、`tile-data.file-data._CFURLStringType = 15`、`tile-data.file-label` = 文件夹名、`tile-data.file-type`（对照实测取值）、`tile-type = file-tile`。不写 `book`，由 Dock 自行生成。
 - API：`contains(tileURL:)`、`add(tileURL:label:)`、`remove(tileURL:)`、`updateLabel(tileURL:label:)`、`restartDock()`。
 - 匹配 tile 只按标准化后的 URL，不按名称。
@@ -63,7 +63,7 @@
 
 ## 验收
 
-- 新建根文件夹后 Dock 出现 tile，图标含 App 预览；修改预览数量后图标更新；重命名后 tile 名更新；删除后 tile 消失
+- 新建根文件夹后 Dock 左侧的 App 区域出现 tile，图标含 App 预览；修改预览数量后图标更新；重命名后 tile 名更新；删除后 tile 消失
 - 点击 tile 后 Flotilla 日志出现对应 id
 - 前后导出 Dock 偏好比对，除 Flotilla 的 tile 外没有其它改动
 - 测试用的文件夹与 tile 全部清理干净

@@ -15,10 +15,10 @@ final class DockPreferences {
     nonisolated static let defaultBackupDirectory = URL.applicationSupportDirectory
         .appending(path: "Flotilla/Backups", directoryHint: .isDirectory)
 
-    #warning("TODO: 解锁后实测 persistent-others 中的 tile 点击能启动 stub，图标与名称显示正确")
+    #warning("TODO: 实测 persistent-apps 中的 tile 点击能启动 stub，图标与名称显示正确")
 
-    /// tile 所在的区域：实测 Dock 接受放在右侧区域的 App tile，重启后条目仍在该区域，并由 Dock 补全 `book`、`bundle-identifier` 等字段
-    private static let sectionKey = "persistent-others"
+    /// tile 所在的区域：Dock 左侧的 App 区域
+    private static let sectionKey = "persistent-apps"
 
     /// 备份最多保留的份数
     private static let maximumBackupCount = 5
