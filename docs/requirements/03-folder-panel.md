@@ -33,7 +33,9 @@
 - 输入根文件夹 id，通过 `DockTileBundleBuilder.bundleURL(for:)` 得到 stub URL，在 Dock 进程的 AX 树里找 `AXURL` 与之相同（标准化后比较）的 tile。
 - 输出 `DockTileAnchor`：tile 在 AppKit 屏幕坐标系里的 frame、Dock 所贴的屏幕边（下、左、右）、所在的 `NSScreen`。AX 给出的坐标以主屏左上角为原点、y 向下，必须换算。
 - 权限：第一次需要时用 `AXIsProcessTrustedWithOptions` 带提示地请求，每次启动最多提示一次。
-- 退化：无权限或找不到 tile 时，锚点取鼠标当前位置在 Dock 方向上的投影：Dock 在底部时 x 取鼠标 x、y 取 Dock 窗口顶边。Dock 窗口的 frame 取 `CGWindowListCopyWindowInfo` 里 owner 为 Dock、贴着屏幕边缘的窗口，Dock 方向也由此判断；这个 frame 同时用于判断一次点击是否落在 Dock 区域。
+- Dock 方向取自 Dock 偏好（`com.apple.dock`）的 `orientation`，缺省为底部。
+- Dock 区域：实测（macOS 27）Dock 进程在 Dock 层级只有一个铺满整个屏幕的窗口，`CGWindowListCopyWindowInfo` 给不出 Dock 的范围，无权限时又读不到 AX。因此按 Dock 偏好估算：沿 Dock 所贴的屏幕边、厚度为 `tilesize` + 30 pt 的条带（`tilesize` 为 64 时，AX 实测 Dock 列表 `AXList` 朝屏幕内侧的边距屏幕边缘 94 pt）。这个区域用于判断一次点击是否落在 Dock 区域。
+- 退化：无权限或找不到 tile 时，锚点取鼠标当前位置在 Dock 方向上的投影：Dock 在底部时 x 取鼠标 x、y 取上述 Dock 区域的顶边。实测开启自动隐藏时，Dock 重启后到第一次显示之前，AX 给出的所有 tile frame 都是宽度为 0 的无效值（`(0, -6, 0, 16)`），同样按找不到 tile 处理。
 - 放大开启时，点击瞬间 tile 处于放大状态，鼠标离开 Dock 后 tile 缩回、中心移动。尾巴对准哪里以实测原生为准。
 
 ## 点击信号
