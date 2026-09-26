@@ -53,6 +53,7 @@ Flotilla 通过辅助功能读取 Dock 的界面信息，用来：
 
 - 第一次点击 tile 时系统会弹出授权提示，每次启动 Flotilla 最多提示一次
 - 也可以在设置窗口的“辅助功能权限”一行点击“打开系统设置”，在“隐私与安全性 › 辅助功能”里打开 Flotilla
+  - macOS 27 里这一页是“隐私与安全 › 设备控制和数据访问”
   - 这一行会显示当前是否已授权
 
 自行打包的 Flotilla 使用 ad-hoc 签名，重新打包后原来的授权可能失效，需要重新授权。
@@ -78,6 +79,7 @@ Dock 上的 tile 是通过修改 Dock 偏好（`com.apple.dock`）加上去的�
    - `Backups/`：Dock 偏好的备份
 4. 删除设置：`defaults delete com.rakuyo.flotilla`
 5. 在“系统设置 › 隐私与安全性 › 辅助功能”里移除 Flotilla
+   - macOS 27 里这一页是“隐私与安全 › 设备控制和数据访问”
 6. 删除 Flotilla.app
 
 ## 构建

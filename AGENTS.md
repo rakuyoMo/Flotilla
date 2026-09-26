@@ -58,6 +58,7 @@ docs/requirements/      需求文档：00 为总览，01–04 为按实现顺序
 ### 辅助功能权限
 
 - 打包产物是 ad-hoc 签名，重新打包后原来的辅助功能授权可能失效，需要在“系统设置 › 隐私与安全性 › 辅助功能”里重新授权
+  - macOS 27 里这一页是“隐私与安全 › 设备控制和数据访问”
 - 从终端直接运行 `build/Flotilla.app/Contents/MacOS/Flotilla` 时，进程沿用终端的辅助功能授权
 - 用 `open build/Flotilla.app` 启动时按 Flotilla 自己的授权判定；没有授权时，第一次点击 tile 会弹出授权提示
 - 两种启动方式可以分别用来验证有权限、无权限两条路径
