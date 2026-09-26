@@ -7,8 +7,11 @@ import Testing
 // MARK: - DockFolderPresenterStateTests
 
 /// 展开状态的迁移：同一次点击 tile 会先后经过快速路径与 URL 两条路径，必须只生效一次，
-/// 否则再次点击会变成“先收起再展开”，按下后拖动 tile 也会误展开
+/// 否则再次点击会变成“先收起再展开”；按下后拖动 tile、按住 tile 弹出 Dock 菜单也不能误展开
 struct DockFolderPresenterStateTests {
+    /// 一次普通点击从按下到抬起的时长
+    private static let clickDuration: TimeInterval = 0.1
+
     /// 根文件夹 A
     private let folderA = UUID()
 
@@ -25,8 +28,8 @@ struct DockFolderPresenterStateTests {
     func tileClickExpandsOnMouseUp() {
         var state = DockFolderPresenterState()
 
-        #expect(pressTile(folderA, in: &state) == .unchanged)
-        #expect(state.mouseUp(time: 0) == .expand(folderA))
+        #expect(pressTile(folderA, at: 0, in: &state) == .unchanged)
+        #expect(state.mouseUp(time: Self.clickDuration) == .expand(folderA))
         #expect(state.presentedFolderID == folderA)
     }
 
@@ -36,10 +39,10 @@ struct DockFolderPresenterStateTests {
         var state = DockFolderPresenterState()
         let farPoint = CGPoint(x: tilePoint.x + FolderPanelMetrics.dragThreshold + 1, y: tilePoint.y)
 
-        _ = pressTile(folderA, in: &state)
+        _ = pressTile(folderA, at: 0, in: &state)
 
-        #expect(state.mouseDragged(to: farPoint, time: 0) == .unchanged)
-        #expect(state.mouseUp(time: 0) == .unchanged)
+        #expect(state.mouseDragged(to: farPoint, time: 0.05) == .unchanged)
+        #expect(state.mouseUp(time: Self.clickDuration) == .unchanged)
         #expect(state.presentedFolderID == nil)
     }
 
@@ -49,10 +52,10 @@ struct DockFolderPresenterStateTests {
         var state = DockFolderPresenterState()
         let nearPoint = CGPoint(x: tilePoint.x + FolderPanelMetrics.dragThreshold, y: tilePoint.y)
 
-        _ = pressTile(folderA, in: &state)
+        _ = pressTile(folderA, at: 0, in: &state)
 
-        #expect(state.mouseDragged(to: nearPoint, time: 0) == .unchanged)
-        #expect(state.mouseUp(time: 0) == .expand(folderA))
+        #expect(state.mouseDragged(to: nearPoint, time: 0.05) == .unchanged)
+        #expect(state.mouseUp(time: Self.clickDuration) == .expand(folderA))
     }
 
     /// 展开时从另一个 tile 按下拖动：视同点击其它位置，收起面板
@@ -61,10 +64,10 @@ struct DockFolderPresenterStateTests {
         var state = DockFolderPresenterState()
         clickTile(folderA, at: 0, in: &state)
 
-        _ = pressTile(folderB, in: &state)
+        _ = pressTile(folderB, at: 5, in: &state)
 
-        #expect(state.mouseDragged(to: CGPoint(x: 900, y: 40), time: 1) == .collapse)
-        #expect(state.mouseUp(time: 1) == .unchanged)
+        #expect(state.mouseDragged(to: CGPoint(x: 900, y: 40), time: 5.05) == .collapse)
+        #expect(state.mouseUp(time: 5.1) == .unchanged)
     }
 
     /// 展开时再次点击同一 tile：按下时不动，抬起时收起，随后到达的 URL 不会再展开
@@ -73,8 +76,8 @@ struct DockFolderPresenterStateTests {
         var state = DockFolderPresenterState()
         clickTile(folderA, at: 0, in: &state)
 
-        #expect(pressTile(folderA, in: &state) == .unchanged)
-        #expect(state.mouseUp(time: 2) == .collapse)
+        #expect(pressTile(folderA, at: 2, in: &state) == .unchanged)
+        #expect(state.mouseUp(time: 2 + Self.clickDuration) == .collapse)
         #expect(state.receiveURL(folderID: folderA, time: 2.3) == .unchanged)
         #expect(state.presentedFolderID == nil)
     }
@@ -85,8 +88,8 @@ struct DockFolderPresenterStateTests {
         var state = DockFolderPresenterState()
         clickTile(folderA, at: 0, in: &state)
 
-        #expect(pressTile(folderB, in: &state) == .unchanged)
-        #expect(state.mouseUp(time: 2) == .expand(folderB))
+        #expect(pressTile(folderB, at: 2, in: &state) == .unchanged)
+        #expect(state.mouseUp(time: 2 + Self.clickDuration) == .expand(folderB))
         #expect(state.presentedFolderID == folderB)
     }
 
@@ -98,6 +101,55 @@ struct DockFolderPresenterStateTests {
 
         #expect(state.mouseDown(onTile: nil, at: .zero, isInDockArea: false, time: 1) == .collapse)
         #expect(state.mouseDown(onTile: nil, at: .zero, isInDockArea: false, time: 2) == .unchanged)
+    }
+
+    // MARK: 长按
+
+    /// 按住超过 Dock 弹出 App 菜单的时长后抬起：不算点击，不展开
+    @Test
+    func longPressDoesNotExpand() {
+        var state = DockFolderPresenterState()
+
+        _ = pressTile(folderA, at: 0, in: &state)
+
+        #expect(state.mouseUp(time: FolderPanelMetrics.longPressDuration + 0.1) == .unchanged)
+        #expect(state.presentedFolderID == nil)
+    }
+
+    /// 按住时长恰好等于阈值仍算点击：超过才不算
+    @Test
+    func pressUpToLongPressDurationStillClicks() {
+        var state = DockFolderPresenterState()
+
+        _ = pressTile(folderA, at: 0, in: &state)
+
+        #expect(state.mouseUp(time: FolderPanelMetrics.longPressDuration) == .expand(folderA))
+    }
+
+    /// 展开时长按同一 tile：视同点击其它位置而收起，随后到达的同一文件夹 URL 不会再展开
+    @Test
+    func longPressOnPresentedTileCollapses() {
+        var state = DockFolderPresenterState()
+        clickTile(folderA, at: 0, in: &state)
+
+        _ = pressTile(folderA, at: 5, in: &state)
+        let release = 5 + FolderPanelMetrics.longPressDuration + 0.1
+
+        #expect(state.mouseUp(time: release) == .collapse)
+        #expect(state.receiveURL(folderID: folderA, time: release + 0.3) == .unchanged)
+        #expect(state.presentedFolderID == nil)
+    }
+
+    /// 展开时长按另一个 tile：收起，不切换到那个文件夹
+    @Test
+    func longPressOnOtherTileCollapsesWithoutSwitching() {
+        var state = DockFolderPresenterState()
+        clickTile(folderA, at: 0, in: &state)
+
+        _ = pressTile(folderB, at: 5, in: &state)
+
+        #expect(state.mouseUp(time: 5 + FolderPanelMetrics.longPressDuration + 0.1) == .collapse)
+        #expect(state.presentedFolderID == nil)
     }
 
     // MARK: 两路信号合并
@@ -218,13 +270,21 @@ struct DockFolderPresenterStateTests {
 
 extension DockFolderPresenterStateTests {
     /// 在 tile 上按下（快速路径已识别出该 tile）
-    private func pressTile(_ folderID: UUID, in state: inout DockFolderPresenterState) -> DockFolderPresenterTransition {
-        state.mouseDown(onTile: folderID, at: tilePoint, isInDockArea: true, time: 0)
+    private func pressTile(
+        _ folderID: UUID,
+        at time: TimeInterval,
+        in state: inout DockFolderPresenterState
+    ) -> DockFolderPresenterTransition {
+        state.mouseDown(onTile: folderID, at: tilePoint, isInDockArea: true, time: time)
     }
 
-    /// 通过快速路径完整点击一次 tile
-    private func clickTile(_ folderID: UUID, at time: TimeInterval, in state: inout DockFolderPresenterState) {
-        _ = pressTile(folderID, in: &state)
+    /// 通过快速路径完整点击一次 tile，在 time 抬起
+    private func clickTile(
+        _ folderID: UUID,
+        at time: TimeInterval,
+        in state: inout DockFolderPresenterState
+    ) {
+        _ = pressTile(folderID, at: time - Self.clickDuration, in: &state)
         _ = state.mouseUp(time: time)
     }
 }

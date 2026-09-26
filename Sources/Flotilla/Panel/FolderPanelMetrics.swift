@@ -153,6 +153,8 @@ enum FolderPanelMetrics {
 
     // MARK: 点击
 
+    #warning("TODO: 待实测 dragThreshold 与 longPressDuration 为占位值：Dock 多大位移开始拖动 tile、按住多久弹出 App 菜单都未测出")
+
     /// 在 tile 上按下后，移动超过这个距离即视为拖动
     static let dragThreshold: CGFloat = 4
 

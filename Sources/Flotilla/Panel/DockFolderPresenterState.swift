@@ -7,16 +7,14 @@ import Foundation
 ///
 /// 同一次点击 tile 会先后经过快速路径与 URL 两条路径，这里负责让它只生效一次
 struct DockFolderPresenterState {
-    #warning("TODO: 待实测 原生弹窗在按下还是抬起时出现（当前为抬起），拖动阈值 dragThreshold，按住 tile 弹出 Dock 菜单后抬起的处理")
-
     /// 同一次点击的两路信号相互合并的时间窗（秒）
     static let signalMergeInterval: TimeInterval = 1
 
     /// 正在展示的根文件夹；nil 表示面板已收起
     private(set) var presentedFolderID: UUID? = nil
 
-    /// 快速路径识别出的、尚未抬起的 tile 按下
-    private var pendingPress: (folderID: UUID, location: CGPoint)? = nil
+    /// 快速路径识别出的、尚未抬起的 tile 按下，记下位置与时间，抬起时据此排除拖动与长按
+    private var pendingPress: (folderID: UUID, location: CGPoint, time: TimeInterval)? = nil
 
     /// 快速路径最近处理的一次 tile 点击，等待与随后到达的 URL 合并
     private var lastTileClick: (folderID: UUID, time: TimeInterval)? = nil
@@ -42,9 +40,9 @@ extension DockFolderPresenterState {
     ) -> DockFolderPresenterTransition {
         pendingPress = nil
 
-        // 按在 Flotilla 的 tile 上：等抬起时再判定，按下后拖动（调整 Dock 顺序）不展开
+        // 按在 Flotilla 的 tile 上：等抬起时再判定，按下后拖动（调整 Dock 顺序）或按住不放都不展开
         if let folderID {
-            pendingPress = (folderID, location)
+            pendingPress = (folderID, location, time)
             return .unchanged
         }
 
@@ -65,10 +63,18 @@ extension DockFolderPresenterState {
     }
 
     /// 左键抬起：完成一次 tile 点击，切换该文件夹的展开状态
+    ///
+    /// 按住超过 `longPressDuration` 时 Dock 已弹出 App 菜单，这次抬起不算点击，与拖动 tile 一样按点击其它位置收起
     mutating func mouseUp(time: TimeInterval) -> DockFolderPresenterTransition {
         guard let press = pendingPress else { return .unchanged }
 
         pendingPress = nil
+
+        // 按住太久：不展开；面板正展开时视同点击 Dock 上的其它位置而收起
+        guard time - press.time <= FolderPanelMetrics.longPressDuration else {
+            return dismissForOutsideClick(isInDockArea: true, time: time)
+        }
+
         lastTileClick = (press.folderID, time)
         return toggle(folderID: press.folderID)
     }
@@ -76,7 +82,11 @@ extension DockFolderPresenterState {
     /// stub 打开的 `flotilla://folder/<id>` 到达
     mutating func receiveURL(folderID: UUID, time: TimeInterval) -> DockFolderPresenterTransition {
         // 快速路径已处理过这次点击，随后到达的 URL 属于同一次点击
-        if let click = lastTileClick, click.folderID == folderID, time - click.time <= Self.signalMergeInterval {
+        if
+            let click = lastTileClick,
+            click.folderID == folderID,
+            time - click.time <= Self.signalMergeInterval
+        {
             lastTileClick = nil
             return .unchanged
         }
