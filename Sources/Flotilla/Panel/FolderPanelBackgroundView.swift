@@ -73,7 +73,8 @@ final class FolderPanelBackgroundView: NSView {
     /// 面板轮廓：主体是连续曲率的圆角矩形，面向 Dock 的边上长出尾巴，合成一条闭合路径
     ///
     /// 在“尾巴朝下”的标准坐标系里构造，再旋转到 Dock 所在的方向；
-    /// 尾巴底边的中点取尖端在这条边上的投影，并夹在两端圆角之间，尖端偏出时尾巴变斜，尖端仍对准 tile
+    /// 尾巴底边的中点取尖端在这条边上的投影，并夹在两端圆角之间，尖端偏出时尾巴变斜，尖端仍对准 tile；
+    /// tile 离屏幕边缘近到尾巴斜到极限时，尖端停在极限处
     /// - Parameters:
     ///   - bodyRect: 主体区域
     ///   - tailTip: 尾巴尖端，与 bodyRect 同一坐标系
@@ -285,8 +286,12 @@ extension FolderPanelBackgroundView {
         let margin = cornerLength + halfBase + filletRadius
         let center = min(max(tip.x, margin), max(margin, edgeLength - margin))
 
+        // 尖端最多偏到底边端点内侧半个尖端圆角处：再偏，尖端倒圆与根部内凹倒圆会在较短的斜边上重叠，轮廓折回
+        let reach = halfBase - tipRadius / 2
+        let apexX = min(max(tip.x, center - reach), center + reach)
+
         // 90° 尖角倒圆后，最低点比尖角高出 r(√2 - 1)，尖角因此要比 tip 再低这么多
-        let apex = CGPoint(x: tip.x, y: tip.y - tipRadius * (2.0.squareRoot() - 1))
+        let apex = CGPoint(x: apexX, y: tip.y - tipRadius * (2.0.squareRoot() - 1))
 
         path.addArc(
             tangent1End: CGPoint(x: center - halfBase, y: 0),

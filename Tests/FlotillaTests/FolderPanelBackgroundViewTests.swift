@@ -32,14 +32,35 @@ struct FolderPanelBackgroundViewTests {
         #expect(path.contains(insideTip))
     }
 
-    /// 尖端偏到主体一角之外：尾巴变斜，尖端仍在轮廓上
+    /// 尖端偏向主体一角（面板被屏幕边缘夹住）：尾巴变斜，尖端仍落在给定位置，主体不被挖缺
     @Test
     func skewedTailKeepsTipOnTile() {
-        let tip = CGPoint(x: body.minX + 2, y: body.minY - tailHeight)
+        let tip = CGPoint(x: body.minX + 50, y: body.minY - tailHeight)
 
         let path = FolderPanelBackgroundView.outlinePath(bodyRect: body, tailTip: tip, edge: .bottom)
 
         #expect(isClose(path.boundingBoxOfPath, body.union(CGRect(origin: tip, size: .zero))))
+        #expect(path.contains(CGPoint(x: tip.x, y: tip.y + 1)))
+        #expect(path.contains(CGPoint(x: tip.x, y: body.minY + 1)))
+    }
+
+    /// 尖端偏到尾巴斜不过去的位置（贴近屏幕边缘的 tile）：尾巴停在极限处，轮廓不折回，主体不被挖缺
+    @Test
+    func tailStopsAtSkewLimitNearCorner() {
+        let tip = CGPoint(x: body.minX + 10, y: body.minY - tailHeight)
+
+        let path = FolderPanelBackgroundView.outlinePath(bodyRect: body, tailTip: tip, edge: .bottom)
+        let box = path.boundingBoxOfPath
+
+        // 斜到极限的尾巴尖角更尖，倒圆后比给定尖端略浅，但仍伸向 tile
+        #expect(abs(box.minY - tip.y) < 1)
+        #expect(box.minX == body.minX)
+        #expect(!path.contains(CGPoint(x: tip.x, y: tip.y + 1)))
+
+        // 主体沿面向 Dock 的边完整，尾巴根部附近没有被挖掉的缺口
+        for x in stride(from: body.minX + 40, through: body.minX + 80, by: 2) {
+            #expect(path.contains(CGPoint(x: x, y: body.minY + 0.5)))
+        }
     }
 
     /// 点击穿透的判定：主体与尾巴之内接收点击；尾巴两侧、阴影留白、圆角之外都穿透
