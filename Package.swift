@@ -22,5 +22,10 @@ let package = Package(
                 "Info.plist",
             ]
         ),
+
+        .testTarget(
+            name: "FlotillaTests",
+            dependencies: ["Flotilla"]
+        ),
     ]
 )
