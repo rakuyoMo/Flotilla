@@ -159,11 +159,12 @@ enum FolderPanelMetrics {
 
     // MARK: 点击
 
-    #warning("TODO: 待实测 dragThreshold 与 longPressDuration 为占位值：Dock 多大位移开始拖动 tile、按住多久弹出 App 菜单都未测出")
+    /// 在 tile 上按下后，移动超过这个距离即视为拖动：与 Dock 一致，移动不超过 5 pt 时 Dock 仍按点击启动 stub
+    static let dragThreshold: CGFloat = 5
 
-    /// 在 tile 上按下后，移动超过这个距离即视为拖动
-    static let dragThreshold: CGFloat = 4
-
-    /// 按住 tile 超过这个时长（秒），Dock 会弹出 App 菜单，抬起不再算点击
-    static let longPressDuration: TimeInterval = 1
+    /// 按住 tile 超过这个时长（秒）抬起不算点击
+    ///
+    /// Dock 按住约 0.5 秒即判为长按、弹出 App 菜单，之后抬起不再启动 stub；
+    /// 取略小的值，落在两者之间的抬起由随后到达的 URL 按点击处理，Dock 弹出菜单时面板不会展开
+    static let longPressDuration: TimeInterval = 0.45
 }
