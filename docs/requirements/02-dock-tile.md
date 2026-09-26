@@ -18,6 +18,7 @@
   - `Contents/Resources/Icon.icns`
 - `Info.plist` 键：`CFBundleExecutable = FlotillaDockTile`、`CFBundleIdentifier = com.rakuyo.flotilla.tile.<id>`、`CFBundleName` 与 `CFBundleDisplayName` = 文件夹名、`CFBundleIconFile = Icon`、`CFBundlePackageType = APPL`、`CFBundleInfoDictionaryVersion = 6.0`、`LSMinimumSystemVersion = 15.0`、`LSUIElement = true`、`LSBackgroundOnly = true`、`FlotillaFolderID = <id>`
 - 每次生成或更新后执行 `/usr/bin/codesign --force --sign - <bundle>`。
+- 签名后再用 `NSWorkspace.setIcon(_:forFile:)` 把 `Icon.icns` 设为 bundle 的自定义图标：macOS 26 起，系统把 icns 形式的 App 图标装进灰色圆角底板（macOS 27 实测如此），自定义图标不受影响。自定义图标文件 `Icon\r` 位于 bundle 根目录，`codesign` 会拒绝为这样的 bundle 签名，因此每次改写前先清除；缺少自定义图标的 stub 视为残缺，重新生成。
 - API：`bundleURL(for folderID:)`、`write(folder:icon:)`、`remove(folderID:)`、`existingFolderIDs()`。
 - 只在内容确有变化时重写文件（名称比对 plist，图标比对渲染结果）。
 

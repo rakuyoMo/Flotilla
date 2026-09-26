@@ -44,7 +44,9 @@ Sources/Flotilla/       App 源码
   StatusBar/            状态栏图标与菜单
   Settings/             设置窗口
   Panel/                Dock 上展开的面板
+  Dock/                 stub 生成、Dock 偏好读写与 tile 同步
   Info.plist            App 包的 Info.plist，不参与编译，由打包脚本拷入 .app
+Sources/FlotillaDockTile/  Dock tile 的 stub 可执行文件，由打包脚本拷入 .app
 Tests/FlotillaTests/    单元测试（Swift Testing）
 Scripts/bundle.sh       打包脚本：组装 .app 并签名
 ```
