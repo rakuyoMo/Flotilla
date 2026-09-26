@@ -98,9 +98,9 @@ final class FolderPanelBackgroundView: NSView {
 
         let radius = min(
             FolderPanelMetrics.cornerRadius,
-            min(length, depth) / 2 / Self.cornerExtent
+            min(length, depth) / 2 / ContinuousCorner.extent
         )
-        let cornerLength = radius * Self.cornerExtent
+        let cornerLength = radius * ContinuousCorner.extent
 
         let path = CGMutablePath()
         path.move(to: CGPoint(x: cornerLength, y: 0))
@@ -108,7 +108,13 @@ final class FolderPanelBackgroundView: NSView {
         addTail(to: path, tip: canonicalTip, edgeLength: length, cornerLength: cornerLength)
         path.addLine(to: CGPoint(x: length - cornerLength, y: 0))
 
-        addBodyCorners(to: path, length: length, depth: depth, radius: radius)
+        // 从面向 Dock 的边的右端起，依次绕过主体的四个角，回到这条边的左端
+        ContinuousCorner.addCorners(
+            to: path,
+            in: CGRect(x: 0, y: 0, width: length, height: depth),
+            radius: radius
+        )
+
         path.closeSubpath()
 
         return path.copy(using: &transform) ?? path
@@ -242,29 +248,6 @@ extension FolderPanelBackgroundView {
 // MARK: - Helpers
 
 extension FolderPanelBackgroundView {
-    /// 连续曲率圆角沿每条边占用的长度与半径之比
-    private static let cornerExtent: CGFloat = 1.528_664_83
-
-    /// 连续曲率圆角的三段三次贝塞尔曲线：每段是（终点、控制点 1、控制点 2），
-    /// 每个点写成（沿来路往回的距离，沿去路的距离），单位为半径
-    private static let cornerCurves: [(CGVector, CGVector, CGVector)] = [
-        (
-            CGVector(dx: 0.669_934_27, dy: 0.065_496),
-            CGVector(dx: 1.088_493_23, dy: 0),
-            CGVector(dx: 0.868_406_89, dy: 0)
-        ),
-        (
-            CGVector(dx: 0.065_495_69, dy: 0.669_934_93),
-            CGVector(dx: 0.372_824_16, dy: 0.193_830_71),
-            CGVector(dx: 0.193_831_2, dy: 0.372_823_59)
-        ),
-        (
-            CGVector(dx: 0, dy: 1.528_664_71),
-            CGVector(dx: 0, dy: 0.868_407_11),
-            CGVector(dx: 0, dy: 1.088_493_23)
-        ),
-    ]
-
     /// 从“尾巴朝下”的标准坐标系到 bodyRect 所在坐标系的变换
     ///
     /// 标准坐标系里主体占据 `[0, length] × [0, depth]`，面向 Dock 的边在 y = 0，尾巴朝 y 负方向
@@ -339,67 +322,6 @@ extension FolderPanelBackgroundView {
             tangent2End: CGPoint(x: edgeLength, y: 0),
             radius: filletRadius
         )
-    }
-
-    /// 从面向 Dock 的边的右端起，逆时针依次绕过右下、右上、左上、左下四个角，回到这条边的左端
-    private static func addBodyCorners(
-        to path: CGMutablePath,
-        length: CGFloat,
-        depth: CGFloat,
-        radius: CGFloat
-    ) {
-        let cornerLength = radius * cornerExtent
-
-        // 每个角是（角点、来路方向、去路方向）
-        let corners = [
-            (CGPoint(x: length, y: 0), CGVector(dx: 1, dy: 0), CGVector(dx: 0, dy: 1)),
-            (CGPoint(x: length, y: depth), CGVector(dx: 0, dy: 1), CGVector(dx: -1, dy: 0)),
-            (CGPoint(x: 0, y: depth), CGVector(dx: -1, dy: 0), CGVector(dx: 0, dy: -1)),
-            (CGPoint.zero, CGVector(dx: 0, dy: -1), CGVector(dx: 1, dy: 0)),
-        ]
-
-        for (index, (corner, incoming, outgoing)) in corners.enumerated() {
-            addContinuousCorner(
-                to: path,
-                at: corner,
-                incoming: incoming,
-                outgoing: outgoing,
-                radius: radius
-            )
-
-            // 每个角之后沿下一条边走到下一个角的起点；最后一个角回到起点
-            guard index < corners.count - 1 else { break }
-
-            let next = corners[index + 1]
-            path.addLine(to: CGPoint(
-                x: next.0.x - next.1.dx * cornerLength,
-                y: next.0.y - next.1.dy * cornerLength
-            ))
-        }
-    }
-
-    /// 添加一个连续曲率的圆角：当前点位于 corner 沿来路往回 `cornerExtent × radius` 处，结束于沿去路同样距离处
-    private static func addContinuousCorner(
-        to path: CGMutablePath,
-        at corner: CGPoint,
-        incoming: CGVector,
-        outgoing: CGVector,
-        radius: CGFloat
-    ) {
-        let point = { (vector: CGVector) in
-            CGPoint(
-                x: corner.x - incoming.dx * vector.dx * radius + outgoing.dx * vector.dy * radius,
-                y: corner.y - incoming.dy * vector.dx * radius + outgoing.dy * vector.dy * radius
-            )
-        }
-
-        for (end, control1, control2) in cornerCurves {
-            path.addCurve(
-                to: point(end),
-                control1: point(control1),
-                control2: point(control2)
-            )
-        }
     }
 
     /// 创建材质视图：macOS 26 起用玻璃，此前用 popover 材质
