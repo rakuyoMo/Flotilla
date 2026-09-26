@@ -56,7 +56,7 @@ final class FolderGridItemView: NSView {
         // 名称只显示一行，过长时在中间省略
         titleField.stringValue = title
         titleField.font = .systemFont(ofSize: FolderPanelMetrics.titleFontSize)
-        titleField.textColor = .white
+        titleField.textColor = FolderPanelAppearance.dynamicTextColor
         titleField.alignment = .center
         titleField.usesSingleLineMode = true
         titleField.lineBreakMode = .byTruncatingMiddle

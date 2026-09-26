@@ -42,9 +42,6 @@ enum FolderPanelMetrics {
     /// 展开、收起的缩放锚点（tile 图标中心）从尾巴尖端向 Dock 内的距离
     static let anchorDepth: CGFloat = 35
 
-    /// 阴影的不透明度
-    static let shadowOpacity: Float = 0.17
-
     /// 阴影的模糊半径：原生阴影拟合为 σ ≈ 18 pt 的高斯模糊，屏上实测 `shadowRadius` 约等于 σ
     static let shadowRadius: CGFloat = 18
 
@@ -53,15 +50,6 @@ enum FolderPanelMetrics {
 
     /// 窗口在面板轮廓之外为阴影留出的距离
     static let shadowMargin: CGFloat = 60
-
-    /// 边缘暗线的不透明度（竖直边上最强）：灰度 128 的背景上读数约 50
-    static let edgeShadeOpacity: CGFloat = 0.57
-
-    /// 边缘亮线的不透明度（水平边上最强）：灰度 128 的背景上读数约 157
-    static let edgeHighlightOpacity: CGFloat = 0.3
-
-    /// 亮线内侧再一像素的亮线的不透明度：灰度 128 的背景上读数约 139
-    static let edgeInnerHighlightOpacity: CGFloat = 0.17
 
     // MARK: 网格
 
@@ -117,12 +105,6 @@ enum FolderPanelMetrics {
 
     /// 返回按钮的圆角半径
     static let backButtonCornerRadius: CGFloat = 5
-
-    /// 返回按钮底色（白色）的不透明度
-    static let backButtonOpacity: CGFloat = 0.42
-
-    /// 按下时返回按钮底色的不透明度
-    static let backButtonPressedOpacity: CGFloat = 0.61
 
     /// 返回按钮里 chevron 的高度
     static let backChevronHeight: CGFloat = 7

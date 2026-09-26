@@ -9,7 +9,7 @@ import QuartzCore
 /// 视图四周比轮廓多出 `shadowMargin`，留给阴影
 @MainActor
 final class FolderPanelBackgroundView: NSView {
-    #warning("TODO: 未能实测 浅色外观下原生弹窗的外观，面板固定深色外观；macOS 15 的 popover 材质")
+    #warning("TODO: 未能实测 macOS 15 的 popover 材质")
 
     /// 放置标题区与网格的视图，frame 即面板主体
     let bodyView = NSView()
@@ -32,11 +32,11 @@ final class FolderPanelBackgroundView: NSView {
     /// 轮廓外侧的暗线，竖直边上最强
     private let shadeLayer = CAShapeLayer()
 
-    /// 轮廓内侧的亮线，水平边上最强
-    private let highlightLayer = CAShapeLayer()
+    /// 水平边外侧的暗线，只有浅色外观有
+    private let horizontalShadeLayer = CAShapeLayer()
 
-    /// 亮线再往内一像素的一道较弱的亮线，同样集中在水平边
-    private let innerHighlightLayer = CAShapeLayer()
+    /// 轮廓内侧自外向内的几道 1 像素亮线，集中在水平边，外面的更亮
+    private let highlightLayers = [CAShapeLayer(), CAShapeLayer(), CAShapeLayer()]
 
     /// 创建一个层级的背景
     /// - Parameters:
@@ -132,6 +132,13 @@ final class FolderPanelBackgroundView: NSView {
 
         updateEdges()
     }
+
+    /// 系统外观变化时，边缘线与阴影换成对应外观的深浅
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+
+        updateColors()
+    }
 }
 
 // MARK: - Private
@@ -142,7 +149,6 @@ extension FolderPanelBackgroundView {
         shadowLayer.frame = bounds
         shadowLayer.shadowPath = outline
         shadowLayer.shadowColor = NSColor.black.cgColor
-        shadowLayer.shadowOpacity = FolderPanelMetrics.shadowOpacity
         shadowLayer.shadowRadius = FolderPanelMetrics.shadowRadius
         shadowLayer.shadowOffset = CGSize(width: 0, height: -FolderPanelMetrics.shadowOffset)
 
@@ -160,35 +166,42 @@ extension FolderPanelBackgroundView {
         shadowView.layer?.addSublayer(shadowLayer)
     }
 
-    /// 边缘线：暗线在轮廓外侧，两道亮线在轮廓内侧，外面一道更亮
+    /// 边缘线：暗线在轮廓外侧，亮线在轮廓内侧，自外向内逐道变弱
     private func buildEdges(in bounds: CGRect) {
-        shadeLayer.fillColor = NSColor(
-            white: 0,
-            alpha: FolderPanelMetrics.edgeShadeOpacity
-        ).cgColor
-
-        highlightLayer.fillColor = NSColor(
-            white: 1,
-            alpha: FolderPanelMetrics.edgeHighlightOpacity
-        ).cgColor
-
-        innerHighlightLayer.fillColor = NSColor(
-            white: 1,
-            alpha: FolderPanelMetrics.edgeInnerHighlightOpacity
-        ).cgColor
-
-        for edgeLayer in [shadeLayer, highlightLayer, innerHighlightLayer] {
+        for edgeLayer in [shadeLayer, horizontalShadeLayer] + highlightLayers {
             edgeLayer.frame = bounds
             edgeView.layer?.addSublayer(edgeLayer)
         }
 
+        updateColors()
         updateEdges()
+    }
+
+    /// 按当前外观设置边缘线的颜色与阴影的深浅
+    private func updateColors() {
+        let appearance = FolderPanelAppearance(effectiveAppearance)
+
+        shadowLayer.shadowOpacity = appearance.shadowOpacity
+
+        shadeLayer.fillColor = NSColor(
+            white: 0,
+            alpha: appearance.edgeShadeOpacity
+        ).cgColor
+
+        horizontalShadeLayer.fillColor = NSColor(
+            white: 0,
+            alpha: appearance.horizontalEdgeShadeOpacity
+        ).cgColor
+
+        for (layer, opacity) in zip(highlightLayers, appearance.edgeHighlightOpacities) {
+            layer.fillColor = NSColor(white: 1, alpha: opacity).cgColor
+        }
     }
 
     /// 按当前像素密度计算边缘线的区域
     ///
     /// 轮廓左右各平移 1 像素后多出来的部分，宽度随边的朝向变化：竖直边上满 1 像素，水平边上为 0，暗线因此集中在竖直边；
-    /// 亮线同理取上下平移后缺掉的部分，集中在水平边；尾巴斜边两种兼有
+    /// 上下平移后多出来的部分同理集中在水平边；亮线取上下平移后缺掉的部分，同样集中在水平边；尾巴斜边几种兼有
     private func updateEdges() {
         let scale = window?.backingScaleFactor ?? 2
         let pixel = 1 / scale
@@ -207,12 +220,18 @@ extension FolderPanelBackgroundView {
             .union(shifted(pixel, 0))
             .subtracting(outline)
 
-        highlightLayer.path = outline.subtracting(core(1))
+        horizontalShadeLayer.path = shifted(0, -pixel)
+            .union(shifted(0, pixel))
+            .subtracting(outline)
 
-        // 第二道亮线紧贴第一道的内侧，同样宽 1 像素
-        innerHighlightLayer.path = core(1).subtracting(core(2))
+        // 第 n 道亮线是轮廓去掉水平边上 n - 1 像素与 n 像素之间的一圈，每道宽 1 像素，紧贴上一道的内侧
+        for (index, layer) in highlightLayers.enumerated() {
+            let outer = index == 0 ? outline : core(CGFloat(index))
 
-        for layer in [shadowLayer, shadeLayer, highlightLayer, innerHighlightLayer] {
+            layer.path = outer.subtracting(core(CGFloat(index + 1)))
+        }
+
+        for layer in [shadowLayer, shadeLayer, horizontalShadeLayer] + highlightLayers {
             layer.contentsScale = scale
         }
     }

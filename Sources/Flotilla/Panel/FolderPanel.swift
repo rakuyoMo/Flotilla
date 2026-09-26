@@ -15,16 +15,13 @@ final class FolderPanel: NSPanel {
         true
     }
 
-    /// 创建无边框、透明、固定深色外观、不激活 App 的面板
+    /// 创建无边框、透明、不激活 App 的面板；外观跟随系统
     init() {
         let styleMask: NSWindow.StyleMask = [.borderless, .nonactivatingPanel]
         super.init(contentRect: .zero, styleMask: styleMask, backing: .buffered, defer: true)
 
         isOpaque = false
         backgroundColor = .clear
-
-        // 面板的材质、边缘线、阴影与文字都按深色外观实测，固定深色外观让它们在浅色外观下同样成立
-        appearance = NSAppearance(named: .darkAqua)
 
         // 系统阴影边缘更深、衰减更快，与原生不符，阴影由每个层级自己画
         hasShadow = false

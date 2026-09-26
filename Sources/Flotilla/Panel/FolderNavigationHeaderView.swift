@@ -27,7 +27,7 @@ final class FolderNavigationHeaderView: NSView {
 
         titleField.stringValue = title
         titleField.font = .systemFont(ofSize: FolderPanelMetrics.headerTitleFontSize)
-        titleField.textColor = .white
+        titleField.textColor = FolderPanelAppearance.dynamicTextColor
         titleField.alignment = .center
         titleField.usesSingleLineMode = true
         titleField.lineBreakMode = .byTruncatingTail
