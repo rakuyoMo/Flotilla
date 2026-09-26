@@ -38,7 +38,7 @@
 - 签名后再用 `NSWorkspace.setIcon(_:forFile:)` 把 `Icon.icns` 设为 bundle 的自定义图标：macOS 26 起，系统把 icns 形式的 App 图标装进灰色圆角底板（macOS 27 实测如此），自定义图标不受影响。
   - 自定义图标文件 `Icon\r` 位于 bundle 根目录，`codesign` 会拒绝为这样的 bundle 签名，因此每次改写前先清除
   - 缺少自定义图标的 stub 视为残缺，重新生成
-- API：`bundleURL(for folder:)`、`existingBundleURL(for folderID:)`、`folderID(forBundleURL:)`、`write(folder:icon:)`、`remove(folderID:)`（连同 `<id>` 目录一起删除）、`existingFolderIDs()`。
+- API：`bundleURL(for folder:)`、`folderDirectory(for folderID:)`（stub 独占的 `<id>` 目录）、`existingBundleURL(for folderID:)`、`folderID(forBundleURL:)`、`write(folder:icon:)`、`remove(folderID:)`（连同 `<id>` 目录一起删除）、`existingFolderIDs()`。
 - 只在内容确有变化时重写文件（名称比对 plist，图标比对渲染结果）。
 
 ## `.icns` 写入（`Sources/Flotilla/Dock/IconFileWriter.swift`）
@@ -61,7 +61,7 @@
   - `tile-data.file-type`（对照实测取值）
   - `tile-type = file-tile`
   - 不写 `book`，由 Dock 自行生成
-- API：`contains(tileURL:)`、`add(tileURL:label:)`、`remove(tileURL:)`、`update(tileURL:label:isStubRewritten:)`、`restartDock()`。
+- API：`contains(tileURL:)`、`add(tileURL:label:)`、`remove(tileDirectory:)`、`update(tileURL:label:isStubRewritten:)`、`restartDock()`。
 - 匹配 tile 按标准化后 URL 的所在目录（即 stub 独占的 `<id>` 目录），不按名称：文件夹改名后 stub 的文件名变了，仍要找到原来的 tile。
 - 更新已有条目时原地替换，不删除再追加：Dock 里的排序是用户自己拖出来的，重启后必须保持。
   - stub 改名后 `_CFURLString` 换成新位置，并删掉 Dock 按旧位置生成的 `book`，由 Dock 重启后重新生成。
@@ -72,6 +72,7 @@
 
 - `start()` 在 `applicationWillFinishLaunching` 里调用：被 stub 拉起时，URL 事件先于 `applicationDidFinishLaunching` 送达，面板与同步器要在此之前就绪
   - 先做一次对账：每个根文件夹都有 stub 与 tile；多余的 stub 与 tile 删除
+    - tile 按 stub 独占的 `<id>` 目录匹配，stub bundle 已被用户删掉时同样删除条目
   - 再订阅 `FolderStore.didChangeNotification` 与 `Preferences.didChangeNotification`
 - 变更后合并处理（防抖 0.5 秒）：
   1. 重新渲染每个根文件夹的图标，按需更新 stub 的 icns 与 plist

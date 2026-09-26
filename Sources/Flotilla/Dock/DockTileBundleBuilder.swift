@@ -139,6 +139,13 @@ extension DockTileBundleBuilder {
             )
     }
 
+    /// 根文件夹的 stub 独占的目录：`<directory>/<id>`
+    ///
+    /// 目录名只取决于 id，不随文件夹改名变化；Dock 偏好按它匹配该根文件夹的 tile，stub 本身是否还在都不影响
+    func folderDirectory(for folderID: UUID) -> URL {
+        directory.appending(path: folderID.uuidString, directoryHint: .isDirectory)
+    }
+
     /// 根文件夹已有 stub 的位置；还没有生成时为 nil
     func existingBundleURL(for folderID: UUID) -> URL? {
         let urls = (try? FileManager.default.contentsOfDirectory(
@@ -181,11 +188,6 @@ extension DockTileBundleBuilder {
 // MARK: - Private
 
 extension DockTileBundleBuilder {
-    /// 根文件夹的 stub 独占的目录：`<directory>/<id>`
-    private func folderDirectory(for folderID: UUID) -> URL {
-        directory.appending(path: folderID.uuidString, directoryHint: .isDirectory)
-    }
-
     /// 重新签名，并把图标设为 bundle 的自定义图标
     ///
     /// macOS 26 起，系统把 icns 形式的 App 图标装进灰色圆角底板，bundle 的自定义图标不受影响，Dock 上才能显示文件夹原本的形状

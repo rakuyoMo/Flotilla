@@ -85,7 +85,7 @@ final class DockPreferences {
 extension DockPreferences {
     /// Dock 上是否已有该 stub 所属根文件夹的 tile，按 stub 所在的目录匹配
     func contains(tileURL: URL) -> Bool {
-        index(of: tileURL, in: tiles) != nil
+        index(ofDirectory: tileURL.deletingLastPathComponent(), in: tiles) != nil
     }
 }
 
@@ -106,12 +106,15 @@ extension DockPreferences {
         try save(tiles + [entry])
     }
 
-    /// 删除该 stub 所属根文件夹的 tile，按 stub 所在的目录匹配
+    /// 删除根文件夹的 tile：条目记录的 stub 位于该目录即匹配
+    ///
+    /// 只比对条目里记录的 URL，不访问磁盘：用户在访达里删掉了 stub bundle 时同样能删除
+    /// - Parameter tileDirectory: 根文件夹的 stub 独占的目录
     /// - Returns: 是否确实删除了条目
     @discardableResult
-    func remove(tileURL: URL) throws -> Bool {
+    func remove(tileDirectory: URL) throws -> Bool {
         var tiles = tiles
-        guard let index = index(of: tileURL, in: tiles) else { return false }
+        guard let index = index(ofDirectory: tileDirectory, in: tiles) else { return false }
 
         tiles.remove(at: index)
         try save(tiles)
@@ -133,7 +136,7 @@ extension DockPreferences {
     func update(tileURL: URL, label: String, isStubRewritten: Bool) throws -> Bool {
         var tiles = tiles
         guard
-            let index = index(of: tileURL, in: tiles),
+            let index = index(ofDirectory: tileURL.deletingLastPathComponent(), in: tiles),
             var tileData = tiles[index]["tile-data"] as? [String: Any]
         else {
             return false
@@ -246,20 +249,21 @@ extension DockPreferences {
         }
     }
 
-    /// 在条目中查找与该 stub 位于同一目录的 tile，不按名称匹配
+    /// 在条目中查找 stub 位于该目录的 tile，不按名称匹配
     ///
     /// 每个根文件夹的 stub 独占一个目录，文件夹改名时 stub 在目录里改名，按目录匹配才能找到改名前的 tile
-    private func index(of tileURL: URL, in tiles: [[String: Any]]) -> Int? {
-        let target = Self.normalized(tileURL)
-            .deletingLastPathComponent()
-            .path(percentEncoded: false)
+    /// - Parameters:
+    ///   - directory: 根文件夹的 stub 独占的目录
+    ///   - tiles: 区域内的条目
+    private func index(ofDirectory directory: URL, in tiles: [[String: Any]]) -> Int? {
+        let target = Self.normalized(directory).path(percentEncoded: false)
 
         return tiles.firstIndex {
-            let directory = Self.fileURL(of: $0)?
+            let tileDirectory = Self.fileURL(of: $0)?
                 .deletingLastPathComponent()
                 .path(percentEncoded: false)
 
-            return directory == target
+            return tileDirectory == target
         }
     }
 }

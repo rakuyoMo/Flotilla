@@ -153,11 +153,10 @@ extension DockTileSynchronizer {
 
         for folderID in folderIDs {
             do {
-                // tile 按 stub 的位置匹配，目录里已没有 stub bundle 时无从匹配，只删除残留的目录
-                if
-                    let tileURL = builder.existingBundleURL(for: folderID),
-                    try dockPreferences.remove(tileURL: tileURL)
-                {
+                // tile 按 stub 独占的目录匹配：用户在访达里删掉了 stub bundle 时，Dock 上失效的条目同样删除
+                let tileDirectory = builder.folderDirectory(for: folderID)
+
+                if try dockPreferences.remove(tileDirectory: tileDirectory) {
                     needsDockRestart = true
                 }
 

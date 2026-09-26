@@ -193,7 +193,7 @@ final class DockPreferencesTests {
         #expect(try plistData(updated[2]) == plistData(calculatorTile))
     }
 
-    /// 删除只按 URL 匹配：与 Flotilla 的 tile 同名的用户 tile 不受影响
+    /// 删除只按 stub 所在的目录匹配：与 Flotilla 的 tile 同名的用户 tile 不受影响
     @Test
     func removeDeletesOnlyMatchingTile() throws {
         var namesake = calculatorTile
@@ -205,13 +205,35 @@ final class DockPreferencesTests {
 
         try preferences.add(tileURL: tileURL, label: "工作")
 
-        #expect(try preferences.remove(tileURL: tileURL))
-        #expect(try !preferences.remove(tileURL: tileURL))
+        #expect(try preferences.remove(tileDirectory: stubDirectory))
+        #expect(try !preferences.remove(tileDirectory: stubDirectory))
 
         let tiles = storedTiles()
 
         #expect(tiles.count == 1)
         #expect(try plistData(tiles[0]) == plistData(namesake))
+    }
+
+    /// 用户在访达里删掉了 stub bundle、只剩下它的目录：按目录仍能删掉 Dock 上失效的条目，用户的 tile 一个字段都不变
+    @Test
+    func removeByDirectoryWithoutStubBundle() throws {
+        try addOwnTileBetweenUserTiles()
+
+        try FileManager.default.createDirectory(
+            at: stubDirectory,
+            withIntermediateDirectories: true
+        )
+
+        let stubPath = tileURL.path(percentEncoded: false)
+
+        #expect(!FileManager.default.fileExists(atPath: stubPath))
+        #expect(try preferences.remove(tileDirectory: stubDirectory))
+
+        let tiles = storedTiles()
+
+        #expect(tiles.count == 2)
+        #expect(try plistData(tiles[0]) == plistData(calculatorTile))
+        #expect(try plistData(tiles[1]) == plistData(calculatorTile))
     }
 
     /// 首次写入前导出改动前的整个域，同一次运行里只备份一次
