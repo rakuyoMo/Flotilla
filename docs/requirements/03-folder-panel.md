@@ -88,6 +88,7 @@
   - `hasShadow = false`（阴影按“外观”一节自绘）
   - `collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .transient, .ignoresCycle]`
   - `hidesOnDeactivate = false`，`isFloatingPanel = true`，`animationBehavior = .none`
+  - `appearance = NSAppearance(named: .darkAqua)`（见“外观”一节的“浅色外观”）
 - 可以成为 key window（接收 Esc），但绝不激活 Flotilla：显示用 `orderFrontRegardless()`，不得调用 `NSApp.activate`（需求 6）
 - 面板不是 key window 时，面板内的第一次点击也要生效（`acceptsFirstMouse`）
 - 全局只有一个面板实例，复用
@@ -114,7 +115,9 @@
   - 水平边以亮线为主，约 157，内侧再有一像素约 139
   - 尾巴斜边暗线与亮线兼有
   - `NSGlassEffectView` 本身不带这条线，需要自绘
-- 浅色外观：未能实测，本机为深色外观，测量不改动陛下的外观设置。
+- 浅色外观：面板固定深色外观（`NSAppearance(named: .darkAqua)`）。
+  - 材质、边缘线、阴影与文字都按深色外观实测，固定深色外观让它们在浅色外观下同样成立
+  - 浅色外观下原生弹窗的外观未能实测：本机为深色外观，测量不改动陛下的外观设置
 - 阴影：比系统窗口阴影更淡、更宽，并且偏向下方。
   - 同条件下 `NSPanel` 的系统阴影在边缘处更深（左右 12.5%、上 7%、下 19%），约 20 pt 内就衰减完，与原生不符
   - 原生阴影在白底上的变暗幅度：

@@ -9,7 +9,7 @@ import QuartzCore
 /// 视图四周比轮廓多出 `shadowMargin`，留给阴影
 @MainActor
 final class FolderPanelBackgroundView: NSView {
-    #warning("TODO: 未能实测 浅色外观下的材质、边缘线与阴影；macOS 15 的 popover 材质")
+    #warning("TODO: 未能实测 浅色外观下原生弹窗的外观，面板固定深色外观；macOS 15 的 popover 材质")
 
     /// 放置标题区与网格的视图，frame 即面板主体
     let bodyView = NSView()
