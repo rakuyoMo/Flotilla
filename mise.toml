@@ -1,0 +1,26 @@
+# ==========================================
+# 构建任务
+# ==========================================
+
+[tasks.build]
+description = "编译 debug 版本"
+run = "swift build"
+
+[tasks.bundle]
+description = "编译 release 版本，打包为 build/Flotilla.app 并 ad-hoc 签名"
+run = "./Scripts/bundle.sh"
+
+# ==========================================
+# swift 代码规范任务
+# ==========================================
+
+[tasks."swift:format"]
+description = "格式化 Swift 代码"
+
+# 只装 Command Line Tools 时，SwiftLint 默认找不到 sourcekitdInProc，需要显式指定工具链目录
+env = { TOOLCHAIN_DIR = "/Library/Developer/CommandLineTools" }
+run = "swift package --allow-writing-to-package-directory format"
+
+[tasks."swift:lint"]
+description = "检查 Swift 代码规范"
+run = "mise run swift:format --lint"

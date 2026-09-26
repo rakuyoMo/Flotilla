@@ -1,0 +1,8 @@
+# macOS
+.DS_Store
+
+# SwiftPM
+.build/
+
+# 打包产物
+build/
