@@ -38,7 +38,14 @@ Flotilla 是一个原生 macOS App：在 Dock 上增加“文件夹”，把多�
 
 ```
 Sources/Flotilla/       App 源码
+  Model/                文件夹数据模型与持久化
+  Preferences/          用户设置
+  Rendering/            文件夹图标渲染
+  StatusBar/            状态栏图标与菜单
+  Settings/             设置窗口
+  Panel/                Dock 上展开的面板
   Info.plist            App 包的 Info.plist，不参与编译，由打包脚本拷入 .app
+Tests/FlotillaTests/    单元测试（Swift Testing）
 Scripts/bundle.sh       打包脚本：组装 .app 并签名
 ```
 
