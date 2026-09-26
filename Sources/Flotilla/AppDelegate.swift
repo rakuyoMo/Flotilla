@@ -21,6 +21,9 @@ final class AppDelegate: NSObject {
     /// 让 Dock 上的 tile 与根文件夹保持一致；启动完成后创建
     private var dockTileSynchronizer: DockTileSynchronizer?
 
+    /// 面板的展开、收起与切换；启动完成后创建
+    private var dockFolderPresenter: DockFolderPresenter?
+
     /// 从 URL 中解析根文件夹 id，只接受 `flotilla://folder/<uuid>`
     static func folderID(from url: URL) -> UUID? {
         guard url.scheme == urlScheme, url.host() == "folder" else { return nil }
@@ -36,14 +39,14 @@ final class AppDelegate: NSObject {
 // MARK: NSApplicationDelegate
 
 extension AppDelegate: NSApplicationDelegate {
-    /// 搭好主菜单与状态栏，把当前这份 App 注册为 `flotilla` scheme 的处理者，并开始同步 Dock tile
+    /// 搭好主菜单与状态栏，把当前这份 App 注册为 `flotilla` scheme 的处理者，并开始同步 Dock tile、监听 tile 的点击
     func applicationDidFinishLaunching(_: Notification) {
         NSApp.mainMenu = makeMainMenu()
         statusBarController = StatusBarController(
             settingsWindowController: SettingsWindowController()
         )
         registerAsURLHandler()
-        startDockTileSynchronizer()
+        startDockIntegration()
     }
 
     /// 把 `flotilla://folder/<uuid>` 交给面板处理；整个过程不激活 Flotilla
@@ -54,7 +57,12 @@ extension AppDelegate: NSApplicationDelegate {
                 continue
             }
 
-            DockFolderPresenter.shared.toggle(folderID: folderID)
+            guard let dockFolderPresenter else {
+                Self.logger.error("面板不可用，忽略 URL：\(url.absoluteString, privacy: .public)")
+                continue
+            }
+
+            dockFolderPresenter.handleURLSignal(folderID: folderID)
         }
     }
 }
@@ -97,8 +105,8 @@ extension AppDelegate {
         return mainMenu
     }
 
-    /// 创建并启动 Dock tile 同步器；缺少 stub 可执行文件或无法读写 Dock 偏好时只记录日志
-    private func startDockTileSynchronizer() {
+    /// 创建 stub 生成器，据此启动 Dock tile 同步器与面板；缺少 stub 可执行文件时 Dock 上不会有 tile，两者都不启动
+    private func startDockIntegration() {
         let executableName = DockTileBundleBuilder.executableName
 
         // 打包脚本把 stub 可执行文件放在 Flotilla.app/Contents/MacOS 下
@@ -107,6 +115,24 @@ extension AppDelegate {
             return
         }
 
+        let builder = DockTileBundleBuilder(
+            directory: DockTileBundleBuilder.defaultDirectory,
+            executableURL: executableURL
+        )
+
+        startDockTileSynchronizer(builder: builder)
+
+        let presenter = DockFolderPresenter(
+            store: .shared,
+            preferences: .shared,
+            locator: DockTileLocator(builder: builder)
+        )
+        presenter.start()
+        dockFolderPresenter = presenter
+    }
+
+    /// 创建并启动 Dock tile 同步器；无法读写 Dock 偏好时只记录日志
+    private func startDockTileSynchronizer(builder: DockTileBundleBuilder) {
         guard
             let dockPreferences = DockPreferences(
                 domainName: DockPreferences.dockDomain,
@@ -120,10 +146,7 @@ extension AppDelegate {
         let synchronizer = DockTileSynchronizer(
             store: .shared,
             preferences: .shared,
-            builder: DockTileBundleBuilder(
-                directory: DockTileBundleBuilder.defaultDirectory,
-                executableURL: executableURL
-            ),
+            builder: builder,
             dockPreferences: dockPreferences
         )
         synchronizer.start()

@@ -226,7 +226,7 @@ extension DockPreferences {
 
 extension DockPreferences {
     /// 把 stub 的 URL 统一成以 `/` 结尾的标准文件 URL，与 Dock 写出的格式一致
-    private static func normalized(_ url: URL) -> URL {
+    static func normalized(_ url: URL) -> URL {
         URL(
             filePath: url.standardizedFileURL.path(percentEncoded: false),
             directoryHint: .isDirectory

@@ -1,24 +1,197 @@
-import Foundation
+import AppKit
 import os
 
 // MARK: - DockFolderPresenter
 
 /// 面板的展开、收起与切换，是 `flotilla://folder/<id>` URL 事件的最终接收者
+///
+/// 点击 tile 有两条路径：有辅助功能权限时，全局鼠标监听配合 AX 命中测试直接识别（快速路径）；
+/// 无论有无权限，stub 都会打开 URL（URL 路径）。两路信号与外部点击都交给 `DockFolderPresenterState` 归并
 @MainActor
-final class DockFolderPresenter {
-    /// App 唯一的面板调度者
-    static let shared = DockFolderPresenter()
-
+final class DockFolderPresenter: NSObject {
     /// 面板相关的日志
-    private static let logger = Logger(
-        subsystem: "com.rakuyo.flotilla",
-        category: "DockFolderPresenter"
-    )
+    private static let logger = Logger(subsystem: "com.rakuyo.flotilla", category: "DockFolderPresenter")
 
-    /// 切换根文件夹面板的展开状态
-    /// - Parameter folderID: 被点击的 Dock tile 所对应的根文件夹
-    func toggle(folderID: UUID) {
-        #warning("TODO: 面板由 03 阶段实现")
-        Self.logger.notice("收到切换请求：\(folderID.uuidString, privacy: .public)")
+    /// 文件夹树的唯一数据源
+    private let store: FolderStore
+
+    /// 定位 tile，并为快速路径做命中测试
+    private let locator: DockTileLocator
+
+    /// 全局唯一的面板
+    private let panelController: FolderPanelController
+
+    /// 展开状态与信号去重
+    private var state = DockFolderPresenterState()
+
+    /// 已安装的鼠标事件监听，保持引用以免被释放
+    private var eventMonitors: [Any] = []
+
+    /// 创建面板调度者
+    /// - Parameters:
+    ///   - store: 文件夹树的唯一数据源
+    ///   - preferences: 用户设置，决定子文件夹图标里的预览数量
+    ///   - locator: 定位 tile
+    init(store: FolderStore, preferences: Preferences, locator: DockTileLocator) {
+        self.store = store
+        self.locator = locator
+        panelController = FolderPanelController(store: store, preferences: preferences)
+
+        super.init()
+
+        panelController.dismissRequestHandler = { [weak self] in
+            self?.dismiss()
+        }
+    }
+
+    /// 开始监听鼠标点击、文件夹树与屏幕参数的变化
+    func start() {
+        installMouseMonitors()
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(folderStoreDidChange),
+            name: FolderStore.didChangeNotification,
+            object: store
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(dismiss),
+            name: NSApplication.didChangeScreenParametersNotification,
+            object: nil
+        )
+    }
+
+    /// URL 路径：stub 打开 `flotilla://folder/<id>` 后由 `AppDelegate` 转交；不是根文件夹的 id 一律忽略
+    func handleURLSignal(folderID: UUID) {
+        guard store.rootFolders.contains(where: { $0.id == folderID }) else {
+            Self.logger.notice("忽略不存在的根文件夹：\(folderID.uuidString, privacy: .public)")
+            return
+        }
+
+        apply(state.receiveURL(folderID: folderID, time: Self.now))
+    }
+}
+
+// MARK: - Event Handling
+
+extension DockFolderPresenter {
+    /// 收起面板：Esc、启动 App、屏幕参数变化、当前文件夹被删除
+    @objc
+    private func dismiss() {
+        apply(state.dismiss())
+    }
+
+    /// 文件夹树变化：展示中的文件夹仍在则重建网格并尽量保留当前层级，否则收起
+    @objc
+    private func folderStoreDidChange() {
+        guard state.presentedFolderID != nil, !panelController.reload() else { return }
+
+        dismiss()
+    }
+
+    /// 安装鼠标监听：全局监听收到发往其它 App（含 Dock、菜单栏）的点击，本地监听收到发往 Flotilla 自己窗口的点击
+    private func installMouseMonitors() {
+        let globalMask: NSEvent.EventTypeMask = [
+            .leftMouseDown,
+            .leftMouseDragged,
+            .leftMouseUp,
+            .rightMouseDown,
+            .otherMouseDown,
+        ]
+        let globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: globalMask) { [weak self] event in
+            self?.handleGlobalMouseEvent(event)
+        }
+
+        // 状态栏图标、设置窗口也是面板以外的位置；面板自己的点击交给面板处理
+        let localMask: NSEvent.EventTypeMask = [.leftMouseDown, .rightMouseDown, .otherMouseDown]
+        let localMonitor = NSEvent.addLocalMonitorForEvents(matching: localMask) { [weak self] event in
+            self?.handleLocalMouseDown(event)
+            return event
+        }
+
+        eventMonitors = [globalMonitor, localMonitor].compactMap(\.self)
+    }
+
+    /// 发往其它 App 的鼠标事件：左键按下时尝试识别 Flotilla 的 tile，其余按下都是面板以外的点击
+    private func handleGlobalMouseEvent(_ event: NSEvent) {
+        let location = NSEvent.mouseLocation
+        let time = Self.now
+
+        switch event.type {
+        // 按下：按住 Control 或 Command 的左键点击由 Dock 弹出菜单或在访达中显示，不启动 stub，不算点击 tile
+        case .leftMouseDown, .rightMouseDown, .otherMouseDown:
+            let isPlainLeftClick = event.type == .leftMouseDown
+                && event.modifierFlags.isDisjoint(with: [.control, .command])
+
+            let tileID = isPlainLeftClick
+                ? locator.folderID(at: location, among: store.rootFolders.map(\.id))
+                : nil
+
+            apply(state.mouseDown(
+                onTile: tileID,
+                at: location,
+                isInDockArea: isInDockAreaWhilePresenting(location),
+                time: time
+            ))
+
+        case .leftMouseDragged:
+            apply(state.mouseDragged(to: location, time: time))
+
+        case .leftMouseUp:
+            apply(state.mouseUp(time: time))
+
+        default:
+            break
+        }
+    }
+
+    /// 发往 Flotilla 自己窗口的按下：面板以外的都按外部点击处理
+    private func handleLocalMouseDown(_ event: NSEvent) {
+        guard event.window !== panelController.panel else { return }
+
+        apply(state.mouseDown(onTile: nil, at: NSEvent.mouseLocation, isInDockArea: false, time: Self.now))
+    }
+}
+
+// MARK: - Private
+
+extension DockFolderPresenter {
+    /// 当前时间：系统启动以来的秒数，与信号合并的时间窗比较
+    private static var now: TimeInterval {
+        ProcessInfo.processInfo.systemUptime
+    }
+
+    /// 把状态迁移落实到面板
+    private func apply(_ transition: DockFolderPresenterTransition) {
+        switch transition {
+        case .unchanged:
+            break
+
+        case .expand(let folderID):
+            expand(folderID)
+
+        case .collapse:
+            panelController.collapse()
+        }
+    }
+
+    /// 定位 tile 并展开；Dock 正在重启等原因定位不到时由定位器退化到鼠标位置，连屏幕都没有时放弃并同步状态
+    private func expand(_ folderID: UUID) {
+        guard
+            let folder = store.rootFolders.first(where: { $0.id == folderID }),
+            let anchor = locator.locate(folderID: folderID)
+        else {
+            Self.logger.error("无法展开根文件夹：\(folderID.uuidString, privacy: .public)")
+            dismiss()
+            return
+        }
+
+        panelController.expand(rootFolder: folder, anchor: anchor)
+    }
+
+    /// 面板展开时判断点击是否落在 Dock 区域；未展开时不需要，省去一次窗口列表查询
+    private func isInDockAreaWhilePresenting(_ location: CGPoint) -> Bool {
+        state.presentedFolderID != nil && locator.isInDockArea(location)
     }
 }
