@@ -414,6 +414,11 @@ extension FolderPanelController {
     }
 
     /// 转场结束后移除离开的层级，窗口收缩到剩下的层级
+    ///
+    /// 移除之前窗口一直是全部层级的并集，转场途中越出剩下层级范围的画面靠它才不被窗口边界裁掉，因此 delay 取整个转场的时长
+    /// - Parameters:
+    ///   - level: 离开的层级
+    ///   - delay: 转场的时长
     private func removeDepartingLevel(
         _ level: FolderPanelLevel,
         after delay: CFTimeInterval
@@ -657,7 +662,10 @@ extension FolderPanelController {
         removeDepartingLevel(level, after: FolderPanelMetrics.collapseDuration)
     }
 
-    /// 进入子文件夹时旧层级原地淡出、不缩放，结束后移除
+    /// 进入子文件夹时旧层级原地淡出、不缩放，等新层级展开结束再移除
+    ///
+    /// 新层级从旧层级里的子文件夹图标长出来，展开途中的画面落在图标与新层级之间，可能越出新层级的范围；
+    /// 旧层级留到展开结束，窗口保持两者的并集，这部分画面才不被窗口边界裁掉
     private func fadeOut(_ level: FolderPanelLevel) {
         guard let layer = level.view.layer else { return }
 
@@ -669,12 +677,12 @@ extension FolderPanelController {
             timing: CAMediaTimingFunction(name: .linear)
         )
 
-        // 结束后保持透明，直到层级被移除
+        // 淡出后保持透明，直到新层级展开结束、层级被移除
         animation.fillMode = .forwards
         animation.isRemovedOnCompletion = false
         layer.add(animation, forKey: "opacity")
 
-        removeDepartingLevel(level, after: FolderPanelMetrics.enterFadeOutDuration)
+        removeDepartingLevel(level, after: FolderPanelMetrics.expandDuration)
     }
 
     /// 返回上一层时父层级原地淡入、不缩放
