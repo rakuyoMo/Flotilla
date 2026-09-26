@@ -80,7 +80,7 @@
 
 ## 信号链路验证
 
-- 点击 tile：stub 被启动，Flotilla 收到 URL，`DockFolderPresenter.toggle` 的日志里出现对应 id。
+- 点击 tile：stub 被启动，Flotilla 收到 URL，`DockFolderPresenter` 收到对应 id。
 - Flotilla 未运行时点击 tile：Flotilla 被拉起并收到 URL。
 - 实测（macOS 27，tile 在左侧 App 区域）：点击 tile 时 Dock 不弹跳、不显示运行指示灯，前台 App 保持前台；图标是文件夹原本的形状，没有灰色底板。
 
@@ -93,6 +93,6 @@
 ## 验收
 
 - 新建根文件夹后 Dock 左侧的 App 区域出现 tile，图标含 App 预览；修改预览数量后图标更新；重命名后 tile 名更新；删除后 tile 消失
-- 点击 tile 后 Flotilla 日志出现对应 id
+- 点击 tile 后 `DockFolderPresenter` 收到对应 id
 - 前后导出 Dock 偏好比对，除 Flotilla 的 tile 外没有其它改动
 - 测试用的文件夹与 tile 全部清理干净

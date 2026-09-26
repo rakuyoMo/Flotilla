@@ -38,7 +38,7 @@ Flotilla 照此办理：
 ### URL 事件
 
 - `AppDelegate.application(_:open:)` 接收 URL；只处理 `flotilla://folder/<uuid>`，其它一律忽略。
-- 解析出 id 后调用 `DockFolderPresenter.shared.toggle(folderID:)`。
+- 解析出 id 后交给 `DockFolderPresenter`。
 - 处理 URL 事件时不得激活 Flotilla。
 
 ### `DockFolderPresenter` 占位
@@ -169,5 +169,5 @@ enum FolderIconRenderer {
 
 - `mise run bundle` 后 `open build/Flotilla.app`：Dock 上没有 Flotilla 图标；状态栏出现图标；菜单能打开设置窗口，此时 Dock 图标出现，关闭窗口后消失
 - 设置窗口能新建嵌套文件夹、添加 App、重命名、拖拽、删除；重启 App 后数据仍在
-- 终端执行 `open "flotilla://folder/<某个根文件夹 id>"` 后，日志里出现该 id，且 Flotilla 没有被激活
+- 终端执行 `open "flotilla://folder/<某个根文件夹 id>"` 后，`DockFolderPresenter` 收到该 id，且 Flotilla 没有被激活
 - `mise run swift:lint` 与 `swift test` 通过
