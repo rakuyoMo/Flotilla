@@ -12,6 +12,15 @@
   - `CFBundleURLTypes`：注册 scheme `flotilla`，`CFBundleURLName = com.rakuyo.flotilla.url`
 - 启动时调用 `NSWorkspace.shared.setDefaultApplication(at: Bundle.main.bundleURL, toOpenURLsWithScheme: "flotilla")`，让当前这份 App 成为 scheme 的处理者。原因：重新打包后 bundle 内容变了，Launch Services 的旧注册可能失效。
 
+### 激活策略
+
+需求 6 的参照物是陛下自己的 Hassan-macOS（`Components/AppPresentation/Sources/Internal/Operations/ActivationPolicyOperations.swift`）：有可见窗口时用 `.regular`，窗口全部关闭后回到 `.accessory`。Flotilla 照此办理：
+
+- 启动即 `.accessory`（`LSUIElement`），此时没有任何窗口
+- 显示设置窗口前切到 `.regular`，切换后延迟到下一个 run loop 再激活并把窗口带到最前：从 `.accessory` 切到 `.regular` 后系统需要时间准备 Dock 图标
+- 设置窗口关闭后，若没有其它可见窗口，切回 `.accessory`
+- 面板（03 阶段）不算窗口：它从不改变激活策略，也从不激活 Flotilla
+
 ### 主菜单
 
 用代码构建最小主菜单：
@@ -140,7 +149,7 @@ enum FolderIconRenderer {
 
 ## 验收
 
-- `mise run bundle` 后 `open build/Flotilla.app`：Dock 上没有 Flotilla 图标；状态栏出现图标；菜单能打开设置窗口
+- `mise run bundle` 后 `open build/Flotilla.app`：Dock 上没有 Flotilla 图标；状态栏出现图标；菜单能打开设置窗口，此时 Dock 图标出现，关闭窗口后消失
 - 设置窗口能新建嵌套文件夹、添加 App、重命名、拖拽、删除；重启 App 后数据仍在
 - 终端执行 `open "flotilla://folder/<某个根文件夹 id>"` 后，日志里出现该 id，且 Flotilla 没有被激活
 - `mise run swift:lint` 与 `swift test` 通过
