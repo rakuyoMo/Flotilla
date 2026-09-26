@@ -35,6 +35,9 @@ final class FolderPanelBackgroundView: NSView {
     /// 轮廓内侧的亮线，水平边上最强
     private let highlightLayer = CAShapeLayer()
 
+    /// 亮线再往内一像素的一道较弱的亮线，同样集中在水平边
+    private let innerHighlightLayer = CAShapeLayer()
+
     /// 创建一个层级的背景
     /// - Parameters:
     ///   - frame: 视图的 frame，包含轮廓与阴影留白
@@ -165,12 +168,16 @@ extension FolderPanelBackgroundView {
         shadowView.layer?.addSublayer(shadowLayer)
     }
 
-    /// 边缘线：暗线在轮廓外侧，亮线在轮廓内侧
+    /// 边缘线：暗线在轮廓外侧，两道亮线在轮廓内侧，外面一道更亮
     private func buildEdges(in bounds: CGRect) {
         shadeLayer.fillColor = NSColor(white: 0, alpha: FolderPanelMetrics.edgeShadeOpacity).cgColor
         highlightLayer.fillColor = NSColor(white: 1, alpha: FolderPanelMetrics.edgeHighlightOpacity).cgColor
+        innerHighlightLayer.fillColor = NSColor(
+            white: 1,
+            alpha: FolderPanelMetrics.edgeInnerHighlightOpacity
+        ).cgColor
 
-        for edgeLayer in [shadeLayer, highlightLayer] {
+        for edgeLayer in [shadeLayer, highlightLayer, innerHighlightLayer] {
             edgeLayer.frame = bounds
             edgeView.layer?.addSublayer(edgeLayer)
         }
@@ -191,13 +198,20 @@ extension FolderPanelBackgroundView {
             return self.outline.copy(using: &transform) ?? self.outline
         }
 
+        // 上下各平移 n 像素后仍重合的部分，即轮廓去掉水平边上 n 像素后剩下的区域
+        let core = { (pixels: CGFloat) in
+            shifted(0, -pixels * pixel).intersection(shifted(0, pixels * pixel))
+        }
+
         shadeLayer.path = shifted(-pixel, 0)
             .union(shifted(pixel, 0))
             .subtracting(outline)
-        highlightLayer.path = outline
-            .subtracting(shifted(0, -pixel).intersection(shifted(0, pixel)))
+        highlightLayer.path = outline.subtracting(core(1))
 
-        for layer in [shadowLayer, shadeLayer, highlightLayer] {
+        // 第二道亮线紧贴第一道的内侧，同样宽 1 像素
+        innerHighlightLayer.path = core(1).subtracting(core(2))
+
+        for layer in [shadowLayer, shadeLayer, highlightLayer, innerHighlightLayer] {
             layer.contentsScale = scale
         }
     }

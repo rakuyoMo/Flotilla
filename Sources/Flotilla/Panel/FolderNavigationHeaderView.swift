@@ -9,7 +9,7 @@ final class FolderNavigationHeaderView: NSView {
     private let backButton: FolderNavigationBackButton?
 
     /// 当前文件夹名
-    private let titleField = NSTextField(labelWithString: "")
+    private let titleField = FolderPanelLabel(labelWithString: "")
 
     /// 自上而下排列，与面板主体顶边的实测距离一致
     override var isFlipped: Bool {

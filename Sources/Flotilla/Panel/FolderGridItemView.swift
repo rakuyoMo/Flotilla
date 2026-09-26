@@ -9,7 +9,7 @@ final class FolderGridItemView: NSView {
     private let imageView = NSImageView()
 
     /// 名称
-    private let titleField = NSTextField(labelWithString: "")
+    private let titleField = FolderPanelLabel(labelWithString: "")
 
     /// 平常显示的图标
     private let icon: NSImage
