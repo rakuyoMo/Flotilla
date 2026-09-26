@@ -4,14 +4,17 @@ import Foundation
 // MARK: - FolderGridLayout
 
 /// 网格的纯几何计算：列数、行数、每个单元格的位置、面板主体尺寸，以及是否需要滚动
+///
+/// 面板主体自上而下是标题区与网格，根层级与子层级相同
 struct FolderGridLayout: Equatable {
-    #warning("TODO: 待实测 列数规则、单元格 112×100、内边距 16、导航头高度 32、滚动阈值")
-
     /// 列数；空文件夹为 0
     let columnCount: Int
 
-    /// 行数；空文件夹为 0
+    /// 全部项占用的行数；空文件夹为 0
     let rowCount: Int
+
+    /// 面板里显示的行数，其余行靠滚动查看；空文件夹按 1 行计
+    let visibleRowCount: Int
 
     /// 每一项的单元格，顺序与项的顺序一致；坐标系原点在网格左上角、y 向下
     let cellFrames: [CGRect]
@@ -19,55 +22,56 @@ struct FolderGridLayout: Equatable {
     /// 网格内容的完整尺寸，即全部单元格的外接矩形
     let gridSize: CGSize
 
-    /// 面板主体（不含尾巴）的尺寸：网格加内边距，有导航头时再加导航头；需要滚动时高度固定为可用高度
-    let panelSize: CGSize
+    /// 面板主体（不含尾巴）的尺寸：标题区、显示的行与四周留白；空文件夹按 1 格计
+    let bodySize: CGSize
 
-    /// 网格高度超出可用高度，需要放进滚动视图
+    /// 全部项占用的行数多于显示的行数，网格需要滚动
     let needsScrolling: Bool
 
     /// 计算网格布局
     /// - Parameters:
     ///   - itemCount: 项数
     ///   - availableSize: 面板主体可用的最大尺寸，见 `FolderPanelPlacement.availableBodySize`
-    ///   - hasHeader: 是否显示导航头
-    init(itemCount: Int, availableSize: CGSize, hasHeader: Bool) {
-        let cellSize = FolderPanelMetrics.cellSize
-        let inset = FolderPanelMetrics.contentInset
-        let headerHeight = hasHeader ? FolderPanelMetrics.headerHeight : 0
+    init(itemCount: Int, availableSize: CGSize) {
+        let cell = FolderPanelMetrics.cellSize
+        let horizontalPadding = 2 * FolderPanelMetrics.gridSideInset
+        let verticalPadding = FolderPanelMetrics.headerHeight + FolderPanelMetrics.gridBottomInset
 
-        let columnCount = Self.columnCount(
-            itemCount: itemCount,
-            availableWidth: availableSize.width - 2 * inset,
-            cellWidth: cellSize.width
+        // 屏幕放不下规则给出的列数时减少列数，至少保留 1 列
+        let fittingColumnCount = Int(((availableSize.width - horizontalPadding) / cell).rounded(.down))
+        let columnCount = min(
+            Self.preferredColumnCount(itemCount: itemCount),
+            max(1, fittingColumnCount)
         )
-        let rowCount = columnCount > 0 ? (itemCount + columnCount - 1) / columnCount : 0
+        let rowCount = Self.rowCount(itemCount: itemCount, columnCount: columnCount)
+
+        // 最多显示 5 行，屏幕更矮时显示能完整放下的行数，至少 1 行
+        let fittingRowCount = Int(((availableSize.height - verticalPadding) / cell).rounded(.down))
+        let visibleRowCount = max(
+            1,
+            min(rowCount, FolderPanelMetrics.maximumVisibleRowCount, fittingRowCount)
+        )
 
         // 按行优先从左上角依次排列，最后一行靠左
-        let cellFrames = (0 ..< itemCount).map {
+        cellFrames = (0 ..< itemCount).map {
             CGRect(
-                x: CGFloat($0 % columnCount) * cellSize.width,
-                y: CGFloat($0 / columnCount) * cellSize.height,
-                width: cellSize.width,
-                height: cellSize.height
+                x: CGFloat($0 % columnCount) * cell,
+                y: CGFloat($0 / columnCount) * cell,
+                width: cell,
+                height: cell
             )
         }
-        let gridSize = CGSize(
-            width: CGFloat(columnCount) * cellSize.width,
-            height: CGFloat(rowCount) * cellSize.height
-        )
-
-        // 自然高度超出可用高度时固定为可用高度，多出的部分靠滚动查看
-        let naturalHeight = gridSize.height + 2 * inset + headerHeight
-        let needsScrolling = naturalHeight > availableSize.height
 
         self.columnCount = columnCount
         self.rowCount = rowCount
-        self.cellFrames = cellFrames
-        self.gridSize = gridSize
-        self.needsScrolling = needsScrolling
-        panelSize = CGSize(
-            width: gridSize.width + 2 * inset,
-            height: needsScrolling ? availableSize.height : naturalHeight
+        self.visibleRowCount = visibleRowCount
+
+        gridSize = CGSize(width: CGFloat(columnCount) * cell, height: CGFloat(rowCount) * cell)
+        needsScrolling = rowCount > visibleRowCount
+
+        bodySize = CGSize(
+            width: CGFloat(max(columnCount, 1)) * cell + horizontalPadding,
+            height: CGFloat(visibleRowCount) * cell + verticalPadding
         )
     }
 }
@@ -75,15 +79,29 @@ struct FolderGridLayout: Equatable {
 // MARK: - Private
 
 extension FolderGridLayout {
-    /// 列数：`min(项数, max(最少列数, ceil(sqrt(项数 × 系数))))`，再受可用宽度限制，至少 1 列
-    private static func columnCount(itemCount: Int, availableWidth: CGFloat, cellWidth: CGFloat) -> Int {
+    /// 规则给出的列数（c 为项数）
+    ///
+    /// 取 n = ⌈√c⌉，n 列与 n + 1 列中总格数更少的一个，相同时取 n 列；行数超过上限时改用固定的列数
+    private static func preferredColumnCount(itemCount: Int) -> Int {
         guard itemCount > 0 else { return 0 }
 
-        let growth = Int((Double(itemCount) * FolderPanelMetrics.columnGrowthFactor).squareRoot().rounded(.up))
-        let preferred = min(itemCount, max(FolderPanelMetrics.minimumColumnCount, growth))
+        let n = Int(Double(itemCount).squareRoot().rounded(.up))
+        let cellCount = { (columnCount: Int) in
+            columnCount * rowCount(itemCount: itemCount, columnCount: columnCount)
+        }
+        let columnCount = cellCount(n) <= cellCount(n + 1) ? n : n + 1
 
-        // 屏幕放不下时减少列数，宽度不超过屏幕
-        let fitting = Int((availableWidth / cellWidth).rounded(.down))
-        return max(1, min(preferred, fitting))
+        let preferredRowCount = rowCount(itemCount: itemCount, columnCount: columnCount)
+
+        guard preferredRowCount > FolderPanelMetrics.maximumVisibleRowCount else {
+            return columnCount
+        }
+
+        return FolderPanelMetrics.overflowColumnCount
+    }
+
+    /// 按列数排满全部项需要的行数
+    private static func rowCount(itemCount: Int, columnCount: Int) -> Int {
+        columnCount > 0 ? (itemCount + columnCount - 1) / columnCount : 0
     }
 }

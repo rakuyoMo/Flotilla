@@ -5,143 +5,132 @@ import Testing
 
 // MARK: - FolderGridLayoutTests
 
-/// 网格布局：列数规则决定面板的形状，可用尺寸决定何时收窄与滚动，单元格顺序决定 App 出现在哪里
+/// 网格布局：列数规则决定面板的形状，必须与原生弹窗一致；可用尺寸决定何时收窄与滚动，单元格顺序决定 App 出现在哪里
 struct FolderGridLayoutTests {
-    /// 足够大的可用尺寸，不触发收窄与滚动
+    /// 足够大的可用尺寸，不触发收窄与行数限制
     private let roomySize = CGSize(width: 10_000, height: 10_000)
 
-    /// 列数按 `min(项数, max(4, ceil(sqrt(项数 × 1.5))))`，行数按列数向上取整
+    /// 单元格边长
+    private let cell = FolderPanelMetrics.cellSize
+
+    /// 列数与行数与原生实测一致：n = ⌈√c⌉，n 列与 n + 1 列取总格数少的；行数超过 5 改 7 列
     @Test(arguments: [
         (1, 1, 1),
         (2, 2, 1),
         (3, 3, 1),
-        (4, 4, 1),
-        (5, 4, 2),
-        (6, 4, 2),
+        (4, 2, 2),
+        (5, 3, 2),
+        (6, 3, 2),
         (7, 4, 2),
-        (9, 4, 3),
-        (12, 5, 3),
-        (16, 5, 4),
-        (20, 6, 4),
-        (30, 7, 5),
+        (8, 4, 2),
+        (9, 3, 3),
+        (10, 5, 2),
+        (11, 4, 3),
+        (13, 5, 3),
+        (17, 6, 3),
+        (20, 5, 4),
+        (21, 6, 4),
+        (26, 7, 4),
+        (31, 7, 5),
+        (36, 7, 6),
+        (101, 7, 15),
     ])
-    func columnsAndRowsFollowRule(itemCount: Int, columnCount: Int, rowCount: Int) {
-        let layout = FolderGridLayout(itemCount: itemCount, availableSize: roomySize, hasHeader: false)
+    func columnsAndRowsMatchNativeGrid(itemCount: Int, columnCount: Int, rowCount: Int) {
+        let layout = FolderGridLayout(itemCount: itemCount, availableSize: roomySize)
 
         #expect(layout.columnCount == columnCount)
         #expect(layout.rowCount == rowCount)
-        #expect(!layout.needsScrolling)
     }
 
-    /// 项按行优先从左上角依次排列，最后一行靠左
+    /// 面板主体宽 = 128 × 列数 + 34、高 = 128 × 显示行数 + 44，与原生截图的尺寸一致
+    @Test(arguments: [
+        (1, CGSize(width: 162, height: 172)),
+        (7, CGSize(width: 546, height: 300)),
+        (9, CGSize(width: 418, height: 428)),
+        (31, CGSize(width: 930, height: 684)),
+    ])
+    func bodySizeMatchesNativePanel(itemCount: Int, bodySize: CGSize) {
+        let layout = FolderGridLayout(itemCount: itemCount, availableSize: roomySize)
+
+        #expect(layout.bodySize == bodySize)
+    }
+
+    /// 项按行优先从左上角依次排列，单元格彼此紧贴，最后一行靠左
     @Test
-    func cellsFillRowsFromTopLeft() {
-        let cell = FolderPanelMetrics.cellSize
-        let layout = FolderGridLayout(itemCount: 6, availableSize: roomySize, hasHeader: false)
+    func cellsFillRowsFromTopLeftWithoutGaps() {
+        let layout = FolderGridLayout(itemCount: 7, availableSize: roomySize)
 
-        #expect(layout.cellFrames.count == 6)
-        #expect(layout.cellFrames[0] == CGRect(origin: .zero, size: cell))
-        #expect(layout.cellFrames[3] == CGRect(x: 3 * cell.width, y: 0, width: cell.width, height: cell.height))
-        #expect(layout.cellFrames[4] == CGRect(x: 0, y: cell.height, width: cell.width, height: cell.height))
-        #expect(layout.cellFrames[5] == CGRect(x: cell.width, y: cell.height, width: cell.width, height: cell.height))
+        #expect(layout.cellFrames.count == 7)
+        #expect(layout.cellFrames[0] == CGRect(x: 0, y: 0, width: cell, height: cell))
+        #expect(layout.cellFrames[3] == CGRect(x: 3 * cell, y: 0, width: cell, height: cell))
+        #expect(layout.cellFrames[4] == CGRect(x: 0, y: cell, width: cell, height: cell))
+        #expect(layout.cellFrames[6] == CGRect(x: 2 * cell, y: cell, width: cell, height: cell))
+        #expect(layout.gridSize == CGSize(width: 4 * cell, height: 2 * cell))
     }
 
-    /// 面板主体 = 网格 + 两侧内边距；导航头只增加高度
-    @Test(arguments: [false, true])
-    func panelSizeWrapsGridWithInsets(hasHeader: Bool) {
-        let cell = FolderPanelMetrics.cellSize
-        let inset = FolderPanelMetrics.contentInset
-        let header = hasHeader ? FolderPanelMetrics.headerHeight : 0
-
-        let layout = FolderGridLayout(itemCount: 9, availableSize: roomySize, hasHeader: hasHeader)
-
-        #expect(layout.gridSize == CGSize(width: 4 * cell.width, height: 3 * cell.height))
-        #expect(layout.panelSize == CGSize(
-            width: 4 * cell.width + 2 * inset,
-            height: 3 * cell.height + 2 * inset + header
-        ))
-    }
-
-    /// 屏幕放不下规则给出的列数时减少列数，面板宽度不超过可用宽度
+    /// 最多显示 5 行：5 行时不滚动；多出一行就固定为 5 行高并滚动，网格保持完整高度
     @Test
-    func narrowScreenReducesColumns() {
-        let cell = FolderPanelMetrics.cellSize
-        let inset = FolderPanelMetrics.contentInset
-        let availableWidth = 3.5 * cell.width + 2 * inset
+    func scrollsBeyondFiveRows() {
+        let fitting = FolderGridLayout(itemCount: 35, availableSize: roomySize)
+        let overflowing = FolderGridLayout(itemCount: 36, availableSize: roomySize)
+
+        #expect(fitting.rowCount == 5)
+        #expect(!fitting.needsScrolling)
+
+        #expect(overflowing.visibleRowCount == 5)
+        #expect(overflowing.needsScrolling)
+        #expect(overflowing.bodySize.height == 5 * cell + 44)
+        #expect(overflowing.gridSize.height == 6 * cell)
+    }
+
+    /// 屏幕较矮时按能完整显示的行数固定高度并滚动，面板高度不超过可用高度
+    @Test
+    func shortScreenShowsFewerRows() {
+        let availableHeight = 3.5 * cell + 44
 
         let layout = FolderGridLayout(
-            itemCount: 9,
-            availableSize: CGSize(width: availableWidth, height: roomySize.height),
-            hasHeader: false
+            itemCount: 31,
+            availableSize: CGSize(width: roomySize.width, height: availableHeight)
+        )
+
+        #expect(layout.visibleRowCount == 3)
+        #expect(layout.needsScrolling)
+        #expect(layout.bodySize.height <= availableHeight)
+    }
+
+    /// 屏幕较窄时减少列数，面板宽度不超过可用宽度
+    @Test
+    func narrowScreenReducesColumns() {
+        let availableWidth = 3.5 * cell + 34
+
+        let layout = FolderGridLayout(
+            itemCount: 10,
+            availableSize: CGSize(width: availableWidth, height: roomySize.height)
         )
 
         #expect(layout.columnCount == 3)
-        #expect(layout.rowCount == 3)
-        #expect(layout.panelSize.width <= availableWidth)
+        #expect(layout.rowCount == 4)
+        #expect(layout.bodySize.width <= availableWidth)
     }
 
-    /// 可用宽度连一列都放不下时仍保留一列
+    /// 可用尺寸连一格都放不下时仍保留一列、显示一行
     @Test
-    func keepsAtLeastOneColumn() {
-        let layout = FolderGridLayout(
-            itemCount: 3,
-            availableSize: CGSize(width: 10, height: roomySize.height),
-            hasHeader: false
-        )
+    func keepsAtLeastOneCell() {
+        let layout = FolderGridLayout(itemCount: 3, availableSize: CGSize(width: 10, height: 10))
 
         #expect(layout.columnCount == 1)
         #expect(layout.rowCount == 3)
-    }
-
-    /// 自然高度超出可用高度时需要滚动：面板高度固定为可用高度，网格保持完整高度供滚动
-    @Test
-    func tallGridScrollsWithinAvailableHeight() {
-        let cell = FolderPanelMetrics.cellSize
-        let availableHeight: CGFloat = 400
-
-        let layout = FolderGridLayout(
-            itemCount: 30,
-            availableSize: CGSize(width: roomySize.width, height: availableHeight),
-            hasHeader: false
-        )
-
+        #expect(layout.visibleRowCount == 1)
         #expect(layout.needsScrolling)
-        #expect(layout.panelSize.height == availableHeight)
-        #expect(layout.gridSize.height == 5 * cell.height)
     }
 
-    /// 自然高度恰好等于可用高度时不滚动；多出 1 pt 就滚动
+    /// 空文件夹按 1 格的尺寸显示，与原生只有一格“在访达中打开”时相同，格内为空
     @Test
-    func scrollingThresholdIsNaturalHeight() {
-        let natural = FolderGridLayout(itemCount: 9, availableSize: roomySize, hasHeader: true).panelSize.height
+    func emptyFolderHasOneEmptyCell() {
+        let layout = FolderGridLayout(itemCount: 0, availableSize: roomySize)
 
-        let fitting = FolderGridLayout(
-            itemCount: 9,
-            availableSize: CGSize(width: roomySize.width, height: natural),
-            hasHeader: true
-        )
-        let overflowing = FolderGridLayout(
-            itemCount: 9,
-            availableSize: CGSize(width: roomySize.width, height: natural - 1),
-            hasHeader: true
-        )
-
-        #expect(!fitting.needsScrolling)
-        #expect(overflowing.needsScrolling)
-    }
-
-    /// 空文件夹只有内边距（与导航头）构成的最小面板
-    @Test(arguments: [false, true])
-    func emptyFolderIsMinimalPanel(hasHeader: Bool) {
-        let inset = FolderPanelMetrics.contentInset
-        let header = hasHeader ? FolderPanelMetrics.headerHeight : 0
-
-        let layout = FolderGridLayout(itemCount: 0, availableSize: roomySize, hasHeader: hasHeader)
-
-        #expect(layout.columnCount == 0)
-        #expect(layout.rowCount == 0)
         #expect(layout.cellFrames.isEmpty)
-        #expect(layout.panelSize == CGSize(width: 2 * inset, height: 2 * inset + header))
+        #expect(layout.bodySize == CGSize(width: 162, height: 172))
         #expect(!layout.needsScrolling)
     }
 }

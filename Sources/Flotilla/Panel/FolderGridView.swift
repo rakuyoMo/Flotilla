@@ -5,6 +5,9 @@ import AppKit
 /// 一个文件夹的网格：按 `FolderGridLayout` 摆放每一项的单元格，作为滚动视图的文档视图
 @MainActor
 final class FolderGridView: NSView {
+    /// 每一项的单元格，按项的 id 查找
+    private var itemViews: [UUID: FolderGridItemView] = [:]
+
     /// 自上而下排列，与 `FolderGridLayout` 的坐标系一致，滚动视图初始停在顶部
     override var isFlipped: Bool {
         true
@@ -32,6 +35,7 @@ final class FolderGridView: NSView {
 
             itemView.frame = cellFrame
             addSubview(itemView)
+            itemViews[item.id] = itemView
         }
     }
 
@@ -39,6 +43,13 @@ final class FolderGridView: NSView {
     @available(*, unavailable)
     required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    /// 某一项的图标中心，自身坐标系；没有这一项时为 nil
+    func iconCenter(of itemID: UUID) -> CGPoint? {
+        guard let itemView = itemViews[itemID] else { return nil }
+
+        return itemView.convert(itemView.iconCenter, to: self)
     }
 }
 

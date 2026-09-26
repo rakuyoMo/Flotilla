@@ -2,31 +2,28 @@ import AppKit
 
 // MARK: - FolderGridItemView
 
-/// 网格中的一个单元格：图标在上、名称在下；悬停时显示圆角高亮，按下时颜色更深，抬起时触发点击
+/// 网格中的一个单元格：图标在上、名称在下；悬停没有任何变化，按下时图标变暗，在同一格上抬起才触发
 @MainActor
 final class FolderGridItemView: NSView {
-    #warning("TODO: 待实测 图标 64、图标与名称间距 4、名称 12 pt 最多 2 行、高亮圆角 8 与悬停、按下的颜色")
-
     /// 图标
     private let imageView = NSImageView()
 
     /// 名称
-    private let titleField = NSTextField(wrappingLabelWithString: "")
+    private let titleField = NSTextField(labelWithString: "")
+
+    /// 平常显示的图标
+    private let icon: NSImage
+
+    /// 按下时显示的图标，第一次按下时生成
+    private lazy var pressedIcon = Self.darkened(icon)
 
     /// 点击后执行的动作
     private let clickHandler: () -> Void
 
-    /// 鼠标是否悬停在单元格上
-    private var isHovered = false {
-        didSet {
-            needsDisplay = true
-        }
-    }
-
     /// 是否处于按下状态：按下后拖出单元格即恢复，拖回来再次按下
     private var isPressed = false {
         didSet {
-            needsDisplay = true
+            imageView.image = isPressed ? pressedIcon : icon
         }
     }
 
@@ -35,12 +32,18 @@ final class FolderGridItemView: NSView {
         true
     }
 
+    /// 图标中心，自身坐标系；进入子文件夹时新层级从这里长出来
+    var iconCenter: CGPoint {
+        CGPoint(x: bounds.midX, y: FolderPanelMetrics.iconCenterY)
+    }
+
     /// 创建单元格
     /// - Parameters:
     ///   - title: 名称
     ///   - icon: 图标
     ///   - clickHandler: 在单元格内按下并抬起后执行
     init(title: String, icon: NSImage, clickHandler: @escaping () -> Void) {
+        self.icon = icon
         self.clickHandler = clickHandler
 
         super.init(frame: .zero)
@@ -49,21 +52,14 @@ final class FolderGridItemView: NSView {
         imageView.imageScaling = .scaleProportionallyUpOrDown
         addSubview(imageView)
 
-        // 名称居中，最多两行，放不下时在最后一行末尾省略
+        // 名称只显示一行，过长时在中间省略
         titleField.stringValue = title
         titleField.font = .systemFont(ofSize: FolderPanelMetrics.titleFontSize)
+        titleField.textColor = .white
         titleField.alignment = .center
-        titleField.maximumNumberOfLines = FolderPanelMetrics.titleMaximumLines
-        titleField.lineBreakMode = .byWordWrapping
-        titleField.cell?.truncatesLastVisibleLine = true
+        titleField.usesSingleLineMode = true
+        titleField.lineBreakMode = .byTruncatingMiddle
         addSubview(titleField)
-
-        // 面板所在的 App 始终不在前台，悬停追踪要在任何状态下都生效
-        addTrackingArea(NSTrackingArea(
-            rect: .zero,
-            options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
-            owner: self
-        ))
     }
 
     /// 单元格完全由代码构建，不支持从归档解码
@@ -72,56 +68,39 @@ final class FolderGridItemView: NSView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    /// 图标水平居中；图标、间距与两行名称作为一个整体在单元格内竖直居中，名称不足两行时图标位置不变
+    /// 图标按中心定位；名称水平居中，按基线定位
     override func layout() {
         super.layout()
 
         let iconSize = FolderPanelMetrics.iconSize
-        let spacing = FolderPanelMetrics.iconTitleSpacing
-        let lineHeight = titleField.font.map { ceil($0.ascender - $0.descender + $0.leading) } ?? 0
-        let titleHeight = lineHeight * CGFloat(FolderPanelMetrics.titleMaximumLines)
-
-        let top = max(0, (bounds.height - iconSize - spacing - titleHeight) / 2)
         imageView.frame = CGRect(
-            x: (bounds.width - iconSize) / 2,
-            y: top,
+            x: iconCenter.x - iconSize / 2,
+            y: iconCenter.y - iconSize / 2,
             width: iconSize,
             height: iconSize
         )
 
-        let titleTop = imageView.frame.maxY + spacing
+        // 文本框在文字两侧各留有内边距，frame 要比文字的最大宽度宽出这部分
+        let titleWidth = FolderPanelMetrics.titleMaximumWidth + 2 * Self.titlePadding
+        let titleHeight = titleField.intrinsicContentSize.height
         titleField.frame = CGRect(
-            x: 0,
-            y: titleTop,
-            width: bounds.width,
-            height: max(0, bounds.height - titleTop)
+            x: (bounds.width - titleWidth) / 2,
+            y: 0,
+            width: titleWidth,
+            height: titleHeight
         )
+
+        titleField.frame.origin.y = FolderPanelMetrics.titleBaselineY - titleField.firstBaselineOffsetFromTop
     }
 
-    /// 悬停时画浅色圆角高亮，按下时画深色
-    override func draw(_: NSRect) {
-        guard isHovered || isPressed else { return }
-
-        let color: NSColor = isPressed ? .tertiaryLabelColor : .quaternaryLabelColor
-        color.setFill()
-
-        let radius = FolderPanelMetrics.highlightCornerRadius
-        NSBezierPath(roundedRect: bounds, xRadius: radius, yRadius: radius).fill()
+    /// 整个单元格作为一个点击目标，图标与名称不单独响应鼠标
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        frame.contains(point) ? self : nil
     }
 
     /// 面板不是 key window 时，第一次点击也直接生效
     override func acceptsFirstMouse(for _: NSEvent?) -> Bool {
         true
-    }
-
-    /// 鼠标进入单元格
-    override func mouseEntered(with _: NSEvent) {
-        isHovered = true
-    }
-
-    /// 鼠标离开单元格
-    override func mouseExited(with _: NSEvent) {
-        isHovered = false
     }
 
     /// 按下：进入按下状态
@@ -150,5 +129,23 @@ extension FolderGridItemView {
     /// 事件发生的位置是否在单元格内
     private func contains(_ event: NSEvent) -> Bool {
         bounds.contains(convert(event.locationInWindow, from: nil))
+    }
+}
+
+// MARK: - Helpers
+
+extension FolderGridItemView {
+    /// `NSTextField` 在文字两侧留出的内边距
+    private static let titlePadding: CGFloat = 2
+
+    /// 把图标的颜色乘以按下时的亮度，透明部分保持透明
+    private static func darkened(_ icon: NSImage) -> NSImage {
+        NSImage(size: icon.size, flipped: false) { rect in
+            icon.draw(in: rect)
+
+            NSColor(white: 0, alpha: 1 - FolderPanelMetrics.pressedIconBrightness).setFill()
+            rect.fill(using: .sourceAtop)
+            return true
+        }
     }
 }
