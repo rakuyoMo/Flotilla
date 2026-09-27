@@ -66,7 +66,8 @@ docs/requirements/      需求文档：00 为总览，01–05 为按实现顺序
 
 ### 测试与日志
 
-- `swift test` 偶尔编译失败，报 `plugin for module 'TestingMacros' not found`，重跑即可
+- `swift test` 偶尔编译失败，报 `plugin for module 'TestingMacros' not found`，重跑即可；刚跑过 `mise run swift:format` 之后更容易出现
+  - 在 git worktree 里每次都会报，要显式给出插件目录：`swift test -Xswiftc -plugin-path -Xswiftc /Library/Developer/CommandLineTools/usr/lib/swift/host/plugins/testing`
 - zsh 里的 `log` 是内建命令，查看系统日志要写全路径 `/usr/bin/log`，例如：
 
   ```bash
