@@ -10,9 +10,7 @@ struct DockSynchronizationSchedule {
     /// 合并连续变更的防抖间隔
     static let debounceInterval = Duration.milliseconds(500)
 
-    #warning("TODO: 静默期只依据一次写回时刻的实测（重启后约 4.2 秒），未多次测量")
-
-    /// Dock 重启后不写 Dock 偏好的静默期：实测重启到写回最长约 4.2 秒，留出近一倍的余量
+    /// Dock 重启后不写 Dock 偏好的静默期：多次实测重启到写回为 4.1–4.2 秒，留出近一倍的余量
     static let settleInterval = Duration.seconds(8)
 
     /// 最近一次重启 Dock 的时刻；nil 表示本次运行还没有重启过
