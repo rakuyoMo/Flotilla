@@ -105,19 +105,36 @@ struct AppReference: Codable, Hashable, Identifiable {
 
 ```swift
 enum FolderIconRenderer {
-    static func render(folder: Folder, previewIconCount: Int, pointSize: CGFloat) -> NSImage
+    static func render(
+        folder: Folder,
+        previewIconCount: Int,
+        pointSize: CGFloat,
+        appearance: FolderIconAppearance
+    ) -> NSImage
 }
 ```
 
 - 返回的 `NSImage` 必须与分辨率无关（用绘制闭包构造），调用方可按任意像素尺寸栅格化；边线、投影等尺寸都按画布比例换算，16 px 到 1024 px 都成立。
-- 图标是静态图，与外观无关，深色外观下不变。
+- 底板颜色随系统的深浅外观分两套；形状、边线宽度、预览网格与投影两种外观完全相同。
+  - 跟随的是系统的深浅外观（`AppleInterfaceStyle`），不是“图标与小组件样式”设置
+  - `FolderIconAppearance`（`Rendering/`）只有 `dark`、`light` 两种，由 `NSAppearance` 按 `bestMatch(from: [.darkAqua, .aqua])` 归类，高对比度等变体归入对应的一种，与 `FolderPanelAppearance` 的归类方式相同
+  - 颜色在调用 `render` 时就定下，不随绘制时的外观变化；外观变了由调用方重新渲染
+  - 调用方：stub 图标按 `NSApp.effectiveAppearance`（见 02），面板网格与设置窗口的树按所在视图的 `effectiveAppearance`，视图在 `viewDidChangeEffectiveAppearance` 时重新渲染
 - 以下几何以画布边长为 1，y 轴自上而下。
-- 底板：浅色、哑光、半透明的圆角方形，位置、大小与圆角和 macOS 26 起系统 App 图标的底板一致
+- 底板：哑光、半透明的圆角方形，位置、大小与圆角和 macOS 26 起系统 App 图标的底板一致
   - 范围 [100/1024, 924/1024]，按 1024 px 栅格化后不透明部分为 [100, 923]
   - 四角是与面板主体同款的连续曲率圆角（`ContinuousCorner`），半径为底板边长的 0.25；按 1024 px 栅格化后与系统 App 图标的轮廓相差不超过 2 px（每个角逐行比较较陡的一半、逐列比较较平的一半）
-  - 竖直渐变，顶部白色、底部 0.84 灰，整体不透明度 0.9
-  - 轮廓内侧一条黑色边线，不透明度 0.12，宽 4.5/1024
+  - 竖直渐变，上亮下暗，整体半透明；轮廓内侧一条边线，宽 4.5/1024
   - 不画底板外的投影
+  - 两种外观的颜色（灰度都在 generic gray gamma 2.2 色彩空间里取值）：
+
+    | 外观 | 渐变顶部 | 渐变底部 | 不透明度 | 边线 |
+    |---|---|---|---|---|
+    | 浅色 | 1（白） | 0.84 | 0.9 | 黑色，不透明度 0.12 |
+    | 深色 | 0.20 | 0.08 | 0.96 | 白色，不透明度 0.16 |
+
+  - 深色取自 [macos-dock-folders](https://github.com/wjvalue/macos-dock-folders)（MIT）的 `glass-dark` 样式，换算到上面的结构：它的渐变两端是同一灰度色彩空间里的 0.20、0.08，不透明度同为 0.96，分别作为渐变两端的灰度与底板整体的不透明度；边线的白色、不透明度 0.16 照搬，宽度与浅色相同
+  - 深色取值还没有与系统深色图标实测对照
 - 预览：取 `folder.items` 里前 `previewIconCount` 个 `.app` 项（保持顺序，跳过子文件夹）的图标，按 2×2 网格放在底板上
   - `previewIconCount` 为 0 或文件夹内没有 App 时只画底板。
 - 网格几何：
@@ -142,7 +159,7 @@ enum FolderIconRenderer {
 ### 文件夹区
 
 - `NSOutlineView` 展示完整的树：根文件夹、子文件夹、App。
-  - 每行显示图标与名称；文件夹图标用 `FolderIconRenderer` 渲染，App 图标用 `AppReference.icon`。
+  - 每行显示图标与名称；文件夹图标用 `FolderIconRenderer` 按行视图的外观渲染，系统外观变化时立即换图；App 图标用 `AppReference.icon`。
 - 树随 `FolderStore.didChangeNotification` 刷新，尽量保留展开状态与选中项。
 - 底部按钮：
   - “新建文件夹”：有选中项时在其所属文件夹内新建子文件夹（选中的是文件夹则在该文件夹内），无选中项时新建根文件夹
@@ -171,7 +188,8 @@ enum FolderIconRenderer {
 - 模型：嵌套结构 JSON 编解码往返一致
 - `FolderStore`：增删改查、移动（含禁止移入子孙）、持久化到临时目录后重新加载一致、损坏文件的处理
 - `Preferences`：默认值与夹取
-- `FolderIconRenderer`：0–4 个预览都能渲染、`previewIconCount` 超过 App 数量时不崩溃、输出尺寸正确
+- `FolderIconRenderer`：0–4 个预览都能渲染、`previewIconCount` 超过 App 数量时不崩溃、输出尺寸正确，以上在深浅两种外观下都成立；两种外观的底板透明区域逐像素相同；深色底板比中灰暗、浅色比中灰亮，都是上亮下暗；深色边线亮于底板内部、浅色边线暗于内部
+- `FolderIconAppearance`：高对比度、vibrant 等变体归入对应的深色或浅色；面板网格与设置窗口树里的文件夹图标在视图外观切换后换成对应外观的版本
 
 ## 验收
 

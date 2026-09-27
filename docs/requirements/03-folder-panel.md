@@ -144,7 +144,7 @@
 
 - 项的顺序就是 `folder.items` 的顺序。
   - App 项显示 `AppReference.icon` 与 `displayName`
-  - 子文件夹项显示 `FolderIconRenderer.render(folder:previewIconCount:pointSize:)`（数量取 `Preferences.shared.previewIconCount`）与 `name`。
+  - 子文件夹项显示 `FolderIconRenderer.render(folder:previewIconCount:pointSize:appearance:)`（数量取 `Preferences.shared.previewIconCount`，外观取网格视图的 `effectiveAppearance`，系统外观变化时立即换图）与 `name`。
 - 面板主体内：顶部是高 32 pt 的标题区，其下是网格；网格左右各留 17 pt、底部留 12 pt。
   - 单元格 128 × 128 pt，彼此紧贴、没有间距。
 - 面板主体尺寸：宽 = 128 × 列数 + 34，高 = 128 × 显示行数 + 44；尾巴另占 8 pt。
