@@ -31,6 +31,7 @@ Flotilla 是一个原生 macOS App：在 Dock 上增加“文件夹”，把多�
 | `mise run build` | 编译 debug 版本 |
 | `mise run bundle` | 编译 release 版本，打包为 `build/Flotilla.app` 并 ad-hoc 签名 |
 | `open build/Flotilla.app` | 启动打包好的 App |
+| `swift test` | 运行单元测试 |
 | `mise run swift:format` | 按代码规范自动格式化 |
 | `mise run swift:lint` | 检查代码规范 |
 
@@ -38,9 +39,43 @@ Flotilla 是一个原生 macOS App：在 Dock 上增加“文件夹”，把多�
 
 ```
 Sources/Flotilla/       App 源码
+  Model/                文件夹数据模型与持久化
+  Preferences/          用户设置
+  Rendering/            文件夹图标渲染
+  StatusBar/            状态栏图标与菜单
+  Settings/             设置窗口
+  Panel/                Dock 上展开的面板
+  Dock/                 stub 生成、Dock 偏好读写与 tile 同步
   Info.plist            App 包的 Info.plist，不参与编译，由打包脚本拷入 .app
+Sources/FlotillaDockTile/  Dock tile 的 stub 可执行文件，由打包脚本拷入 .app
+Tests/FlotillaTests/    单元测试（Swift Testing）
 Scripts/bundle.sh       打包脚本：组装 .app 并签名
+docs/requirements/      需求文档：00 为总览，01–04 为按实现顺序拆分的阶段
 ```
+
+## 开发注意事项
+
+### 辅助功能权限
+
+- 打包产物是 ad-hoc 签名，重新打包后原来的辅助功能授权可能失效，需要在“系统设置 › 隐私与安全性 › 辅助功能”里重新授权
+  - macOS 27 里这一页是“隐私与安全 › 设备控制和数据访问”
+- 从终端直接运行 `build/Flotilla.app/Contents/MacOS/Flotilla` 时，进程沿用终端的辅助功能授权
+- 用 `open build/Flotilla.app` 启动时按 Flotilla 自己的授权判定；没有授权时，第一次点击 tile 会弹出授权提示
+- 两种启动方式可以分别用来验证有权限、无权限两条路径
+
+### 测试与日志
+
+- `swift test` 偶尔编译失败，报 `plugin for module 'TestingMacros' not found`，重跑即可
+- zsh 里的 `log` 是内建命令，查看系统日志要写全路径 `/usr/bin/log`，例如：
+
+  ```bash
+  /usr/bin/log show --last 5m --predicate 'subsystem == "com.rakuyo.flotilla"'
+  ```
+
+### Dock 偏好
+
+- 调试时修改 Dock 偏好之前，先用 `defaults export com.apple.dock <文件>` 备份
+- 只增删 Flotilla 自己的 tile，不碰其它 tile 与 Dock 的其它设置
 
 ## 协作约定
 
