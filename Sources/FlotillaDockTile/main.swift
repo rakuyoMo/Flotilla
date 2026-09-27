@@ -3,8 +3,6 @@ import AppKit
 // Dock tile 的 stub：被 Dock 启动后，以不激活任何 App 的方式打开 `flotilla://` URL，随即退出；
 // 由把 App 拖到 tile 上启动时，URL 里一并带上被拖的项
 
-#warning("TODO: 未能实测 改为 NSApplication 运行后，点击 tile 时 Dock 仍不弹跳、前台 App 保持前台")
-
 /// stub 的应用 delegate；`NSApplication.delegate` 是弱引用，由这里持有
 let delegate = DockTileAppDelegate()
 
