@@ -6,10 +6,7 @@ import AppKit
 @MainActor
 final class SettingsWindowController: NSWindowController {
     /// 文件夹区
-    private let folderTreeViewController = FolderTreeViewController(
-        store: .shared,
-        preferences: .shared
-    )
+    private let folderTreeViewController = FolderTreeViewController(store: .shared)
 
     /// 通用区
     private let generalSettingsViewController = GeneralSettingsViewController(

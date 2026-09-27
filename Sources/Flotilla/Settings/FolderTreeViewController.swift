@@ -12,9 +12,6 @@ final class FolderTreeViewController: NSViewController {
     /// 文件夹树的唯一数据源
     private let store: FolderStore
 
-    /// 用户设置，文件夹行的图标按其中的预览图标数渲染
-    private let preferences: Preferences
-
     /// outline view 的数据源，持有全部行节点
     private let dataSource: FolderTreeDataSource
 
@@ -33,12 +30,9 @@ final class FolderTreeViewController: NSViewController {
     }
 
     /// 创建文件夹区
-    /// - Parameters:
-    ///   - store: 文件夹树的唯一数据源
-    ///   - preferences: 用户设置，决定文件夹行图标里的预览数量
-    init(store: FolderStore, preferences: Preferences) {
+    /// - Parameter store: 文件夹树的唯一数据源
+    init(store: FolderStore) {
         self.store = store
-        self.preferences = preferences
         dataSource = FolderTreeDataSource(store: store)
 
         super.init(nibName: nil, bundle: nil)
@@ -50,7 +44,7 @@ final class FolderTreeViewController: NSViewController {
         fatalError("init(coder:) has not been implemented")
     }
 
-    /// 搭建界面，并在文件夹树或预览数量变化时刷新
+    /// 搭建界面，并在文件夹树变化时刷新
     override func loadView() {
         configureOutlineView()
         view = makeContentView()
@@ -61,13 +55,6 @@ final class FolderTreeViewController: NSViewController {
             selector: #selector(reloadTree),
             name: FolderStore.didChangeNotification,
             object: store
-        )
-
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(reloadTree),
-            name: Preferences.didChangeNotification,
-            object: preferences
         )
     }
 }
@@ -88,7 +75,7 @@ extension FolderTreeViewController: NSOutlineViewDelegate {
             owner: self
         )
         let cell = reusedCell as? FolderTreeCellView ?? FolderTreeCellView()
-        cell.configure(with: node, previewIconCount: preferences.previewIconCount)
+        cell.configure(with: node)
         cell.textField?.delegate = self
 
         return cell
