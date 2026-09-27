@@ -84,8 +84,8 @@ final class FolderTreeCellView: NSTableCellView {
             textField?.stringValue = app.displayName
             textField?.isEditable = false
 
+        // 根文件夹与子文件夹都用系统的通用文件夹图标：设置窗口里不渲染文件夹内的 App 图标
         case .folder(let folder):
-            // 根文件夹与子文件夹都用系统的通用文件夹图标：设置窗口里不渲染文件夹内的 App 图标
             imageView?.image = NSWorkspace.shared.icon(for: .folder)
             textField?.stringValue = folder.name
             textField?.isEditable = true

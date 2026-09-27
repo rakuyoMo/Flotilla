@@ -33,8 +33,8 @@ enum DockTileRequest: Equatable {
         case []:
             self = .toggleFolder(folderID)
 
+        // 查询项由 stub 用 `URLComponents` 编码，这里同样用它解码，路径里的空格、`&` 与中文都能还原
         case ["apps"]:
-            // 查询项由 stub 用 `URLComponents` 编码，这里同样用它解码，路径里的空格、`&` 与中文都能还原
             let paths = URLComponents(url: url, resolvingAgainstBaseURL: false)?
                 .queryItems?
                 .filter { $0.name == "path" }

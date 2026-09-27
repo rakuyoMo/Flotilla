@@ -63,8 +63,8 @@ extension AppDelegate: NSApplicationDelegate {
 
                 dockFolderPresenter.handleURLSignal(folderID: folderID)
 
+            // 只加入 App bundle，与从访达拖进设置窗口时的判断相同；同一次拖放重复送达时由 `addApps` 去重
             case .addApps(let folderID, let appURLs):
-                // 只加入 App bundle，与从访达拖进设置窗口时的判断相同；同一次拖放重复送达时由 `addApps` 去重
                 let bundleURLs = appURLs.filter {
                     AppReference.isApplicationBundle($0)
                 }
