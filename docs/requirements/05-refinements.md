@@ -11,8 +11,14 @@
   1. 根文件夹是新出现的：上一次同步时它还不是根文件夹（新建的根文件夹、被拖成根文件夹的子文件夹）
      - 启动时的对账把当时的全部根文件夹都视为已同步过：Flotilla 没运行时不会有新的根文件夹出现，此时缺少 tile 的根文件夹都是被用户拖出去的
   2. 用户在设置窗口点了“添加到 Dock”
-- 添加过 tile 的根文件夹，在随后的同步（通常是重启 Dock 后的复查）看到 tile 确实在 Dock 上之前一直算作“待添加”：Dock 重启后写回偏好把刚加的条目盖掉时，复查会再加一次；tile 在 Dock 上出现过、之后又不在了，才是用户拖出去的
-  - 待添加的根文件夹被删除或被拖成子文件夹时，不再添加
+- 添加过 tile 的根文件夹先算作“待添加”，直到确认 tile 已经加上。添加 tile 后同步器重启 Dock，被终止的旧 Dock 退出时读一次 Dock 偏好：
+  - tile 在偏好里：新拉起的 Dock 读到的就是此刻的偏好，此后它自己的写回也保留这个条目，tile 已经加上，不再待添加
+  - tile 不在偏好里：是旧 Dock 终止时把启动时读到的旧条目写回、抹掉了它（见 02 的“Dock 偏好”一节），仍待添加，静默期结束的复查再加一次
+  - 旧 Dock 的退出由 `DockPreferences.restartDock(terminationHandler:)` 通知（见 02）
+  - 同步看到 tile 在 Dock 上时同样不再待添加
+- 不再待添加之后 tile 不在 Dock 上，就是用户拖出去的：复查与之后的同步都不加回
+  - 用户在 tile 出现后、复查之前就把它拖出同样不加回
+- 待添加的根文件夹被删除或被拖成子文件夹时，不再添加
 - 这部分是纯逻辑，放在 `Dock/DockTileAdditionTracker.swift`：
 
   ```swift
@@ -22,6 +28,9 @@
 
       /// 用户要求把该根文件夹添加到 Dock
       mutating func request(folderID: UUID)
+
+      /// 重启 Dock 时被终止的旧 Dock 已经退出：此刻 Dock 偏好里已有 tile 的根文件夹不再待添加
+      mutating func recordDockTermination(onDockFolderIDs: Set<UUID>)
 
       /// 本次同步要添加 tile 的根文件夹：待添加的与新出现的，去掉已在 Dock 上的与已不是根文件夹的；
       /// 返回的集合就是同步之后仍待添加的集合
@@ -150,7 +159,7 @@
 
 ## 单元测试
 
-- `DockTileAdditionTracker`：启动时缺少 tile 的根文件夹不添加；新出现的根文件夹添加；添加过的在看到 tile 之前保持待添加，看到之后再消失不再添加；用户请求的添加；待添加的被删除或不再是根文件夹时不添加；被拖出的判定只包含启动时就缺 tile 的与看到之后又消失的，新出现的、待添加的与已要求添加的都不算
+- `DockTileAdditionTracker`：启动时缺少 tile 的根文件夹不添加；新出现的根文件夹添加；添加过的 tile 在旧 Dock 退出时不在偏好里则保持待添加、复查再加；旧 Dock 退出时已在偏好里的，复查前被拖出不再添加；同步看到之后再消失不再添加；用户请求的添加；待添加的被删除或不再是根文件夹时不添加；被拖出的判定只包含启动时就缺 tile 的与确认加上之后又消失的，新出现的、待添加的与已要求添加的都不算
 - `DockTileRequest`：两种 URL 的解析，`path` 里的空格与中文，多个 `path` 保持顺序；scheme、host、层级、id 不符或没有 `path` 的 URL 一律为 nil（取代 `FolderURLParsingTests`）
 - stub 的 Info.plist 含上述 `CFBundleDocumentTypes`
 - 本地化：五张 `Localizable.strings` 都能解析、键集合完全相同、没有空值；代码里 `String(localized:` 引用的每个键都在表里，表里的每个键都被代码引用
