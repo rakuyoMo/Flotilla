@@ -10,8 +10,8 @@
 - `Sources/Flotilla/Info.plist` 新增：
   - `LSUIElement = true`：Flotilla 没有 Dock 图标（需求 6）
   - `CFBundleURLTypes`：注册 scheme `flotilla`，`CFBundleURLName = com.rakuyo.flotilla.url`
-  - `CFBundleAllowMixedLocalizations = true`：Flotilla 自己没有本地化资源，缺少这个键时进程语言固定为英文，`FileManager.displayName` 给出 “Calculator” 而不是“计算器”
-    - 加上后 App 名称跟随系统语言，与原生一致
+  - `CFBundleAllowMixedLocalizations = true`：让 App 显示名等来自其它 bundle 的文字按系统语言本地化，不受 Flotilla 自身支持的语言限制
+  - `CFBundleDevelopmentRegion = en`：系统语言不在 Flotilla 支持的语言之内时，界面文字回落到英文
 - 启动时调用 `NSWorkspace.shared.setDefaultApplication(at: Bundle.main.bundleURL, toOpenURLsWithScheme: "flotilla")`，让当前这份 App 成为 scheme 的处理者。
   - 原因：重新打包后 bundle 内容变了，Launch Services 的旧注册可能失效。
 
