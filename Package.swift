@@ -20,6 +20,7 @@ let package = Package(
             exclude: [
                 // 由打包脚本拷入 .app，不参与编译
                 "Info.plist",
+                "Resources",
             ]
         ),
 

@@ -17,6 +17,10 @@ struct DockTileBundleBuilder {
     /// 自定义图标在 bundle 根目录下的文件名，由 `NSWorkspace.setIcon` 生成
     private static let customIconFileName = "Icon\r"
 
+    /// Launch Services 的注册工具
+    static let lsregisterPath =
+        "/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister"
+
     /// 存放所有 stub 的目录
     let directory: URL
 
@@ -24,6 +28,9 @@ struct DockTileBundleBuilder {
     let executableURL: URL
 
     /// stub 的 Info.plist 内容；`FlotillaFolderID` 由 stub 读取后拼出 `flotilla://folder/<id>`
+    ///
+    /// `CFBundleDocumentTypes` 声明 stub 能打开 App：从访达把 App 拖到 tile 上时，tile 高亮为放置目标，
+    /// 松手后 Launch Services 以“打开文档”的方式启动 stub；`Alternate` 让 stub 不成为 App 的默认打开方式
     static func infoDictionary(for folder: Folder) -> [String: Any] {
         [
             "CFBundleExecutable": executableName,
@@ -37,6 +44,17 @@ struct DockTileBundleBuilder {
             "LSUIElement": true,
             "LSBackgroundOnly": true,
             "FlotillaFolderID": folder.id.uuidString,
+            "CFBundleDocumentTypes": [
+                [
+                    "CFBundleTypeName": "Application",
+                    "CFBundleTypeRole": "Viewer",
+                    "LSHandlerRank": "Alternate",
+                    "LSItemContentTypes": [
+                        "com.apple.application",
+                        "com.apple.application-bundle",
+                    ],
+                ],
+            ],
         ]
     }
 }
@@ -113,12 +131,22 @@ extension DockTileBundleBuilder {
     }
 
     /// 删除根文件夹的 stub 连同它独占的目录；不存在时什么也不做
+    ///
+    /// 删除前先注销 stub 在 Launch Services 里的登记：登记是改写 stub 时加上的，bundle 删掉之后就注销不了了
     func remove(folderID: UUID) throws {
         let fileManager = FileManager.default
         let folderDirectory = folderDirectory(for: folderID)
         let path = folderDirectory.path(percentEncoded: false)
 
         guard fileManager.fileExists(atPath: path) else { return }
+
+        // 注销失败不影响删除，登记留在 Launch Services 里只是指向一个已不存在的路径
+        if let bundleURL = existingBundleURL(for: folderID) {
+            try? CommandRunner.run(
+                Self.lsregisterPath,
+                arguments: ["-u", bundleURL.path(percentEncoded: false)]
+            )
+        }
 
         try fileManager.removeItem(at: folderDirectory)
     }
@@ -188,7 +216,7 @@ extension DockTileBundleBuilder {
 // MARK: - Private
 
 extension DockTileBundleBuilder {
-    /// 重新签名，并把图标设为 bundle 的自定义图标
+    /// 重新签名，把图标设为 bundle 的自定义图标，再向 Launch Services 注册
     ///
     /// macOS 26 起，系统把 icns 形式的 App 图标装进灰色圆角底板，bundle 的自定义图标不受影响，Dock 上才能显示文件夹原本的形状
     private func seal(_ bundleURL: URL, iconURL: URL) throws {
@@ -215,6 +243,9 @@ extension DockTileBundleBuilder {
         else {
             throw DockTileError.customIconFailed(path: bundlePath)
         }
+
+        // 按改写后的 Info.plist 重新注册：Launch Services 知道 stub 能打开 App，App 拖到 tile 上时 Dock 才接受放下
+        try CommandRunner.run(Self.lsregisterPath, arguments: ["-f", bundlePath])
     }
 
     /// 用 source 的副本替换 destination；destination 不存在时直接拷贝

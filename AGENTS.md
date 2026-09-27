@@ -44,13 +44,14 @@ Sources/Flotilla/       App 源码
   Rendering/            文件夹图标渲染
   StatusBar/            状态栏图标与菜单
   Settings/             设置窗口
+  Resources/            五种语言的 Localizable.strings，不参与编译，由打包脚本拷入 .app
   Panel/                Dock 上展开的面板
   Dock/                 stub 生成、Dock 偏好读写与 tile 同步
   Info.plist            App 包的 Info.plist，不参与编译，由打包脚本拷入 .app
 Sources/FlotillaDockTile/  Dock tile 的 stub 可执行文件，由打包脚本拷入 .app
 Tests/FlotillaTests/    单元测试（Swift Testing）
 Scripts/bundle.sh       打包脚本：组装 .app 并签名
-docs/requirements/      需求文档：00 为总览，01–04 为按实现顺序拆分的阶段
+docs/requirements/      需求文档：00 为总览，01–05 为按实现顺序拆分的阶段
 ```
 
 ## 开发注意事项
@@ -65,7 +66,8 @@ docs/requirements/      需求文档：00 为总览，01–04 为按实现顺序
 
 ### 测试与日志
 
-- `swift test` 偶尔编译失败，报 `plugin for module 'TestingMacros' not found`，重跑即可
+- `swift test` 偶尔编译失败，报 `plugin for module 'TestingMacros' not found`，重跑即可；刚跑过 `mise run swift:format` 之后更容易出现
+  - 在 git worktree 里每次都会报，要显式给出插件目录：`swift test -Xswiftc -plugin-path -Xswiftc /Library/Developer/CommandLineTools/usr/lib/swift/host/plugins/testing`
 - zsh 里的 `log` 是内建命令，查看系统日志要写全路径 `/usr/bin/log`，例如：
 
   ```bash

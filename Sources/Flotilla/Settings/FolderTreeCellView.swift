@@ -1,8 +1,9 @@
 import AppKit
+import UniformTypeIdentifiers
 
 // MARK: - FolderTreeCellView
 
-/// 文件夹树的一行：图标加名称；文件夹名可编辑，App 名只读
+/// 文件夹树的一行：图标、名称与状态文字；文件夹名可编辑，App 名只读
 final class FolderTreeCellView: NSTableCellView {
     /// 行视图的复用标识
     static let reuseIdentifier = NSUserInterfaceItemIdentifier("FolderTreeCell")
@@ -10,13 +11,21 @@ final class FolderTreeCellView: NSTableCellView {
     /// 图标边长
     private static let iconSize: CGFloat = 20
 
-    /// 这一行显示的文件夹，App 行为 nil；系统外观变化时按它重新渲染图标
-    private var folder: Folder?
+    /// 名称右侧的状态文字“不在 Dock 上”，默认隐藏
+    private let notOnDockLabel = NSTextField(
+        labelWithString: String(
+            localized: "folders.notOnDock",
+            comment: "文件夹树里 tile 不在 Dock 上的根文件夹，名称右侧的状态文字"
+        )
+    )
 
-    /// 文件夹图标内叠加的 App 图标数量
-    private var previewIconCount = 0
+    /// 是否显示“不在 Dock 上”；只有 tile 不在 Dock 上的根文件夹这一行显示
+    var showsNotOnDockLabel: Bool {
+        get { !notOnDockLabel.isHidden }
+        set { notOnDockLabel.isHidden = !newValue }
+    }
 
-    /// 创建图标与名称两个子视图并完成布局
+    /// 创建图标、名称与状态文字三个子视图并完成布局
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
 
@@ -28,10 +37,27 @@ final class FolderTreeCellView: NSTableCellView {
 
         let nameField = NSTextField(labelWithString: "")
         nameField.lineBreakMode = .byTruncatingTail
-        nameField.translatesAutoresizingMaskIntoConstraints = false
+
+        // 名称占满状态文字以外的宽度，放不下时截断名称，状态文字保持完整
+        nameField.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        nameField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+
+        notOnDockLabel.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+        notOnDockLabel.textColor = .secondaryLabelColor
+        notOnDockLabel.isHidden = true
+        notOnDockLabel.setContentHuggingPriority(.defaultHigh, for: .horizontal)
+        notOnDockLabel.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
+
+        // 隐藏的状态文字不占位置，名称随之占满整行
+        let labelRow = NSStackView(views: [nameField, notOnDockLabel])
+        labelRow.orientation = .horizontal
+        labelRow.alignment = .firstBaseline
+        labelRow.distribution = .fill
+        labelRow.spacing = 6
+        labelRow.translatesAutoresizingMaskIntoConstraints = false
 
         addSubview(iconView)
-        addSubview(nameField)
+        addSubview(labelRow)
 
         imageView = iconView
         textField = nameField
@@ -42,9 +68,9 @@ final class FolderTreeCellView: NSTableCellView {
             iconView.widthAnchor.constraint(equalToConstant: Self.iconSize),
             iconView.heightAnchor.constraint(equalToConstant: Self.iconSize),
 
-            nameField.leadingAnchor.constraint(equalTo: iconView.trailingAnchor, constant: 6),
-            nameField.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -2),
-            nameField.centerYAnchor.constraint(equalTo: centerYAnchor),
+            labelRow.leadingAnchor.constraint(equalTo: iconView.trailingAnchor, constant: 6),
+            labelRow.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -2),
+            labelRow.centerYAnchor.constraint(equalTo: centerYAnchor),
         ])
     }
 
@@ -55,49 +81,19 @@ final class FolderTreeCellView: NSTableCellView {
     }
 
     /// 用节点内容填充这一行
-    /// - Parameters:
-    ///   - node: 这一行对应的节点
-    ///   - previewIconCount: 文件夹图标内叠加的 App 图标数量
-    func configure(with node: FolderTreeNode, previewIconCount: Int) {
-        self.previewIconCount = previewIconCount
-
+    /// - Parameter node: 这一行对应的节点
+    func configure(with node: FolderTreeNode) {
         switch node.item {
         case .app(let app):
-            folder = nil
-
             imageView?.image = app.icon
             textField?.stringValue = app.displayName
             textField?.isEditable = false
 
+        // 根文件夹与子文件夹都用系统的通用文件夹图标：设置窗口里不渲染文件夹内的 App 图标
         case .folder(let folder):
-            self.folder = folder
-            updateFolderIcon()
-
+            imageView?.image = NSWorkspace.shared.icon(for: .folder)
             textField?.stringValue = folder.name
             textField?.isEditable = true
         }
-    }
-
-    /// 系统外观变化时，文件夹图标换成对应外观的底板
-    override func viewDidChangeEffectiveAppearance() {
-        super.viewDidChangeEffectiveAppearance()
-
-        updateFolderIcon()
-    }
-}
-
-// MARK: - Private
-
-extension FolderTreeCellView {
-    /// 按这一行当前的外观渲染文件夹图标；App 行不动
-    private func updateFolderIcon() {
-        guard let folder else { return }
-
-        imageView?.image = FolderIconRenderer.render(
-            folder: folder,
-            previewIconCount: previewIconCount,
-            pointSize: Self.iconSize,
-            appearance: FolderIconAppearance(effectiveAppearance)
-        )
     }
 }

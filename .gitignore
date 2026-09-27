@@ -6,3 +6,6 @@
 
 # 打包产物
 build/
+
+# 子代理的隔离 git 工作树
+.claude/worktrees/

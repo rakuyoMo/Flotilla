@@ -6,9 +6,6 @@ import os
 /// 应用生命周期、主菜单与 URL 事件分发
 @MainActor
 final class AppDelegate: NSObject {
-    /// Flotilla 处理的 URL scheme，与 Info.plist 的 `CFBundleURLTypes` 一致
-    private static let urlScheme = "flotilla"
-
     /// 应用生命周期与 URL 事件相关的日志
     private nonisolated static let logger = Logger(
         subsystem: "com.rakuyo.flotilla",
@@ -23,17 +20,6 @@ final class AppDelegate: NSObject {
 
     /// 面板的展开、收起与切换；启动完成后创建
     private var dockFolderPresenter: DockFolderPresenter?
-
-    /// 从 URL 中解析根文件夹 id，只接受 `flotilla://folder/<uuid>`
-    static func folderID(from url: URL) -> UUID? {
-        guard url.scheme == urlScheme, url.host() == "folder" else { return nil }
-
-        // `pathComponents` 形如 `["/", "<uuid>"]`，多出的层级一律视为无法识别
-        let components = url.pathComponents
-        guard components.count == 2 else { return nil }
-
-        return UUID(uuidString: components[1])
-    }
 }
 
 // MARK: NSApplicationDelegate
@@ -51,26 +37,46 @@ extension AppDelegate: NSApplicationDelegate {
         NSApp.mainMenu = makeMainMenu()
 
         statusBarController = StatusBarController(
-            settingsWindowController: SettingsWindowController()
+            settingsWindowController: SettingsWindowController(
+                dockTileSynchronizer: dockTileSynchronizer
+            )
         )
 
         registerAsURLHandler()
     }
 
-    /// 把 `flotilla://folder/<uuid>` 交给面板处理；整个过程不激活 Flotilla
+    /// 处理 stub 发来的请求：展开或收起面板交给面板处理，拖到 tile 上的 App 加入根文件夹；
+    /// 整个过程不激活 Flotilla
     func application(_: NSApplication, open urls: [URL]) {
         for url in urls {
-            guard let folderID = Self.folderID(from: url) else {
+            guard let request = DockTileRequest(url: url) else {
                 Self.logger.notice("忽略无法识别的 URL：\(url.absoluteString, privacy: .public)")
                 continue
             }
 
-            guard let dockFolderPresenter else {
-                Self.logger.error("面板不可用，忽略 URL：\(url.absoluteString, privacy: .public)")
-                continue
-            }
+            switch request {
+            case .toggleFolder(let folderID):
+                guard let dockFolderPresenter else {
+                    Self.logger.error("面板不可用，忽略 URL：\(url.absoluteString, privacy: .public)")
+                    continue
+                }
 
-            dockFolderPresenter.handleURLSignal(folderID: folderID)
+                dockFolderPresenter.handleURLSignal(folderID: folderID)
+
+            // 只加入 App bundle，与从访达拖进设置窗口时的判断相同；同一次拖放重复送达时由 `addApps` 去重
+            case .addApps(let folderID, let appURLs):
+                // stub 只代表根文件夹，指向其它文件夹的 URL 一律忽略
+                guard FolderStore.shared.rootFolders.contains(where: { $0.id == folderID }) else {
+                    Self.logger.notice("忽略不存在的根文件夹：\(folderID.uuidString, privacy: .public)")
+                    continue
+                }
+
+                let bundleURLs = appURLs.filter {
+                    AppReference.isApplicationBundle($0)
+                }
+
+                FolderStore.shared.addApps(bundleURLs, to: folderID)
+            }
         }
     }
 }
@@ -83,7 +89,10 @@ extension AppDelegate {
         let appMenu = NSMenu()
         appMenu.items = [
             NSMenuItem(
-                title: "退出 Flotilla",
+                title: String(
+                    localized: "mainMenu.quit",
+                    comment: "App 菜单的“退出 Flotilla”"
+                ),
                 action: #selector(NSApplication.terminate(_:)),
                 keyEquivalent: "q"
             ),
@@ -103,38 +112,61 @@ extension AppDelegate {
     /// “编辑”菜单：撤销、重做、剪切、复制、粘贴、全选，动作沿响应链交给当前的文本框
     private func makeEditMenu() -> NSMenu {
         let redoItem = NSMenuItem(
-            title: "重做",
+            title: String(
+                localized: "mainMenu.redo",
+                comment: "“编辑”菜单的“重做”"
+            ),
             action: Selector(("redo:")),
             keyEquivalent: "z"
         )
         redoItem.keyEquivalentModifierMask = [.command, .shift]
 
-        let editMenu = NSMenu(title: "编辑")
+        let editMenu = NSMenu(
+            title: String(
+                localized: "mainMenu.edit",
+                comment: "主菜单里“编辑”菜单的标题"
+            )
+        )
         editMenu.items = [
             NSMenuItem(
-                title: "撤销",
+                title: String(
+                    localized: "mainMenu.undo",
+                    comment: "“编辑”菜单的“撤销”"
+                ),
                 action: Selector(("undo:")),
                 keyEquivalent: "z"
             ),
             redoItem,
             .separator(),
             NSMenuItem(
-                title: "剪切",
+                title: String(
+                    localized: "mainMenu.cut",
+                    comment: "“编辑”菜单的“剪切”"
+                ),
                 action: #selector(NSText.cut(_:)),
                 keyEquivalent: "x"
             ),
             NSMenuItem(
-                title: "复制",
+                title: String(
+                    localized: "mainMenu.copy",
+                    comment: "“编辑”菜单的“复制”"
+                ),
                 action: #selector(NSText.copy(_:)),
                 keyEquivalent: "c"
             ),
             NSMenuItem(
-                title: "粘贴",
+                title: String(
+                    localized: "mainMenu.paste",
+                    comment: "“编辑”菜单的“粘贴”"
+                ),
                 action: #selector(NSText.paste(_:)),
                 keyEquivalent: "v"
             ),
             NSMenuItem(
-                title: "全选",
+                title: String(
+                    localized: "mainMenu.selectAll",
+                    comment: "“编辑”菜单的“全选”"
+                ),
                 action: #selector(NSText.selectAll(_:)),
                 keyEquivalent: "a"
             ),
@@ -195,7 +227,7 @@ extension AppDelegate {
     private func registerAsURLHandler() {
         NSWorkspace.shared.setDefaultApplication(
             at: Bundle.main.bundleURL,
-            toOpenURLsWithScheme: Self.urlScheme
+            toOpenURLsWithScheme: DockTileRequest.urlScheme
         ) { error in
             guard let error else { return }
 

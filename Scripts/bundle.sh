@@ -22,10 +22,13 @@ BIN_DIR="$(swift build -c release --show-bin-path)"
 
 # 按 macOS App 的包结构组装
 rm -rf "$APP_PATH"
-mkdir -p "$APP_PATH/Contents/MacOS"
+mkdir -p "$APP_PATH/Contents/MacOS" "$APP_PATH/Contents/Resources"
 cp "$BIN_DIR/$APP_NAME" "$APP_PATH/Contents/MacOS/$APP_NAME"
 cp "$BIN_DIR/$TILE_NAME" "$APP_PATH/Contents/MacOS/$TILE_NAME"
 cp "Sources/$APP_NAME/Info.plist" "$APP_PATH/Contents/Info.plist"
+
+# 五种语言的界面文字
+cp -R "Sources/$APP_NAME/Resources/"*.lproj "$APP_PATH/Contents/Resources/"
 
 # 嵌套代码要先于外层签名：stub 可执行文件单独签一次
 codesign --force --sign - "$APP_PATH/Contents/MacOS/$TILE_NAME"

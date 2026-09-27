@@ -1,5 +1,4 @@
 import AppKit
-import UniformTypeIdentifiers
 
 // MARK: - FolderTreeDataSource
 
@@ -192,11 +191,7 @@ extension FolderTreeDataSource {
             .compactMap { URL(string: $0) }
 
         return urls.filter {
-            let contentType = try? $0
-                .resourceValues(forKeys: [.contentTypeKey])
-                .contentType
-
-            return contentType?.conforms(to: .applicationBundle) ?? false
+            AppReference.isApplicationBundle($0)
         }
     }
 

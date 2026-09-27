@@ -1,4 +1,5 @@
 import AppKit
+import CoreServices
 import Testing
 
 @testable import Flotilla
@@ -36,8 +37,19 @@ final class DockTileBundleBuilderTests {
         )
     }
 
-    /// 删除本用例的临时目录
+    /// 注销本用例生成的 stub，再删除临时目录
+    ///
+    /// 每次改写 stub 都会向 Launch Services 注册；实测不注销就删除，Launch Services 里会留下指向已删路径的记录
     deinit {
+        let folderDirectories = (try? FileManager.default.contentsOfDirectory(
+            at: directory,
+            includingPropertiesForKeys: nil
+        )) ?? []
+
+        for folderDirectory in folderDirectories {
+            Self.unregisterStubs(in: folderDirectory)
+        }
+
         try? FileManager.default.removeItem(at: directory)
     }
 
@@ -93,6 +105,60 @@ final class DockTileBundleBuilderTests {
         #expect(info["LSUIElement"] as? Bool ?? false)
         #expect(info["LSBackgroundOnly"] as? Bool ?? false)
         #expect(info["FlotillaFolderID"] as? String == id)
+    }
+
+    /// Info.plist 声明 stub 能打开 App：从访达把 App 拖到 tile 上时，Dock 才把 tile 当作放置目标；
+    /// 排位为 `Alternate`，stub 不会成为 App 的默认打开方式
+    @Test
+    func infoDeclaresApplicationDocumentType() throws {
+        let folder = makeFolder(name: "工作")
+        try builder.write(folder: folder, icon: makeIcon(for: folder))
+
+        let info = try readInfo(of: folder)
+        let documentTypes = try #require(info["CFBundleDocumentTypes"] as? [[String: Any]])
+        let documentType = try #require(documentTypes.first)
+
+        #expect(documentTypes.count == 1)
+        #expect(documentType["CFBundleTypeName"] as? String == "Application")
+        #expect(documentType["CFBundleTypeRole"] as? String == "Viewer")
+        #expect(documentType["LSHandlerRank"] as? String == "Alternate")
+
+        #expect(
+            documentType["LSItemContentTypes"] as? [String]
+                == ["com.apple.application", "com.apple.application-bundle"]
+        )
+    }
+
+    /// 已被 Launch Services 记录的旧版 stub（没有声明能打开 App）改写后重新注册：随即能接收 App，仍不接收其它文件
+    ///
+    /// 实测不重新注册时，Launch Services 一直按旧记录判断，App 拖不到 tile 上
+    @Test
+    func rewrittenStubIsReregistered() throws {
+        let folder = makeFolder(name: "工作")
+        try builder.write(folder: folder, icon: makeIcon(for: folder))
+
+        let stubURL = builder.bundleURL(for: folder)
+        let chessURL = URL(filePath: "/System/Applications/Chess.app")
+
+        // 模拟旧版 stub：Info.plist 去掉文档类型后注册
+        var info = try readInfo(of: folder)
+        info["CFBundleDocumentTypes"] = nil
+
+        try PropertyListSerialization
+            .data(fromPropertyList: info, format: .xml, options: 0)
+            .write(to: stubURL.appending(path: "Contents/Info.plist"))
+
+        try CommandRunner.run(
+            DockTileBundleBuilder.lsregisterPath,
+            arguments: ["-f", stubURL.path(percentEncoded: false)]
+        )
+
+        #expect(try !canAccept(chessURL, stubURL: stubURL))
+
+        try builder.write(folder: folder, icon: makeIcon(for: folder))
+
+        #expect(try canAccept(chessURL, stubURL: stubURL))
+        #expect(try !canAccept(URL(filePath: "/etc/hosts"), stubURL: stubURL))
     }
 
     /// 名称与图标都没变时不改写：每次改写都可能触发 Dock 重启
@@ -262,5 +328,41 @@ final class DockTileBundleBuilderTests {
             pointSize: 512,
             appearance: .light
         )
+    }
+
+    /// Launch Services 是否认为 stub 能打开该项
+    private func canAccept(_ itemURL: URL, stubURL: URL) throws -> Bool {
+        var accepts = DarwinBoolean(false)
+
+        let status = LSCanURLAcceptURL(
+            itemURL as CFURL,
+            stubURL as CFURL,
+            .all,
+            .acceptDefault,
+            &accepts
+        )
+
+        try #require(status == noErr)
+
+        return accepts.boolValue
+    }
+}
+
+// MARK: - Private
+
+extension DockTileBundleBuilderTests {
+    /// 注销根文件夹目录里的 stub 在 Launch Services 里的注册
+    private nonisolated static func unregisterStubs(in folderDirectory: URL) {
+        let urls = (try? FileManager.default.contentsOfDirectory(
+            at: folderDirectory,
+            includingPropertiesForKeys: nil
+        )) ?? []
+
+        for bundleURL in urls where bundleURL.pathExtension == "app" {
+            try? CommandRunner.run(
+                DockTileBundleBuilder.lsregisterPath,
+                arguments: ["-u", bundleURL.path(percentEncoded: false)]
+            )
+        }
     }
 }

@@ -1,0 +1,35 @@
+/* 主菜单 */
+"mainMenu.quit" = "Flotilla 종료";
+"mainMenu.edit" = "편집";
+"mainMenu.undo" = "실행 취소";
+"mainMenu.redo" = "실행 복귀";
+"mainMenu.cut" = "오려두기";
+"mainMenu.copy" = "복사하기";
+"mainMenu.paste" = "붙이기";
+"mainMenu.selectAll" = "전체 선택";
+
+/* 状态栏菜单 */
+"statusBar.settings" = "설정…";
+
+/* 设置窗口 */
+"settings.windowTitle" = "Flotilla 설정";
+
+/* 设置窗口的文件夹区 */
+"folders.sectionTitle" = "폴더";
+"folders.newFolder" = "새로운 폴더";
+"folders.untitledFolder" = "제목 없는 폴더";
+"folders.addApps" = "앱 추가…";
+"folders.addToDock" = "Dock에 추가";
+"folders.notOnDock" = "Dock에 없음";
+"folders.remove" = "삭제";
+
+/* 设置窗口的通用区 */
+"general.sectionTitle" = "일반";
+"general.previewIconCount" = "폴더 아이콘에 표시할 앱 아이콘 수:";
+"general.accessibility" = "손쉬운 사용 권한:";
+"general.accessibilityGranted" = "허용됨";
+"general.accessibilityNotGranted" = "허용되지 않음";
+"general.openSystemSettings" = "시스템 설정 열기";
+
+/* 展开面板 */
+"panel.back" = "뒤로";

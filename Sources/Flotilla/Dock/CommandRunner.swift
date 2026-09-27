@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - CommandRunner
 
-/// 同步运行系统自带的命令行工具（`iconutil`、`codesign`）
+/// 同步运行系统自带的命令行工具（`iconutil`、`codesign`、`lsregister`）
 enum CommandRunner {
     /// 运行命令并等待其退出
     /// - Parameters:

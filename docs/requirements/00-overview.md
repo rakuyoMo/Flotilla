@@ -1,6 +1,6 @@
 # Flotilla 需求总览
 
-本目录是 Flotilla 的需求文档。`00` 是总览与公共约定，`01`–`04` 是按实现顺序拆分的四个阶段，每个阶段由一名实现者独立完成。
+本目录是 Flotilla 的需求文档。`00` 是总览与公共约定，`01`–`05` 是按实现顺序拆分的五个阶段，每个阶段由一名实现者独立完成。
 
 ## 目标
 
@@ -26,6 +26,10 @@
 7. 提供一个状态栏图标，用于快速打开设置页面。
 8. 展开时 Dock 上的文件夹图标不需要变化。
 9. 点击展开内容中的 App 图标，直接启动该 App，同时收起展开内容。
+10. tile 被拖出 Dock 后，设置窗口显示状态标识，并允许重新添加到 Dock。
+11. 把 App 图标拖到 Dock 上的文件夹图标上，即把该 App 加入这个文件夹。
+12. 界面支持英文、简体中文、繁体中文、日文、韩文。
+13. 设置窗口里的文件夹图标用固定图标，不渲染其中的 App 图标。
 
 初版不给用户更多选择：除需求 2 的数量设置外，不增加任何其它设置项，不提供网格以外的展示样式。
 
@@ -77,17 +81,21 @@ Flotilla 是一个无 Dock 图标的常驻后台 App（`LSUIElement`），只有
 | `Dock/` | `DockTileSynchronizer` | 让 Dock 上的 tile 与根文件夹保持一致 | 02 |
 | `Panel/` | `DockTileLocator` | 通过 Accessibility 定位 tile | 03 |
 | `Panel/` | `FolderPanel` 及各视图 | 面板窗口、背景、网格、导航 | 03 |
-| `Sources/FlotillaDockTile/` | stub 的可执行文件 | 打开 `flotilla://` URL 后退出 | 02 |
+| `Sources/FlotillaDockTile/` | stub 的可执行文件 | 打开 `flotilla://` URL 后退出；被拖放启动时带上被拖的 App | 02、05 |
+| `Dock/` | `DockTileAdditionTracker` | 决定哪些根文件夹要添加 tile 的纯逻辑 | 05 |
+| `Dock/` | `DockTileRequest` | stub 通过 URL 发来的请求：展开面板或加入 App | 05 |
+| `Resources/` | `Localizable.strings` | 五种语言的界面文字 | 05 |
 | `Tests/FlotillaTests/` | 单元测试 | Swift Testing | 各阶段 |
 
 ## 阶段与顺序
 
-四个阶段在同一分支上顺序进行，后一阶段以前一阶段合入后的代码为基线：
+各阶段顺序进行，后一阶段以前一阶段合入后的代码为基线：
 
 1. [01 基础骨架与设置](01-foundation.md)：App 骨架、数据模型与持久化、设置窗口、状态栏、文件夹图标渲染、URL 事件入口
 2. [02 Dock tile](02-dock-tile.md)：stub 生成、`.icns` 写入、Dock 偏好读写、tile 与根文件夹同步
 3. [03 展开面板](03-folder-panel.md)：面板定位、外观、网格、嵌套导航、动效、收起规则
 4. [04 集成验收](04-integration.md)：端到端验证、文档回写、清理
+5. [05 Dock 状态、拖放加入与本地化](05-refinements.md)：tile 被拖出后的状态与重新添加、拖 App 到 tile 上加入文件夹、界面本地化、设置窗口的固定文件夹图标
 
 ## 公共约束
 

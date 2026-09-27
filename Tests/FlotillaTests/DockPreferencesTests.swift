@@ -193,6 +193,43 @@ final class DockPreferencesTests {
         #expect(try plistData(updated[2]) == plistData(calculatorTile))
     }
 
+    /// Dock 被终止时把旧 GUID 写回、盖掉刚换上的新 GUID：下一次更新发现条目的 GUID 不是自己写入的值，再换一个新的并要求重启 Dock；
+    /// 之后 GUID 没有再被改动时不再改条目
+    @Test
+    func updateRenewsGUIDAgainAfterDockRevertsIt() throws {
+        try addOwnTileBetweenUserTiles()
+
+        let originalGUID = try #require(storedTiles()[1]["GUID"] as? Int)
+
+        try preferences.update(tileURL: tileURL, label: "工作", isStubRewritten: true)
+        let renewedGUID = try #require(storedTiles()[1]["GUID"] as? Int)
+
+        // 模拟被终止的 Dock 写回启动时读到的旧条目
+        var tiles = storedTiles()
+        tiles[1]["GUID"] = originalGUID
+        defaults.set(tiles, forKey: "persistent-apps")
+
+        #expect(try preferences.update(tileURL: tileURL, label: "工作", isStubRewritten: false))
+
+        let latestGUID = try #require(storedTiles()[1]["GUID"] as? Int)
+
+        #expect(latestGUID != originalGUID)
+        #expect(latestGUID != renewedGUID)
+        #expect(try !preferences.update(tileURL: tileURL, label: "工作", isStubRewritten: false))
+    }
+
+    /// 本次运行没有写过 GUID 的 tile（上次运行留下的）：条目里的 GUID 是什么都不算被写回，不动条目
+    @Test
+    func updateLeavesUnknownGUIDAlone() throws {
+        defaults.set(
+            [DockPreferences.tileEntry(tileURL: tileURL, label: "工作", guid: 7)],
+            forKey: "persistent-apps"
+        )
+
+        #expect(try !preferences.update(tileURL: tileURL, label: "工作", isStubRewritten: false))
+        #expect(storedTiles()[0]["GUID"] as? Int == 7)
+    }
+
     /// 删除只按 stub 所在的目录匹配：与 Flotilla 的 tile 同名的用户 tile 不受影响
     @Test
     func removeDeletesOnlyMatchingTile() throws {
@@ -321,7 +358,11 @@ final class DockPreferencesTests {
         #expect(Array(names.prefix(4)) == Array(oldNames.suffix(4)))
         #expect(!newest.hasPrefix("com.apple.dock-2020"))
     }
+}
 
+// MARK: - Private
+
+extension DockPreferencesTests {
     /// 布置 [用户 tile, 本用例的 tile, 用户 tile]，并模拟 Dock 重启后为本用例的 tile 补全的字段
     private func addOwnTileBetweenUserTiles() throws {
         defaults.set([calculatorTile], forKey: "persistent-apps")
