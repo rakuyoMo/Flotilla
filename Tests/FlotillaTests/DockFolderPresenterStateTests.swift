@@ -235,6 +235,35 @@ struct DockFolderPresenterStateTests {
         #expect(state.presentedFolderID == folderB)
     }
 
+    /// 1 秒内在同一 tile 上连点两次（展开再收起）、两个 URL 随后才到达：每次点击各合并一个 URL，面板保持收起
+    @Test
+    func urlsOfDoubleClickOnSameTileAreMerged() {
+        var state = DockFolderPresenterState()
+
+        clickTile(folderA, at: 10, in: &state)
+        clickTile(folderA, at: 10.3, in: &state)
+
+        #expect(state.receiveURL(folderID: folderA, time: 10.5) == .unchanged)
+        #expect(state.receiveURL(folderID: folderA, time: 10.6) == .unchanged)
+        #expect(state.presentedFolderID == nil)
+    }
+
+    /// 同一 tile 连点两次、只到达一个 URL：它照样合并；没等到 URL 的那条记录超出时间窗后不再吞掉新的 URL
+    @Test
+    func unmatchedClickOnSameTileExpires() {
+        var state = DockFolderPresenterState()
+
+        clickTile(folderA, at: 10, in: &state)
+        clickTile(folderA, at: 10.3, in: &state)
+
+        #expect(state.receiveURL(folderID: folderA, time: 10.5) == .unchanged)
+        #expect(state.presentedFolderID == nil)
+
+        let late = 10.3 + DockFolderPresenterState.signalMergeInterval + 0.1
+
+        #expect(state.receiveURL(folderID: folderA, time: late) == .expand(folderA))
+    }
+
     // MARK: URL 路径（无辅助功能权限）
 
     /// URL 依次到达：展开、收起；展开时到达另一个文件夹的 URL 则切换

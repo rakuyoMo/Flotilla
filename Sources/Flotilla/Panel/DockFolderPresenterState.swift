@@ -16,10 +16,11 @@ struct DockFolderPresenterState {
     /// 快速路径识别出的、尚未抬起的 tile 按下，记下位置与时间，抬起时据此排除拖动与长按
     private var pendingPress: (folderID: UUID, location: CGPoint, time: TimeInterval)? = nil
 
-    /// 快速路径近期处理的 tile 点击：按文件夹记下抬起的时间，等待与随后到达的 URL 合并
+    /// 快速路径近期处理的 tile 点击：每次点击记一条，按抬起的先后排列，等待与随后到达的 URL 合并
     ///
-    /// 按文件夹分别记录：1 秒内先后点击两个 tile、两个 URL 随后才到达时，每个 URL 都要与自己那次点击合并
-    private var recentTileClicks: [UUID: TimeInterval] = [:]
+    /// 每次点击各自拉起一个 stub、各发一个 URL，因此逐次记录：1 秒内先后点击两个 tile，
+    /// 或在同一 tile 上连点两次，两个 URL 随后才到达时，每个 URL 都要与一次点击合并
+    private var recentTileClicks: [(folderID: UUID, time: TimeInterval)] = []
 
     /// 最近一次因点击 Dock 区域而收起时展示的文件夹，等待与随后到达的 URL 合并
     private var lastDockAreaDismissal: (folderID: UUID, time: TimeInterval)? = nil
@@ -80,9 +81,9 @@ extension DockFolderPresenterState {
             return dismissForOutsideClick(isInDockArea: true, time: time)
         }
 
-        // 记下这次点击，等待随后到达的同一文件夹 URL 来合并
+        // 记下这次点击，等待随后到达的同一文件夹 URL 来合并；追加在末尾，记录保持按抬起的先后排列
         pruneTileClicks(at: time)
-        recentTileClicks[press.folderID] = time
+        recentTileClicks.append((press.folderID, time))
 
         return toggle(folderID: press.folderID)
     }
@@ -95,8 +96,10 @@ extension DockFolderPresenterState {
         // 超出合并时间窗的点击已不再合并，先清掉，剩下的记录都在时间窗内
         pruneTileClicks(at: time)
 
-        // 快速路径已处理过这个文件夹的点击，随后到达的 URL 属于同一次点击；记录随即删除，一次点击只合并一个 URL
-        if recentTileClicks.removeValue(forKey: folderID) != nil {
+        // 快速路径已处理过这个文件夹的点击，随后到达的 URL 属于其中最早的那一次；
+        // 该条记录随即删除，一次点击只合并一个 URL，同一 tile 连点两次就依次合并两个
+        if let index = recentTileClicks.firstIndex(where: { $0.folderID == folderID }) {
+            recentTileClicks.remove(at: index)
             return .unchanged
         }
 
@@ -157,7 +160,7 @@ extension DockFolderPresenterState {
     /// 丢掉距 time 已超出合并时间窗的 tile 点击，记录不会无限增长
     private mutating func pruneTileClicks(at time: TimeInterval) {
         recentTileClicks = recentTileClicks.filter {
-            time - $0.value <= Self.signalMergeInterval
+            time - $0.time <= Self.signalMergeInterval
         }
     }
 }
