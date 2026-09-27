@@ -61,7 +61,7 @@
   - `tile-data.file-type`（对照实测取值）
   - `tile-type = file-tile`
   - 不写 `book`，由 Dock 自行生成
-- API：`contains(tileURL:)`、`add(tileURL:label:)`、`remove(tileDirectory:)`、`update(tileURL:label:isStubRewritten:)`、`restartDock()`。
+- API：`contains(tileURL:)`、`folderIDs(ofTilesIn:)`（stub 位于给定目录下 `<id>` 子目录的 tile 所属的根文件夹 id）、`add(tileURL:label:)`、`remove(tileDirectory:)`、`update(tileURL:label:isStubRewritten:)`、`restartDock()`。
 - 匹配 tile 按标准化后 URL 的所在目录（即 stub 独占的 `<id>` 目录），不按名称：文件夹改名后 stub 的文件名变了，仍要找到原来的 tile。
 - 更新已有条目时原地替换，不删除再追加：Dock 里的排序是用户自己拖出来的，重启后必须保持。
   - stub 改名后 `_CFURLString` 换成新位置，并删掉 Dock 按旧位置生成的 `book`，由 Dock 重启后重新生成。
@@ -73,6 +73,7 @@
 - `start()` 在 `applicationWillFinishLaunching` 里调用：被 stub 拉起时，URL 事件先于 `applicationDidFinishLaunching` 送达，面板与同步器要在此之前就绪
   - 先做一次对账：每个根文件夹都有 stub 与 tile；多余的 stub 与 tile 删除
     - tile 按 stub 独占的 `<id>` 目录匹配，stub bundle 已被用户删掉时同样删除条目
+    - 多余的 tile 也包括 Dock 偏好里指向 `DockTiles/` 下、目录已不存在的条目
   - 再订阅 `FolderStore.didChangeNotification` 与 `Preferences.didChangeNotification`，并用 KVO 观察 `NSApp.effectiveAppearance`
 - 变更后合并处理（防抖 0.5 秒）：
   1. 重新渲染每个根文件夹的图标，底板按 `NSApp.effectiveAppearance` 取深浅（见 01），按需更新 stub 的 icns 与 plist

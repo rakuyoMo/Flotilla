@@ -87,6 +87,38 @@ extension DockPreferences {
     func contains(tileURL: URL) -> Bool {
         index(ofDirectory: tileURL.deletingLastPathComponent(), in: tiles) != nil
     }
+
+    /// Dock 上 stub 位于该目录下某个 `<id>` 子目录的 tile 所属的根文件夹 id；子目录名解析不成 UUID 的条目忽略
+    ///
+    /// 只比对条目里记录的 URL，不访问磁盘：stub 连同它独占的 `<id>` 目录都已不存在时，Dock 上残留的 tile 仍能据此找出
+    /// - Parameter stubsDirectory: 存放所有 stub 的目录
+    func folderIDs(ofTilesIn stubsDirectory: URL) -> Set<UUID> {
+        let target = Self.normalized(stubsDirectory).path(percentEncoded: false)
+        var folderIDs: Set<UUID> = []
+
+        for tile in tiles {
+            guard
+                let tileDirectory = Self.fileURL(of: tile)?.deletingLastPathComponent()
+            else {
+                continue
+            }
+
+            // 条目记录的是 `<stubsDirectory>/<id>/<文件夹名>.app/`：stub 所在目录的上一级必须正好是存放 stub 的目录，
+            // 用户自己的 tile 与其它位置的条目一律不认
+            let parentPath = tileDirectory
+                .deletingLastPathComponent()
+                .path(percentEncoded: false)
+
+            guard parentPath == target else { continue }
+
+            // 同一目录下与 Flotilla 无关的子目录，名称解析不成 UUID
+            if let folderID = UUID(uuidString: tileDirectory.lastPathComponent) {
+                folderIDs.insert(folderID)
+            }
+        }
+
+        return folderIDs
+    }
 }
 
 // MARK: - Mutation

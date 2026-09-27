@@ -109,8 +109,12 @@ extension DockTileSynchronizer {
             synchronizeTile(of: $0, previewIconCount: previewIconCount)
         }
 
-        // 已删除或被拖成子文件夹的根文件夹：先删 tile，Dock 不再引用后才删 stub
-        let staleIDs = builder.existingFolderIDs().subtracting(rootFolders.map(\.id))
+        // 已删除或被拖成子文件夹的根文件夹：先删 tile，Dock 不再引用后才删 stub。
+        // 候选既取磁盘上现存的 stub 目录，也取 Dock 上指向 stub 目录的 tile：
+        // 整个 `<id>` 目录已不存在时，Dock 上残留的 tile 同样要删
+        let candidateIDs = builder.existingFolderIDs()
+            .union(dockPreferences.folderIDs(ofTilesIn: builder.directory))
+        let staleIDs = candidateIDs.subtracting(rootFolders.map(\.id))
         let staleTiles = removeTiles(of: staleIDs)
 
         if restartRequests.contains(true) || staleTiles.needsDockRestart {

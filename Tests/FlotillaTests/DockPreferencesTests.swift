@@ -236,6 +236,40 @@ final class DockPreferencesTests {
         #expect(try plistData(tiles[1]) == plistData(calculatorTile))
     }
 
+    /// 只列出 stub 位于存放 stub 的目录下 `<id>` 子目录的 tile，stub 连同目录都不在磁盘上时照样列出；
+    /// 对账据此删掉残留的 tile，用户的 tile 与位置不符的条目一律不能列出
+    @Test
+    func folderIDsListsOnlyTilesInStubsDirectory() throws {
+        let stubsDirectory = directory.appending(path: "Dock Tiles")
+        let ownID = try #require(UUID(uuidString: stubDirectory.lastPathComponent))
+        let orphanID = UUID()
+
+        let ownURLs = [
+            tileURL,
+            stubsDirectory.appending(path: "\(orphanID.uuidString)/日常.app"),
+        ]
+
+        // 子目录名不是 UUID、层级不对、目录名只是前缀相同或位于其它目录的条目
+        let foreignURLs = [
+            stubsDirectory.appending(path: "Other/工作.app"),
+            stubsDirectory.appending(path: "工作.app"),
+            stubsDirectory.appending(path: "\(UUID().uuidString)/Nested/工作.app"),
+            directory.appending(path: "Dock Tiles 2/\(UUID().uuidString)/工作.app"),
+            directory.appending(path: "Elsewhere/\(UUID().uuidString)/工作.app"),
+        ]
+
+        let entries = (ownURLs + foreignURLs).map {
+            DockPreferences.tileEntry(tileURL: $0, label: "工作", guid: 42)
+        }
+
+        defaults.set([calculatorTile] + entries, forKey: "persistent-apps")
+
+        let stubsPath = stubsDirectory.path(percentEncoded: false)
+
+        #expect(!FileManager.default.fileExists(atPath: stubsPath))
+        #expect(preferences.folderIDs(ofTilesIn: stubsDirectory) == [ownID, orphanID])
+    }
+
     /// 首次写入前导出改动前的整个域，同一次运行里只备份一次
     @Test
     func firstWriteBacksUpOriginalDomain() throws {
