@@ -1,0 +1,95 @@
+# 标题为 `release: X.Y.Z` 的 PR 合并进 main 后，打包并发布 GitHub Release
+
+name: 发布
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
+
+permissions: {}
+
+jobs:
+  release:
+    name: 发布新版本
+
+    # `startsWith` 不区分大小写，标题的完整格式由“校验版本号”一步严格检查
+    if: >-
+      github.event.pull_request.merged == true
+      && startsWith(github.event.pull_request.title, 'release:')
+
+    runs-on: macos-26
+
+    permissions:
+      contents: write
+
+    # PR 标题由用户填写，只经环境变量交给脚本，不直接展开进 shell
+    env:
+      PR_TITLE: ${{ github.event.pull_request.title }}
+      MERGE_COMMIT_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+
+    steps:
+      # 打包与打 tag 都基于 PR 合并进 main 后产生的提交
+      - name: 检出合并提交
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          persist-credentials: false
+
+      - name: 校验版本号
+        run: |
+          # 标题必须是 `release: X.Y.Z`，三段都是不带前导零的非负整数
+          pattern='^release: (0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$'
+
+          if [[ ! "$PR_TITLE" =~ $pattern ]]; then
+            echo "::error::PR 标题须为 release: X.Y.Z，实际为 ${PR_TITLE}"
+            exit 1
+          fi
+
+          version="${PR_TITLE#release: }"
+
+          # Info.plist 的两个版本号都要与标题一致
+          for key in CFBundleShortVersionString CFBundleVersion; do
+            value="$(
+              /usr/libexec/PlistBuddy -c "Print :$key" Sources/Flotilla/Info.plist 2> /dev/null \
+                || true
+            )"
+
+            if [[ "$value" != "$version" ]]; then
+              echo "::error::Info.plist 的 ${key} 须为 ${version}，实际为 ${value}"
+              exit 1
+            fi
+          done
+
+          # 同名 tag 已存在说明这个版本发布过
+          if git ls-remote --exit-code --tags origin "refs/tags/v$version" > /dev/null; then
+            echo "::error::tag v${version} 已存在"
+            exit 1
+          fi
+
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+
+      - name: 安装 mise
+        uses: jdx/mise-action@v4
+
+      - name: 打包
+        run: mise run bundle
+
+      # 不带扩展属性：否则 zip 里会有 `._*` 文件，用 unzip 解压时它们落进 .app，签名校验失败
+      - name: 压缩
+        run: |
+          ditto -c -k --norsrc --keepParent \
+            build/Flotilla.app \
+            "Flotilla-$VERSION.zip"
+
+      # 一步完成打 tag、创建 Release、上传 zip；tag 打在合并提交上
+      - name: 创建 Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v$VERSION" \
+            "Flotilla-$VERSION.zip" \
+            --target "$MERGE_COMMIT_SHA" \
+            --generate-notes
