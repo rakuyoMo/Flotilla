@@ -281,6 +281,9 @@ extension FolderTreeViewController {
         outlineView.outlineTableColumn = column
         outlineView.columnAutoresizingStyle = .uniformColumnAutoresizingStyle
 
+        // 展开子层级时不加宽大纲列：加宽后树比滚动区宽，行尾的“不在 Dock 上”会被右缘裁掉
+        outlineView.autoresizesOutlineColumn = false
+
         outlineView.headerView = nil
         outlineView.rowHeight = 26
         outlineView.dataSource = dataSource
