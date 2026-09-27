@@ -32,9 +32,7 @@ struct DockTileBundleBuilder {
     /// `CFBundleDocumentTypes` 声明 stub 能打开 App：从访达把 App 拖到 tile 上时，tile 高亮为放置目标，
     /// 松手后 Launch Services 以“打开文档”的方式启动 stub；`Alternate` 让 stub 不成为 App 的默认打开方式
     static func infoDictionary(for folder: Folder) -> [String: Any] {
-        #warning("TODO: 未能实测 从访达把 App 拖到 tile 上时 Dock 高亮 tile，松手后以打开文档的方式启动 stub")
-
-        return [
+        [
             "CFBundleExecutable": executableName,
             "CFBundleIdentifier": "com.rakuyo.flotilla.tile.\(folder.id.uuidString)",
             "CFBundleName": folder.name,
