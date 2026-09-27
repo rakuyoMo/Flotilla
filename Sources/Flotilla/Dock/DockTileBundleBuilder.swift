@@ -133,12 +133,22 @@ extension DockTileBundleBuilder {
     }
 
     /// 删除根文件夹的 stub 连同它独占的目录；不存在时什么也不做
+    ///
+    /// 删除前先注销 stub 在 Launch Services 里的登记：登记是改写 stub 时加上的，bundle 删掉之后就注销不了了
     func remove(folderID: UUID) throws {
         let fileManager = FileManager.default
         let folderDirectory = folderDirectory(for: folderID)
         let path = folderDirectory.path(percentEncoded: false)
 
         guard fileManager.fileExists(atPath: path) else { return }
+
+        // 注销失败不影响删除，登记留在 Launch Services 里只是指向一个已不存在的路径
+        if let bundleURL = existingBundleURL(for: folderID) {
+            try? CommandRunner.run(
+                Self.lsregisterPath,
+                arguments: ["-u", bundleURL.path(percentEncoded: false)]
+            )
+        }
 
         try fileManager.removeItem(at: folderDirectory)
     }

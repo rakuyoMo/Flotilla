@@ -265,9 +265,6 @@ final class DockTileBundleBuilderTests {
 
         #expect(builder.existingFolderIDs() == [first.id, second.id])
 
-        // 删除之前先注销，删除之后就无法再注销
-        Self.unregisterStubs(in: builder.folderDirectory(for: first.id))
-
         try builder.remove(folderID: first.id)
 
         let removedPath = directory

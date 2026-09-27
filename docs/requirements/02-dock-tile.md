@@ -47,7 +47,7 @@
   - 缺少自定义图标的 stub 视为残缺，重新生成
 - 设好自定义图标后执行 `lsregister -f <bundle>`（`/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister`），让 Launch Services 按改写后的 Info.plist 登记 stub 能打开的文档类型。
   - 实测（macOS 27，`LSCanURLAcceptURL`）：已被 Launch Services 记录过的 stub 改写 Info.plist 后不重新注册，仍按旧记录判断；重新注册后能接收 App，不接收其它文件
-- API：`bundleURL(for folder:)`、`folderDirectory(for folderID:)`（stub 独占的 `<id>` 目录）、`existingBundleURL(for folderID:)`、`folderID(forBundleURL:)`、`write(folder:icon:)`、`remove(folderID:)`（连同 `<id>` 目录一起删除）、`existingFolderIDs()`。
+- API：`bundleURL(for folder:)`、`folderDirectory(for folderID:)`（stub 独占的 `<id>` 目录）、`existingBundleURL(for folderID:)`、`folderID(forBundleURL:)`、`write(folder:icon:)`、`remove(folderID:)`（先 `lsregister -u` 注销，再连同 `<id>` 目录一起删除）、`existingFolderIDs()`。
 - 只在内容确有变化时重写文件（名称比对 plist，图标比对渲染结果）。
 
 ## `.icns` 写入（`Sources/Flotilla/Dock/IconFileWriter.swift`）
