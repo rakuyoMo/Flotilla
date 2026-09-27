@@ -6,7 +6,7 @@ import Testing
 // MARK: - DockTileAdditionTrackerTests
 
 /// 添加 tile 的条件：用户拖出 Dock 的 tile 不能被自动加回，新出现的与用户要求添加的根文件夹却必须出现在 Dock 上，
-/// 而且在 Dock 写回偏好盖掉刚加的条目时还要再加一次
+/// 而且在被终止的 Dock 写回偏好抹掉刚加的条目时还要再加一次
 struct DockTileAdditionTrackerTests {
     /// 启动时就在的根文件夹
     private let existingID = UUID()
@@ -44,16 +44,42 @@ struct DockTileAdditionTrackerTests {
         #expect(folderIDs == [newID])
     }
 
-    /// 添加过的根文件夹在看到 tile 之前保持待添加：Dock 重启后写回偏好盖掉了刚加的条目，复查时再加一次
+    /// 被终止的 Dock 退出时偏好里没有刚加的 tile：是它终止时写回旧条目抹掉了，仍待添加，复查时再加一次；
+    /// 这期间也不算被拖出，设置窗口不显示状态
     @Test
-    func addedFolderStaysPendingUntilTileIsSeen() {
+    func tileWipedAtDockTerminationIsAddedAgain() {
         var tracker = DockTileAdditionTracker(rootFolderIDs: [])
 
         let firstIDs = tracker.folderIDsToAdd(rootFolderIDs: [newID], onDockFolderIDs: [])
+        tracker.recordDockTermination(onDockFolderIDs: [])
+
+        let removedIDs = tracker.removedFolderIDs(rootFolderIDs: [newID], onDockFolderIDs: [])
         let recheckIDs = tracker.folderIDsToAdd(rootFolderIDs: [newID], onDockFolderIDs: [])
 
         #expect(firstIDs == [newID])
+        #expect(removedIDs.isEmpty)
         #expect(recheckIDs == [newID])
+    }
+
+    /// 被终止的 Dock 退出时 tile 在偏好里：新拉起的 Dock 读到了它，tile 已经加上。
+    /// 之后、复查之前用户把 tile 拖出：设置窗口随即显示它不在 Dock 上，复查不加回
+    @Test
+    func tileConfirmedAtDockTerminationThenDraggedOutIsNotAddedAgain() {
+        var tracker = DockTileAdditionTracker(rootFolderIDs: [existingID])
+        tracker.request(folderID: existingID)
+
+        let rootIDs: Set = [existingID, newID]
+
+        let firstIDs = tracker.folderIDsToAdd(rootFolderIDs: rootIDs, onDockFolderIDs: [])
+        tracker.recordDockTermination(onDockFolderIDs: rootIDs)
+
+        // 两个 tile 都在复查之前被拖出 Dock，其间没有别的同步
+        let removedIDs = tracker.removedFolderIDs(rootFolderIDs: rootIDs, onDockFolderIDs: [])
+        let recheckIDs = tracker.folderIDsToAdd(rootFolderIDs: rootIDs, onDockFolderIDs: [])
+
+        #expect(firstIDs == rootIDs)
+        #expect(removedIDs == rootIDs)
+        #expect(recheckIDs.isEmpty)
     }
 
     /// 看到 tile 在 Dock 上之后它又不在了：是用户拖出去的，不再添加

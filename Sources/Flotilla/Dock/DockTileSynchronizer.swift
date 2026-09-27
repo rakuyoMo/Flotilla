@@ -179,8 +179,14 @@ extension DockTileSynchronizer {
 
         let needsDockRestart = restartRequests.contains(true) || staleTiles.needsDockRestart
 
+        // 旧 Dock 退出时读一次偏好：刚加的 tile 还在，就是新拉起的 Dock 读到了它，不再待添加；
+        // 被旧 Dock 终止时的写回抹掉的仍待添加，由复查再加一次
         if needsDockRestart {
-            dockPreferences.restartDock()
+            dockPreferences.restartDock { [weak self] in
+                guard let self else { return }
+
+                additionTracker.recordDockTermination(onDockFolderIDs: rootFolderIDsOnDock())
+            }
         }
 
         removeStubs(of: staleTiles.removableIDs)

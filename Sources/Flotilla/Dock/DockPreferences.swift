@@ -50,6 +50,9 @@ final class DockPreferences {
     /// 盖掉 Flotilla 刚换上的新 GUID；重启后的 Dock 读到旧 GUID，仍显示缓存的旧图标
     private var writtenGUIDs: [String: Int] = [:]
 
+    /// 对最近一次被终止的 Dock 进程是否已退出的观察，下一次重启 Dock 时替换
+    private var terminationObservations: [NSKeyValueObservation] = []
+
     /// 创建 Dock 偏好的读写者；域名无法作为 `UserDefaults` 的 suite 时返回 nil
     /// - Parameters:
     ///   - domainName: 偏好所在的域，App 使用 `com.apple.dock`，测试时注入临时文件的绝对路径
@@ -226,10 +229,26 @@ extension DockPreferences {
     }
 
     /// 终止 Dock 进程，由 launchd 自动拉起；Dock 只在启动时读取偏好，改动要靠重启生效
-    func restartDock() {
+    /// - Parameter terminationHandler: 被终止的 Dock 全部退出后在主线程调用。
+    ///   Dock 终止时若把旧条目写回，此时已经落地：此刻的偏好就是新拉起的 Dock 读到的内容
+    func restartDock(terminationHandler: @escaping @MainActor () -> Void) {
+        #warning("TODO: 未能实测 被终止的 Dock 退出后 `isTerminated` 的观察回调送达，且此刻已能读到它终止时写回的偏好")
+
         let docks = NSRunningApplication.runningApplications(
             withBundleIdentifier: Self.dockDomain
         )
+
+        // Dock 是 LSUIElement App，NSWorkspace 不为它发退出通知，只能观察 `isTerminated`。
+        // 该属性只在主线程的 run loop 里更新，观察回调也在主线程；终止之前就开始观察，不会错过退出
+        terminationObservations = docks.map {
+            $0.observe(\.isTerminated) { _, _ in
+                MainActor.assumeIsolated {
+                    guard docks.allSatisfy(\.isTerminated) else { return }
+
+                    terminationHandler()
+                }
+            }
+        }
 
         for dock in docks {
             kill(dock.processIdentifier, SIGTERM)
