@@ -63,9 +63,20 @@ jobs:
             fi
           done
 
+          # 查询远端的同名 tag：`--exit-code` 下退出码 0 表示已存在，2 表示不存在，其它表示查询本身失败
+          status=0
+          git ls-remote --exit-code --tags origin "refs/tags/v$version" > /dev/null \
+            || status=$?
+
           # 同名 tag 已存在说明这个版本发布过
-          if git ls-remote --exit-code --tags origin "refs/tags/v$version" > /dev/null; then
+          if [[ "$status" -eq 0 ]]; then
             echo "::error::tag v${version} 已存在"
+            exit 1
+          fi
+
+          # 查询失败时无法确认 tag 不存在，不能继续发布
+          if [[ "$status" -ne 2 ]]; then
+            echo "::error::查询远端 tag 失败，退出码 ${status}"
             exit 1
           fi
 
