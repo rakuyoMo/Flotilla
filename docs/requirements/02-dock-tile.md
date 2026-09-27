@@ -77,6 +77,7 @@
 - 更新已有条目时原地替换，不删除再追加：Dock 里的排序是用户自己拖出来的，重启后必须保持。
   - stub 改名后 `_CFURLString` 换成新位置，并删掉 Dock 按旧位置生成的 `book`，由 Dock 重启后重新生成。
   - stub 改写过时换一个新的 `GUID`：实测（macOS 27）Dock 按 `GUID` 缓存 tile 图标，`GUID` 不变时重启后仍显示旧图标。
+  - 条目的 `GUID` 不是本次运行写入的值时同样换新：实测（macOS 27）Dock 被终止时若带着未写的状态（例如松手约 2 秒内刚接受过一次拖放），会在终止时把启动时读到的旧条目写回，盖掉刚换上的 `GUID`，重启后的 Dock 仍显示旧图标；静默期结束的复查据此再换一个新的 `GUID` 并重启 Dock。
 - `restartDock()`：终止 `com.apple.dock` 进程，launchd 会自动拉起。
 
 ## 同步器（`Sources/Flotilla/Dock/DockTileSynchronizer.swift`）
@@ -96,6 +97,7 @@
   - `restartDock()` 之后 8 秒内不写 Dock 偏好：同步时刻取“变更后 0.5 秒”与“最近一次重启后 8 秒”中较晚的一个，静默期内的变更合并成一次同步
   - 同步重启了 Dock 时，静默期结束再复查一次：重新读取 Dock 偏好对账，把被写回覆盖的改动重新写上；没有差异时不改偏好、不重启 Dock
     - 复查通常也是刚添加的 tile 第一次被“看到”的时机：tile 在 Dock 上就不再待添加，被写回盖掉就再加一次（见下）
+    - 复查也比对 `GUID`：被 Dock 写回盖掉的 `GUID` 会在这里换新（见“Dock 偏好”一节）
     - 复查本身重启了 Dock 时不再安排复查，Dock 写回的条目与写入的始终不一致时也不会被反复重启
 - 根文件夹被删除、或被拖成子文件夹：删掉 tile 与 stub；子文件夹被拖成根文件夹：新建 tile 与 stub。
 - 添加 tile 的条件（需求 10，纯逻辑在 `DockTileAdditionTracker`）：

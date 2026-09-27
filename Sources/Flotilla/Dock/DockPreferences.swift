@@ -44,6 +44,12 @@ final class DockPreferences {
     /// 本次运行是否已经备份过：每次运行只在首次写入前备份一次
     private var hasBackedUp = false
 
+    /// 本次运行为每个 tile 写入的最新 GUID，按 stub 所在目录的标准化路径记录
+    ///
+    /// 实测（macOS 27）Dock 被终止时若带着未写的状态（例如刚接受过一次拖放），会把启动时读到的旧条目写回，
+    /// 盖掉 Flotilla 刚换上的新 GUID；重启后的 Dock 读到旧 GUID，仍显示缓存的旧图标
+    private var writtenGUIDs: [String: Int] = [:]
+
     /// 创建 Dock 偏好的读写者；域名无法作为 `UserDefaults` 的 suite 时返回 nil
     /// - Parameters:
     ///   - domainName: 偏好所在的域，App 使用 `com.apple.dock`，测试时注入临时文件的绝对路径
@@ -129,13 +135,12 @@ extension DockPreferences {
     ///   - tileURL: stub bundle 的文件 URL
     ///   - label: tile 的名称
     func add(tileURL: URL, label: String) throws {
-        let entry = Self.tileEntry(
-            tileURL: tileURL,
-            label: label,
-            guid: Self.makeGUID()
-        )
+        let guid = Self.makeGUID()
+        let entry = Self.tileEntry(tileURL: tileURL, label: label, guid: guid)
 
         try save(tiles + [entry])
+
+        writtenGUIDs[Self.directoryKey(of: tileURL)] = guid
     }
 
     /// 删除根文件夹的 tile：条目记录的 stub 位于该目录即匹配
@@ -151,6 +156,8 @@ extension DockPreferences {
         tiles.remove(at: index)
         try save(tiles)
 
+        writtenGUIDs[Self.normalized(tileDirectory).path(percentEncoded: false)] = nil
+
         return true
     }
 
@@ -158,7 +165,8 @@ extension DockPreferences {
     ///
     /// 文件夹改名后 stub 随之改名，URL 变化时一并删掉 Dock 按旧位置生成的书签 `book`，由 Dock 重启后按新 URL 重新生成
     ///
-    /// 实测（macOS 27）Dock 按条目的 `GUID` 缓存 tile 图标，GUID 不变时重启后仍显示旧图标；stub 改写过就换一个新的 GUID
+    /// 实测（macOS 27）Dock 按条目的 `GUID` 缓存 tile 图标，GUID 不变时重启后仍显示旧图标；stub 改写过就换一个新的 GUID。
+    /// 条目的 GUID 不是本次运行写入的值时同样换新：那是 Dock 被终止时写回了旧条目，新图标还没被读取过
     /// - Parameters:
     ///   - tileURL: stub bundle 的当前位置
     ///   - label: tile 的名称
@@ -180,17 +188,25 @@ extension DockPreferences {
         let isURLChanged = currentPath != tilePath
         let isLabelChanged = tileData["file-label"] as? String != label
 
+        // 本次运行写过 GUID 的 tile，条目里的 GUID 却不是写入的值：被终止的 Dock 把旧条目写回了
+        let directoryKey = Self.directoryKey(of: tileURL)
+        let isGUIDReverted = writtenGUIDs[directoryKey]
+            .map { $0 != tiles[index]["GUID"] as? Int } ?? false
+
         guard
             isURLChanged
             || isLabelChanged
             || isStubRewritten
+            || isGUIDReverted
         else {
             return false
         }
 
         // 新的 GUID 让 Dock 丢掉按旧 GUID 缓存的图标，重启后从 stub 重新读取
-        if isStubRewritten {
-            tiles[index]["GUID"] = Self.makeGUID()
+        if isStubRewritten || isGUIDReverted {
+            let guid = Self.makeGUID()
+            tiles[index]["GUID"] = guid
+            writtenGUIDs[directoryKey] = guid
         }
 
         // 只替换 URL 本身，`file-data` 里 Dock 补全的其它字段保留
@@ -303,6 +319,11 @@ extension DockPreferences {
 // MARK: - Normalization
 
 extension DockPreferences {
+    /// stub 所在目录的标准化路径，作为按 tile 记录 GUID 的键
+    private static func directoryKey(of tileURL: URL) -> String {
+        normalized(tileURL.deletingLastPathComponent()).path(percentEncoded: false)
+    }
+
     /// 把 stub 的 URL 统一成以 `/` 结尾的标准文件 URL，与 Dock 写出的格式一致
     private static func normalized(_ url: URL) -> URL {
         URL(
