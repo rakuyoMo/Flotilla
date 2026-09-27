@@ -119,7 +119,7 @@ enum FolderIconRenderer {
   - 跟随的是系统的深浅外观（`AppleInterfaceStyle`），不是“图标与小组件样式”设置
   - `FolderIconAppearance`（`Rendering/`）只有 `dark`、`light` 两种，由 `NSAppearance` 按 `bestMatch(from: [.darkAqua, .aqua])` 归类，高对比度等变体归入对应的一种，与 `FolderPanelAppearance` 的归类方式相同
   - 颜色在调用 `render` 时就定下，不随绘制时的外观变化；外观变了由调用方重新渲染
-  - 调用方：stub 图标按 `NSApp.effectiveAppearance`（见 02），面板网格与设置窗口的树按所在视图的 `effectiveAppearance`，视图在 `viewDidChangeEffectiveAppearance` 时重新渲染
+  - 调用方：stub 图标按 `NSApp.effectiveAppearance`（见 02），面板网格按所在视图的 `effectiveAppearance`，视图在 `viewDidChangeEffectiveAppearance` 时重新渲染
 - 以下几何以画布边长为 1，y 轴自上而下。
 - 底板：哑光、半透明的圆角方形，位置、大小与圆角和 macOS 26 起系统 App 图标的底板一致
   - 范围 [100/1024, 924/1024]，按 1024 px 栅格化后不透明部分为 [100, 923]
@@ -159,7 +159,7 @@ enum FolderIconRenderer {
 ### 文件夹区
 
 - `NSOutlineView` 展示完整的树：根文件夹、子文件夹、App。
-  - 每行显示图标与名称；文件夹图标用 `FolderIconRenderer` 按行视图的外观渲染，系统外观变化时立即换图；App 图标用 `AppReference.icon`。
+  - 每行显示图标与名称；文件夹图标用系统的通用文件夹图标（`NSWorkspace.shared.icon(for: .folder)`），根文件夹与子文件夹相同，不渲染其中的 App 图标，也不随预览数量与系统外观变化（需求 13）；App 图标用 `AppReference.icon`。
 - 树随 `FolderStore.didChangeNotification` 刷新，尽量保留展开状态与选中项。
 - 底部按钮：
   - “新建文件夹”：有选中项时在其所属文件夹内新建子文件夹（选中的是文件夹则在该文件夹内），无选中项时新建根文件夹
@@ -189,7 +189,7 @@ enum FolderIconRenderer {
 - `FolderStore`：增删改查、移动（含禁止移入子孙）、持久化到临时目录后重新加载一致、损坏文件的处理
 - `Preferences`：默认值与夹取
 - `FolderIconRenderer`：0–4 个预览都能渲染、`previewIconCount` 超过 App 数量时不崩溃、输出尺寸正确，以上在深浅两种外观下都成立；两种外观的底板透明区域逐像素相同；深色底板比中灰暗、浅色比中灰亮，都是上亮下暗；深色边线亮于底板内部、浅色边线暗于内部
-- `FolderIconAppearance`：高对比度、vibrant 等变体归入对应的深色或浅色；面板网格与设置窗口树里的文件夹图标在视图外观切换后换成对应外观的版本
+- `FolderIconAppearance`：高对比度、vibrant 等变体归入对应的深色或浅色；面板网格里的文件夹图标在视图外观切换后换成对应外观的版本
 
 ## 验收
 

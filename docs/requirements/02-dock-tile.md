@@ -4,11 +4,15 @@
 
 ## stub 可执行文件
 
-- 新增 SwiftPM executable target `FlotillaDockTile`（`Sources/FlotillaDockTile/main.swift`），不依赖 `Flotilla` target。
-- 行为：读取 `Bundle.main.infoDictionary["FlotillaFolderID"]`，拼出 `flotilla://folder/<id>`，用 `NSWorkspace.shared.open(_:configuration:completionHandler:)` 打开，配置 `activates = false`
+- 新增 SwiftPM executable target `FlotillaDockTile`（`Sources/FlotillaDockTile/`），不依赖 `Flotilla` target。
+- 基于 `NSApplication` 运行（`DockTileAppDelegate`），仍是 `LSUIElement` + `LSBackgroundOnly` 的后台 App。
+- 行为：读取 `Bundle.main.infoDictionary["FlotillaFolderID"]`，在 `applicationDidFinishLaunching` 里拼出 URL，用 `NSWorkspace.shared.open(_:configuration:completionHandler:)` 打开，配置 `activates = false`
+  - 由点击 tile 启动：`flotilla://folder/<id>`
+  - 由把 App 拖到 tile 上启动：AppKit 在 `applicationDidFinishLaunching` 之前经 `application(_:open:)` 送来被拖的项，可能分多次；收齐后打开 `flotilla://folder/<id>/apps?path=<路径>&path=<路径>`，每个被拖的项一个 `path` 查询项，取值为它的 POSIX 路径，由 `URLComponents` 编码
+  - 每次启动只发一个 URL；同一次拖放被系统重复送达时，由 Flotilla 侧 `FolderStore.addApps` 的去重吸收
   - 等到回调（最多 5 秒）后退出
   - 缺少 id 或打开失败时记录日志并以非零状态退出
-- 不得激活任何 App：点击 tile 前的前台 App 必须保持前台。
+- 不得激活任何 App：点击或拖放之前的前台 App 必须保持前台。
 - `Scripts/bundle.sh`：把 `FlotillaDockTile` 一并拷入 `Flotilla.app/Contents/MacOS/`，然后再签名。
   - Flotilla 通过 `Bundle.main.url(forAuxiliaryExecutable: "FlotillaDockTile")` 找到它。
 
@@ -34,10 +38,15 @@
   - `LSMinimumSystemVersion = 15.0`
   - `LSUIElement = true`、`LSBackgroundOnly = true`
   - `FlotillaFolderID = <id>`
+  - `CFBundleDocumentTypes`，只有一项：`CFBundleTypeName = Application`、`CFBundleTypeRole = Viewer`、`LSHandlerRank = Alternate`、`LSItemContentTypes = [com.apple.application, com.apple.application-bundle]`
+    - 取自 [macos-dock-folders](https://github.com/wjvalue/macos-dock-folders)（MIT）：从访达把 App 拖到 tile 上时，tile 高亮为放置目标，松手后 Launch Services 以“打开文档”的方式启动 stub；`Alternate` 让 stub 不成为 App 的默认打开方式
+    - Dock 上的 tile 之间不能互相拖放：拖动 Dock 图标时整个过程由 Dock 接管，只能排序或拖出
 - 每次生成或更新后执行 `/usr/bin/codesign --force --sign - <bundle>`。
 - 签名后再用 `NSWorkspace.setIcon(_:forFile:)` 把 `Icon.icns` 设为 bundle 的自定义图标：macOS 26 起，系统把 icns 形式的 App 图标装进灰色圆角底板（macOS 27 实测如此），自定义图标不受影响。
   - 自定义图标文件 `Icon\r` 位于 bundle 根目录，`codesign` 会拒绝为这样的 bundle 签名，因此每次改写前先清除
   - 缺少自定义图标的 stub 视为残缺，重新生成
+- 设好自定义图标后执行 `lsregister -f <bundle>`（`/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister`），让 Launch Services 按改写后的 Info.plist 登记 stub 能打开的文档类型。
+  - 实测（macOS 27，`LSCanURLAcceptURL`）：已被 Launch Services 记录过的 stub 改写 Info.plist 后不重新注册，仍按旧记录判断；重新注册后能接收 App，不接收其它文件
 - API：`bundleURL(for folder:)`、`folderDirectory(for folderID:)`（stub 独占的 `<id>` 目录）、`existingBundleURL(for folderID:)`、`folderID(forBundleURL:)`、`write(folder:icon:)`、`remove(folderID:)`（连同 `<id>` 目录一起删除）、`existingFolderIDs()`。
 - 只在内容确有变化时重写文件（名称比对 plist，图标比对渲染结果）。
 
@@ -71,7 +80,7 @@
 ## 同步器（`Sources/Flotilla/Dock/DockTileSynchronizer.swift`）
 
 - `start()` 在 `applicationWillFinishLaunching` 里调用：被 stub 拉起时，URL 事件先于 `applicationDidFinishLaunching` 送达，面板与同步器要在此之前就绪
-  - 先做一次对账：每个根文件夹都有 stub 与 tile；多余的 stub 与 tile 删除
+  - 先做一次对账：每个根文件夹都有 stub，tile 按“添加 tile 的条件”添加；多余的 stub 与 tile 删除
     - tile 按 stub 独占的 `<id>` 目录匹配，stub bundle 已被用户删掉时同样删除条目
     - 多余的 tile 也包括 Dock 偏好里指向 `DockTiles/` 下、目录已不存在的条目
   - 再订阅 `FolderStore.didChangeNotification` 与 `Preferences.didChangeNotification`，并用 KVO 观察 `NSApp.effectiveAppearance`
@@ -84,14 +93,24 @@
     - 终止 Dock 后 10–60 ms 新 Dock 即被拉起；并非每次重启都会写回
   - `restartDock()` 之后 8 秒内不写 Dock 偏好：同步时刻取“变更后 0.5 秒”与“最近一次重启后 8 秒”中较晚的一个，静默期内的变更合并成一次同步
   - 同步重启了 Dock 时，静默期结束再复查一次：重新读取 Dock 偏好对账，把被写回覆盖的改动重新写上；没有差异时不改偏好、不重启 Dock
+    - 复查通常也是刚添加的 tile 第一次被“看到”的时机：tile 在 Dock 上就不再待添加，被写回盖掉就再加一次（见下）
     - 复查本身重启了 Dock 时不再安排复查，Dock 写回的条目与写入的始终不一致时也不会被反复重启
 - 根文件夹被删除、或被拖成子文件夹：删掉 tile 与 stub；子文件夹被拖成根文件夹：新建 tile 与 stub。
+- 添加 tile 的条件（需求 10，纯逻辑在 `DockTileAdditionTracker`）：
+  - 用户可以像其它 App 一样把 tile 拖出 Dock，拖出后不再自动加回；tile 不在 Dock 上的根文件夹照常生成与更新 stub，只是不动 Dock 偏好，重新添加时直接引用
+  - 只在两种情况下向 Dock 添加 tile：根文件夹是新出现的（上一次同步时还不是根文件夹），或用户在设置窗口点了“添加到 Dock”
+    - 同步器创建时的根文件夹都视为已同步过：Flotilla 没运行时不会有新的根文件夹出现，此时缺少 tile 的根文件夹都是被用户拖出去的
+  - 添加过 tile 的根文件夹，在同步看到 tile 确实在 Dock 上之前一直待添加；tile 在 Dock 上出现过、之后又不在了，才是被用户拖出去的
+    - 待添加的根文件夹被删除或被拖成子文件夹时不再添加
+- 查询与请求：`rootFolderIDsOnDock()` 给出 Dock 上现有 tile 对应的根文件夹（`DockPreferences.folderIDs(ofTilesIn:)` 对 stub 目录的结果）；`addTile(for:)` 把根文件夹记为待添加并安排一次同步。
+- 每次同步结束后发出 `DockTileSynchronizer.didSynchronizeNotification`（`object` 为同步器），设置窗口据此刷新 tile 的状态。
 - 系统切换深浅外观：Flotilla 没有固定外观，渲染 stub 图标时读取的 `NSApp.effectiveAppearance` 随系统变化，触发一次同步；底板颜色变了，stub 被改写、tile 换新的 `GUID`，Dock 因此重启一次（Dock 按 `GUID` 缓存 tile 图标，见上文）。
 
 ## 信号链路验证
 
 - 点击 tile：stub 被启动，Flotilla 收到 URL，`DockFolderPresenter` 收到对应 id。
 - Flotilla 未运行时点击 tile：Flotilla 被拉起并收到 URL。
+- 从访达把 App 拖到 tile 上：tile 高亮，stub 以打开文档的方式被启动，Flotilla 收到 `flotilla://folder/<id>/apps?path=…`，由 `DockTileRequest` 解析，只保留 App bundle（`AppReference.isApplicationBundle`）后加入该根文件夹；整个过程不激活 Flotilla，前台 App 保持前台。
 - 实测（macOS 27，tile 在左侧 App 区域）：点击 tile 时 Dock 不弹跳、不显示运行指示灯，前台 App 保持前台；图标按渲染结果原样显示，系统没有另套灰色底板。
 
 ## 单元测试
