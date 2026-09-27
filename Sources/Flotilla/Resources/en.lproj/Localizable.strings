@@ -1,0 +1,35 @@
+/* 主菜单 */
+"mainMenu.quit" = "Quit Flotilla";
+"mainMenu.edit" = "Edit";
+"mainMenu.undo" = "Undo";
+"mainMenu.redo" = "Redo";
+"mainMenu.cut" = "Cut";
+"mainMenu.copy" = "Copy";
+"mainMenu.paste" = "Paste";
+"mainMenu.selectAll" = "Select All";
+
+/* 状态栏菜单 */
+"statusBar.settings" = "Settings…";
+
+/* 设置窗口 */
+"settings.windowTitle" = "Flotilla Settings";
+
+/* 设置窗口的文件夹区 */
+"folders.sectionTitle" = "Folders";
+"folders.newFolder" = "New Folder";
+"folders.untitledFolder" = "Untitled Folder";
+"folders.addApps" = "Add Apps…";
+"folders.addToDock" = "Add to Dock";
+"folders.notOnDock" = "Not in Dock";
+"folders.remove" = "Delete";
+
+/* 设置窗口的通用区 */
+"general.sectionTitle" = "General";
+"general.previewIconCount" = "App icons shown in folder icon:";
+"general.accessibility" = "Accessibility permission:";
+"general.accessibilityGranted" = "Granted";
+"general.accessibilityNotGranted" = "Not granted";
+"general.openSystemSettings" = "Open System Settings";
+
+/* 展开面板 */
+"panel.back" = "Back";

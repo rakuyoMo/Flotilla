@@ -1,0 +1,35 @@
+/* 主菜单 */
+"mainMenu.quit" = "Flotillaを終了";
+"mainMenu.edit" = "編集";
+"mainMenu.undo" = "取り消す";
+"mainMenu.redo" = "やり直す";
+"mainMenu.cut" = "カット";
+"mainMenu.copy" = "コピー";
+"mainMenu.paste" = "ペースト";
+"mainMenu.selectAll" = "すべてを選択";
+
+/* 状态栏菜单 */
+"statusBar.settings" = "設定…";
+
+/* 设置窗口 */
+"settings.windowTitle" = "Flotillaの設定";
+
+/* 设置窗口的文件夹区 */
+"folders.sectionTitle" = "フォルダ";
+"folders.newFolder" = "新規フォルダ";
+"folders.untitledFolder" = "名称未設定フォルダ";
+"folders.addApps" = "アプリを追加…";
+"folders.addToDock" = "Dockに追加";
+"folders.notOnDock" = "Dockにありません";
+"folders.remove" = "削除";
+
+/* 设置窗口的通用区 */
+"general.sectionTitle" = "一般";
+"general.previewIconCount" = "フォルダアイコンに表示するアプリアイコンの数：";
+"general.accessibility" = "アクセシビリティの権限：";
+"general.accessibilityGranted" = "許可済み";
+"general.accessibilityNotGranted" = "未許可";
+"general.openSystemSettings" = "システム設定を開く";
+
+/* 展开面板 */
+"panel.back" = "戻る";
