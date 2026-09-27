@@ -3,7 +3,7 @@ import UniformTypeIdentifiers
 
 // MARK: - FolderTreeCellView
 
-/// 文件夹树的一行：图标加名称；文件夹名可编辑，App 名只读
+/// 文件夹树的一行：图标、名称与状态文字；文件夹名可编辑，App 名只读
 final class FolderTreeCellView: NSTableCellView {
     /// 行视图的复用标识
     static let reuseIdentifier = NSUserInterfaceItemIdentifier("FolderTreeCell")
@@ -11,7 +11,16 @@ final class FolderTreeCellView: NSTableCellView {
     /// 图标边长
     private static let iconSize: CGFloat = 20
 
-    /// 创建图标与名称两个子视图并完成布局
+    /// 名称右侧的状态文字“不在 Dock 上”，默认隐藏
+    private let notOnDockLabel = NSTextField(labelWithString: "不在 Dock 上")
+
+    /// 是否显示“不在 Dock 上”；只有 tile 不在 Dock 上的根文件夹这一行显示
+    var showsNotOnDockLabel: Bool {
+        get { !notOnDockLabel.isHidden }
+        set { notOnDockLabel.isHidden = !newValue }
+    }
+
+    /// 创建图标、名称与状态文字三个子视图并完成布局
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
 
@@ -23,10 +32,27 @@ final class FolderTreeCellView: NSTableCellView {
 
         let nameField = NSTextField(labelWithString: "")
         nameField.lineBreakMode = .byTruncatingTail
-        nameField.translatesAutoresizingMaskIntoConstraints = false
+
+        // 名称占满状态文字以外的宽度，放不下时截断名称，状态文字保持完整
+        nameField.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        nameField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+
+        notOnDockLabel.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+        notOnDockLabel.textColor = .secondaryLabelColor
+        notOnDockLabel.isHidden = true
+        notOnDockLabel.setContentHuggingPriority(.defaultHigh, for: .horizontal)
+        notOnDockLabel.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
+
+        // 隐藏的状态文字不占位置，名称随之占满整行
+        let labelRow = NSStackView(views: [nameField, notOnDockLabel])
+        labelRow.orientation = .horizontal
+        labelRow.alignment = .firstBaseline
+        labelRow.distribution = .fill
+        labelRow.spacing = 6
+        labelRow.translatesAutoresizingMaskIntoConstraints = false
 
         addSubview(iconView)
-        addSubview(nameField)
+        addSubview(labelRow)
 
         imageView = iconView
         textField = nameField
@@ -37,9 +63,9 @@ final class FolderTreeCellView: NSTableCellView {
             iconView.widthAnchor.constraint(equalToConstant: Self.iconSize),
             iconView.heightAnchor.constraint(equalToConstant: Self.iconSize),
 
-            nameField.leadingAnchor.constraint(equalTo: iconView.trailingAnchor, constant: 6),
-            nameField.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -2),
-            nameField.centerYAnchor.constraint(equalTo: centerYAnchor),
+            labelRow.leadingAnchor.constraint(equalTo: iconView.trailingAnchor, constant: 6),
+            labelRow.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -2),
+            labelRow.centerYAnchor.constraint(equalTo: centerYAnchor),
         ])
     }
 

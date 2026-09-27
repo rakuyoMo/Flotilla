@@ -4,8 +4,15 @@ import os
 // MARK: - DockTileSynchronizer
 
 /// 让 Dock 上的 tile 与根文件夹保持一致：每个根文件夹对应一个 stub 与一个 tile，名称与图标随文件夹实时更新
+///
+/// 用户把 tile 拖出 Dock 后不自动加回，只在根文件夹新出现或用户要求添加时添加 tile
 @MainActor
 final class DockTileSynchronizer: NSObject {
+    /// 每次同步结束后发出，`object` 为同步器；设置窗口据此刷新 tile 是否在 Dock 上
+    nonisolated static let didSynchronizeNotification = Notification.Name(
+        "DockTileSynchronizer.didSynchronize"
+    )
+
     /// stub 图标的渲染边长（点），与 iconset 的最大一档一致
     private static let iconPointSize: CGFloat = 512
 
@@ -30,6 +37,9 @@ final class DockTileSynchronizer: NSObject {
     /// 同步时机：防抖、Dock 重启后的静默期与复查
     private var schedule = DockSynchronizationSchedule()
 
+    /// 决定哪些根文件夹要添加 tile
+    private var additionTracker: DockTileAdditionTracker
+
     /// 等待执行的同步；新的变更到来时取消并替换它
     private var pendingSynchronization: Task<Void, Never>?
 
@@ -52,6 +62,11 @@ final class DockTileSynchronizer: NSObject {
         self.preferences = preferences
         self.builder = builder
         self.dockPreferences = dockPreferences
+
+        // 创建时就有的根文件夹都视为已同步过：其中缺少 tile 的，是用户在 Flotilla 没运行时拖出去的
+        additionTracker = DockTileAdditionTracker(
+            rootFolderIDs: Set(store.rootFolders.map(\.id))
+        )
     }
 
     /// 先对账一次，再订阅文件夹树、设置与系统外观的变更
@@ -81,6 +96,17 @@ final class DockTileSynchronizer: NSObject {
                 self?.scheduleSynchronization()
             }
         }
+    }
+
+    /// Dock 上现有 tile 对应的根文件夹 id
+    func rootFolderIDsOnDock() -> Set<UUID> {
+        dockPreferences.folderIDs(ofTilesIn: builder.directory)
+    }
+
+    /// 把根文件夹记为待添加，并安排一次同步；用于把被拖出 Dock 的 tile 重新添加回去
+    func addTile(for folderID: UUID) {
+        additionTracker.request(folderID: folderID)
+        scheduleSynchronization()
     }
 }
 
@@ -112,15 +138,25 @@ extension DockTileSynchronizer {
     }
 
     /// 按当前的根文件夹对账：更新 stub、增删改 tile，Dock 需要刷新时重启它，最后清理多余的 stub；
-    /// 重启了 Dock 时，安排静默期结束时的复查
+    /// 重启了 Dock 时，安排静默期结束时的复查；结束后发出 `didSynchronizeNotification`
     /// - Parameter isRecheck: 是否为重启 Dock 之后的复查
     private func synchronize(isRecheck: Bool) {
         let rootFolders = store.rootFolders
         let previewIconCount = preferences.previewIconCount
 
+        // 缺少 tile 的根文件夹里，只有新出现的与用户要求添加的才添加；其余是被用户拖出 Dock 的
+        let folderIDsToAdd = additionTracker.folderIDsToAdd(
+            rootFolderIDs: Set(rootFolders.map(\.id)),
+            onDockFolderIDs: rootFolderIDsOnDock()
+        )
+
         // 逐个同步全部根文件夹，每个都要执行，不能在第一个需要重启时短路
         let restartRequests = rootFolders.map {
-            synchronizeTile(of: $0, previewIconCount: previewIconCount)
+            synchronizeTile(
+                of: $0,
+                previewIconCount: previewIconCount,
+                canAddTile: folderIDsToAdd.contains($0.id)
+            )
         }
 
         // 已删除或被拖成子文件夹的根文件夹：先删 tile，Dock 不再引用后才删 stub。
@@ -149,11 +185,21 @@ extension DockTileSynchronizer {
         if let recheckTime {
             synchronize(at: recheckTime, isRecheck: true)
         }
+
+        NotificationCenter.default.post(name: Self.didSynchronizeNotification, object: self)
     }
 
     /// 让一个根文件夹的 stub 与 tile 与数据一致
+    /// - Parameters:
+    ///   - folder: 根文件夹
+    ///   - previewIconCount: 图标里叠加的 App 图标数量
+    ///   - canAddTile: tile 不在 Dock 上时是否添加；不添加时只更新 stub
     /// - Returns: 是否需要重启 Dock
-    private func synchronizeTile(of folder: Folder, previewIconCount: Int) -> Bool {
+    private func synchronizeTile(
+        of folder: Folder,
+        previewIconCount: Int,
+        canAddTile: Bool
+    ) -> Bool {
         let tileURL = builder.bundleURL(for: folder)
 
         // stub 图标没有所在的视图，按 App 当前的外观取底板颜色
@@ -169,6 +215,9 @@ extension DockTileSynchronizer {
             let isBundleChanged = try builder.write(folder: folder, icon: icon)
 
             guard dockPreferences.contains(tileURL: tileURL) else {
+                // 被用户拖出 Dock 的 tile 不加回；stub 照常保留，重新添加时直接引用
+                guard canAddTile else { return false }
+
                 try dockPreferences.add(tileURL: tileURL, label: folder.name)
                 return true
             }

@@ -51,7 +51,9 @@ extension AppDelegate: NSApplicationDelegate {
         NSApp.mainMenu = makeMainMenu()
 
         statusBarController = StatusBarController(
-            settingsWindowController: SettingsWindowController()
+            settingsWindowController: SettingsWindowController(
+                dockTileSynchronizer: dockTileSynchronizer
+            )
         )
 
         registerAsURLHandler()

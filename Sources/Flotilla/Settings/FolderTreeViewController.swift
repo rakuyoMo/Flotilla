@@ -3,7 +3,8 @@ import UniformTypeIdentifiers
 
 // MARK: - FolderTreeViewController
 
-/// 设置窗口的文件夹区：展示完整的文件夹树，提供新建、添加 App、删除、重命名与拖拽
+/// 设置窗口的文件夹区：展示完整的文件夹树，提供新建、添加 App、添加到 Dock、删除、重命名与拖拽；
+/// tile 不在 Dock 上的根文件夹标出“不在 Dock 上”
 @MainActor
 final class FolderTreeViewController: NSViewController {
     /// 新建文件夹的默认名称
@@ -11,6 +12,9 @@ final class FolderTreeViewController: NSViewController {
 
     /// 文件夹树的唯一数据源
     private let store: FolderStore
+
+    /// Dock tile 同步器；Dock 集成不可用时为 nil，此时不显示 tile 的状态，也没有“添加到 Dock”
+    private let dockTileSynchronizer: DockTileSynchronizer?
 
     /// outline view 的数据源，持有全部行节点
     private let dataSource: FolderTreeDataSource
@@ -21,8 +25,14 @@ final class FolderTreeViewController: NSViewController {
     /// “添加 App…”按钮，无选中项时禁用
     private let addAppsButton = NSButton(title: "添加 App…", target: nil, action: nil)
 
+    /// “添加到 Dock”按钮，只有选中 tile 不在 Dock 上的根文件夹时可用
+    private let addToDockButton = NSButton(title: "添加到 Dock", target: nil, action: nil)
+
     /// “删除”按钮，无选中项时禁用
     private let removeButton = NSButton(title: "删除", target: nil, action: nil)
+
+    /// 最近一次读取到的、Dock 上现有 tile 对应的根文件夹；行的状态与按钮的可用状态都按它判断
+    private var rootFolderIDsOnDock: Set<UUID>?
 
     /// 当前选中行的节点
     private var selectedNode: FolderTreeNode? {
@@ -30,9 +40,12 @@ final class FolderTreeViewController: NSViewController {
     }
 
     /// 创建文件夹区
-    /// - Parameter store: 文件夹树的唯一数据源
-    init(store: FolderStore) {
+    /// - Parameters:
+    ///   - store: 文件夹树的唯一数据源
+    ///   - dockTileSynchronizer: Dock tile 同步器；Dock 集成不可用时传 nil
+    init(store: FolderStore, dockTileSynchronizer: DockTileSynchronizer?) {
         self.store = store
+        self.dockTileSynchronizer = dockTileSynchronizer
         dataSource = FolderTreeDataSource(store: store)
 
         super.init(nibName: nil, bundle: nil)
@@ -44,11 +57,11 @@ final class FolderTreeViewController: NSViewController {
         fatalError("init(coder:) has not been implemented")
     }
 
-    /// 搭建界面，并在文件夹树变化时刷新
+    /// 搭建界面；文件夹树变化时重建，每次同步 Dock tile 之后刷新 tile 的状态
     override func loadView() {
         configureOutlineView()
         view = makeContentView()
-        updateButtons()
+        refreshDockStatus()
 
         NotificationCenter.default.addObserver(
             self,
@@ -56,6 +69,37 @@ final class FolderTreeViewController: NSViewController {
             name: FolderStore.didChangeNotification,
             object: store
         )
+
+        guard let dockTileSynchronizer else { return }
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(refreshDockStatus),
+            name: DockTileSynchronizer.didSynchronizeNotification,
+            object: dockTileSynchronizer
+        )
+    }
+
+    /// 重新读取 Dock 上现有的 tile，原地更新各行的状态文字与按钮的可用状态
+    ///
+    /// 不重建树：新建的根文件夹正在改名时，随后的同步会发出通知，重建会结束编辑并提交输入到一半的名称
+    @objc
+    func refreshDockStatus() {
+        rootFolderIDsOnDock = dockTileSynchronizer?.rootFolderIDsOnDock()
+
+        // 只更新已经创建出来的行，其余行在出现时按新的结果配置
+        outlineView.enumerateAvailableRowViews {
+            guard
+                let cell = $0.view(atColumn: 0) as? FolderTreeCellView,
+                let node = outlineView.item(atRow: $1) as? FolderTreeNode
+            else {
+                return
+            }
+
+            cell.showsNotOnDockLabel = isNotOnDock(node)
+        }
+
+        updateButtons()
     }
 }
 
@@ -76,6 +120,7 @@ extension FolderTreeViewController: NSOutlineViewDelegate {
         )
         let cell = reusedCell as? FolderTreeCellView ?? FolderTreeCellView()
         cell.configure(with: node)
+        cell.showsNotOnDockLabel = isNotOnDock(node)
         cell.textField?.delegate = self
 
         return cell
@@ -144,6 +189,14 @@ extension FolderTreeViewController {
         }
     }
 
+    /// 把选中的根文件夹重新添加到 Dock
+    @objc
+    private func addSelectedFolderToDock() {
+        guard let folder = selectedNode?.folder else { return }
+
+        dockTileSynchronizer?.addTile(for: folder.id)
+    }
+
     /// 删除选中项；文件夹连同内容一起删除
     @objc
     private func removeSelectedItem() {
@@ -163,12 +216,14 @@ extension FolderTreeViewController {
         outlineView.editColumn(0, row: row, with: nil, select: true)
     }
 
-    /// 按数据源的最新内容重建整棵树，尽量保留展开状态与选中项
+    /// 按数据源的最新内容重建整棵树，尽量保留展开状态与选中项；重建时重新读取 Dock 上现有的 tile
     @objc
     private func reloadTree() {
         // 节点会整体重建，先按 id 记下展开的文件夹与选中项
         let expandedIDs = expandedFolderIDs(in: dataSource.rootNodes)
         let selectedID = selectedNode?.item.id
+
+        rootFolderIDsOnDock = dockTileSynchronizer?.rootFolderIDsOnDock()
 
         dataSource.reloadNodes()
         outlineView.reloadData()
@@ -236,11 +291,15 @@ extension FolderTreeViewController {
         addAppsButton.target = self
         addAppsButton.action = #selector(addApps)
 
+        addToDockButton.target = self
+        addToDockButton.action = #selector(addSelectedFolderToDock)
+        addToDockButton.isHidden = dockTileSynchronizer == nil
+
         removeButton.target = self
         removeButton.action = #selector(removeSelectedItem)
 
         let buttonRow = NSStackView()
-        buttonRow.setViews([newFolderButton, addAppsButton], in: .leading)
+        buttonRow.setViews([newFolderButton, addAppsButton, addToDockButton], in: .leading)
         buttonRow.setViews([removeButton], in: .trailing)
 
         let stackView = NSStackView(views: [titleLabel, scrollView, buttonRow])
@@ -258,11 +317,26 @@ extension FolderTreeViewController {
         return stackView
     }
 
-    /// 根据是否有选中项更新“添加 App…”与“删除”的可用状态
+    /// 根据选中项更新“添加 App…”“添加到 Dock”与“删除”的可用状态
     private func updateButtons() {
         let hasSelection = selectedNode != nil
         addAppsButton.isEnabled = hasSelection
         removeButton.isEnabled = hasSelection
+
+        addToDockButton.isEnabled = selectedNode.map { isNotOnDock($0) } ?? false
+    }
+
+    /// 这一行是否为 tile 不在 Dock 上的根文件夹；Dock 集成不可用时一律为否
+    private func isNotOnDock(_ node: FolderTreeNode) -> Bool {
+        guard
+            let rootFolderIDsOnDock,
+            node.parent == nil,
+            let folder = node.folder
+        else {
+            return false
+        }
+
+        return !rootFolderIDsOnDock.contains(folder.id)
     }
 
     /// 选中新建的文件夹并进入名称编辑

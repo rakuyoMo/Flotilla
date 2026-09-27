@@ -6,7 +6,7 @@ import AppKit
 @MainActor
 final class SettingsWindowController: NSWindowController {
     /// 文件夹区
-    private let folderTreeViewController = FolderTreeViewController(store: .shared)
+    private let folderTreeViewController: FolderTreeViewController
 
     /// 通用区
     private let generalSettingsViewController = GeneralSettingsViewController(
@@ -14,7 +14,13 @@ final class SettingsWindowController: NSWindowController {
     )
 
     /// 创建设置窗口；窗口关闭时只隐藏，不释放
-    init() {
+    /// - Parameter dockTileSynchronizer: Dock tile 同步器；Dock 集成不可用时传 nil
+    init(dockTileSynchronizer: DockTileSynchronizer?) {
+        folderTreeViewController = FolderTreeViewController(
+            store: .shared,
+            dockTileSynchronizer: dockTileSynchronizer
+        )
+
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 520, height: 600),
             styleMask: [.titled, .closable, .resizable],
@@ -57,9 +63,11 @@ final class SettingsWindowController: NSWindowController {
 // MARK: NSWindowDelegate
 
 extension SettingsWindowController: NSWindowDelegate {
-    /// 窗口每次来到前台都刷新辅助功能权限状态，从系统设置授权回来即可看到结果
+    /// 窗口每次来到前台都刷新辅助功能权限状态与 tile 的状态：
+    /// 从系统设置授权回来、把 tile 拖出 Dock 后再点开窗口，即可看到结果
     func windowDidBecomeKey(_: Notification) {
         generalSettingsViewController.refreshAccessibilityStatus()
+        folderTreeViewController.refreshDockStatus()
     }
 
     /// 设置窗口关闭后，若没有其它可见窗口就回到 `.accessory`，Dock 图标随之消失
