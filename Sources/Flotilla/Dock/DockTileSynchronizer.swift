@@ -6,9 +6,6 @@ import os
 /// 让 Dock 上的 tile 与根文件夹保持一致：每个根文件夹对应一个 stub 与一个 tile，名称与图标随文件夹实时更新
 @MainActor
 final class DockTileSynchronizer: NSObject {
-    /// 合并连续变更的防抖间隔
-    private static let debounceInterval = Duration.milliseconds(500)
-
     /// stub 图标的渲染边长（点），与 iconset 的最大一档一致
     private static let iconPointSize: CGFloat = 512
 
@@ -30,7 +27,10 @@ final class DockTileSynchronizer: NSObject {
     /// 读写 Dock 偏好
     private let dockPreferences: DockPreferences
 
-    /// 防抖期间等待执行的同步；新的变更到来时取消并替换它
+    /// 同步时机：防抖、Dock 重启后的静默期与复查
+    private var schedule = DockSynchronizationSchedule()
+
+    /// 等待执行的同步；新的变更到来时取消并替换它
     private var pendingSynchronization: Task<Void, Never>?
 
     /// 对 App 外观的观察：stub 图标按 App 当时的外观渲染，系统切换深浅后要重新同步
@@ -56,7 +56,7 @@ final class DockTileSynchronizer: NSObject {
 
     /// 先对账一次，再订阅文件夹树、设置与系统外观的变更
     func start() {
-        synchronize()
+        synchronize(isRecheck: false)
 
         NotificationCenter.default.addObserver(
             self,
@@ -87,20 +87,34 @@ final class DockTileSynchronizer: NSObject {
 // MARK: - Private
 
 extension DockTileSynchronizer {
-    /// 防抖：连续变更只在最后一次之后同步一次，避免拖拽、连续添加时反复重启 Dock
+    /// 变更到达：连续变更只在最后一次之后同步一次，避免拖拽、连续添加时反复重启 Dock；
+    /// Dock 重启后静默期内到来的变更推迟到静默期结束，免得写入的改动被 Dock 的写回覆盖
     @objc
     private func scheduleSynchronization() {
+        let time = schedule.synchronizationTime(forChangeAt: .now)
+
+        // 等待中的复查由这次同步代替：它不早于静默期结束，同样会重新读取 Dock 偏好对账
+        synchronize(at: time, isRecheck: false)
+    }
+
+    /// 在指定时刻同步；之前等待中的同步随之取消
+    /// - Parameters:
+    ///   - time: 执行同步的时刻
+    ///   - isRecheck: 是否为重启 Dock 之后的复查
+    private func synchronize(at time: ContinuousClock.Instant, isRecheck: Bool) {
         pendingSynchronization?.cancel()
         pendingSynchronization = Task { [weak self] in
-            try? await Task.sleep(for: Self.debounceInterval)
+            try? await Task.sleep(until: time, clock: .continuous)
             guard !Task.isCancelled else { return }
 
-            self?.synchronize()
+            self?.synchronize(isRecheck: isRecheck)
         }
     }
 
-    /// 按当前的根文件夹对账：更新 stub、增删改 tile，Dock 需要刷新时重启它，最后清理多余的 stub
-    private func synchronize() {
+    /// 按当前的根文件夹对账：更新 stub、增删改 tile，Dock 需要刷新时重启它，最后清理多余的 stub；
+    /// 重启了 Dock 时，安排静默期结束时的复查
+    /// - Parameter isRecheck: 是否为重启 Dock 之后的复查
+    private func synchronize(isRecheck: Bool) {
         let rootFolders = store.rootFolders
         let previewIconCount = preferences.previewIconCount
 
@@ -117,11 +131,24 @@ extension DockTileSynchronizer {
         let staleIDs = candidateIDs.subtracting(rootFolders.map(\.id))
         let staleTiles = removeTiles(of: staleIDs)
 
-        if restartRequests.contains(true) || staleTiles.needsDockRestart {
+        let needsDockRestart = restartRequests.contains(true) || staleTiles.needsDockRestart
+
+        if needsDockRestart {
             dockPreferences.restartDock()
         }
 
         removeStubs(of: staleTiles.removableIDs)
+
+        // 重启后的 Dock 会把启动时读到的偏好写回一次，可能覆盖刚写入的改动：静默期结束时再对账一次
+        let recheckTime = schedule.recordSynchronization(
+            at: .now,
+            didRestartDock: needsDockRestart,
+            isRecheck: isRecheck
+        )
+
+        if let recheckTime {
+            synchronize(at: recheckTime, isRecheck: true)
+        }
     }
 
     /// 让一个根文件夹的 stub 与 tile 与数据一致

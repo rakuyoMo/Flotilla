@@ -75,10 +75,16 @@
     - tile 按 stub 独占的 `<id>` 目录匹配，stub bundle 已被用户删掉时同样删除条目
     - 多余的 tile 也包括 Dock 偏好里指向 `DockTiles/` 下、目录已不存在的条目
   - 再订阅 `FolderStore.didChangeNotification` 与 `Preferences.didChangeNotification`，并用 KVO 观察 `NSApp.effectiveAppearance`
-- 变更后合并处理（防抖 0.5 秒）：
+- 变更后合并处理（防抖 0.5 秒；Dock 重启后的静默期见下）：
   1. 重新渲染每个根文件夹的图标，底板按 `NSApp.effectiveAppearance` 取深浅（见 01），按需更新 stub 的 icns 与 plist
   2. tile 集合或名称有变化：改 Dock 偏好，然后 `restartDock()`
   3. 只有图标变化：实测（macOS 27）Dock 不会自动刷新，`touch` bundle、重新注册 Launch Services、替换自定义图标都无效，因此 tile 换新的 `GUID` 后同样 `restartDock()`
+- Dock 重启后的静默期（同步时机的纯逻辑在 `DockSynchronizationSchedule`）：
+  - 实测（macOS 27）重启后的 Dock 会把启动时读到的偏好写回一次（`mod-count` 加一），约在重启后 4 秒（实测 3.7–4.2 秒），或在此之前被终止时；在这次写回之前写入的改动会被覆盖，随后重启的 Dock 读到的仍是旧条目
+    - 终止 Dock 后 10–60 ms 新 Dock 即被拉起；并非每次重启都会写回
+  - `restartDock()` 之后 8 秒内不写 Dock 偏好：同步时刻取“变更后 0.5 秒”与“最近一次重启后 8 秒”中较晚的一个，静默期内的变更合并成一次同步
+  - 同步重启了 Dock 时，静默期结束再复查一次：重新读取 Dock 偏好对账，把被写回覆盖的改动重新写上；没有差异时不改偏好、不重启 Dock
+    - 复查本身重启了 Dock 时不再安排复查，Dock 写回的条目与写入的始终不一致时也不会被反复重启
 - 根文件夹被删除、或被拖成子文件夹：删掉 tile 与 stub；子文件夹被拖成根文件夹：新建 tile 与 stub。
 - 系统切换深浅外观：Flotilla 没有固定外观，渲染 stub 图标时读取的 `NSApp.effectiveAppearance` 随系统变化，触发一次同步；底板颜色变了，stub 被改写、tile 换新的 `GUID`，Dock 因此重启一次（Dock 按 `GUID` 缓存 tile 图标，见上文）。
 
@@ -93,6 +99,7 @@
 - Dock 偏好条目构造（纯函数）
 - stub 目录结构与 plist 内容（写到临时目录）
 - `.icns` 写入
+- 同步时机：防抖、Dock 重启后的静默期与复查（纯逻辑）
 
 ## 验收
 
