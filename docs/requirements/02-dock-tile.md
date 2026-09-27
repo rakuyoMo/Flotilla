@@ -79,8 +79,8 @@
   - stub 改写过时换一个新的 `GUID`：实测（macOS 27）Dock 按 `GUID` 缓存 tile 图标，`GUID` 不变时重启后仍显示旧图标。
   - 条目的 `GUID` 不是本次运行写入的值时同样换新：实测（macOS 27）Dock 被终止时若带着未写的状态（例如松手约 2 秒内刚接受过一次拖放），会在终止时把启动时读到的旧条目写回，盖掉刚换上的 `GUID`，重启后的 Dock 仍显示旧图标；静默期结束的复查据此再换一个新的 `GUID` 并重启 Dock。
 - `restartDock(terminationHandler:)`：终止 `com.apple.dock` 进程，launchd 会自动拉起；被终止的 Dock 全部退出后在主线程调用 `terminationHandler`。
-  - 退出靠观察被终止进程的 `NSRunningApplication.isTerminated`（KVO）得知：Dock 是 LSUIElement App，实测（macOS 27）NSWorkspace 不为 LSUIElement App 发 `didTerminateApplicationNotification`
-  - Dock 终止时若把旧条目写回，退出时已经落地（实测 Dock 进程消失时 `mod-count` 已经加一）：此刻的偏好就是新拉起的 Dock 读到的内容
+  - 退出靠观察被终止进程的 `NSRunningApplication.isTerminated`（KVO）得知：Dock 是 LSUIElement App，实测（macOS 27）NSWorkspace 不为 LSUIElement App 发 `didTerminateApplicationNotification`，`isTerminated` 的观察回调则在 Dock 退出后送达
+  - Dock 终止时若把旧条目写回，退出时已经落地（实测 Dock 进程消失时 `mod-count` 已经加一，回调里读到的偏好已不含被写回抹掉的条目）：此刻的偏好就是新拉起的 Dock 读到的内容
 
 ## 同步器（`Sources/Flotilla/Dock/DockTileSynchronizer.swift`）
 

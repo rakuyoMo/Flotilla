@@ -232,8 +232,6 @@ extension DockPreferences {
     /// - Parameter terminationHandler: 被终止的 Dock 全部退出后在主线程调用。
     ///   Dock 终止时若把旧条目写回，此时已经落地：此刻的偏好就是新拉起的 Dock 读到的内容
     func restartDock(terminationHandler: @escaping @MainActor () -> Void) {
-        #warning("TODO: 未能实测 被终止的 Dock 退出后 `isTerminated` 的观察回调送达，且此刻已能读到它终止时写回的偏好")
-
         let docks = NSRunningApplication.runningApplications(
             withBundleIdentifier: Self.dockDomain
         )
