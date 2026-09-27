@@ -17,6 +17,10 @@ struct DockTileBundleBuilder {
     /// 自定义图标在 bundle 根目录下的文件名，由 `NSWorkspace.setIcon` 生成
     private static let customIconFileName = "Icon\r"
 
+    /// Launch Services 的注册工具
+    static let lsregisterPath =
+        "/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister"
+
     /// 存放所有 stub 的目录
     let directory: URL
 
@@ -24,8 +28,13 @@ struct DockTileBundleBuilder {
     let executableURL: URL
 
     /// stub 的 Info.plist 内容；`FlotillaFolderID` 由 stub 读取后拼出 `flotilla://folder/<id>`
+    ///
+    /// `CFBundleDocumentTypes` 声明 stub 能打开 App：从访达把 App 拖到 tile 上时，tile 高亮为放置目标，
+    /// 松手后 Launch Services 以“打开文档”的方式启动 stub；`Alternate` 让 stub 不成为 App 的默认打开方式
     static func infoDictionary(for folder: Folder) -> [String: Any] {
-        [
+        #warning("TODO: 未能实测 从访达把 App 拖到 tile 上时 Dock 高亮 tile，松手后以打开文档的方式启动 stub")
+
+        return [
             "CFBundleExecutable": executableName,
             "CFBundleIdentifier": "com.rakuyo.flotilla.tile.\(folder.id.uuidString)",
             "CFBundleName": folder.name,
@@ -37,6 +46,17 @@ struct DockTileBundleBuilder {
             "LSUIElement": true,
             "LSBackgroundOnly": true,
             "FlotillaFolderID": folder.id.uuidString,
+            "CFBundleDocumentTypes": [
+                [
+                    "CFBundleTypeName": "Application",
+                    "CFBundleTypeRole": "Viewer",
+                    "LSHandlerRank": "Alternate",
+                    "LSItemContentTypes": [
+                        "com.apple.application",
+                        "com.apple.application-bundle",
+                    ],
+                ],
+            ],
         ]
     }
 }
@@ -188,7 +208,7 @@ extension DockTileBundleBuilder {
 // MARK: - Private
 
 extension DockTileBundleBuilder {
-    /// 重新签名，并把图标设为 bundle 的自定义图标
+    /// 重新签名，把图标设为 bundle 的自定义图标，再向 Launch Services 注册
     ///
     /// macOS 26 起，系统把 icns 形式的 App 图标装进灰色圆角底板，bundle 的自定义图标不受影响，Dock 上才能显示文件夹原本的形状
     private func seal(_ bundleURL: URL, iconURL: URL) throws {
@@ -215,6 +235,9 @@ extension DockTileBundleBuilder {
         else {
             throw DockTileError.customIconFailed(path: bundlePath)
         }
+
+        // 按改写后的 Info.plist 重新注册：Launch Services 知道 stub 能打开 App，App 拖到 tile 上时 Dock 才接受放下
+        try CommandRunner.run(Self.lsregisterPath, arguments: ["-f", bundlePath])
     }
 
     /// 用 source 的副本替换 destination；destination 不存在时直接拷贝

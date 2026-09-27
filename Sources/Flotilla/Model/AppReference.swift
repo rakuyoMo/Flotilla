@@ -1,4 +1,5 @@
 import AppKit
+import UniformTypeIdentifiers
 
 // MARK: - AppReference
 
@@ -22,5 +23,20 @@ extension AppReference {
     /// App 的图标
     var icon: NSImage {
         NSWorkspace.shared.icon(forFile: url.path(percentEncoded: false))
+    }
+}
+
+// MARK: - Content Type
+
+extension AppReference {
+    /// URL 是否指向 App bundle：内容类型符合 `.applicationBundle`；文件不存在时为否
+    ///
+    /// 设置窗口从访达拖入、把 App 拖到 Dock 上的 tile，两处按同一个标准判断
+    static func isApplicationBundle(_ url: URL) -> Bool {
+        let contentType = try? url
+            .resourceValues(forKeys: [.contentTypeKey])
+            .contentType
+
+        return contentType?.conforms(to: .applicationBundle) ?? false
     }
 }
