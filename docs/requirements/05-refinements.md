@@ -98,7 +98,7 @@
   - `flotilla://folder/<uuid>` → `.toggleFolder`
   - `flotilla://folder/<uuid>/apps?path=…&path=…` → `.addApps`：`path` 解码后按目录 URL（`URL(filePath:directoryHint: .isDirectory)`）给出，顺序与查询项一致；没有任何 `path` 时视为无法识别
   - 其它 URL 一律为 nil
-- `AppDelegate.application(_:open:)`：`.toggleFolder` 交给 `DockFolderPresenter`；`.addApps` 先只保留 App bundle（内容类型符合 `.applicationBundle`），再交给 `FolderStore.shared.addApps(_:to:)`；整个过程不激活 Flotilla。
+- `AppDelegate.application(_:open:)`：`.toggleFolder` 交给 `DockFolderPresenter`；`.addApps` 先确认 id 是根文件夹（stub 只代表根文件夹，其它 id 一律忽略），再只保留 App bundle（内容类型符合 `.applicationBundle`），交给 `FolderStore.shared.addApps(_:to:)`；整个过程不激活 Flotilla。
   - App bundle 的判断与设置窗口从访达拖入时相同，抽到 `AppReference.isApplicationBundle(_ url: URL) -> Bool` 供两处共用
 - 加入之后，文件夹树、tile 图标与面板都按既有的变更通知更新，不另加提示。
 

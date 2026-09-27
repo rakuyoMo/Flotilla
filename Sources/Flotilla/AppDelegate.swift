@@ -65,6 +65,12 @@ extension AppDelegate: NSApplicationDelegate {
 
             // 只加入 App bundle，与从访达拖进设置窗口时的判断相同；同一次拖放重复送达时由 `addApps` 去重
             case .addApps(let folderID, let appURLs):
+                // stub 只代表根文件夹，指向其它文件夹的 URL 一律忽略
+                guard FolderStore.shared.rootFolders.contains(where: { $0.id == folderID }) else {
+                    Self.logger.notice("忽略不存在的根文件夹：\(folderID.uuidString, privacy: .public)")
+                    continue
+                }
+
                 let bundleURLs = appURLs.filter {
                     AppReference.isApplicationBundle($0)
                 }
