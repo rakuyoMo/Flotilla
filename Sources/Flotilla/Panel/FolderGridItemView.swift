@@ -11,8 +11,14 @@ final class FolderGridItemView: NSView {
     /// 名称
     private let titleField = FolderPanelLabel(labelWithString: "")
 
-    /// 平常显示的图标
-    private let icon: NSImage
+    /// 平常显示的图标；子文件夹的图标在系统外观变化时由网格换成对应外观的版本
+    var icon: NSImage {
+        didSet {
+            // 按下时的图标跟着换，正在按下时也立即显示新的
+            pressedIcon = Self.darkened(icon)
+            imageView.image = isPressed ? pressedIcon : icon
+        }
+    }
 
     /// 按下时显示的图标，第一次按下时生成
     private lazy var pressedIcon = Self.darkened(icon)

@@ -33,6 +33,9 @@ final class DockTileSynchronizer: NSObject {
     /// 防抖期间等待执行的同步；新的变更到来时取消并替换它
     private var pendingSynchronization: Task<Void, Never>?
 
+    /// 对 App 外观的观察：stub 图标按 App 当时的外观渲染，系统切换深浅后要重新同步
+    private var appearanceObservation: NSKeyValueObservation?
+
     /// 创建同步器
     /// - Parameters:
     ///   - store: 文件夹树的唯一数据源
@@ -51,7 +54,7 @@ final class DockTileSynchronizer: NSObject {
         self.dockPreferences = dockPreferences
     }
 
-    /// 先对账一次，再订阅文件夹树与设置的变更
+    /// 先对账一次，再订阅文件夹树、设置与系统外观的变更
     func start() {
         synchronize()
 
@@ -68,6 +71,16 @@ final class DockTileSynchronizer: NSObject {
             name: Preferences.didChangeNotification,
             object: preferences
         )
+
+        // 观察渲染 stub 图标时读取的同一个值：App 没有固定外观，这个值跟随系统的深浅；
+        // 它在主线程上变化，观察回调也在主线程。
+        // 深浅切换后底板颜色变了，同步时 stub 被改写、tile 换新的 GUID，Dock 因此重启一次：
+        // Dock 按 GUID 缓存 tile 图标，不重启不会换图（见 02 文档）
+        appearanceObservation = NSApp.observe(\.effectiveAppearance) { [weak self] _, _ in
+            MainActor.assumeIsolated {
+                self?.scheduleSynchronization()
+            }
+        }
     }
 }
 
@@ -112,10 +125,12 @@ extension DockTileSynchronizer {
     private func synchronizeTile(of folder: Folder, previewIconCount: Int) -> Bool {
         let tileURL = builder.bundleURL(for: folder)
 
+        // stub 图标没有所在的视图，按 App 当前的外观取底板颜色
         let icon = FolderIconRenderer.render(
             folder: folder,
             previewIconCount: previewIconCount,
-            pointSize: Self.iconPointSize
+            pointSize: Self.iconPointSize,
+            appearance: FolderIconAppearance(NSApp.effectiveAppearance)
         )
 
         do {

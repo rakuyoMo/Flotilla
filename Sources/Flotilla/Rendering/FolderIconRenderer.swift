@@ -2,24 +2,16 @@ import AppKit
 
 // MARK: - FolderIconRenderer
 
-/// 把文件夹渲染成图标（需求 2）：浅色磨砂的圆角方形底板上，按 2×2 网格放前几个 App 的图标
+/// 把文件夹渲染成图标（需求 2）：磨砂的圆角方形底板上，按 2×2 网格放前几个 App 的图标
 ///
-/// 底板的位置、大小与圆角和 macOS 26 起系统 App 图标的底板一致，放进 Dock 后与相邻的 App 图标对齐
+/// 底板的位置、大小与圆角和 macOS 26 起系统 App 图标的底板一致，放进 Dock 后与相邻的 App 图标对齐；
+/// 底板颜色随外观分深浅，取值见 `FolderIconAppearance`
 enum FolderIconRenderer {
     /// 底板在画布四边各留的边距，以画布边长为 1；系统 App 图标的底板同样四边各留 100/1024
     private static let plateInset: CGFloat = 100 / 1024
 
     /// 底板连续曲率圆角的半径与底板边长之比，按系统 App 图标的轮廓实测拟合
     private static let plateCornerRatio: CGFloat = 0.25
-
-    /// 底板渐变底部的灰度，顶部为白色
-    private static let plateBottomWhite: CGFloat = 0.84
-
-    /// 底板的不透明度：半透明，透出 Dock 的背景，形成磨砂感
-    private static let plateOpacity: CGFloat = 0.9
-
-    /// 底板边线的不透明度，边线为黑色
-    private static let plateEdgeOpacity: CGFloat = 0.12
 
     /// 底板边线的宽度，以画布边长为 1；边线紧贴轮廓内侧
     private static let plateEdgeWidth: CGFloat = 4.5 / 1024
@@ -50,11 +42,14 @@ enum FolderIconRenderer {
     ///   - folder: 要渲染的文件夹
     ///   - previewIconCount: 叠加的 App 图标数量上限，超出 `0...Preferences.maximumPreviewIconCount` 时夹取
     ///   - pointSize: 输出图像的边长（点）
-    /// - Returns: 用绘制闭包构造的图像，与分辨率无关，调用方可按任意像素尺寸栅格化
+    ///   - appearance: 底板按哪种外观取色
+    /// - Returns: 用绘制闭包构造的图像，与分辨率无关，调用方可按任意像素尺寸栅格化；
+    ///   底板颜色在这里就已定下，不随绘制时的外观变化，外观变了要重新渲染
     static func render(
         folder: Folder,
         previewIconCount: Int,
-        pointSize: CGFloat
+        pointSize: CGFloat,
+        appearance: FolderIconAppearance
     ) -> NSImage {
         let count = min(max(previewIconCount, 0), Preferences.maximumPreviewIconCount)
 
@@ -74,7 +69,7 @@ enum FolderIconRenderer {
         ) { canvas in
             guard let context = NSGraphicsContext.current?.cgContext else { return false }
 
-            drawPlate(in: canvas, context: context)
+            drawPlate(in: canvas, appearance: appearance, context: context)
 
             // 没有预览时只留底板
             for (index, icon) in previewIcons.enumerated() {
@@ -128,8 +123,14 @@ enum FolderIconRenderer {
 // MARK: - Private
 
 extension FolderIconRenderer {
-    /// 画底板：连续曲率圆角方形，自上而下由白色渐变到浅灰，整体半透明，轮廓内侧一圈淡淡的暗色边线
-    private static func drawPlate(in canvas: CGRect, context: CGContext) {
+    /// 画底板：连续曲率圆角方形，自上而下由亮到暗渐变，整体半透明，轮廓内侧一圈淡淡的边线
+    ///
+    /// 浅色外观是白色到浅灰、黑色边线，深色外观是深灰到近黑、白色边线
+    private static func drawPlate(
+        in canvas: CGRect,
+        appearance: FolderIconAppearance,
+        context: CGContext
+    ) {
         let inset = canvas.width * plateInset
         let plate = canvas.insetBy(dx: inset, dy: inset)
         let outline = plateOutline(in: plate)
@@ -142,8 +143,8 @@ extension FolderIconRenderer {
         context.clip()
 
         let colors = [
-            CGColor(gray: 1, alpha: plateOpacity),
-            CGColor(gray: plateBottomWhite, alpha: plateOpacity),
+            CGColor(gray: appearance.plateTopWhite, alpha: appearance.plateOpacity),
+            CGColor(gray: appearance.plateBottomWhite, alpha: appearance.plateOpacity),
         ]
 
         // 画布是翻转坐标系，plate.minY 在上方
@@ -165,7 +166,9 @@ extension FolderIconRenderer {
         // 以轮廓为中线描两倍宽的线，外侧一半被裁掉，留下紧贴轮廓内侧的边线
         context.addPath(outline)
         context.setLineWidth(canvas.width * plateEdgeWidth * 2)
-        context.setStrokeColor(CGColor(gray: 0, alpha: plateEdgeOpacity))
+        context.setStrokeColor(
+            CGColor(gray: appearance.plateEdgeWhite, alpha: appearance.plateEdgeOpacity)
+        )
         context.strokePath()
     }
 

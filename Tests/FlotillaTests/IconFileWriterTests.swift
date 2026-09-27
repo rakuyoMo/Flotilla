@@ -68,7 +68,8 @@ final class IconFileWriterTests {
         return FolderIconRenderer.render(
             folder: Folder(id: UUID(), name: "测试", items: apps),
             previewIconCount: 4,
-            pointSize: 512
+            pointSize: 512,
+            appearance: .light
         )
     }
 }

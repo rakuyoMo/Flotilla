@@ -254,7 +254,8 @@ final class DockTileBundleBuilderTests {
         FolderIconRenderer.render(
             folder: folder,
             previewIconCount: previewIconCount,
-            pointSize: 512
+            pointSize: 512,
+            appearance: .light
         )
     }
 }
