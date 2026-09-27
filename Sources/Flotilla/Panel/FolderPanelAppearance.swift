@@ -2,10 +2,10 @@ import AppKit
 
 // MARK: - FolderPanelAppearance
 
-/// 面板跟随系统外观时随之变化的颜色与不透明度，深色、浅色各一组
+/// 面板跟随系统外观时随之变化的取值：颜色、不透明度与返回按钮的几个尺寸，深色、浅色各一组
 ///
 /// 数值来自对原生 Dock 文件夹弹窗的实测（macOS 27、tilesize 64），边缘线的读数都取灰度 128 的背景；
-/// 几何与动画参数与外观无关，见 `FolderPanelMetrics`
+/// 与外观无关的几何与动画参数见 `FolderPanelMetrics`
 enum FolderPanelAppearance {
     /// 深色外观
     case dark
@@ -77,14 +77,29 @@ enum FolderPanelAppearance {
         }
     }
 
-    /// 返回按钮底色可见部分相对按钮 frame 的内缩：浅色底色连边线 20 × 20 pt，下方留给投影
+    /// 返回按钮底色可见部分相对 21 × 22 pt 按钮 frame 的内缩
+    ///
+    /// 深色底色 21 × 21 pt，贴 frame 顶边，frame 最下面 1 pt 不画；浅色连边线 20 × 20 pt，比深色四周各小 0.5 pt，下方留给投影
     var backButtonBezelInsets: NSEdgeInsets {
         switch self {
         case .dark:
-            NSEdgeInsetsZero
+            NSEdgeInsets(top: 0, left: 0, bottom: 1, right: 0)
 
         case .light:
             NSEdgeInsets(top: 0.5, left: 0.5, bottom: 1.5, right: 0.5)
+        }
+    }
+
+    /// 返回按钮底色可见部分的圆角半径，连续曲率
+    ///
+    /// 浅色可见部分比深色四周各小 0.5 pt，圆角同心，半径也小 0.5 pt
+    var backButtonCornerRadius: CGFloat {
+        switch self {
+        case .dark:
+            4
+
+        case .light:
+            3.5
         }
     }
 
@@ -127,6 +142,19 @@ enum FolderPanelAppearance {
 
         case .light:
             NSColor(white: 0, alpha: 0.85)
+        }
+    }
+
+    /// 返回按钮 chevron 的线宽
+    ///
+    /// 两种外观下原生 chevron 的位置与长度相同，截图上深色的线更粗：按 8 位读数线性叠加拟合，深色 1.13 pt、浅色 0.95 pt
+    var backButtonChevronLineWidth: CGFloat {
+        switch self {
+        case .dark:
+            1.13
+
+        case .light:
+            0.95
         }
     }
 

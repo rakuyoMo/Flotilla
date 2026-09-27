@@ -103,11 +103,15 @@ enum FolderPanelMetrics {
     /// 返回按钮在面板主体里的位置与尺寸，原点在主体左上角、y 向下
     static let backButtonFrame = CGRect(x: 15, y: 7, width: 21, height: 22)
 
-    /// 返回按钮的圆角半径
-    static let backButtonCornerRadius: CGFloat = 5
+    /// 返回按钮里 chevron 的高度：两个端点之间的竖直距离，不含线宽
+    ///
+    /// 两条边与水平方向成 45°，宽度是高度的一半；深色、浅色原生的几何相同
+    static let backChevronHeight: CGFloat = 10.1
 
-    /// 返回按钮里 chevron 的高度
-    static let backChevronHeight: CGFloat = 7
+    /// chevron 外接框（不含线宽）的水平中心相对底色中心的偏移，负值向左
+    ///
+    /// 原生 chevron 并不水平居中：顶点距按钮 frame 左边 7.225 pt，外接框中心比 21 pt 宽的底色中心偏左 0.75 pt
+    static let backChevronOffsetX: CGFloat = -0.75
 
     // MARK: 动画
 

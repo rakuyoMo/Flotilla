@@ -2,14 +2,11 @@ import AppKit
 
 // MARK: - FolderNavigationBackButton
 
-/// 标题区里的返回按钮：圆角矩形底色，中间是向左的 chevron；悬停不变，按下时底色改变，在按钮上抬起才触发
+/// 标题区里的返回按钮：连续曲率圆角的底色上是一个向左的 chevron；悬停不变，按下时底色改变，在按钮上抬起才触发
 ///
 /// 深色外观下底色是半透明白色；浅色外观下是不透明的白色，外有一圈暗线与很窄的投影
 @MainActor
 final class FolderNavigationBackButton: NSView {
-    /// chevron 的线宽
-    private static let chevronLineWidth: CGFloat = 1.5
-
     /// 点击后执行的动作
     private let clickHandler: () -> Void
 
@@ -42,7 +39,7 @@ final class FolderNavigationBackButton: NSView {
         let appearance = FolderPanelAppearance(effectiveAppearance)
         let insets = appearance.backButtonBezelInsets
 
-        // 底色可见部分：深色铺满整个按钮，浅色四周内缩，下方留出投影的位置；按钮不是 flipped，底边内缩加在 minY 上
+        // 底色可见部分：深色贴 frame 顶边、最下面 1 pt 不画，浅色再向内缩、下方留出投影的位置；按钮不是 flipped，底边内缩加在 minY 上
         let bezel = CGRect(
             x: bounds.minX + insets.left,
             y: bounds.minY + insets.bottom,
@@ -51,7 +48,7 @@ final class FolderNavigationBackButton: NSView {
         )
 
         drawBezel(bezel, appearance: appearance)
-        drawChevron(centeredIn: bezel, color: appearance.backButtonChevronColor)
+        drawChevron(in: bezel, appearance: appearance)
     }
 
     /// 面板不是 key window 时，第一次点击也直接生效
@@ -87,17 +84,16 @@ extension FolderNavigationBackButton {
     ///   - bezel: 底色可见部分，含暗线
     ///   - appearance: 当前外观
     private func drawBezel(_ bezel: CGRect, appearance: FolderPanelAppearance) {
-        let radius = FolderPanelMetrics.backButtonCornerRadius
+        let radius = appearance.backButtonCornerRadius
         let borderOpacity = appearance.backButtonBorderOpacity
 
-        // 有暗线时底色再向内缩 1 像素，暗线落在底色外侧、直接叠在材质上
+        // 有暗线时底色再向内缩 1 像素，暗线落在底色外侧、直接叠在材质上；圆角同心，半径随之减小
         let pixel = 1 / (window?.backingScaleFactor ?? 2)
         let inset = borderOpacity > 0 ? pixel : 0
 
-        let fill = NSBezierPath(
-            roundedRect: bezel.insetBy(dx: inset, dy: inset),
-            xRadius: radius - inset,
-            yRadius: radius - inset
+        let fill = Self.roundedPath(
+            in: bezel.insetBy(dx: inset, dy: inset),
+            radius: radius - inset
         )
 
         // 投影由不透明的底色投下，只露出底色之外的部分
@@ -112,7 +108,7 @@ extension FolderNavigationBackButton {
         guard borderOpacity > 0 else { return }
 
         // 暗线是可见部分减去底色剩下的一圈
-        let border = NSBezierPath(roundedRect: bezel, xRadius: radius, yRadius: radius)
+        let border = Self.roundedPath(in: bezel, radius: radius)
         border.append(fill)
         border.windingRule = .evenOdd
 
@@ -120,28 +116,55 @@ extension FolderNavigationBackButton {
         border.fill()
     }
 
-    /// 画向左的 chevron：两条边与水平方向成 45°，宽度是高度的一半
+    /// 画向左的 chevron：两条边与水平方向成 45°，宽度是高度的一半，线端与拐角都是圆的
+    ///
+    /// 竖直方向以底色中心为中心；水平方向按实测偏向左侧，两种外观下位置相同
     /// - Parameters:
-    ///   - rect: chevron 居中的区域
-    ///   - color: 线的颜色
-    private func drawChevron(centeredIn rect: CGRect, color: NSColor) {
+    ///   - rect: 底色可见部分，含暗线
+    ///   - appearance: 当前外观
+    private func drawChevron(in rect: CGRect, appearance: FolderPanelAppearance) {
         let height = FolderPanelMetrics.backChevronHeight
+        let width = height / 2
+
+        // 外接框（不含线宽）的水平中心偏离底色中心；顶点在左，两个端点在右
+        let centerX = rect.midX + FolderPanelMetrics.backChevronOffsetX
+        let vertexX = centerX - width / 2
+        let endX = centerX + width / 2
 
         let chevron = NSBezierPath()
-        chevron.move(to: CGPoint(x: rect.midX + height / 4, y: rect.midY + height / 2))
-        chevron.line(to: CGPoint(x: rect.midX - height / 4, y: rect.midY))
-        chevron.line(to: CGPoint(x: rect.midX + height / 4, y: rect.midY - height / 2))
+        chevron.move(to: CGPoint(x: endX, y: rect.midY + height / 2))
+        chevron.line(to: CGPoint(x: vertexX, y: rect.midY))
+        chevron.line(to: CGPoint(x: endX, y: rect.midY - height / 2))
 
-        chevron.lineWidth = Self.chevronLineWidth
+        chevron.lineWidth = appearance.backButtonChevronLineWidth
         chevron.lineCapStyle = .round
         chevron.lineJoinStyle = .round
 
-        color.setStroke()
+        appearance.backButtonChevronColor.setStroke()
         chevron.stroke()
     }
 
     /// 事件发生的位置是否在按钮内
     private func contains(_ event: NSEvent) -> Bool {
         bounds.contains(convert(event.locationInWindow, from: nil))
+    }
+}
+
+// MARK: - Helpers
+
+extension FolderNavigationBackButton {
+    /// 四个角都是连续曲率圆角的矩形
+    /// - Parameters:
+    ///   - rect: 外框
+    ///   - radius: 圆角半径
+    private static func roundedPath(in rect: CGRect, radius: CGFloat) -> NSBezierPath {
+        // 从 minY 边上右侧圆角的起点出发，绕过四个角后闭合回到这里
+        let path = CGMutablePath()
+        path.move(to: CGPoint(x: rect.maxX - radius * ContinuousCorner.extent, y: rect.minY))
+
+        ContinuousCorner.addCorners(to: path, in: rect, radius: radius)
+        path.closeSubpath()
+
+        return NSBezierPath(cgPath: path)
     }
 }
