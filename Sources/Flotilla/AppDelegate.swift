@@ -83,7 +83,10 @@ extension AppDelegate {
         let appMenu = NSMenu()
         appMenu.items = [
             NSMenuItem(
-                title: "退出 Flotilla",
+                title: String(
+                    localized: "mainMenu.quit",
+                    comment: "App 菜单的“退出 Flotilla”"
+                ),
                 action: #selector(NSApplication.terminate(_:)),
                 keyEquivalent: "q"
             ),
@@ -103,38 +106,61 @@ extension AppDelegate {
     /// “编辑”菜单：撤销、重做、剪切、复制、粘贴、全选，动作沿响应链交给当前的文本框
     private func makeEditMenu() -> NSMenu {
         let redoItem = NSMenuItem(
-            title: "重做",
+            title: String(
+                localized: "mainMenu.redo",
+                comment: "“编辑”菜单的“重做”"
+            ),
             action: Selector(("redo:")),
             keyEquivalent: "z"
         )
         redoItem.keyEquivalentModifierMask = [.command, .shift]
 
-        let editMenu = NSMenu(title: "编辑")
+        let editMenu = NSMenu(
+            title: String(
+                localized: "mainMenu.edit",
+                comment: "主菜单里“编辑”菜单的标题"
+            )
+        )
         editMenu.items = [
             NSMenuItem(
-                title: "撤销",
+                title: String(
+                    localized: "mainMenu.undo",
+                    comment: "“编辑”菜单的“撤销”"
+                ),
                 action: Selector(("undo:")),
                 keyEquivalent: "z"
             ),
             redoItem,
             .separator(),
             NSMenuItem(
-                title: "剪切",
+                title: String(
+                    localized: "mainMenu.cut",
+                    comment: "“编辑”菜单的“剪切”"
+                ),
                 action: #selector(NSText.cut(_:)),
                 keyEquivalent: "x"
             ),
             NSMenuItem(
-                title: "复制",
+                title: String(
+                    localized: "mainMenu.copy",
+                    comment: "“编辑”菜单的“复制”"
+                ),
                 action: #selector(NSText.copy(_:)),
                 keyEquivalent: "c"
             ),
             NSMenuItem(
-                title: "粘贴",
+                title: String(
+                    localized: "mainMenu.paste",
+                    comment: "“编辑”菜单的“粘贴”"
+                ),
                 action: #selector(NSText.paste(_:)),
                 keyEquivalent: "v"
             ),
             NSMenuItem(
-                title: "全选",
+                title: String(
+                    localized: "mainMenu.selectAll",
+                    comment: "“编辑”菜单的“全选”"
+                ),
                 action: #selector(NSText.selectAll(_:)),
                 keyEquivalent: "a"
             ),

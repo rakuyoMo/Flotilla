@@ -30,7 +30,10 @@ extension StatusBarController {
     /// 菜单：“设置…”、分隔线、“退出 Flotilla”
     private func makeMenu() -> NSMenu {
         let settingsItem = NSMenuItem(
-            title: "设置…",
+            title: String(
+                localized: "statusBar.settings",
+                comment: "状态栏菜单的“设置…”，打开设置窗口"
+            ),
             action: #selector(openSettings),
             keyEquivalent: ","
         )
@@ -41,7 +44,10 @@ extension StatusBarController {
             settingsItem,
             .separator(),
             NSMenuItem(
-                title: "退出 Flotilla",
+                title: String(
+                    localized: "mainMenu.quit",
+                    comment: "状态栏菜单的“退出 Flotilla”，与 App 菜单的同名项共用"
+                ),
                 action: #selector(NSApplication.terminate(_:)),
                 keyEquivalent: "q"
             ),

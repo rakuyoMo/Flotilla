@@ -43,15 +43,29 @@ final class GeneralSettingsViewController: NSViewController {
         previewIconCountPopUp.action = #selector(previewIconCountChanged)
 
         let openSettingsButton = NSButton(
-            title: "打开系统设置",
+            title: String(
+                localized: "general.openSystemSettings",
+                comment: "打开系统设置辅助功能权限页的按钮"
+            ),
             target: self,
             action: #selector(openAccessibilitySettings)
         )
 
         let accessibilityRow = NSStackView(views: [accessibilityStatusLabel, openSettingsButton])
 
-        let previewIconCountLabel = NSTextField(labelWithString: "文件夹图标内显示的 App 图标数量：")
-        let accessibilityLabel = NSTextField(labelWithString: "辅助功能权限：")
+        let previewIconCountLabel = NSTextField(
+            labelWithString: String(
+                localized: "general.previewIconCount",
+                comment: "预览图标数选择器左侧的标签：Dock 上的文件夹图标里最多显示几个 App 图标"
+            )
+        )
+
+        let accessibilityLabel = NSTextField(
+            labelWithString: String(
+                localized: "general.accessibility",
+                comment: "辅助功能权限一行左侧的标签"
+            )
+        )
 
         // 两列网格：左列标签右对齐，右列控件左对齐，各行按首行基线对齐
         let gridView = NSGridView(views: [
@@ -63,7 +77,12 @@ final class GeneralSettingsViewController: NSViewController {
         gridView.rowAlignment = .firstBaseline
         gridView.rowSpacing = 12
 
-        let titleLabel = NSTextField(labelWithString: "通用")
+        let titleLabel = NSTextField(
+            labelWithString: String(
+                localized: "general.sectionTitle",
+                comment: "设置窗口通用区的区块标题"
+            )
+        )
         titleLabel.font = .boldSystemFont(ofSize: NSFont.systemFontSize)
 
         let stackView = NSStackView(views: [titleLabel, gridView])
@@ -77,7 +96,18 @@ final class GeneralSettingsViewController: NSViewController {
 
     /// 按 `AXIsProcessTrusted()` 刷新辅助功能权限的显示
     func refreshAccessibilityStatus() {
-        accessibilityStatusLabel.stringValue = AXIsProcessTrusted() ? "已授权" : "未授权"
+        accessibilityStatusLabel.stringValue =
+            if AXIsProcessTrusted() {
+                String(
+                    localized: "general.accessibilityGranted",
+                    comment: "辅助功能权限的状态：已授权"
+                )
+            } else {
+                String(
+                    localized: "general.accessibilityNotGranted",
+                    comment: "辅助功能权限的状态：未授权"
+                )
+            }
     }
 }
 

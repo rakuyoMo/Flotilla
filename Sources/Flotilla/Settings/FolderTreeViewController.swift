@@ -8,7 +8,10 @@ import UniformTypeIdentifiers
 @MainActor
 final class FolderTreeViewController: NSViewController {
     /// 新建文件夹的默认名称
-    private static let untitledFolderName = "未命名文件夹"
+    private static let untitledFolderName = String(
+        localized: "folders.untitledFolder",
+        comment: "新建文件夹的默认名称，新建后立即进入改名"
+    )
 
     /// 文件夹树的唯一数据源
     private let store: FolderStore
@@ -23,13 +26,34 @@ final class FolderTreeViewController: NSViewController {
     private let outlineView = NSOutlineView()
 
     /// “添加 App…”按钮，无选中项时禁用
-    private let addAppsButton = NSButton(title: "添加 App…", target: nil, action: nil)
+    private let addAppsButton = NSButton(
+        title: String(
+            localized: "folders.addApps",
+            comment: "文件夹区的按钮：选择 App 加入选中项所属的文件夹"
+        ),
+        target: nil,
+        action: nil
+    )
 
     /// “添加到 Dock”按钮，只有选中 tile 不在 Dock 上的根文件夹时可用
-    private let addToDockButton = NSButton(title: "添加到 Dock", target: nil, action: nil)
+    private let addToDockButton = NSButton(
+        title: String(
+            localized: "folders.addToDock",
+            comment: "文件夹区的按钮：把 tile 不在 Dock 上的根文件夹重新添加到 Dock"
+        ),
+        target: nil,
+        action: nil
+    )
 
     /// “删除”按钮，无选中项时禁用
-    private let removeButton = NSButton(title: "删除", target: nil, action: nil)
+    private let removeButton = NSButton(
+        title: String(
+            localized: "folders.remove",
+            comment: "文件夹区的按钮：删除选中的文件夹或 App"
+        ),
+        target: nil,
+        action: nil
+    )
 
     /// 最近一次读取到的、被拖出 Dock 的根文件夹；行的状态与按钮的可用状态都按它判断
     private var rootFolderIDsRemovedFromDock: Set<UUID> = []
@@ -274,7 +298,12 @@ extension FolderTreeViewController {
 
     /// 区块标题、树与底部按钮自上而下排列
     private func makeContentView() -> NSView {
-        let titleLabel = NSTextField(labelWithString: "文件夹")
+        let titleLabel = NSTextField(
+            labelWithString: String(
+                localized: "folders.sectionTitle",
+                comment: "设置窗口文件夹区的区块标题"
+            )
+        )
         titleLabel.font = .boldSystemFont(ofSize: NSFont.systemFontSize)
 
         let scrollView = NSScrollView()
@@ -284,7 +313,10 @@ extension FolderTreeViewController {
         scrollView.borderType = .bezelBorder
 
         let newFolderButton = NSButton(
-            title: "新建文件夹",
+            title: String(
+                localized: "folders.newFolder",
+                comment: "文件夹区的按钮：新建文件夹"
+            ),
             target: self,
             action: #selector(addFolder)
         )

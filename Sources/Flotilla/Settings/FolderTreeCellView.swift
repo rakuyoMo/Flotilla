@@ -12,7 +12,12 @@ final class FolderTreeCellView: NSTableCellView {
     private static let iconSize: CGFloat = 20
 
     /// 名称右侧的状态文字“不在 Dock 上”，默认隐藏
-    private let notOnDockLabel = NSTextField(labelWithString: "不在 Dock 上")
+    private let notOnDockLabel = NSTextField(
+        labelWithString: String(
+            localized: "folders.notOnDock",
+            comment: "文件夹树里 tile 不在 Dock 上的根文件夹，名称右侧的状态文字"
+        )
+    )
 
     /// 是否显示“不在 Dock 上”；只有 tile 不在 Dock 上的根文件夹这一行显示
     var showsNotOnDockLabel: Bool {

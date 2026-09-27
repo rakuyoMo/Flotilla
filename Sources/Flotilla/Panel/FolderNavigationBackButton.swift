@@ -25,7 +25,12 @@ final class FolderNavigationBackButton: NSView {
         super.init(frame: .zero)
 
         setAccessibilityRole(.button)
-        setAccessibilityLabel("返回")
+        setAccessibilityLabel(
+            String(
+                localized: "panel.back",
+                comment: "面板标题区返回按钮的辅助功能标签，回到上一层文件夹"
+            )
+        )
     }
 
     /// 按钮完全由代码构建，不支持从归档解码

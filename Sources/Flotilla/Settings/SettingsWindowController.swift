@@ -28,7 +28,10 @@ final class SettingsWindowController: NSWindowController {
             defer: true
         )
 
-        window.title = "Flotilla 设置"
+        window.title = String(
+            localized: "settings.windowTitle",
+            comment: "设置窗口的标题"
+        )
         window.isReleasedWhenClosed = false
         window.contentMinSize = NSSize(width: 460, height: 480)
 
