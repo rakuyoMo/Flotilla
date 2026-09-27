@@ -98,9 +98,14 @@ final class DockTileSynchronizer: NSObject {
         }
     }
 
-    /// Dock 上现有 tile 对应的根文件夹 id
-    func rootFolderIDsOnDock() -> Set<UUID> {
-        dockPreferences.folderIDs(ofTilesIn: builder.directory)
+    /// 被用户拖出 Dock 的根文件夹：tile 不在 Dock 上，下一次同步也不会添加；设置窗口据此显示状态
+    ///
+    /// 刚新建、还没同步的根文件夹，以及已经要求添加的根文件夹都不算
+    func rootFolderIDsRemovedFromDock() -> Set<UUID> {
+        additionTracker.removedFolderIDs(
+            rootFolderIDs: Set(store.rootFolders.map(\.id)),
+            onDockFolderIDs: rootFolderIDsOnDock()
+        )
     }
 
     /// 把根文件夹记为待添加，并安排一次同步；用于把被拖出 Dock 的 tile 重新添加回去
@@ -121,6 +126,11 @@ extension DockTileSynchronizer {
 
         // 等待中的复查由这次同步代替：它不早于静默期结束，同样会重新读取 Dock 偏好对账
         synchronize(at: time, isRecheck: false)
+    }
+
+    /// Dock 上现有 tile 对应的根文件夹 id
+    private func rootFolderIDsOnDock() -> Set<UUID> {
+        dockPreferences.folderIDs(ofTilesIn: builder.directory)
     }
 
     /// 在指定时刻同步；之前等待中的同步随之取消

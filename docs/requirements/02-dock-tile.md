@@ -102,7 +102,7 @@
     - 同步器创建时的根文件夹都视为已同步过：Flotilla 没运行时不会有新的根文件夹出现，此时缺少 tile 的根文件夹都是被用户拖出去的
   - 添加过 tile 的根文件夹，在同步看到 tile 确实在 Dock 上之前一直待添加；tile 在 Dock 上出现过、之后又不在了，才是被用户拖出去的
     - 待添加的根文件夹被删除或被拖成子文件夹时不再添加
-- 查询与请求：`rootFolderIDsOnDock()` 给出 Dock 上现有 tile 对应的根文件夹（`DockPreferences.folderIDs(ofTilesIn:)` 对 stub 目录的结果）；`addTile(for:)` 把根文件夹记为待添加并安排一次同步。
+- 查询与请求：`rootFolderIDsRemovedFromDock()` 给出被用户拖出 Dock 的根文件夹（tile 不在 Dock 上、下一次同步也不会添加；Dock 上现有的 tile 取 `DockPreferences.folderIDs(ofTilesIn:)` 对 stub 目录的结果）；`addTile(for:)` 把根文件夹记为待添加并安排一次同步。
 - 每次同步结束后发出 `DockTileSynchronizer.didSynchronizeNotification`（`object` 为同步器），设置窗口据此刷新 tile 的状态。
 - 系统切换深浅外观：Flotilla 没有固定外观，渲染 stub 图标时读取的 `NSApp.effectiveAppearance` 随系统变化，触发一次同步；底板颜色变了，stub 被改写、tile 换新的 `GUID`，Dock 因此重启一次（Dock 按 `GUID` 缓存 tile 图标，见上文）。
 

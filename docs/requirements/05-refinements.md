@@ -29,6 +29,13 @@
           rootFolderIDs: Set<UUID>,
           onDockFolderIDs: Set<UUID>
       ) -> Set<UUID>
+
+      /// 被用户拖出 Dock 的根文件夹：tile 不在 Dock 上，下一次同步也不会添加；
+      /// 新出现的与待添加的都不算，它们的 tile 只是还没加上
+      func removedFolderIDs(
+          rootFolderIDs: Set<UUID>,
+          onDockFolderIDs: Set<UUID>
+      ) -> Set<UUID>
   }
   ```
 
@@ -39,14 +46,14 @@
 
 `DockTileSynchronizer` 新增两个方法：
 
-- `func rootFolderIDsOnDock() -> Set<UUID>`：Dock 上现有 tile 对应的根文件夹 id，即 `DockPreferences.folderIDs(ofTilesIn:)` 对 stub 目录的结果
+- `func rootFolderIDsRemovedFromDock() -> Set<UUID>`：被用户拖出 Dock 的根文件夹，即 `removedFolderIDs` 对当前根文件夹与 Dock 上现有 tile（`DockPreferences.folderIDs(ofTilesIn:)` 对 stub 目录的结果）的判定；刚新建、还没同步的根文件夹与已经要求添加的都不算
 - `func addTile(for folderID: UUID)`：把该根文件夹记为待添加，并安排一次同步
 
 ### 设置窗口
 
 - 文件夹树里，tile 不在 Dock 上的根文件夹这一行，在名称右侧显示状态文字“不在 Dock 上”：次要文字颜色（`secondaryLabelColor`）、小号系统字体；在 Dock 上的根文件夹、子文件夹与 App 都不显示。
 - 底部按钮行新增“添加到 Dock”，排在“添加 App…”之后；只有选中的是 tile 不在 Dock 上的根文件夹时可用，点击后调用 `addTile(for:)`。
-- 文件夹树每次重建或刷新状态时读取一次 `rootFolderIDsOnDock()`，行的状态与按钮的可用状态都用这一次读取的结果。
+- 文件夹树每次重建或刷新状态时读取一次 `rootFolderIDsRemovedFromDock()`，行的状态与按钮的可用状态都用这一次读取的结果；点击“添加到 Dock”后立即刷新一次，状态文字随即消失。
 - `FolderStore.didChangeNotification` 时重建整棵树；`DockTileSynchronizer.didSynchronizeNotification` 与设置窗口成为 key window 时（用户把 tile 拖出 Dock 后再点开窗口，状态才是新的）只原地刷新已显示各行的状态与按钮的可用状态，不重建。
   - 新建根文件夹后立即进入改名，随后的同步会发出通知；实测 view-based `NSOutlineView` 在编辑中 `reloadData` 会结束编辑，并把输入到一半的名称提交出去
 - `SettingsWindowController` 与 `FolderTreeViewController` 通过构造函数拿到同步器，由 `AppDelegate` 传入。Dock 集成不可用（没有 stub 可执行文件，或读不到 Dock 偏好）时同步器为 nil：不显示状态，“添加到 Dock”隐藏。
@@ -143,7 +150,7 @@
 
 ## 单元测试
 
-- `DockTileAdditionTracker`：启动时缺少 tile 的根文件夹不添加；新出现的根文件夹添加；添加过的在看到 tile 之前保持待添加，看到之后再消失不再添加；用户请求的添加；待添加的被删除或不再是根文件夹时不添加
+- `DockTileAdditionTracker`：启动时缺少 tile 的根文件夹不添加；新出现的根文件夹添加；添加过的在看到 tile 之前保持待添加，看到之后再消失不再添加；用户请求的添加；待添加的被删除或不再是根文件夹时不添加；被拖出的判定只包含启动时就缺 tile 的与看到之后又消失的，新出现的、待添加的与已要求添加的都不算
 - `DockTileRequest`：两种 URL 的解析，`path` 里的空格与中文，多个 `path` 保持顺序；scheme、host、层级、id 不符或没有 `path` 的 URL 一律为 nil（取代 `FolderURLParsingTests`）
 - stub 的 Info.plist 含上述 `CFBundleDocumentTypes`
 - 本地化：五张 `Localizable.strings` 都能解析、键集合完全相同、没有空值；代码里 `String(localized:` 引用的每个键都在表里，表里的每个键都被代码引用

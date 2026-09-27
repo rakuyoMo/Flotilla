@@ -143,4 +143,61 @@ struct DockTileAdditionTrackerTests {
 
         #expect(folderIDs == [existingID])
     }
+
+    // MARK: 被拖出 Dock 的判定
+
+    /// 启动时就缺少 tile 的根文件夹算被拖出：设置窗口要显示“不在 Dock 上”
+    @Test
+    func missingTileAtLaunchIsRemoved() {
+        let tracker = DockTileAdditionTracker(rootFolderIDs: [existingID])
+
+        let removedIDs = tracker.removedFolderIDs(
+            rootFolderIDs: [existingID],
+            onDockFolderIDs: []
+        )
+
+        #expect(removedIDs == [existingID])
+    }
+
+    /// 新建后还没同步的根文件夹不算被拖出：tile 只是还没加上，状态文字不该闪现
+    @Test
+    func newRootFolderBeforeSyncIsNotRemoved() {
+        let tracker = DockTileAdditionTracker(rootFolderIDs: [existingID])
+
+        let removedIDs = tracker.removedFolderIDs(
+            rootFolderIDs: [existingID, newID],
+            onDockFolderIDs: [existingID]
+        )
+
+        #expect(removedIDs.isEmpty)
+    }
+
+    /// 添加过、还没看到 tile 的根文件夹不算被拖出；看到之后 tile 又不在了才算
+    @Test
+    func pendingFolderIsNotRemovedUntilTileDisappearsAfterBeingSeen() {
+        var tracker = DockTileAdditionTracker(rootFolderIDs: [])
+
+        _ = tracker.folderIDsToAdd(rootFolderIDs: [newID], onDockFolderIDs: [])
+        let pendingRemovedIDs = tracker.removedFolderIDs(rootFolderIDs: [newID], onDockFolderIDs: [])
+
+        _ = tracker.folderIDsToAdd(rootFolderIDs: [newID], onDockFolderIDs: [newID])
+        let draggedOutIDs = tracker.removedFolderIDs(rootFolderIDs: [newID], onDockFolderIDs: [])
+
+        #expect(pendingRemovedIDs.isEmpty)
+        #expect(draggedOutIDs == [newID])
+    }
+
+    /// 用户要求添加之后立即不再算被拖出：点了“添加到 Dock”状态文字随即消失
+    @Test
+    func requestedFolderIsNotRemoved() {
+        var tracker = DockTileAdditionTracker(rootFolderIDs: [existingID])
+        tracker.request(folderID: existingID)
+
+        let removedIDs = tracker.removedFolderIDs(
+            rootFolderIDs: [existingID],
+            onDockFolderIDs: []
+        )
+
+        #expect(removedIDs.isEmpty)
+    }
 }

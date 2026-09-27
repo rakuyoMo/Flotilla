@@ -47,4 +47,20 @@ struct DockTileAdditionTracker {
 
         return pendingFolderIDs
     }
+
+    /// 被用户拖出 Dock 的根文件夹：tile 不在 Dock 上，下一次同步也不会添加
+    ///
+    /// 新出现的（上一次同步时还不是根文件夹）与待添加的根文件夹都不算：它们的 tile 只是还没加上
+    /// - Parameters:
+    ///   - rootFolderIDs: 当前的根文件夹
+    ///   - onDockFolderIDs: Dock 上现有 tile 对应的根文件夹
+    func removedFolderIDs(
+        rootFolderIDs: Set<UUID>,
+        onDockFolderIDs: Set<UUID>
+    ) -> Set<UUID> {
+        rootFolderIDs
+            .intersection(syncedRootFolderIDs)
+            .subtracting(pendingFolderIDs)
+            .subtracting(onDockFolderIDs)
+    }
 }
