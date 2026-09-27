@@ -27,11 +27,9 @@ final class DockTileAppDelegate: NSObject {
 extension DockTileAppDelegate: NSApplicationDelegate {
     /// 收下被拖到 tile 上的项
     ///
-    /// 由拖放启动时，AppKit 在 `applicationDidFinishLaunching` 之前送来，可能分多次；
+    /// 实测（macOS 27）由拖放启动时，AppKit 在 `applicationDidFinishLaunching` 之前送来，一次拖放的多个项一次送齐；
     /// URL 在启动完成时发出，之后才送达的项不再发出
     func application(_: NSApplication, open urls: [URL]) {
-        #warning("TODO: 未能实测 由拖放启动时 application(_:open:) 先于 applicationDidFinishLaunching 送达")
-
         droppedURLs += urls
     }
 
