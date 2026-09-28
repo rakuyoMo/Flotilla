@@ -36,6 +36,18 @@ remote_has_ref() {
   [[ "$status" -eq 0 ]]
 }
 
+# 推送或开 PR 失败时收回发布分支，失败后重试不会被“分支已存在”拦住
+discard_release_branch() {
+  git switch main
+
+  # 发布提交没有合并进 main，普通删除会被拒绝
+  git branch --delete --force "$BRANCH"
+
+  # 推送本身没成功时远端本来就没有这个分支，删除失败可以忽略
+  git push origin --delete "$BRANCH" 2> /dev/null \
+    || true
+}
+
 # 参数必须恰好是一个 X.Y.Z 格式的版本号
 if [[ $# -ne 1 ]]; then
   fail "需要恰好一个参数，用法：mise run release X.Y.Z"
@@ -86,6 +98,18 @@ if ! gh auth status > /dev/null; then
   fail "gh 未通过登录检查，请按上面的提示处理后重试"
 fi
 
+# origin 须是本仓库：fork 的 PR 拿不到发布所需的写权限，合并后不会发布
+# 按 origin 的 URL 查询，有多个 remote 时结果也确定
+origin_url="$(git remote get-url origin)"
+
+if ! origin_is_fork="$(gh repo view "$origin_url" --json isFork --jq .isFork)"; then
+  fail "查询 origin 对应的 GitHub 仓库失败：${origin_url}"
+fi
+
+if [[ "$origin_is_fork" != "false" ]]; then
+  fail "origin 须是本仓库，不能是 fork：${origin_url}"
+fi
+
 # 本地或远端已有同名分支时不覆盖，交给用户确认后清理
 if git show-ref --quiet --verify "refs/heads/$BRANCH"; then
   fail "本地已有分支 ${BRANCH}"
@@ -109,7 +133,10 @@ git add "$INFO_PLIST"
 git commit --allow-empty --message "release: $VERSION"
 
 # 推送发布分支，PR 从它发起
-git push --set-upstream origin "$BRANCH"
+git push --set-upstream origin "$BRANCH" || {
+  discard_release_branch
+  fail "推送 ${BRANCH} 失败"
+}
 
 # PR 标题须为 `release: X.Y.Z`，合并后才会触发 .github/workflows/release.yml
 pr_url="$(
@@ -118,7 +145,10 @@ pr_url="$(
     --head "$BRANCH" \
     --title "release: $VERSION" \
     --body "发布 ${VERSION}：合并后由 GitHub Actions 打包并创建 Release。"
-)"
+)" || {
+  discard_release_branch
+  fail "创建 PR 失败"
+}
 
 # PR 链接用于等 CI 与合并；发布分支已推送，本地切回 main
 echo "已创建 PR：$pr_url"
