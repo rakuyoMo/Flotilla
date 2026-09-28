@@ -198,9 +198,9 @@ docs/requirements/      需求文档：00 为总览，01–05 为按实现顺序
    - 本地 `main` 与 `origin/main` 一致
    - tag `vX.Y.Z` 在远端不存在
    - `gh` 已登录
+   - `origin` 是本仓库而不是 fork：fork 的 PR 拿不到发布所需的写权限
    - 本地与远端都没有 `release/X.Y.Z` 分支
 2. 检查通过后，脚本切出 `release/X.Y.Z` 分支，把 Info.plist 的两个版本号改成新版本，提交并推送到 `origin`，再向 `main` 开标题为 `release: X.Y.Z` 的 PR
-   - `origin` 须是本仓库：fork 来的 PR 拿不到发布所需的写权限
 3. 等 CI 通过后合并 PR
 4. 合并后，GitHub Actions 自动：
    - 在合并提交上打 tag `vX.Y.Z`
