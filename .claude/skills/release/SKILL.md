@@ -3,6 +3,15 @@ name: release
 description: 发布 Flotilla 的新版本：用 `mise run release` 开 release PR，等 CI 通过后合并，再等 GitHub Actions 创建 GitHub Release。
 when_to_use: 用户要发布新版本时，例如“发布 1.2.0”“发个 1.2.0”“release 1.2.0”。
 argument-hint: "[X.Y.Z]"
+allowed-tools:
+  - Bash(mise run release *)
+  - Bash(gh pr checks *)
+  - Bash(gh pr merge *)
+  - Bash(gh pr view *)
+  - Bash(gh run list *)
+  - Bash(gh run watch *)
+  - Bash(gh release view *)
+  - Bash(sleep *)
 ---
 
 # 发布新版本
