@@ -20,6 +20,9 @@ final class AppDelegate: NSObject {
 
     /// 面板的展开、收起与切换；启动完成后创建
     private var dockFolderPresenter: DockFolderPresenter?
+
+    /// 让 Dock 与 ⌘Tab 里的 App 图标随系统深浅外观切换
+    private let appIconController = AppIconController()
 }
 
 // MARK: NSApplicationDelegate
@@ -32,9 +35,11 @@ extension AppDelegate: NSApplicationDelegate {
         startDockIntegration()
     }
 
-    /// 搭好主菜单与状态栏，把当前这份 App 注册为 `flotilla` scheme 的处理者
+    /// 搭好主菜单与状态栏，按系统外观设好 App 图标，把当前这份 App 注册为 `flotilla` scheme 的处理者
     func applicationDidFinishLaunching(_: Notification) {
         NSApp.mainMenu = makeMainMenu()
+
+        appIconController.start()
 
         statusBarController = StatusBarController(
             settingsWindowController: SettingsWindowController(
