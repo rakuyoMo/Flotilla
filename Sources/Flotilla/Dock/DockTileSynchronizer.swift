@@ -13,9 +13,9 @@ final class DockTileSynchronizer: NSObject {
         "DockTileSynchronizer.didSynchronize"
     )
 
-    /// Dock 偏好有变化时发出，`object` 为同步器；包括 Dock 自己写入的改动，例如用户把 tile 拖出 Dock
-    nonisolated static let dockPreferencesDidChangeNotification = Notification.Name(
-        "DockTileSynchronizer.dockPreferencesDidChange"
+    /// Dock 偏好里的 tile 有变化时发出，`object` 为同步器；包括 Dock 自己写入的改动，例如用户把 tile 拖出 Dock
+    nonisolated static let dockTilesDidChangeNotification = Notification.Name(
+        "DockTileSynchronizer.dockTilesDidChange"
     )
 
     /// stub 图标的渲染边长（点），与 iconset 的最大一档一致
@@ -106,11 +106,11 @@ final class DockTileSynchronizer: NSObject {
         }
 
         // 用户把 tile 拖出 Dock 后，Dock 约 4 秒才把删除写进偏好：写入时通知设置窗口刷新状态，不触发同步
-        dockPreferences.observeChanges { [weak self] in
+        dockPreferences.observeTiles { [weak self] in
             guard let self else { return }
 
             NotificationCenter.default.post(
-                name: Self.dockPreferencesDidChangeNotification,
+                name: Self.dockTilesDidChangeNotification,
                 object: self
             )
         }

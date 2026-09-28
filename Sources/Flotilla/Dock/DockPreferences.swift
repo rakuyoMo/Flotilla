@@ -1,4 +1,4 @@
-import AppKit
+import Foundation
 import os
 
 // MARK: - DockPreferences
@@ -15,15 +15,10 @@ final class DockPreferences {
     nonisolated static let defaultBackupDirectory = URL.applicationSupportDirectory
         .appending(path: "Flotilla/Backups", directoryHint: .isDirectory)
 
-    /// tile 所在的区域：Dock 左侧的 App 区域
-    ///
-    /// 实测（macOS 27）这里的 stub 条目在 Dock 重启后保留，显示自定义图标与条目名称，点击即启动 stub
-    private static let sectionKey = "persistent-apps"
-
-    #warning("TODO: 待实测新 Dock 启动后读取 persistent-apps 的时刻，取其一半以内")
-
     /// 新拉起的 Dock 启动后多久之内写完的偏好一定会被它读到
-    nonisolated static let relaunchReadDelay: TimeInterval = 0.05
+    ///
+    /// 实测（macOS 27，23 次）新 Dock 在启动后约 70–85 ms 读取 `persistent-apps`，70 ms 之前写完的改动都被读到；取其一半以内
+    nonisolated static let relaunchReadDelay: TimeInterval = 0.03
 
     /// 备份最多保留的份数
     private static let maximumBackupCount = 5
@@ -37,8 +32,10 @@ final class DockPreferences {
         category: "DockPreferences"
     )
 
-    /// 读写偏好的 `UserDefaults`
-    private let defaults: UserDefaults
+    /// 读写偏好的 `UserDefaults`；tile 放在 Dock 左侧的 App 区域
+    ///
+    /// 实测（macOS 27）这个区域里的 stub 条目在 Dock 重启后保留，显示自定义图标与条目名称，点击即启动 stub
+    private let defaults: DockDefaults
 
     /// 偏好所在的域，备份时按它导出全部内容
     private let domainName: String
@@ -55,21 +52,27 @@ final class DockPreferences {
     /// 盖掉 Flotilla 刚换上的新 GUID；重启后的 Dock 读到旧 GUID，仍显示缓存的旧图标
     private var writtenGUIDs: [String: Int] = [:]
 
-    /// 对最近一次被终止的 Dock 进程是否已退出的观察，下一次重启 Dock 时替换
-    private var terminationObservations: [NSKeyValueObservation] = []
-
     /// 最近一次重启时被终止的 Dock 进程号；找新拉起的 Dock 时排除它们
     private var terminatedDockPIDs: Set<pid_t> = []
 
-    /// 对偏好文件的监听，Dock 与其它进程写入时都会通知
-    private var fileMonitor: PreferencesFileMonitor? = nil
+    /// 被终止、还没退出的 Dock 进程号；全部退出后调用 `terminationHandler`
+    private var exitingDockPIDs: Set<pid_t> = []
+
+    /// 被终止的 Dock 全部退出后要调用的回调，调用后清空
+    private var terminationHandler: (@MainActor () -> Void)? = nil
+
+    /// 对最近一次被终止的 Dock 进程退出事件的监听，下一次重启 Dock 时替换
+    private var terminationSources: [DispatchSourceProcess] = []
+
+    /// 对 tile 区域的观察，Dock 与其它进程写入时都会通知
+    private var tilesObservation: NSKeyValueObservation? = nil
 
     /// 创建 Dock 偏好的读写者；域名无法作为 `UserDefaults` 的 suite 时返回 nil
     /// - Parameters:
     ///   - domainName: 偏好所在的域，App 使用 `com.apple.dock`，测试时注入临时文件的绝对路径
     ///   - backupDirectory: 存放备份的目录
     init?(domainName: String, backupDirectory: URL) {
-        guard let defaults = UserDefaults(suiteName: domainName) else { return nil }
+        guard let defaults = DockDefaults(suiteName: domainName) else { return nil }
 
         self.defaults = defaults
         self.domainName = domainName
@@ -285,17 +288,13 @@ extension DockPreferences {
 // MARK: - Observation
 
 extension DockPreferences {
-    /// 开始监听偏好的变化：Dock 自己写入的改动（例如用户把 tile 拖出 Dock 后约 4 秒写入的删除）与 Flotilla 的写入都会通知
-    ///
-    /// 监听的是 `~/Library/Preferences` 下与域同名的偏好文件
+    /// 开始观察 tile 区域的变化：Dock 自己写入的改动（例如用户把 tile 拖出 Dock 后约 4 秒写入的删除）与 Flotilla 的写入都会通知
     /// - Parameter handler: 在主线程调用
-    func observeChanges(_ handler: @escaping @MainActor () -> Void) {
-        let fileURL = URL.libraryDirectory.appending(path: "Preferences/\(domainName).plist")
-
-        fileMonitor = PreferencesFileMonitor(fileURL: fileURL, handler: handler)
-
-        if fileMonitor == nil {
-            Self.logger.error("无法监听 Dock 偏好文件：\(fileURL.path(percentEncoded: false), privacy: .public)")
+    func observeTiles(_ handler: @escaping @MainActor @Sendable () -> Void) {
+        tilesObservation = defaults.observe(\.tiles) { _, _ in
+            Task { @MainActor in
+                handler()
+            }
         }
     }
 }
@@ -321,61 +320,57 @@ extension DockPreferences {
     /// - Parameter terminationHandler: 被终止的 Dock 全部退出后在主线程调用；没有在运行的 Dock 时立即调用。
     ///   Dock 终止时若把启动时读到的旧条目写回，此时已经落地
     func restartDock(terminationHandler: @escaping @MainActor () -> Void) {
-        let docks = NSRunningApplication.runningApplications(
-            withBundleIdentifier: Self.dockDomain
-        )
+        let pids = Self.dockProcesses().map(\.pid)
 
-        terminatedDockPIDs = Set(docks.map(\.processIdentifier))
+        terminatedDockPIDs = Set(pids)
+        exitingDockPIDs = Set(pids)
 
-        guard !docks.isEmpty else {
-            terminationObservations = []
+        for source in terminationSources {
+            source.cancel()
+        }
+
+        terminationSources = []
+        self.terminationHandler = nil
+
+        guard !pids.isEmpty else {
             terminationHandler()
             return
         }
 
-        // Dock 是 LSUIElement App，NSWorkspace 不为它发退出通知，只能观察 `isTerminated`。
-        // 该属性只在主线程的 run loop 里更新，观察回调也在主线程；终止之前就开始观察，不会错过退出
-        terminationObservations = docks.map {
-            $0.observe(\.isTerminated) { _, _ in
-                MainActor.assumeIsolated {
-                    guard docks.allSatisfy(\.isTerminated) else { return }
+        self.terminationHandler = terminationHandler
 
-                    terminationHandler()
+        // 用 kqueue 监听进程退出，终止之前就开始监听，不会错过退出。
+        // 核对不通过时要终止的正是刚拉起的新 Dock，NSRunningApplication 这时还看不到它
+        terminationSources = pids.map { pid in
+            let source = DispatchSource.makeProcessSource(
+                identifier: pid,
+                eventMask: .exit,
+                queue: .main
+            )
+
+            source.setEventHandler { [weak self] in
+                MainActor.assumeIsolated {
+                    self?.dockDidExit(pid)
                 }
             }
+
+            source.resume()
+            return source
         }
 
-        for dock in docks {
-            kill(dock.processIdentifier, SIGTERM)
+        for pid in pids {
+            kill(pid, SIGTERM)
         }
     }
 
-    #warning("TODO: 待实测 NSRunningApplication 比内核晚多久看到新 Dock")
-
     /// 最近一次重启后新拉起的 Dock 的启动时刻；新 Dock 还没启动时为 nil
     ///
-    /// 取内核记录的进程启动时刻：新 Dock 从进程创建起就可能读取偏好，
-    /// NSRunningApplication 要等它向 Launch Services 登记之后才看得到
+    /// 取内核记录的进程启动时刻：实测（macOS 27）NSRunningApplication 在新 Dock 启动约 45 ms 后才列出它，
+    /// 给出的 `launchDate` 为空
     func relaunchedDockLaunchDate() -> Date? {
-        let capacity = 4096
-        var pids = [pid_t](repeating: 0, count: capacity)
-
-        let byteCount = proc_listpids(
-            UInt32(PROC_UID_ONLY),
-            UInt32(getuid()),
-            &pids,
-            Int32(capacity * MemoryLayout<pid_t>.size)
-        )
-
-        let count = Int(max(byteCount, 0)) / MemoryLayout<pid_t>.size
-
-        for pid in pids.prefix(count) where pid > 0 && !terminatedDockPIDs.contains(pid) {
-            if let launchDate = Self.launchDate(ofDockProcess: pid) {
-                return launchDate
-            }
-        }
-
-        return nil
+        Self.dockProcesses()
+            .first { !terminatedDockPIDs.contains($0.pid) }?
+            .launchDate
     }
 }
 
@@ -384,7 +379,22 @@ extension DockPreferences {
 extension DockPreferences {
     /// 区域内当前的全部条目
     private var tiles: [[String: Any]] {
-        defaults.array(forKey: Self.sectionKey) as? [[String: Any]] ?? []
+        defaults.tiles
+    }
+
+    /// 一个被终止的 Dock 已退出：全部退出后调用回调
+    private func dockDidExit(_ pid: pid_t) {
+        exitingDockPIDs.remove(pid)
+
+        guard
+            exitingDockPIDs.isEmpty,
+            let terminationHandler
+        else {
+            return
+        }
+
+        self.terminationHandler = nil
+        terminationHandler()
     }
 
     /// 写回区域内的全部条目；本次运行首次写入前先备份，备份失败时不写
@@ -394,7 +404,7 @@ extension DockPreferences {
             hasBackedUp = true
         }
 
-        defaults.set(tiles, forKey: Self.sectionKey)
+        defaults.set(tiles, forKey: DockDefaults.tilesKey)
 
         // 等写入交给 cfprefsd 后再返回：重启 Dock 后的补写要据此判断是否赶在新 Dock 读取之前
         defaults.synchronize()
@@ -500,6 +510,35 @@ extension DockPreferences {
     /// 生成条目的 `GUID`：随机的 32 位正整数，与 Dock 自己写出的取值范围一致
     private static func makeGUID() -> Int {
         Int.random(in: 1 ... Int(UInt32.max))
+    }
+
+    /// 本用户正在运行的 Dock 进程及其内核启动时刻
+    ///
+    /// 按进程名找：launchd 拉起的新进程先以 xpcproxy 运行，实测（macOS 27）约 7–10 ms 后才 exec 成 Dock；
+    /// 在此之前找不到它，它也还没开始执行 Dock 的代码，读不到偏好
+    private static func dockProcesses() -> [(pid: pid_t, launchDate: Date)] {
+        let capacity = 4096
+        var pids = [pid_t](repeating: 0, count: capacity)
+
+        let byteCount = proc_listpids(
+            UInt32(PROC_UID_ONLY),
+            UInt32(getuid()),
+            &pids,
+            Int32(capacity * MemoryLayout<pid_t>.size)
+        )
+
+        let count = Int(max(byteCount, 0)) / MemoryLayout<pid_t>.size
+
+        return pids.prefix(count).compactMap { pid in
+            guard
+                pid > 0,
+                let launchDate = launchDate(ofDockProcess: pid)
+            else {
+                return nil
+            }
+
+            return (pid, launchDate)
+        }
     }
 
     /// 进程是 Dock 时给出它的内核启动时刻；不是 Dock、已退出或读不到进程信息时为 nil

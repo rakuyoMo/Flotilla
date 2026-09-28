@@ -81,7 +81,7 @@ final class FolderTreeViewController: NSViewController {
         fatalError("init(coder:) has not been implemented")
     }
 
-    /// 搭建界面；文件夹树变化时重建，每次同步 Dock tile 之后与 Dock 偏好变化时刷新 tile 的状态
+    /// 搭建界面；文件夹树变化时重建，每次同步 Dock tile 之后与 Dock 偏好里的 tile 变化时刷新 tile 的状态
     override func loadView() {
         configureOutlineView()
         view = makeContentView()
@@ -107,7 +107,7 @@ final class FolderTreeViewController: NSViewController {
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(refreshDockStatus),
-            name: DockTileSynchronizer.dockPreferencesDidChangeNotification,
+            name: DockTileSynchronizer.dockTilesDidChangeNotification,
             object: dockTileSynchronizer
         )
     }
