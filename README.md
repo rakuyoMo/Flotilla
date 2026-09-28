@@ -32,7 +32,7 @@ xattr -d com.apple.quarantine /Applications/Flotilla.app
 
 ## 使用方法
 
-Flotilla 启动后没有 Dock 图标，只在菜单栏显示一个文件夹图标。
+Flotilla 启动后没有 Dock 图标，只在菜单栏显示一个小帆船图标。
 
 界面语言跟随系统，支持英文、简体中文、繁体中文、日文、韩文；其它语言显示英文。
 
