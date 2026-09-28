@@ -6,7 +6,7 @@ import Testing
 // MARK: - DockTileAdditionTrackerTests
 
 /// 添加 tile 的条件：用户拖出 Dock 的 tile 不能被自动加回，新出现的与用户要求添加的根文件夹却必须出现在 Dock 上，
-/// 而且在被终止的 Dock 写回偏好抹掉刚加的条目时还要再加一次
+/// 在确认新 Dock 读到 tile 之前还要保持待添加；新建的根文件夹在名称定下来之前不能出现在 Dock 上
 struct DockTileAdditionTrackerTests {
     /// 启动时就在的根文件夹
     private let existingID = UUID()
@@ -44,42 +44,57 @@ struct DockTileAdditionTrackerTests {
         #expect(folderIDs == [newID])
     }
 
-    /// 被终止的 Dock 退出时偏好里没有刚加的 tile：是它终止时写回旧条目抹掉了，仍待添加，复查时再加一次；
-    /// 这期间也不算被拖出，设置窗口不显示状态
+    /// 添加之后还没确认新 Dock 读到了 tile（补写一直赶不上新 Dock 读取偏好）：tile 不在 Dock 上时不算被拖出，
+    /// 设置窗口不显示状态，下一次同步再加
     @Test
-    func tileWipedAtDockTerminationIsAddedAgain() {
+    func unconfirmedTileIsAddedAgain() {
         var tracker = DockTileAdditionTracker(rootFolderIDs: [])
 
         let firstIDs = tracker.folderIDsToAdd(rootFolderIDs: [newID], onDockFolderIDs: [])
-        tracker.recordDockTermination(onDockFolderIDs: [])
 
         let removedIDs = tracker.removedFolderIDs(rootFolderIDs: [newID], onDockFolderIDs: [])
-        let recheckIDs = tracker.folderIDsToAdd(rootFolderIDs: [newID], onDockFolderIDs: [])
+        let nextIDs = tracker.folderIDsToAdd(rootFolderIDs: [newID], onDockFolderIDs: [])
 
         #expect(firstIDs == [newID])
         #expect(removedIDs.isEmpty)
-        #expect(recheckIDs == [newID])
+        #expect(nextIDs == [newID])
     }
 
-    /// 被终止的 Dock 退出时 tile 在偏好里：新拉起的 Dock 读到了它，tile 已经加上。
-    /// 之后、复查之前用户把 tile 拖出：设置窗口随即显示它不在 Dock 上，复查不加回
+    /// 重启后的 Dock 读到了含有 tile 的偏好，tile 已经加上。
+    /// 之后、下一次同步之前用户把 tile 拖出：设置窗口随即显示它不在 Dock 上，下一次同步不加回
     @Test
-    func tileConfirmedAtDockTerminationThenDraggedOutIsNotAddedAgain() {
+    func tileConfirmedByRelaunchedDockThenDraggedOutIsNotAddedAgain() {
         var tracker = DockTileAdditionTracker(rootFolderIDs: [existingID])
         tracker.request(folderID: existingID)
 
         let rootIDs: Set = [existingID, newID]
 
         let firstIDs = tracker.folderIDsToAdd(rootFolderIDs: rootIDs, onDockFolderIDs: [])
-        tracker.recordDockTermination(onDockFolderIDs: rootIDs)
+        tracker.recordDockRelaunch(onDockFolderIDs: rootIDs)
 
-        // 两个 tile 都在复查之前被拖出 Dock，其间没有别的同步
+        // 两个 tile 都在下一次同步之前被拖出 Dock
         let removedIDs = tracker.removedFolderIDs(rootFolderIDs: rootIDs, onDockFolderIDs: [])
-        let recheckIDs = tracker.folderIDsToAdd(rootFolderIDs: rootIDs, onDockFolderIDs: [])
+        let nextIDs = tracker.folderIDsToAdd(rootFolderIDs: rootIDs, onDockFolderIDs: [])
 
         #expect(firstIDs == rootIDs)
         #expect(removedIDs == rootIDs)
-        #expect(recheckIDs.isEmpty)
+        #expect(nextIDs.isEmpty)
+    }
+
+    /// 新 Dock 读到的偏好里只有部分 tile（例如某个 stub 写入失败没能添加）：只确认读到的，其余仍待添加
+    @Test
+    func relaunchConfirmsOnlyTilesOnDock() {
+        var tracker = DockTileAdditionTracker(rootFolderIDs: [existingID])
+        tracker.request(folderID: existingID)
+
+        let rootIDs: Set = [existingID, newID]
+
+        _ = tracker.folderIDsToAdd(rootFolderIDs: rootIDs, onDockFolderIDs: [])
+        tracker.recordDockRelaunch(onDockFolderIDs: [newID])
+
+        let nextIDs = tracker.folderIDsToAdd(rootFolderIDs: rootIDs, onDockFolderIDs: [])
+
+        #expect(nextIDs == [existingID])
     }
 
     /// 看到 tile 在 Dock 上之后它又不在了：是用户拖出去的，不再添加
@@ -104,14 +119,14 @@ struct DockTileAdditionTrackerTests {
         tracker.request(folderID: existingID)
 
         let firstIDs = tracker.folderIDsToAdd(rootFolderIDs: [existingID], onDockFolderIDs: [])
-        let recheckIDs = tracker.folderIDsToAdd(rootFolderIDs: [existingID], onDockFolderIDs: [])
+        let nextIDs = tracker.folderIDsToAdd(rootFolderIDs: [existingID], onDockFolderIDs: [])
         let seenIDs = tracker.folderIDsToAdd(
             rootFolderIDs: [existingID],
             onDockFolderIDs: [existingID]
         )
 
         #expect(firstIDs == [existingID])
-        #expect(recheckIDs == [existingID])
+        #expect(nextIDs == [existingID])
         #expect(seenIDs.isEmpty)
     }
 
@@ -132,6 +147,60 @@ struct DockTileAdditionTrackerTests {
 
         #expect(onDockIDs.isEmpty)
         #expect(draggedOutIDs.isEmpty)
+    }
+
+    // MARK: 搁置
+
+    /// 新建后正在输入名称的根文件夹：搁置期间的同步不添加 tile，也不算被拖出；
+    /// 名称定下来解除搁置后，下一次同步把它当作新出现的根文件夹添加
+    @Test
+    func heldFolderIsAddedOnlyAfterRelease() {
+        var tracker = DockTileAdditionTracker(rootFolderIDs: [existingID])
+        tracker.hold(folderID: newID)
+
+        let rootIDs: Set = [existingID, newID]
+
+        let heldIDs = tracker.folderIDsToAdd(rootFolderIDs: rootIDs, onDockFolderIDs: [existingID])
+        let heldRemovedIDs = tracker.removedFolderIDs(
+            rootFolderIDs: rootIDs,
+            onDockFolderIDs: [existingID]
+        )
+
+        tracker.release(folderID: newID)
+        let releasedIDs = tracker.folderIDsToAdd(rootFolderIDs: rootIDs, onDockFolderIDs: [existingID])
+
+        #expect(heldIDs.isEmpty)
+        #expect(heldRemovedIDs.isEmpty)
+        #expect(releasedIDs == [newID])
+    }
+
+    /// 解除搁置时告知它是否在搁置中：只有搁置过的根文件夹才需要为它再同步一次
+    @Test
+    func releaseReportsWhetherFolderWasHeld() {
+        var tracker = DockTileAdditionTracker(rootFolderIDs: [existingID])
+        tracker.hold(folderID: newID)
+
+        let isHeld = tracker.release(folderID: newID)
+        let isHeldAgain = tracker.release(folderID: newID)
+        let isExistingHeld = tracker.release(folderID: existingID)
+
+        #expect(isHeld)
+        #expect(!isHeldAgain)
+        #expect(!isExistingHeld)
+    }
+
+    /// 搁置期间被删除或被拖成子文件夹的根文件夹：解除搁置后不添加
+    @Test
+    func heldFolderNoLongerRootIsNotAdded() {
+        var tracker = DockTileAdditionTracker(rootFolderIDs: [])
+        tracker.hold(folderID: newID)
+
+        _ = tracker.folderIDsToAdd(rootFolderIDs: [newID], onDockFolderIDs: [])
+        tracker.release(folderID: newID)
+
+        let folderIDs = tracker.folderIDsToAdd(rootFolderIDs: [], onDockFolderIDs: [])
+
+        #expect(folderIDs.isEmpty)
     }
 
     // MARK: 不再是根文件夹

@@ -360,6 +360,152 @@ final class DockPreferencesTests {
     }
 }
 
+// MARK: - Apply
+
+extension DockPreferencesTests {
+    /// 被终止的 Dock 把启动时读到的旧条目写回，盖掉了刚写入的改名、换新的 GUID、新增与删除：
+    /// 按同一份期望再应用一次，要把它们全部改回来，并报告偏好有改动（据此判断新 Dock 是否读到）；
+    /// 之后再应用不再改动，Dock 不会被反复重启
+    @Test
+    func applyRestoresExpectationAfterDockWritesBackOldEntries() throws {
+        try addOwnTileBetweenUserTiles()
+
+        let staleDirectory = directory.appending(
+            path: "Dock Tiles/\(UUID().uuidString)",
+            directoryHint: .isDirectory
+        )
+        try preferences.add(tileURL: staleDirectory.appending(path: "旧.app"), label: "旧")
+
+        let launchTiles = storedTiles()
+        let launchGUID = try #require(launchTiles[1]["GUID"] as? Int)
+
+        let renamed = stubDirectory.appending(path: "日常.app")
+        let newTileURL = directory.appending(path: "Dock Tiles/\(UUID().uuidString)/新.app")
+
+        let expectedTiles = [
+            ExpectedDockTile(tileURL: renamed, label: "日常", canAdd: true),
+            ExpectedDockTile(tileURL: newTileURL, label: "新", canAdd: true),
+        ]
+
+        let isWritten = try preferences.apply(
+            expectedTiles,
+            rewrittenTileURLs: [renamed],
+            removingTilesIn: [staleDirectory]
+        )
+        let writtenGUID = try #require(storedTiles()[1]["GUID"] as? Int)
+
+        // 模拟被终止的 Dock 写回启动时读到的全部条目
+        defaults.set(launchTiles, forKey: "persistent-apps")
+
+        let isRewritten = try preferences.apply(
+            expectedTiles,
+            rewrittenTileURLs: [],
+            removingTilesIn: [staleDirectory]
+        )
+
+        let tiles = storedTiles()
+        let restoredGUID = try #require(tiles[1]["GUID"] as? Int)
+
+        #expect(isWritten)
+        #expect(isRewritten)
+        #expect(tiles.map { label(of: $0) } == ["计算器", "日常", "计算器", "新"])
+        #expect(preferences.contains(tileURL: renamed))
+        #expect(!preferences.contains(tileURL: staleDirectory.appending(path: "旧.app")))
+        #expect(restoredGUID != launchGUID)
+        #expect(restoredGUID != writtenGUID)
+        #expect(try plistData(tiles[0]) == plistData(calculatorTile))
+
+        #expect(try !preferences.apply(expectedTiles, rewrittenTileURLs: [], removingTilesIn: [staleDirectory]))
+    }
+
+    /// Dock 没有写回时再应用同一份期望不改动偏好：重启 Dock 后的核对不会凭空补写、再重启一次
+    @Test
+    func applyWithoutWriteBackChangesNothing() throws {
+        try addOwnTileBetweenUserTiles()
+
+        let expectedTiles = [ExpectedDockTile(tileURL: tileURL, label: "日常", canAdd: true)]
+
+        let isWritten = try preferences.apply(
+            expectedTiles,
+            rewrittenTileURLs: [tileURL],
+            removingTilesIn: []
+        )
+        let written = try plistData(storedTiles()[1])
+
+        let isRewritten = try preferences.apply(
+            expectedTiles,
+            rewrittenTileURLs: [],
+            removingTilesIn: []
+        )
+
+        #expect(isWritten)
+        #expect(!isRewritten)
+        #expect(try plistData(storedTiles()[1]) == written)
+    }
+
+    /// 不在 Dock 上、又不能添加的 tile 是被用户拖出去的：不加回，偏好不改动
+    @Test
+    func applyDoesNotAddTileThatCannotBeAdded() throws {
+        defaults.set([calculatorTile], forKey: "persistent-apps")
+
+        let isChanged = try preferences.apply(
+            [ExpectedDockTile(tileURL: tileURL, label: "工作", canAdd: false)],
+            rewrittenTileURLs: [tileURL],
+            removingTilesIn: []
+        )
+
+        #expect(!isChanged)
+        #expect(storedTiles().count == 1)
+    }
+}
+
+// MARK: - Relaunched Dock
+
+extension DockPreferencesTests {
+    /// 补写完成时新 Dock 还没启动，或完成得早于它启动后读取偏好的下限：新 Dock 一定读到补写，不必再重启
+    @Test
+    func rewriteBeforeRelaunchedDockReadsIsRead() {
+        let launch = Date()
+        let readDelay = DockPreferences.relaunchReadDelay
+
+        let isReadWithoutDock = DockPreferences.isReadByRelaunchedDock(
+            writtenAt: launch,
+            dockLaunchedAt: nil
+        )
+        let isReadBeforeLaunch = DockPreferences.isReadByRelaunchedDock(
+            writtenAt: launch.addingTimeInterval(-0.01),
+            dockLaunchedAt: launch
+        )
+        let isReadWithinDelay = DockPreferences.isReadByRelaunchedDock(
+            writtenAt: launch.addingTimeInterval(readDelay / 2),
+            dockLaunchedAt: launch
+        )
+
+        #expect(isReadWithoutDock)
+        #expect(isReadBeforeLaunch)
+        #expect(isReadWithinDelay)
+    }
+
+    /// 补写完成得不早于新 Dock 启动后读取偏好的下限：新 Dock 可能已读到被写回的旧条目，要再重启一次
+    @Test
+    func rewriteAfterReadDelayIsNotRead() {
+        let launch = Date()
+        let readDelay = DockPreferences.relaunchReadDelay
+
+        let isReadAtDelay = DockPreferences.isReadByRelaunchedDock(
+            writtenAt: launch.addingTimeInterval(readDelay),
+            dockLaunchedAt: launch
+        )
+        let isReadLater = DockPreferences.isReadByRelaunchedDock(
+            writtenAt: launch.addingTimeInterval(readDelay + 1),
+            dockLaunchedAt: launch
+        )
+
+        #expect(!isReadAtDelay)
+        #expect(!isReadLater)
+    }
+}
+
 // MARK: - Private
 
 extension DockPreferencesTests {
