@@ -30,6 +30,30 @@ cp "Sources/$APP_NAME/Info.plist" "$APP_PATH/Contents/Info.plist"
 # 五种语言的界面文字
 cp -R "Sources/$APP_NAME/Resources/"*.lproj "$APP_PATH/Contents/Resources/"
 
+# App 图标：白天版与夜间版的母版各生成一份 icns；
+# 白天版是 Info.plist 的 `CFBundleIconFile` 指向的默认图标，夜间版由 App 运行时按系统外观取用
+
+# 中间的 iconset 放在临时目录，脚本退出时删除
+ICONSET_ROOT="$(mktemp -d)"
+trap 'rm -rf "$ICONSET_ROOT"' EXIT
+
+for ICON_NAME in AppIcon AppIconDark; do
+    MASTER="Sources/$APP_NAME/Resources/$ICON_NAME.png"
+    ICONSET="$ICONSET_ROOT/$ICON_NAME.iconset"
+    mkdir "$ICONSET"
+
+    # iconutil 要求的五档边长，每档再配一张 @2x
+    for SIDE in 16 32 128 256 512; do
+        sips -z "$SIDE" "$SIDE" "$MASTER" \
+            --out "$ICONSET/icon_${SIDE}x${SIDE}.png" > /dev/null
+
+        sips -z "$((SIDE * 2))" "$((SIDE * 2))" "$MASTER" \
+            --out "$ICONSET/icon_${SIDE}x${SIDE}@2x.png" > /dev/null
+    done
+
+    iconutil -c icns "$ICONSET" -o "$APP_PATH/Contents/Resources/$ICON_NAME.icns"
+done
+
 # 嵌套代码要先于外层签名：stub 可执行文件单独签一次
 codesign --force --sign - "$APP_PATH/Contents/MacOS/$TILE_NAME"
 

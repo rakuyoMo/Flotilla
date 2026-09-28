@@ -44,7 +44,7 @@ Sources/Flotilla/       App 源码
   Rendering/            文件夹图标渲染
   StatusBar/            状态栏图标与菜单
   Settings/             设置窗口
-  Resources/            五种语言的 Localizable.strings，不参与编译，由打包脚本拷入 .app
+  Resources/            五种语言的 Localizable.strings 与白天、夜间两版 App 图标母版，不参与编译；由打包脚本拷入 .app，图标母版转成 icns
   Panel/                Dock 上展开的面板
   Dock/                 stub 生成、Dock 偏好读写与 tile 同步
   Info.plist            App 包的 Info.plist，不参与编译，由打包脚本拷入 .app
