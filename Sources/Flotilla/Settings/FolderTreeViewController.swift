@@ -81,7 +81,7 @@ final class FolderTreeViewController: NSViewController {
         fatalError("init(coder:) has not been implemented")
     }
 
-    /// 搭建界面；文件夹树变化时重建，每次同步 Dock tile 之后刷新 tile 的状态
+    /// 搭建界面；文件夹树变化时重建，每次同步 Dock tile 之后与 Dock 偏好里的 tile 变化时刷新 tile 的状态
     override func loadView() {
         configureOutlineView()
         view = makeContentView()
@@ -100,6 +100,14 @@ final class FolderTreeViewController: NSViewController {
             self,
             selector: #selector(refreshDockStatus),
             name: DockTileSynchronizer.didSynchronizeNotification,
+            object: dockTileSynchronizer
+        )
+
+        // 用户把 tile 拖出 Dock 后，Dock 写入删除时就刷新，不必等窗口重新成为 key
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(refreshDockStatus),
+            name: DockTileSynchronizer.dockTilesDidChangeNotification,
             object: dockTileSynchronizer
         )
     }
@@ -159,7 +167,7 @@ extension FolderTreeViewController: NSOutlineViewDelegate {
 // MARK: NSTextFieldDelegate
 
 extension FolderTreeViewController: NSTextFieldDelegate {
-    /// 结束编辑文件夹名时写回数据源
+    /// 结束编辑文件夹名时写回数据源；新建的根文件夹名称就此定下，解除搁置，tile 带着这个名称出现
     func controlTextDidEndEditing(_ notification: Notification) {
         guard let textField = notification.object as? NSTextField else { return }
 
@@ -169,6 +177,28 @@ extension FolderTreeViewController: NSTextFieldDelegate {
         guard let folder = node?.folder else { return }
 
         store.rename(folderID: folder.id, to: textField.stringValue)
+        dockTileSynchronizer?.releaseTile(for: folder.id)
+    }
+
+    /// 按 Esc 取消编辑时名称保持原样，同样算名称定下来了：解除搁置，tile 带着原名出现
+    ///
+    /// 实测 outline view 取消编辑时不发 `controlTextDidEndEditing`，只能在这里得知
+    func control(
+        _ control: NSControl,
+        textView _: NSTextView,
+        doCommandBy commandSelector: Selector
+    ) -> Bool {
+        guard commandSelector == #selector(NSResponder.cancelOperation(_:)) else { return false }
+
+        let row = outlineView.row(for: control)
+        let node = outlineView.item(atRow: row) as? FolderTreeNode
+
+        if let folder = node?.folder {
+            dockTileSynchronizer?.releaseTile(for: folder.id)
+        }
+
+        // 取消编辑本身仍交给 outline view 处理
+        return false
     }
 }
 
@@ -176,16 +206,25 @@ extension FolderTreeViewController: NSTextFieldDelegate {
 
 extension FolderTreeViewController {
     /// 新建文件夹：有选中项时建在其所属文件夹内，否则建为根文件夹；建好后立即进入重命名
+    ///
+    /// 新建的根文件夹在名称编辑结束之前搁置，不添加 tile：tile 带着最终名称出现，Dock 只重启一次
     @objc
     private func addFolder() {
-        let folder: Folder? =
-            if let parentID = selectedNode?.containingFolderID {
-                store.addSubfolder(named: Self.untitledFolderName, to: parentID)
-            } else {
-                store.addRootFolder(named: Self.untitledFolderName)
+        if let parentID = selectedNode?.containingFolderID {
+            guard
+                let folder = store.addSubfolder(named: Self.untitledFolderName, to: parentID)
+            else {
+                return
             }
 
-        guard let folder else { return }
+            beginRenaming(folderID: folder.id)
+            return
+        }
+
+        let folder = store.addRootFolder(named: Self.untitledFolderName)
+
+        // 同步器收到变更通知后要等防抖间隔才同步，此时搁置赶得上这次同步
+        dockTileSynchronizer?.holdTile(for: folder.id)
 
         beginRenaming(folderID: folder.id)
     }

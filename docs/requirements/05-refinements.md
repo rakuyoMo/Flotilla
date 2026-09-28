@@ -11,14 +11,17 @@
   1. 根文件夹是新出现的：上一次同步时它还不是根文件夹（新建的根文件夹、被拖成根文件夹的子文件夹）
      - 启动时的对账把当时的全部根文件夹都视为已同步过：Flotilla 没运行时不会有新的根文件夹出现，此时缺少 tile 的根文件夹都是被用户拖出去的
   2. 用户在设置窗口点了“添加到 Dock”
-- 添加过 tile 的根文件夹先算作“待添加”，直到确认 tile 已经加上。添加 tile 后同步器重启 Dock，被终止的旧 Dock 退出时读一次 Dock 偏好：
-  - tile 在偏好里：新拉起的 Dock 读到的就是此刻的偏好，此后它自己的写回也保留这个条目，tile 已经加上，不再待添加
-  - tile 不在偏好里：是旧 Dock 终止时把启动时读到的旧条目写回、抹掉了它（见 02 的“Dock 偏好”一节），仍待添加，静默期结束的复查再加一次
-  - 旧 Dock 的退出由 `DockPreferences.restartDock(terminationHandler:)` 通知（见 02）
+- 添加过 tile 的根文件夹先算作“待添加”，直到确认 tile 已经加上。添加 tile 后同步器重启 Dock，旧 Dock 退出后核对新 Dock 读到的偏好（见 02 的“Dock 重启后的核对”）：
+  - 核对通过：新拉起的 Dock 读到了期望状态，此刻 Dock 偏好里有 tile 的根文件夹确认加上，不再待添加；此后新 Dock 自己的写回也保留这些条目
+  - 旧 Dock 终止时的写回抹掉了刚加的 tile 时，核对里立即补写，补写赶在新 Dock 读取偏好之前才算通过
+  - 核对放弃（一次同步重启 Dock 3 次，补写仍晚于新 Dock 读取）时仍待添加，之后的同步再加
   - 同步看到 tile 在 Dock 上时同样不再待添加
-- 不再待添加之后 tile 不在 Dock 上，就是用户拖出去的：复查与之后的同步都不加回
-  - 用户在 tile 出现后、复查之前就把它拖出同样不加回
+- 不再待添加之后 tile 不在 Dock 上，就是用户拖出去的：之后的同步都不加回
+  - 用户在 tile 出现后立即把它拖出同样不加回
 - 待添加的根文件夹被删除或被拖成子文件夹时，不再添加
+- 在设置窗口新建的根文件夹，在输入名称期间搁置：不添加 tile，也不算被拖出；名称编辑结束（回车确认、点别处提交、Esc 取消）后解除搁置，按新出现的根文件夹添加，tile 带着最终名称出现，Dock 只重启一次
+  - 新建子文件夹不涉及 tile，不搁置；拖放等其它途径出现的根文件夹也不搁置
+  - 搁置只在内存里：搁置期间退出 Flotilla，下次启动时它与其它根文件夹一样视为已同步过，没有 tile，显示“不在 Dock 上”
 - 这部分是纯逻辑，放在 `Dock/DockTileAdditionTracker.swift`：
 
   ```swift
@@ -29,10 +32,17 @@
       /// 用户要求把该根文件夹添加到 Dock
       mutating func request(folderID: UUID)
 
-      /// 重启 Dock 时被终止的旧 Dock 已经退出：此刻 Dock 偏好里已有 tile 的根文件夹不再待添加
-      mutating func recordDockTermination(onDockFolderIDs: Set<UUID>)
+      /// 搁置新建的根文件夹：名称定下来之前不添加 tile
+      mutating func hold(folderID: UUID)
 
-      /// 本次同步要添加 tile 的根文件夹：待添加的与新出现的，去掉已在 Dock 上的与已不是根文件夹的；
+      /// 解除搁置，返回它此前是否在搁置中；此后的同步把它当作新出现的根文件夹
+      @discardableResult
+      mutating func release(folderID: UUID) -> Bool
+
+      /// 重启后的 Dock 已读到期望的偏好：此刻偏好里已有 tile 的根文件夹确认加上，不再待添加
+      mutating func recordDockRelaunch(onDockFolderIDs: Set<UUID>)
+
+      /// 本次同步要添加 tile 的根文件夹：待添加的与新出现的，去掉已在 Dock 上的、已不是根文件夹的与搁置中的；
       /// 返回的集合就是同步之后仍待添加的集合
       mutating func folderIDsToAdd(
           rootFolderIDs: Set<UUID>,
@@ -40,7 +50,7 @@
       ) -> Set<UUID>
 
       /// 被用户拖出 Dock 的根文件夹：tile 不在 Dock 上，下一次同步也不会添加；
-      /// 新出现的与待添加的都不算，它们的 tile 只是还没加上
+      /// 新出现的、搁置中的与待添加的都不算，它们的 tile 只是还没加上
       func removedFolderIDs(
           rootFolderIDs: Set<UUID>,
           onDockFolderIDs: Set<UUID>
@@ -50,21 +60,26 @@
 
 - 其余对账逻辑不变：stub 照常生成与更新（tile 不在 Dock 上的根文件夹也保留 stub，重新添加时直接引用）；已有 tile 的名称、位置与图标照常更新；多余的 tile 与 stub 照常删除。
 - 每次同步结束后发出 `DockTileSynchronizer.didSynchronizeNotification`（`object` 为同步器），设置窗口据此刷新状态。
+- Dock 偏好里的 tile 变化时发出 `DockTileSynchronizer.dockTilesDidChangeNotification`（`object` 为同步器），不触发同步：用户把 tile 拖出 Dock 后，实测 Dock 约 4.1 秒才把删除写进偏好，设置窗口据此立即刷新状态（观察方式见 02 的 `observeTiles(_:)`）。
 
 ### 查询与请求
 
-`DockTileSynchronizer` 新增两个方法：
+`DockTileSynchronizer` 提供：
 
-- `func rootFolderIDsRemovedFromDock() -> Set<UUID>`：被用户拖出 Dock 的根文件夹，即 `removedFolderIDs` 对当前根文件夹与 Dock 上现有 tile（`DockPreferences.folderIDs(ofTilesIn:)` 对 stub 目录的结果）的判定；刚新建、还没同步的根文件夹与已经要求添加的都不算
+- `func rootFolderIDsRemovedFromDock() -> Set<UUID>`：被用户拖出 Dock 的根文件夹，即 `removedFolderIDs` 对当前根文件夹与 Dock 上现有 tile（`DockPreferences.folderIDs(ofTilesIn:)` 对 stub 目录的结果）的判定；刚新建、还没同步的根文件夹，搁置中的与已经要求添加的都不算
 - `func addTile(for folderID: UUID)`：把该根文件夹记为待添加，并安排一次同步
+- `func holdTile(for folderID: UUID)`：搁置新建的根文件夹
+- `func releaseTile(for folderID: UUID)`：解除搁置；它此前在搁置中时安排一次同步
 
 ### 设置窗口
 
 - 文件夹树里，tile 不在 Dock 上的根文件夹这一行，在名称右侧显示状态文字“不在 Dock 上”：次要文字颜色（`secondaryLabelColor`）、小号系统字体；在 Dock 上的根文件夹、子文件夹与 App 都不显示。
 - 底部按钮行新增“添加到 Dock”，排在“添加 App…”之后；只有选中的是 tile 不在 Dock 上的根文件夹时可用，点击后调用 `addTile(for:)`。
 - 文件夹树每次重建或刷新状态时读取一次 `rootFolderIDsRemovedFromDock()`，行的状态与按钮的可用状态都用这一次读取的结果；点击“添加到 Dock”后立即刷新一次，状态文字随即消失。
-- `FolderStore.didChangeNotification` 时重建整棵树；`DockTileSynchronizer.didSynchronizeNotification` 与设置窗口成为 key window 时（用户把 tile 拖出 Dock 后再点开窗口，状态才是新的）只原地刷新已显示各行的状态与按钮的可用状态，不重建。
-  - 新建根文件夹后立即进入改名，随后的同步会发出通知；实测 view-based `NSOutlineView` 在编辑中 `reloadData` 会结束编辑，并把输入到一半的名称提交出去
+- `FolderStore.didChangeNotification` 时重建整棵树；`DockTileSynchronizer.didSynchronizeNotification`、`DockTileSynchronizer.dockTilesDidChangeNotification` 与设置窗口成为 key window 时只原地刷新已显示各行的状态与按钮的可用状态，不重建。
+  - 新建根文件夹后立即进入改名，随后的同步与 Dock 偏好里 tile 的变化都会发出通知；实测 view-based `NSOutlineView` 在编辑中 `reloadData` 会结束编辑，并把输入到一半的名称提交出去
+- “新建文件夹”新建根文件夹时，先加入数据源再立即 `holdTile(for:)`（同步器收到变更通知后要等防抖间隔才同步，搁置赶得上）；名称编辑结束（`controlTextDidEndEditing`）时写回名称并 `releaseTile(for:)`
+  - 按 Esc 取消编辑时名称保持原样，同样 `releaseTile(for:)`：实测 outline view 取消编辑时不发 `controlTextDidEndEditing`，在 `control(_:textView:doCommandBy:)` 收到 `cancelOperation(_:)` 时解除搁置，返回 false，取消编辑仍交给 outline view
 - `SettingsWindowController` 与 `FolderTreeViewController` 通过构造函数拿到同步器，由 `AppDelegate` 传入。Dock 集成不可用（没有 stub 可执行文件，或读不到 Dock 偏好）时同步器为 nil：不显示状态，“添加到 Dock”隐藏。
 
 ## 把 App 拖到 tile 上加入文件夹（需求 11）
@@ -159,7 +174,7 @@
 
 ## 单元测试
 
-- `DockTileAdditionTracker`：启动时缺少 tile 的根文件夹不添加；新出现的根文件夹添加；添加过的 tile 在旧 Dock 退出时不在偏好里则保持待添加、复查再加；旧 Dock 退出时已在偏好里的，复查前被拖出不再添加；同步看到之后再消失不再添加；用户请求的添加；待添加的被删除或不再是根文件夹时不添加；被拖出的判定只包含启动时就缺 tile 的与确认加上之后又消失的，新出现的、待添加的与已要求添加的都不算
+- `DockTileAdditionTracker`：启动时缺少 tile 的根文件夹不添加；新出现的根文件夹添加；还没确认新 Dock 读到的 tile 不在 Dock 上时不算被拖出、下一次同步再加；新 Dock 读到之后、下一次同步之前被拖出的不再添加；新 Dock 只读到部分 tile 时只确认读到的；同步看到之后再消失不再添加；用户请求的添加；搁置期间不添加也不算被拖出，解除后添加；只有搁置过的才报告解除；搁置期间被删除的不添加；待添加的被删除或不再是根文件夹时不添加；被拖出的判定只包含启动时就缺 tile 的与确认加上之后又消失的，新出现的、待添加的与已要求添加的都不算
 - `DockTileRequest`：两种 URL 的解析，`path` 里的空格与中文，多个 `path` 保持顺序；scheme、host、层级、id 不符或没有 `path` 的 URL 一律为 nil（取代 `FolderURLParsingTests`）
 - stub 的 Info.plist 含上述 `CFBundleDocumentTypes`
 - 本地化：五张 `Localizable.strings` 都能解析、键集合完全相同、没有空值；代码里 `String(localized:` 引用的每个键都在表里，表里的每个键都被代码引用
@@ -169,7 +184,7 @@
 
 - 00：需求清单、模块划分表与阶段列表
 - 01：设置窗口文件夹行的图标；Info.plist 一节里“Flotilla 自己没有本地化资源”的说法
-- 02：stub 的 Info.plist 键与行为；同步器的对账规则、添加 tile 的条件与复查的含义；信号链路加上拖放
+- 02：stub 的 Info.plist 键与行为；同步器的对账规则、添加 tile 的条件与待添加的确认；信号链路加上拖放
 - 04：端到端验证第 10 步不再包含设置窗口的图标
 - `README.md`：把 App 拖到 tile 上、tile 拖出 Dock 后的状态与“添加到 Dock”、支持的语言
 - `AGENTS.md`：目录结构表加上 `Resources/`，需求文档范围改为 01–05

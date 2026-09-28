@@ -5,16 +5,34 @@ import Testing
 
 // MARK: - AppIconControllerTests
 
-/// App 图标跟随系统外观：深色外观取夜间版、浅色外观取白天版，白天版同时是包的默认图标
+/// App 图标跟随“图标与小组件样式”：深色样式在运行时换成夜间版，其余样式交还包里的默认图标（白天版）
 ///
+/// Dock 只对包里的默认图标做透明、色调处理，透明、色调样式下在运行时设了图标，Dock 就不再按样式处理；
 /// 资源名落到 `Sources/Flotilla/Resources` 下同名的母版上比较画面，深浅取反或母版对调都会失败
 @MainActor
 struct AppIconControllerTests {
-    /// 成对的深色、浅色外观：基础外观与高对比度、vibrant 变体
-    private nonisolated static let appearancePairs: [(dark: NSAppearance.Name, light: NSAppearance.Name)] = [
-        (.darkAqua, .aqua),
-        (.accessibilityHighContrastDarkAqua, .accessibilityHighContrastAqua),
-        (.vibrantDark, .vibrantLight),
+    /// 要换成夜间版的样式与外观：深色 · 始终不看外观，深色 · 自动只在深色外观（含高对比度、vibrant 变体）下
+    private nonisolated static let nightCases: [(iconTheme: String, appearance: NSAppearance.Name)] = [
+        ("RegularDark", .darkAqua),
+        ("RegularDark", .aqua),
+        ("RegularAutomatic", .darkAqua),
+        ("RegularAutomatic", .accessibilityHighContrastDarkAqua),
+        ("RegularAutomatic", .vibrantDark),
+    ]
+
+    /// 用包里默认图标的样式与外观：默认（键不存在）、深色 · 自动遇到浅色外观、透明与色调的各个子变体
+    private nonisolated static let bundleIconCases: [(iconTheme: String?, appearance: NSAppearance.Name)] = [
+        (nil, .darkAqua),
+        (nil, .aqua),
+        ("RegularAutomatic", .aqua),
+        ("RegularAutomatic", .accessibilityHighContrastAqua),
+        ("RegularAutomatic", .vibrantLight),
+        ("ClearLight", .darkAqua),
+        ("ClearDark", .darkAqua),
+        ("ClearAutomatic", .darkAqua),
+        ("TintedLight", .darkAqua),
+        ("TintedDark", .darkAqua),
+        ("TintedAutomatic", .darkAqua),
     ]
 
     /// App 图标母版所在目录：本文件位于 `Tests/FlotillaTests/` 下，所在目录向上两级是仓库根目录
@@ -24,25 +42,47 @@ struct AppIconControllerTests {
         .deletingLastPathComponent()
         .appending(path: "Sources/Flotilla/Resources", directoryHint: .isDirectory)
 
-    /// 深色外观取到的是夜间版：它的母版整体比浅色外观取到的暗
-    @Test(arguments: appearancePairs)
-    func darkAppearanceUsesNightIcon(
-        dark: NSAppearance.Name,
-        light: NSAppearance.Name
+    /// 深色样式换上的是夜间版：它的母版整体比 Info.plist 指定的默认图标暗
+    @Test(arguments: nightCases)
+    func darkStyleUsesNightIcon(
+        iconTheme: String,
+        appearance: NSAppearance.Name
     ) throws {
-        let darkName = try AppIconController.iconName(for: #require(NSAppearance(named: dark)))
-        let lightName = try AppIconController.iconName(for: #require(NSAppearance(named: light)))
+        let effectiveAppearance = try #require(NSAppearance(named: appearance))
+        let name = try #require(
+            AppIconController.iconName(
+                forIconTheme: iconTheme,
+                appearance: effectiveAppearance
+            )
+        )
 
-        let darkBrightness = try Self.meanBrightness(ofMasterNamed: darkName)
-        let lightBrightness = try Self.meanBrightness(ofMasterNamed: lightName)
+        let nightBrightness = try Self.meanBrightness(ofMasterNamed: name)
+        let defaultBrightness = try Self.meanBrightness(ofMasterNamed: Self.defaultIconName())
 
-        #expect(darkBrightness < lightBrightness)
+        #expect(nightBrightness < defaultBrightness)
     }
 
-    /// 浅色外观取到的白天版就是 Info.plist 指定的默认图标，访达等处显示的也是它
-    @Test
-    func defaultIconIsDaytimeIcon() throws {
-        let infoURL = Self.resourcesURL
+    /// 其余样式不在运行时设图标，Dock 显示包里的默认图标并按样式处理
+    @Test(arguments: bundleIconCases)
+    func otherStylesKeepBundleIcon(
+        iconTheme: String?,
+        appearance: NSAppearance.Name
+    ) throws {
+        let name = try AppIconController.iconName(
+            forIconTheme: iconTheme,
+            appearance: #require(NSAppearance(named: appearance))
+        )
+
+        #expect(name == nil)
+    }
+}
+
+// MARK: - Private
+
+extension AppIconControllerTests {
+    /// Info.plist 里 `CFBundleIconFile` 指定的默认图标名，也是它的母版文件名
+    private static func defaultIconName() throws -> String {
+        let infoURL = resourcesURL
             .deletingLastPathComponent()
             .appending(path: "Info.plist")
 
@@ -52,15 +92,10 @@ struct AppIconControllerTests {
         )
 
         let info = try #require(propertyList as? [String: Any])
-        let aqua = try #require(NSAppearance(named: .aqua))
 
-        #expect(info["CFBundleIconFile"] as? String == AppIconController.iconName(for: aqua))
+        return try #require(info["CFBundleIconFile"] as? String)
     }
-}
 
-// MARK: - Private
-
-extension AppIconControllerTests {
     /// 母版的平均亮度，0–255
     /// - Parameter name: 母版的文件名，不含扩展名
     private static func meanBrightness(ofMasterNamed name: String) throws -> Double {

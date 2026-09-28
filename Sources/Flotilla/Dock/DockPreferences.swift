@@ -1,4 +1,4 @@
-import AppKit
+import Foundation
 import os
 
 // MARK: - DockPreferences
@@ -15,10 +15,10 @@ final class DockPreferences {
     nonisolated static let defaultBackupDirectory = URL.applicationSupportDirectory
         .appending(path: "Flotilla/Backups", directoryHint: .isDirectory)
 
-    /// tile 所在的区域：Dock 左侧的 App 区域
+    /// 新拉起的 Dock 启动后多久之内写完的偏好一定会被它读到
     ///
-    /// 实测（macOS 27）这里的 stub 条目在 Dock 重启后保留，显示自定义图标与条目名称，点击即启动 stub
-    private static let sectionKey = "persistent-apps"
+    /// 实测（macOS 27，23 次）新 Dock 在启动后约 70–85 ms 读取 `persistent-apps`，70 ms 之前写完的改动都被读到；取其一半以内
+    nonisolated static let relaunchReadDelay: TimeInterval = 0.03
 
     /// 备份最多保留的份数
     private static let maximumBackupCount = 5
@@ -32,8 +32,10 @@ final class DockPreferences {
         category: "DockPreferences"
     )
 
-    /// 读写偏好的 `UserDefaults`
-    private let defaults: UserDefaults
+    /// 读写偏好的 `UserDefaults`；tile 放在 Dock 左侧的 App 区域
+    ///
+    /// 实测（macOS 27）这个区域里的 stub 条目在 Dock 重启后保留，显示自定义图标与条目名称，点击即启动 stub
+    private let defaults: DockDefaults
 
     /// 偏好所在的域，备份时按它导出全部内容
     private let domainName: String
@@ -50,15 +52,27 @@ final class DockPreferences {
     /// 盖掉 Flotilla 刚换上的新 GUID；重启后的 Dock 读到旧 GUID，仍显示缓存的旧图标
     private var writtenGUIDs: [String: Int] = [:]
 
-    /// 对最近一次被终止的 Dock 进程是否已退出的观察，下一次重启 Dock 时替换
-    private var terminationObservations: [NSKeyValueObservation] = []
+    /// 最近一次重启时被终止的 Dock 进程号；找新拉起的 Dock 时排除它们
+    private var terminatedDockPIDs: Set<pid_t> = []
+
+    /// 被终止、还没退出的 Dock 进程号；全部退出后调用 `terminationHandler`
+    private var exitingDockPIDs: Set<pid_t> = []
+
+    /// 被终止的 Dock 全部退出后要调用的回调，调用后清空
+    private var terminationHandler: (@MainActor () -> Void)? = nil
+
+    /// 对最近一次被终止的 Dock 进程退出事件的监听，下一次重启 Dock 时替换
+    private var terminationSources: [DispatchSourceProcess] = []
+
+    /// 对 tile 区域的观察，Dock 与其它进程写入时都会通知
+    private var tilesObservation: NSKeyValueObservation? = nil
 
     /// 创建 Dock 偏好的读写者；域名无法作为 `UserDefaults` 的 suite 时返回 nil
     /// - Parameters:
     ///   - domainName: 偏好所在的域，App 使用 `com.apple.dock`，测试时注入临时文件的绝对路径
     ///   - backupDirectory: 存放备份的目录
     init?(domainName: String, backupDirectory: URL) {
-        guard let defaults = UserDefaults(suiteName: domainName) else { return nil }
+        guard let defaults = DockDefaults(suiteName: domainName) else { return nil }
 
         self.defaults = defaults
         self.domainName = domainName
@@ -133,6 +147,48 @@ extension DockPreferences {
 // MARK: - Mutation
 
 extension DockPreferences {
+    /// 让 Flotilla 的 tile 与期望一致：已在 Dock 上的原地更新，缺少的按需追加，多余的删除
+    ///
+    /// 同步时的第一次写入与 Dock 重启后的核对共用这一步：被终止的 Dock 写回的旧条目
+    /// （条目丢失、名称或位置回退、GUID 不是写入的值）在这里被改回期望的样子
+    /// - Parameters:
+    ///   - expectedTiles: 各根文件夹的 tile 应有的样子
+    ///   - rewrittenTileURLs: stub 刚被改写过的 tile，条目换新的 GUID
+    ///   - staleDirectories: 要删除 tile 的 stub 目录
+    /// - Returns: 是否改动了偏好
+    @discardableResult
+    func apply(
+        _ expectedTiles: [ExpectedDockTile],
+        rewrittenTileURLs: Set<URL>,
+        removingTilesIn staleDirectories: [URL]
+    ) throws -> Bool {
+        var isChanged = false
+
+        for tile in expectedTiles {
+            if contains(tileURL: tile.tileURL) {
+                isChanged = try update(
+                    tileURL: tile.tileURL,
+                    label: tile.label,
+                    isStubRewritten: rewrittenTileURLs.contains(tile.tileURL)
+                ) || isChanged
+
+                continue
+            }
+
+            // 不在 Dock 上又不能添加的，是被用户拖出去的 tile，不加回
+            guard tile.canAdd else { continue }
+
+            try add(tileURL: tile.tileURL, label: tile.label)
+            isChanged = true
+        }
+
+        for directory in staleDirectories {
+            isChanged = try remove(tileDirectory: directory) || isChanged
+        }
+
+        return isChanged
+    }
+
     /// 在区域末尾追加一个 tile
     /// - Parameters:
     ///   - tileURL: stub bundle 的文件 URL
@@ -227,30 +283,94 @@ extension DockPreferences {
 
         return true
     }
+}
 
-    /// 终止 Dock 进程，由 launchd 自动拉起；Dock 只在启动时读取偏好，改动要靠重启生效
-    /// - Parameter terminationHandler: 被终止的 Dock 全部退出后在主线程调用。
-    ///   Dock 终止时若把旧条目写回，此时已经落地：此刻的偏好就是新拉起的 Dock 读到的内容
-    func restartDock(terminationHandler: @escaping @MainActor () -> Void) {
-        let docks = NSRunningApplication.runningApplications(
-            withBundleIdentifier: Self.dockDomain
-        )
+// MARK: - Observation
 
-        // Dock 是 LSUIElement App，NSWorkspace 不为它发退出通知，只能观察 `isTerminated`。
-        // 该属性只在主线程的 run loop 里更新，观察回调也在主线程；终止之前就开始观察，不会错过退出
-        terminationObservations = docks.map {
-            $0.observe(\.isTerminated) { _, _ in
-                MainActor.assumeIsolated {
-                    guard docks.allSatisfy(\.isTerminated) else { return }
-
-                    terminationHandler()
-                }
+extension DockPreferences {
+    /// 开始观察 tile 区域的变化：Dock 自己写入的改动（例如用户把 tile 拖出 Dock 后约 4 秒写入的删除）与 Flotilla 的写入都会通知
+    /// - Parameter handler: 在主线程调用
+    func observeTiles(_ handler: @escaping @MainActor @Sendable () -> Void) {
+        tilesObservation = defaults.observe(\.tiles) { _, _ in
+            Task { @MainActor in
+                handler()
             }
         }
+    }
+}
 
-        for dock in docks {
-            kill(dock.processIdentifier, SIGTERM)
+// MARK: - Dock Process
+
+extension DockPreferences {
+    /// 重启 Dock 之后补写的偏好是否一定会被新拉起的 Dock 读到：补写完成时新 Dock 还没启动，
+    /// 或补写完成得早于新 Dock 启动后 `relaunchReadDelay`
+    /// - Parameters:
+    ///   - writtenAt: 补写完成的时刻
+    ///   - dockLaunchedAt: 补写完成之后看到的新 Dock 的启动时刻；新 Dock 还没启动时为 nil
+    nonisolated static func isReadByRelaunchedDock(
+        writtenAt: Date,
+        dockLaunchedAt: Date?
+    ) -> Bool {
+        guard let dockLaunchedAt else { return true }
+
+        return writtenAt < dockLaunchedAt.addingTimeInterval(relaunchReadDelay)
+    }
+
+    /// 终止 Dock 进程，由 launchd 自动拉起；Dock 只在启动时读取偏好，改动要靠重启生效
+    /// - Parameter terminationHandler: 被终止的 Dock 全部退出后在主线程调用；没有在运行的 Dock 时立即调用。
+    ///   Dock 终止时若把启动时读到的旧条目写回，此时已经落地
+    func restartDock(terminationHandler: @escaping @MainActor () -> Void) {
+        let pids = Self.dockProcesses().map(\.pid)
+
+        terminatedDockPIDs = Set(pids)
+        exitingDockPIDs = Set(pids)
+
+        for source in terminationSources {
+            source.cancel()
         }
+
+        terminationSources = []
+        self.terminationHandler = nil
+
+        guard !pids.isEmpty else {
+            terminationHandler()
+            return
+        }
+
+        self.terminationHandler = terminationHandler
+
+        // 用 kqueue 监听进程退出，终止之前就开始监听，不会错过退出。
+        // 核对不通过时要终止的正是刚拉起的新 Dock，NSRunningApplication 这时还看不到它
+        terminationSources = pids.map { pid in
+            let source = DispatchSource.makeProcessSource(
+                identifier: pid,
+                eventMask: .exit,
+                queue: .main
+            )
+
+            source.setEventHandler { [weak self] in
+                MainActor.assumeIsolated {
+                    self?.dockDidExit(pid)
+                }
+            }
+
+            source.resume()
+            return source
+        }
+
+        for pid in pids {
+            kill(pid, SIGTERM)
+        }
+    }
+
+    /// 最近一次重启后新拉起的 Dock 的启动时刻；新 Dock 还没启动时为 nil
+    ///
+    /// 取内核记录的进程启动时刻：实测（macOS 27）NSRunningApplication 在新 Dock 启动约 45 ms 后才列出它，
+    /// 给出的 `launchDate` 为空
+    func relaunchedDockLaunchDate() -> Date? {
+        Self.dockProcesses()
+            .first { !terminatedDockPIDs.contains($0.pid) }?
+            .launchDate
     }
 }
 
@@ -259,7 +379,22 @@ extension DockPreferences {
 extension DockPreferences {
     /// 区域内当前的全部条目
     private var tiles: [[String: Any]] {
-        defaults.array(forKey: Self.sectionKey) as? [[String: Any]] ?? []
+        defaults.tiles
+    }
+
+    /// 一个被终止的 Dock 已退出：全部退出后调用回调
+    private func dockDidExit(_ pid: pid_t) {
+        exitingDockPIDs.remove(pid)
+
+        guard
+            exitingDockPIDs.isEmpty,
+            let terminationHandler
+        else {
+            return
+        }
+
+        self.terminationHandler = nil
+        terminationHandler()
     }
 
     /// 写回区域内的全部条目；本次运行首次写入前先备份，备份失败时不写
@@ -269,7 +404,10 @@ extension DockPreferences {
             hasBackedUp = true
         }
 
-        defaults.set(tiles, forKey: Self.sectionKey)
+        defaults.set(tiles, forKey: DockDefaults.tilesKey)
+
+        // 等写入交给 cfprefsd 后再返回：重启 Dock 后的补写要据此判断是否赶在新 Dock 读取之前
+        defaults.synchronize()
     }
 
     /// 把整个偏好域导出到备份目录，并删掉超出保留份数的旧备份
@@ -372,5 +510,59 @@ extension DockPreferences {
     /// 生成条目的 `GUID`：随机的 32 位正整数，与 Dock 自己写出的取值范围一致
     private static func makeGUID() -> Int {
         Int.random(in: 1 ... Int(UInt32.max))
+    }
+
+    /// 本用户正在运行的 Dock 进程及其内核启动时刻
+    ///
+    /// 按进程名找：launchd 拉起的新进程先以 xpcproxy 运行，实测（macOS 27）约 7–10 ms 后才 exec 成 Dock；
+    /// 在此之前找不到它，它也还没开始执行 Dock 的代码，读不到偏好
+    private static func dockProcesses() -> [(pid: pid_t, launchDate: Date)] {
+        let capacity = 4096
+        var pids = [pid_t](repeating: 0, count: capacity)
+
+        let byteCount = proc_listpids(
+            UInt32(PROC_UID_ONLY),
+            UInt32(getuid()),
+            &pids,
+            Int32(capacity * MemoryLayout<pid_t>.size)
+        )
+
+        let count = Int(max(byteCount, 0)) / MemoryLayout<pid_t>.size
+
+        return pids.prefix(count).compactMap { pid in
+            guard
+                pid > 0,
+                let launchDate = launchDate(ofDockProcess: pid)
+            else {
+                return nil
+            }
+
+            return (pid, launchDate)
+        }
+    }
+
+    /// 进程是 Dock 时给出它的内核启动时刻；不是 Dock、已退出或读不到进程信息时为 nil
+    private static func launchDate(ofDockProcess pid: pid_t) -> Date? {
+        var info = proc_bsdinfo()
+        let size = Int32(MemoryLayout<proc_bsdinfo>.size)
+
+        guard proc_pidinfo(pid, PROC_PIDTBSDINFO, 0, &info, size) == size else { return nil }
+
+        // 可执行文件名以 0 结尾，存放在定长的元组里
+        let name = withUnsafeBytes(of: info.pbi_comm) {
+            String(decoding: $0.prefix { $0 != 0 }, as: UTF8.self)
+        }
+
+        guard
+            name == "Dock",
+            info.pbi_status != SZOMB
+        else {
+            return nil
+        }
+
+        return Date(
+            timeIntervalSince1970: TimeInterval(info.pbi_start_tvsec)
+                + TimeInterval(info.pbi_start_tvusec) / 1_000_000
+        )
     }
 }

@@ -21,21 +21,39 @@ final class AppDelegate: NSObject {
     /// 面板的展开、收起与切换；启动完成后创建
     private var dockFolderPresenter: DockFolderPresenter?
 
-    /// 让 Dock 与 ⌘Tab 里的 App 图标随系统深浅外观切换
+    /// 让 Dock 与 ⌘Tab 里的 App 图标跟随系统的“图标与小组件样式”
     private let appIconController = AppIconController()
+
+    /// 同一 bundle id 下、当前进程以外的一个运行实例；没有就返回 nil
+    /// - Parameters:
+    ///   - instances: 同一 bundle id 下正在运行的实例，含当前进程
+    ///   - currentProcessIdentifier: 当前进程的进程号
+    ///   - processIdentifier: 取实例的进程号
+    static func otherInstance<Instance>(
+        among instances: [Instance],
+        currentProcessIdentifier: pid_t,
+        processIdentifier: (Instance) -> pid_t
+    ) -> Instance? {
+        instances.first {
+            processIdentifier($0) != currentProcessIdentifier
+        }
+    }
 }
 
 // MARK: NSApplicationDelegate
 
 extension AppDelegate: NSApplicationDelegate {
-    /// 开始同步 Dock tile、监听 tile 的点击
+    /// 已有 Flotilla 在运行时把它带到前台并退出；否则开始同步 Dock tile、监听 tile 的点击
     ///
     /// 被 stub 拉起时，AppKit 在 `applicationDidFinishLaunching` 之前就送来 URL，面板必须在此之前就绪
     func applicationWillFinishLaunching(_: Notification) {
+        // 两个实例会同时改写 Dock 偏好：检查必须早于任何初始化，Dock 同步从下面开始
+        exitIfAnotherInstanceIsRunning()
+
         startDockIntegration()
     }
 
-    /// 搭好主菜单与状态栏，按系统外观设好 App 图标，把当前这份 App 注册为 `flotilla` scheme 的处理者
+    /// 搭好主菜单与状态栏，按“图标与小组件样式”设好 App 图标，把当前这份 App 注册为 `flotilla` scheme 的处理者
     func applicationDidFinishLaunching(_: Notification) {
         NSApp.mainMenu = makeMainMenu()
 
@@ -178,6 +196,31 @@ extension AppDelegate {
         ]
 
         return editMenu
+    }
+
+    /// 同一 bundle id 的 Flotilla 已在运行时，激活那一份并立即结束当前进程
+    ///
+    /// 此时当前进程还没有初始化任何东西，没有需要清理的状态
+    private func exitIfAnotherInstanceIsRunning() {
+        // `swift build` 产出的可执行文件不在 .app 包里，没有 bundle id，无从判断
+        guard let bundleIdentifier = Bundle.main.bundleIdentifier else { return }
+
+        let instances = NSRunningApplication.runningApplications(
+            withBundleIdentifier: bundleIdentifier
+        )
+
+        guard
+            let other = Self.otherInstance(
+                among: instances,
+                currentProcessIdentifier: ProcessInfo.processInfo.processIdentifier,
+                processIdentifier: \.processIdentifier
+            )
+        else { return }
+
+        Self.logger.notice("已有 Flotilla 在运行（pid \(other.processIdentifier)），当前实例退出")
+
+        other.activate()
+        exit(EXIT_SUCCESS)
     }
 
     /// 创建 stub 生成器，据此启动 Dock tile 同步器与面板；缺少 stub 可执行文件时 Dock 上不会有 tile，两者都不启动

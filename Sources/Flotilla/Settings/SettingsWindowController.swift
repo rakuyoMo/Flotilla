@@ -91,7 +91,9 @@ extension SettingsWindowController: NSWindowDelegate {
 extension SettingsWindowController {
     /// 激活 Flotilla 并把设置窗口带到最前
     private func bringToFront() {
-        NSApp.activate()
+        // macOS 14 起 `activate()` 是协作式的：最近一次用户输入不是发给 Flotilla 时
+        // （例如用辅助功能按下菜单项）会被系统忽略，窗口开在其它 App 后面
+        NSApp.activate(ignoringOtherApps: true)
         window?.makeKeyAndOrderFront(nil)
     }
 

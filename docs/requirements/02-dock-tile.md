@@ -61,7 +61,7 @@
 
 ## Dock 偏好（`Sources/Flotilla/Dock/DockPreferences.swift`）
 
-- 读写域 `com.apple.dock`（`UserDefaults(suiteName:)`），条目字段沿用 Dock 自己写出的结构。
+- 读写域 `com.apple.dock`（`UserDefaults` 的子类 `DockDefaults`，见 `observeTiles(_:)`），条目字段沿用 Dock 自己写出的结构。
 - 备份：首次写入前把当前全部内容导出到 `~/Library/Application Support/Flotilla/Backups/com.apple.dock-<yyyyMMdd-HHmmss>.plist`，最多保留 5 份。
 - 放置区域：`persistent-apps`，即 Dock 左侧的 App 区域（`tile-type = file-tile`）；新 tile 追加在该区域末尾。
 - 条目字段对照本机 Dock 已有 App 条目：
@@ -72,15 +72,27 @@
   - `tile-data.file-type`（对照实测取值）
   - `tile-type = file-tile`
   - 不写 `book`，由 Dock 自行生成
-- API：`contains(tileURL:)`、`folderIDs(ofTilesIn:)`（stub 位于给定目录下 `<id>` 子目录的 tile 所属的根文件夹 id）、`add(tileURL:label:)`、`remove(tileDirectory:)`、`update(tileURL:label:isStubRewritten:)`、`restartDock(terminationHandler:)`。
+- API：`contains(tileURL:)`、`folderIDs(ofTilesIn:)`（stub 位于给定目录下 `<id>` 子目录的 tile 所属的根文件夹 id）、`add(tileURL:label:)`、`remove(tileDirectory:)`、`update(tileURL:label:isStubRewritten:)`、`apply(_:rewrittenTileURLs:removingTilesIn:)`、`observeTiles(_:)`、`restartDock(terminationHandler:)`、`relaunchedDockLaunchDate()`、`isReadByRelaunchedDock(writtenAt:dockLaunchedAt:)`。
+- 每次写入后调用 `synchronize()`，等写入交给 cfprefsd 之后再返回：重启 Dock 之后的补写要据此判断是否赶在新 Dock 读取之前。
 - 匹配 tile 按标准化后 URL 的所在目录（即 stub 独占的 `<id>` 目录），不按名称：文件夹改名后 stub 的文件名变了，仍要找到原来的 tile。
 - 更新已有条目时原地替换，不删除再追加：Dock 里的排序是用户自己拖出来的，重启后必须保持。
   - stub 改名后 `_CFURLString` 换成新位置，并删掉 Dock 按旧位置生成的 `book`，由 Dock 重启后重新生成。
   - stub 改写过时换一个新的 `GUID`：实测（macOS 27）Dock 按 `GUID` 缓存 tile 图标，`GUID` 不变时重启后仍显示旧图标。
-  - 条目的 `GUID` 不是本次运行写入的值时同样换新：实测（macOS 27）Dock 被终止时若带着未写的状态（例如松手约 2 秒内刚接受过一次拖放），会在终止时把启动时读到的旧条目写回，盖掉刚换上的 `GUID`，重启后的 Dock 仍显示旧图标；静默期结束的复查据此再换一个新的 `GUID` 并重启 Dock。
-- `restartDock(terminationHandler:)`：终止 `com.apple.dock` 进程，launchd 会自动拉起；被终止的 Dock 全部退出后在主线程调用 `terminationHandler`。
-  - 退出靠观察被终止进程的 `NSRunningApplication.isTerminated`（KVO）得知：Dock 是 LSUIElement App，实测（macOS 27）NSWorkspace 不为 LSUIElement App 发 `didTerminateApplicationNotification`，`isTerminated` 的观察回调则在 Dock 退出后送达
-  - Dock 终止时若把旧条目写回，退出时已经落地（实测 Dock 进程消失时 `mod-count` 已经加一，回调里读到的偏好已不含被写回抹掉的条目）：此刻的偏好就是新拉起的 Dock 读到的内容
+  - 条目的 `GUID` 不是本次运行写入的值时同样换新：实测（macOS 27）Dock 被终止时若带着未写的状态（例如松手约 2 秒内刚接受过一次拖放），会在终止时把启动时读到的旧条目写回，盖掉刚换上的 `GUID`，重启后的 Dock 仍显示旧图标；旧 Dock 退出后的核对据此再换一个新的 `GUID`（见“Dock 重启后的核对”）。
+- `apply(_:rewrittenTileURLs:removingTilesIn:)`：让 Flotilla 的 tile 与一份期望状态一致，返回是否改动了偏好；同步时的第一次写入与旧 Dock 退出后的核对共用这一步
+  - 期望状态是每个根文件夹一个 `ExpectedDockTile`：stub 的位置、tile 的名称、tile 不在 Dock 上时能否添加
+  - 已在 Dock 上的按 `update` 原地更新，`rewrittenTileURLs` 里的 stub 刚被改写，换新的 `GUID`；不在 Dock 上且能添加的按 `add` 追加；`removingTilesIn` 给出的 stub 目录按 `remove` 删除
+- `observeTiles(_:)`：`persistent-apps` 变化时在主线程回调，Dock 自己的写入与 Flotilla 的写入都会通知
+  - 读写偏好用 `UserDefaults` 的子类 `DockDefaults`：键名带连字符，写不成 KeyPath，借 KVO 的依赖键（`keyPathsForValuesAffectingTiles`）让属性 `tiles` 随 `persistent-apps` 一起通知
+  - 实测（macOS 27）以域名创建的 `UserDefaults(suiteName:)` 能收到其它进程写入的 KVO 通知，写入后随即送达；偏好文件要等 cfprefsd 落盘，Dock 自己的写入有时晚 5 秒以上才出现在 `com.apple.dock.plist` 里，监听文件赶不上
+- `restartDock(terminationHandler:)`：终止本用户的 Dock 进程，launchd 会自动拉起；被终止的 Dock 全部退出后在主线程调用 `terminationHandler`，没有在运行的 Dock 时立即调用。
+  - Dock 进程按进程名在内核里找（`proc_listpids` + `proc_pidinfo` 的 `PROC_PIDTBSDINFO`），退出用 kqueue（`DispatchSource.makeProcessSource`，`.exit`）监听，终止之前就开始监听
+  - 不用 `NSRunningApplication`：核对不通过时要终止的是刚拉起的新 Dock，实测（macOS 27）它启动约 45 ms（37–66 ms，23 次）后才出现在 `NSRunningApplication` 里，`launchDate` 为空；`isTerminated` 的 KVO 也比 kqueue 的退出事件晚 1–16 ms（中位 3.7 ms）；NSWorkspace 不为 LSUIElement 的 Dock 发 `didTerminateApplicationNotification`
+  - Dock 终止时若把旧条目写回，退出时已经落地（实测退出事件到达时读到的偏好已是写回之后的内容）
+- `relaunchedDockLaunchDate()`：最近一次重启后新拉起的 Dock 的内核启动时刻，排除被终止的进程与僵尸进程；新 Dock 还没启动时为 nil
+  - 实测（macOS 27）：旧 Dock 的退出事件之后 0.4 ms 之内新进程就被创建（23 次）；它先以 xpcproxy 运行，约 7–10 ms 后才 exec 成 Dock（3 次），在此之前按进程名找不到它，它也还没开始执行 Dock 的代码
+- `isReadByRelaunchedDock(writtenAt:dockLaunchedAt:)`：重启 Dock 之后的补写是否一定会被新 Dock 读到：补写完成时新 Dock 还没启动，或补写完成得早于新 Dock 启动后 `relaunchReadDelay`
+  - 实测（macOS 27，23 次，在新 Dock 启动后不同时刻改测试 tile 的名称，看它显示哪个）：新 Dock 在启动后约 70–85 ms 读取 `persistent-apps`，70 ms 之前写完的改动都被读到，73 ms 起开始有读不到的；`relaunchReadDelay` 取 30 ms
 
 ## 同步器（`Sources/Flotilla/Dock/DockTileSynchronizer.swift`）
 
@@ -88,31 +100,37 @@
   - 先做一次对账：每个根文件夹都有 stub，tile 按“添加 tile 的条件”添加；多余的 stub 与 tile 删除
     - tile 按 stub 独占的 `<id>` 目录匹配，stub bundle 已被用户删掉时同样删除条目
     - 多余的 tile 也包括 Dock 偏好里指向 `DockTiles/` 下、目录已不存在的条目
-  - 再订阅 `FolderStore.didChangeNotification` 与 `Preferences.didChangeNotification`，并用 KVO 观察 `NSApp.effectiveAppearance`
-- 变更后合并处理（防抖 0.5 秒；Dock 重启后的静默期见下）：
+  - 再订阅 `FolderStore.didChangeNotification` 与 `Preferences.didChangeNotification`，用 KVO 观察 `NSApp.effectiveAppearance`，并用 `DockPreferences.observeTiles(_:)` 观察 Dock 偏好里的 tile
+- 变更后合并处理（防抖 0.5 秒）：
   1. 重新渲染每个根文件夹的图标，底板按 `NSApp.effectiveAppearance` 取深浅（见 01），按需更新 stub 的 icns 与 plist
-  2. tile 集合或名称有变化：改 Dock 偏好，然后重启 Dock
-  3. 只有图标变化：实测（macOS 27）Dock 不会自动刷新，`touch` bundle、重新注册 Launch Services、替换自定义图标都无效，因此 tile 换新的 `GUID` 后同样重启 Dock
-- Dock 重启后的静默期（同步时机的纯逻辑在 `DockSynchronizationSchedule`）：
-  - 实测（macOS 27）重启后的 Dock 会把启动时读到的偏好写回一次（`mod-count` 加一），在重启后 4.1–4.2 秒（多次实测），或在此之前被终止时；在这次写回之前写入的改动会被覆盖，随后重启的 Dock 读到的仍是旧条目
-    - 终止 Dock 后 10–60 ms 新 Dock 即被拉起；并非每次重启都会写回
-  - 重启 Dock 之后 8 秒内不写 Dock 偏好：同步时刻取“变更后 0.5 秒”与“最近一次重启后 8 秒”中较晚的一个，静默期内的变更合并成一次同步
-  - 同步重启了 Dock 时，静默期结束再复查一次：重新读取 Dock 偏好对账，把被写回覆盖的改动重新写上；没有差异时不改偏好、不重启 Dock
-    - 复查只把仍待添加的 tile 再加一次，即被旧 Dock 终止时的写回抹掉的；已确认加上、之后不在 Dock 上的是被用户拖出的，不加回（见下）
-    - 复查也比对 `GUID`：被 Dock 写回盖掉的 `GUID` 会在这里换新（见“Dock 偏好”一节）
-    - 复查本身重启了 Dock 时不再安排复查，Dock 写回的条目与写入的始终不一致时也不会被反复重启
+  2. 把各根文件夹 tile 的期望状态写进 Dock 偏好（`apply`）：tile 集合或名称有变化，或 stub 被改写过（条目换新的 `GUID`）
+  3. 偏好有改动就重启 Dock，每次同步只重启一次；只有图标变化时，实测（macOS 27）Dock 不会自动刷新，`touch` bundle、重新注册 Launch Services、替换自定义图标都无效，因此同样靠新的 `GUID` 加重启
+- Dock 重启后的核对：
+  - 实测（macOS 27）：
+    - 新 Dock 只在启动时读取偏好：旧 Dock 退出后立即被拉起，启动后约 70–85 ms 读取 `persistent-apps`
+    - 被终止的 Dock 若带着未写的状态，会在终止时把启动时读到的条目写回，盖掉 Flotilla 在它运行期间写入的改动：刚接受过拖放、刚在 Dock 里拖动过 tile，或新增 tile 后启动还不到 4.1 秒、还没把补全字段的条目写回时
+    - 新增 tile 后重启的 Dock 在启动后 4.1–4.2 秒把补全字段的条目写回一次（多次实测）；删除、改名、只换 `GUID` 后重启的 Dock 没有观察到写回
+  - 旧 Dock 退出后（`restartDock` 的回调）按本次同步的同一份期望再 `apply` 一次，不再算 stub 改写：终止时的写回丢掉的条目补回、回退的名称与位置改回、被盖掉的 `GUID` 换新
+  - 有补写时，补写完成得早于新 Dock 启动后 `relaunchReadDelay`（`isReadByRelaunchedDock`）才算新 Dock 读到了；否则再重启一次 Dock，回到上一步。一次同步最多重启 3 次 Dock，超过就记日志放弃：偏好里已是期望状态，Dock 下一次重启时读到
+    - 实测（macOS 27）7 次终止写回（拖放 3 次、拖放同时加回 tile 2 次、新增 tile 后 4 秒内改名 2 次），补写都在第一次重启里完成，守卫通过，新 Dock 显示的名称与图标都是补写的
+    - 再重启时被终止的新 Dock 只活了几十毫秒，实测（1 次）launchd 约 1 秒后才拉起下一个 Dock
+  - 没有补写时不必判断：新 Dock 读到的要么是第一次写入的内容，要么是与期望一致的写回
+  - 新 Dock 读到期望状态后才算同步结束：确认待添加的 tile（见下），删掉多余的 stub，发出 `didSynchronizeNotification`
+  - 每次变更只重启一次 Dock；只有赶上终止写回、补写又晚于新 Dock 读取时才多重启
 - 根文件夹被删除、或被拖成子文件夹：删掉 tile 与 stub；子文件夹被拖成根文件夹：新建 tile 与 stub。
 - 添加 tile 的条件（需求 10，纯逻辑在 `DockTileAdditionTracker`）：
   - 用户可以像其它 App 一样把 tile 拖出 Dock，拖出后不再自动加回；tile 不在 Dock 上的根文件夹照常生成与更新 stub，只是不动 Dock 偏好，重新添加时直接引用
   - 只在两种情况下向 Dock 添加 tile：根文件夹是新出现的（上一次同步时还不是根文件夹），或用户在设置窗口点了“添加到 Dock”
     - 同步器创建时的根文件夹都视为已同步过：Flotilla 没运行时不会有新的根文件夹出现，此时缺少 tile 的根文件夹都是被用户拖出去的
-  - 添加过 tile 的根文件夹先待添加，直到确认 tile 已经加上：添加后重启 Dock，被终止的旧 Dock 退出时 tile 仍在 Dock 偏好里（新拉起的 Dock 读到了它），或某次同步看到 tile 在 Dock 上
-    - 旧 Dock 退出时 tile 不在偏好里：是旧 Dock 终止时的写回抹掉了它，仍待添加，静默期结束的复查再加一次
-    - 确认加上之后 tile 不在 Dock 上，就是被用户拖出去的；在复查之前拖出也一样，不加回
+  - 添加过 tile 的根文件夹先待添加，直到确认 tile 已经加上：核对通过时新 Dock 读到的偏好里有它，或某次同步看到 tile 在 Dock 上
+    - 核对放弃时仍待添加，之后的同步再加
+    - 确认加上之后 tile 不在 Dock 上，就是被用户拖出去的；tile 出现后立即拖出也一样，不加回
     - 待添加的根文件夹被删除或被拖成子文件夹时不再添加
-- 查询与请求：`rootFolderIDsRemovedFromDock()` 给出被用户拖出 Dock 的根文件夹（tile 不在 Dock 上、下一次同步也不会添加；Dock 上现有的 tile 取 `DockPreferences.folderIDs(ofTilesIn:)` 对 stub 目录的结果）；`addTile(for:)` 把根文件夹记为待添加并安排一次同步。
+  - 设置窗口里新建的根文件夹在输入名称期间搁置：不添加 tile，也不算被拖出；名称编辑结束后解除搁置并同步一次，tile 带着最终名称出现，Dock 只重启一次（见 05）
+- 查询与请求：`rootFolderIDsRemovedFromDock()` 给出被用户拖出 Dock 的根文件夹（tile 不在 Dock 上、下一次同步也不会添加；Dock 上现有的 tile 取 `DockPreferences.folderIDs(ofTilesIn:)` 对 stub 目录的结果）；`addTile(for:)` 把根文件夹记为待添加并安排一次同步；`holdTile(for:)`、`releaseTile(for:)` 搁置与解除搁置新建的根文件夹。
 - 每次同步结束后发出 `DockTileSynchronizer.didSynchronizeNotification`（`object` 为同步器），设置窗口据此刷新 tile 的状态。
-- 系统切换深浅外观：Flotilla 没有固定外观，渲染 stub 图标时读取的 `NSApp.effectiveAppearance` 随系统变化，触发一次同步；底板颜色变了，stub 被改写、tile 换新的 `GUID`，Dock 因此重启一次（Dock 按 `GUID` 缓存 tile 图标，见上文）。
+- Dock 偏好里的 tile 变化时发出 `DockTileSynchronizer.dockTilesDidChangeNotification`（`object` 为同步器），不触发同步：用户把 tile 拖出 Dock 后，实测 Dock 约 4.1 秒才把删除写进偏好，设置窗口据此立即刷新状态。
+- 系统切换深浅外观：Flotilla 没有固定外观，渲染 stub 图标时读取的 `NSApp.effectiveAppearance` 随系统变化，触发一次同步；底板颜色变了，stub 被改写、tile 换新的 `GUID`，每次切换 Dock 重启一次（Dock 按 `GUID` 缓存 tile 图标，见上文）。
 
 ## 信号链路验证
 
@@ -126,7 +144,7 @@
 - Dock 偏好条目构造（纯函数）
 - stub 目录结构与 plist 内容（写到临时目录）
 - `.icns` 写入
-- 同步时机：防抖、Dock 重启后的静默期与复查（纯逻辑）
+- Dock 重启后的核对：按同一份期望补写被终止写回盖掉的条目，没有写回时不补写；补写是否赶在新 Dock 读取之前（纯逻辑）
 
 ## 验收
 
