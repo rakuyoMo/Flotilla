@@ -46,14 +46,24 @@ Dock 与 ⌘Tab 里的 Flotilla 图标跟随“系统设置 › 外观 › 图�
   |---|---|---|
   | 默认 | 不设运行时图标 | 白天版 |
   | 深色 · 始终 | `NSApp.applicationIconImage` 设为夜间版 | 夜间版 |
-  | 深色 · 自动 | 深色外观时设为夜间版，浅色外观时不设 | 随系统深浅外观 |
-  | 透明（浅色、深色、自动） | 不设 | 系统把白天版去色成灰度 |
-  | 色调（浅色、深色、自动） | 不设 | 系统按亮度给白天版着色 |
+  | 深色 · 自动 | 深色外观时同“深色 · 始终”，浅色外观时不设 | 随系统深浅外观 |
+  | 透明 · 浅色 | 不设 | 系统把白天版去色成灰度 |
+  | 透明 · 深色 | 设为去色后的夜间版 | 深灰底、浅灰图案 |
+  | 透明 · 自动 | 深色外观时同“透明 · 深色”，浅色外观时不设 | 随系统深浅外观 |
+  | 色调 · 浅色 | 不设 | 系统按亮度给白天版着色 |
+  | 色调 · 深色 | 设为按色调颜色着色的夜间版 | 深底、色调颜色的图案 |
+  | 色调 · 自动 | 深色外观时同“色调 · 深色”，浅色外观时不设 | 随系统深浅外观 |
 
   - “不设”即 `applicationIconImage = nil`：Dock 只对包里的默认图标做透明、色调处理
+  - 运行时设置的图标 Dock 原样显示，所以透明、色调的深色子变体由 `DarkIconStyleRenderer` 先处理好夜间版再设：
+    - 两种处理都只看像素的 Rec. 709 亮度 L（在 sRGB 编码值上计算），透明度不变
+    - 透明 · 深色：灰度 = 0.075 + 0.79 L
+    - 色调 · 深色：各通道 = 0.08 + 0.92 L × 色调颜色的对应通道；系统颜色按深色外观取值
+    - 系数按 Dock 对包里白天版的处理效果拟合
+  - 色调颜色取 `NSWorkspace.shared` 私有的 `currentIconAppearanceConfiguration` 所返回对象的 `resolvedIconTintColor`；取不到时不设运行时图标，由 Dock 按系统设置的颜色处理白天版，只是底板是浅色
+  - 取不到夜间版资源或处理失败时同样不设：上一种样式设的图标与当前样式不符
   - 没有“图标与小组件样式”的系统（macOS 15 起、26 之前）上 `AppleIconAppearanceTheme` 不存在，按“默认”处理：显示白天版，与系统里其它 App 一致
-  - 透明、色调的深色子变体下仍是浅底，与系统 App 的深底图标不同
-- 启动时、`NSApplication.didBecomeActiveNotification` 时、样式变化时、系统深浅外观变化时重新设置：`.accessory` 期间设的图标切到 `.regular` 后不沿用
+- 启动时、`NSApplication.didBecomeActiveNotification` 时、样式或色调颜色变化时、系统深浅外观变化时重新设置：`.accessory` 期间设的图标切到 `.regular` 后不沿用
 - 访达、启动台等处只显示包里的白天版：没有 `actool`，生成不了 Assets.car；icns 内嵌的深色变体系统也不读
 
 实测（macOS 27）：
@@ -61,8 +71,11 @@ Dock 与 ⌘Tab 里的 Flotilla 图标跟随“系统设置 › 外观 › 图�
 - 样式存在全局偏好 `AppleIconAppearanceTheme` 里；“默认”时键不存在，其余取值为 `RegularDark`、`RegularAutomatic`、`ClearLight`、`ClearDark`、`ClearAutomatic`、`TintedLight`、`TintedDark`、`TintedAutomatic`
 - 色调颜色存在 `AppleIconAppearanceTintColor` 里；“自动”时键不存在，选定颜色时为英文颜色名，如 `Orange`
 - 样式或色调颜色变化时，`NSWorkspace.shared.notificationCenter` 发出 `NSWorkspaceIconAppearanceConfigurationDidChangeNotification`（名称不在公开头文件里），此时全局偏好已是新值
+- `NSWorkspace.shared` 响应私有选择子 `currentIconAppearanceConfiguration`，返回 SkyLight 的 `SLSIconAppearanceConfiguration`；其 `resolvedIconTintColor` 是 `NSColor`：选定橙色时为 `systemOrangeColor`，“自动”时为 `systemBlueColor`
 - 运行时设置的 `applicationIconImage` 在任何样式下都原样显示；设回 `nil` 后 Dock 立即恢复对包里默认图标的处理
+- Dock 对包里默认图标做的透明 · 深色、色调 · 深色处理，输出都是像素亮度的线性函数；色调处理是亮度与色调颜色逐通道相乘
 - 深色样式下系统不会把 icns 变暗：不设运行时图标时 Dock 仍显示白天版
+- `NSWorkspace.shared.icon(forFile:)` 取到的 App 图标已按当前样式处理，但只对 `.app` 有效：`CFBundleIconFile` 指向夜间版的 `.bundle` 取到的是通用的 bundle 图标
 - 切换样式后 Dock 即时刷新 Flotilla 的图标，Dock 不重启
 
 ### 主菜单
@@ -183,11 +196,15 @@ enum FolderIconRenderer {
   - 每个图标在单元格内等比缩放居中
 - 每个预览图标下方一层柔和投影：黑色，不透明度 0.3，模糊半径 14/1024，向下偏移 5/1024。
 
-## 状态栏（`Sources/Flotilla/StatusBar/StatusBarController.swift`）
+## 状态栏（`Sources/Flotilla/StatusBar/`）
 
 需求 7。
 
-- `NSStatusItem`，图标用 SF Symbol `folder`（template 模式）
+- `StatusBarController`：方形的 `NSStatusItem`（`squareLength`），图标取自 `StatusBarIcon`
+- `StatusBarIcon`：按矢量绘制 App 图标里那艘方帆船的剪影，template 模式，无障碍描述“Flotilla”
+  - 部件：桅杆、桅顶向右飘的三角旗、三面上下叠放的横帆（帆桁左高右低、越往下越宽，相邻两面之间留斜缝）、船尾高起而船首上翘的船身、船首斜桅
+  - 画布 16×16 pt，船从桅顶到船底占满画布高度、左右居中，放进 22 pt 见方的状态栏按钮后四周各留 3 pt
+  - 桅杆、甲板、船尾与船底落在整点上，1x 屏幕上这些边缘不发虚
 - 菜单：“设置…”（⌘,）、分隔线、“退出 Flotilla”（⌘Q）
 - “设置…”打开设置窗口并把它带到最前（这是唯一允许激活 Flotilla 的场景）
 
@@ -227,16 +244,18 @@ enum FolderIconRenderer {
 - 模型：嵌套结构 JSON 编解码往返一致
 - `FolderStore`：增删改查、移动（含禁止移入子孙）、持久化到临时目录后重新加载一致、损坏文件的处理
 - `Preferences`：默认值与夹取
+- `StatusBarIcon`：是 template 图、无障碍描述为“Flotilla”；在 16 pt 画布里上下占满、左右居中；1x 下桅杆、甲板与船底落在整像素上
 - `FolderIconRenderer`：0–4 个预览都能渲染、`previewIconCount` 超过 App 数量时不崩溃、输出尺寸正确，以上在深浅两种外观下都成立；两种外观的底板透明区域逐像素相同；深色底板比中灰暗、浅色比中灰亮，都是上亮下暗；深色边线亮于底板内部、浅色边线暗于内部
 - `FolderIconAppearance`：高对比度、vibrant 等变体归入对应的深色或浅色；面板网格里的文件夹图标在视图外观切换后换成对应外观的版本
-- `AppIconController`：深色 · 始终、深色 · 自动遇到深色外观（含高对比度、vibrant 变体）时取夜间版，其母版比默认图标暗；其余样式与外观都不设运行时图标
+- `AppIconController`：深色、透明、色调三种样式的“深色”子变体（深色样式为“始终”）不看外观，换成夜间版、去色的夜间版、着色的夜间版；“自动”子变体只在深色外观（含高对比度、vibrant 变体）下同样换；默认样式与透明、色调的“浅色”子变体在任何外观下都不设运行时图标
+- `DarkIconStyleRenderer`：去色后红、绿、蓝相等；着色后亮部的色相与色调颜色一致；黑色变成中性的深色；明暗顺序与透明度不变；夜间版母版处理后比白天版暗，平均亮度低于一半
 - 单实例：同一 bundle id 的实例里只有当前进程时不算重复启动；另有实例时，不论它排在当前进程之前还是之后都能找出
 
 ## 验收
 
 - `mise run bundle` 后 `open build/Flotilla.app`：Dock 上没有 Flotilla 图标；状态栏出现图标；菜单能打开设置窗口，此时 Dock 图标出现，关闭窗口后消失
 - 其它 App 在前台时打开设置窗口，Flotilla 成为前台 App、设置窗口在最前；关闭后重开同样如此
-- 设置窗口打开期间切换“图标与小组件样式”，Dock 上的 Flotilla 图标随即按上文“App 图标”一节变化
+- 设置窗口打开期间切换“图标与小组件样式”、色调颜色或系统深浅外观，Dock 上的 Flotilla 图标随即按上文“App 图标”一节变化；透明 · 深色、色调 · 深色下是深底，与相邻系统 App 的图标一致
 - Flotilla 运行时再启动一份：新的一份立即退出，Dock 偏好不变
 - 设置窗口能新建嵌套文件夹、添加 App、重命名、拖拽、删除；重启 App 后数据仍在
 - 终端执行 `open "flotilla://folder/<某个根文件夹 id>"` 后，`DockFolderPresenter` 收到该 id，且 Flotilla 没有被激活

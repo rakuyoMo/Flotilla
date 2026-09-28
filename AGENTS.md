@@ -42,7 +42,7 @@ Flotilla 是一个原生 macOS App：在 Dock 上增加“文件夹”，把多�
 Sources/Flotilla/       App 源码
   Model/                文件夹数据模型与持久化
   Preferences/          用户设置
-  Rendering/            文件夹图标渲染
+  Rendering/            文件夹图标渲染、App 图标的透明与色调处理
   StatusBar/            状态栏图标与菜单
   Settings/             设置窗口
   Resources/            五种语言的 Localizable.strings 与白天、夜间两版 App 图标母版，不参与编译；由打包脚本拷入 .app，图标母版转成 icns

@@ -17,9 +17,7 @@ final class StatusBarController: NSObject {
         self.settingsWindowController = settingsWindowController
         super.init()
 
-        let image = NSImage(systemSymbolName: "folder", accessibilityDescription: "Flotilla")
-        image?.isTemplate = true
-        statusItem.button?.image = image
+        statusItem.button?.image = StatusBarIcon.makeImage()
         statusItem.menu = makeMenu()
     }
 }
