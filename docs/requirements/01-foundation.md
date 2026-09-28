@@ -23,6 +23,7 @@ Flotilla 照此办理：
 
 - 启动即 `.accessory`（`LSUIElement`），此时没有任何窗口
 - 显示设置窗口前切到 `.regular`，切换后延迟到下一个 run loop 再激活并把窗口带到最前：从 `.accessory` 切到 `.regular` 后系统需要时间准备 Dock 图标
+  - 激活用 `NSApp.activate(ignoringOtherApps: true)`，不用协作式的 `activate()`：最近一次用户输入不是发给 Flotilla 时（例如用辅助功能按下“设置…”），`activate()` 被系统忽略，窗口开在其它 App 后面（macOS 27 实测）
 - 设置窗口关闭后，若没有其它可见窗口，切回 `.accessory`
 - 面板（03 阶段）不算窗口：它从不改变激活策略，也从不激活 Flotilla
 
