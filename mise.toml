@@ -24,3 +24,11 @@ run = "swift package --allow-writing-to-package-directory format"
 [tasks."swift:lint"]
 description = "检查 Swift 代码规范"
 run = "mise run swift:format --lint"
+
+# ==========================================
+# 发布任务
+# ==========================================
+
+[tasks.release]
+description = "为新版本开 release PR，用法：mise run release X.Y.Z"
+run = "./Scripts/release.sh"

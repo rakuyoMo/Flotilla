@@ -34,6 +34,7 @@ Flotilla 是一个原生 macOS App：在 Dock 上增加“文件夹”，把多�
 | `swift test` | 运行单元测试 |
 | `mise run swift:format` | 按代码规范自动格式化 |
 | `mise run swift:lint` | 检查代码规范 |
+| `mise run release <版本号>` | 为新版本开 release PR，见“发布流程” |
 
 ## 目录结构
 
@@ -51,8 +52,10 @@ Sources/Flotilla/       App 源码
 Sources/FlotillaDockTile/  Dock tile 的 stub 可执行文件，由打包脚本拷入 .app
 Tests/FlotillaTests/    单元测试（Swift Testing）
 Scripts/bundle.sh       打包脚本：组装 .app 并签名
+Scripts/release.sh      发版脚本：改版本号并开 release PR
 docs/requirements/      需求文档：00 为总览，01–05 为按实现顺序拆分的阶段
 .github/workflows/      GitHub Actions：`ci.yml` 检查与构建，`release.yml` 发布新版本
+.claude/skills/release/ Claude Code 的 `release` skill：用自然语言发布新版本
 ```
 
 ## 开发注意事项
@@ -185,14 +188,21 @@ docs/requirements/      需求文档：00 为总览，01–05 为按实现顺序
 
 ## 发布流程
 
-版本号记在 `Sources/Flotilla/Info.plist` 的 `CFBundleShortVersionString` 与 `CFBundleVersion` 里，两者手工维护、始终相同，格式为 `X.Y.Z`。
+版本号记在 `Sources/Flotilla/Info.plist` 的 `CFBundleShortVersionString` 与 `CFBundleVersion` 里，两者始终相同，格式为 `X.Y.Z`：三段都是不带前导零的整数，不带 `v`。
 
 发布一个新版本：
 
-1. 从本仓库的分支向 `main` 开 PR，把 Info.plist 的两个版本号改成新版本
-   - fork 来的 PR 拿不到发布所需的写权限
-2. PR 标题写 `release: X.Y.Z`，三段都是不带前导零的整数，不带 `v`
-3. 合并后，GitHub Actions 自动：
+1. 在 `main` 上运行 `mise run release X.Y.Z`，脚本先检查以下各项，任一不满足就报错退出，不做任何改动：
+   - 当前在 `main` 分支
+   - 工作区干净
+   - 本地 `main` 与 `origin/main` 一致
+   - tag `vX.Y.Z` 在远端不存在
+   - `gh` 已登录
+   - `origin` 是本仓库而不是 fork：fork 的 PR 拿不到发布所需的写权限
+   - 本地与远端都没有 `release/X.Y.Z` 分支
+2. 检查通过后，脚本切出 `release/X.Y.Z` 分支，把 Info.plist 的两个版本号改成新版本，提交并推送到 `origin`，再向 `main` 开标题为 `release: X.Y.Z` 的 PR
+3. 等 CI 通过后合并 PR
+4. 合并后，GitHub Actions 自动：
    - 在合并提交上打 tag `vX.Y.Z`
    - 打包并压缩为 `Flotilla-X.Y.Z.zip`
    - 创建 GitHub Release，附上 zip 与自动生成的更新说明
@@ -203,7 +213,9 @@ docs/requirements/      需求文档：00 为总览，01–05 为按实现顺序
 - Info.plist 的两个版本号与标题不一致
 - tag `vX.Y.Z` 已存在
 
-失败时到仓库的 Actions 页面查看原因，修好后再开一个 release PR。
+失败时到仓库的 Actions 页面查看原因，修好后再运行一次 `mise run release X.Y.Z`。
+
+也可以对 Claude Code 说“发布 X.Y.Z”，由 [`release` skill](.claude/skills/release/SKILL.md) 走完开 PR、等 CI、合并、等发布的全过程。
 
 ## commit message
 
@@ -216,7 +228,7 @@ docs/requirements/      需求文档：00 为总览，01–05 为按实现顺序
   - `chore`：构建、依赖、流程工具
   - `style`：行为不变的排版、注释措辞、命名整改
   - `test`：只动测试
-  - `release`：把 Info.plist 的版本号改成新版本，见“发布流程”
+  - `release`：发布新版本，由 `mise run release` 生成，见“发布流程”
 - 简述用中文写成一句“改动结果”；`release` 例外，简述就是版本号本身，如 `release: 1.0.0`
 - 标题不超过 50 个字符，中文一字算一，可用 `printf '%s' '<标题>' | wc -m` 核对
 - 不含任何 AI 署名：`Co-Authored-By`、`Generated with`、🤖 之类的行与尾注一律不写
