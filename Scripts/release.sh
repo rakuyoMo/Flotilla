@@ -124,3 +124,6 @@ pr_url="$(
 echo "已创建 PR：$pr_url"
 
 git switch main
+
+# 发布分支已推送到远端，本地副本没有用处，留着会让重发同一版本时被“本地已有分支”拦住
+git branch --delete "$BRANCH"
