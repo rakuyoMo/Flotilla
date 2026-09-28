@@ -37,6 +37,8 @@ final class AppIconController: NSObject {
     ///
     /// 深色样式分“始终”（`RegularDark`）与“自动”（`RegularAutomatic`，跟随系统深浅外观）；
     /// 透明、色调样式的取值以 `Clear`、`Tinted` 开头
+    ///
+    /// 没有“图标与小组件样式”的系统（macOS 15 起、26 之前）上 `iconTheme` 总是 nil，同样用默认图标，与系统里其它 App 一致
     /// - Parameters:
     ///   - iconTheme: 全局偏好 `AppleIconAppearanceTheme` 的值，“默认”样式时为 nil
     ///   - appearance: App 的 `effectiveAppearance`，只在“深色 · 自动”时起作用；高对比度等变体归入对应的深色或浅色
