@@ -2,6 +2,34 @@
 
 在 macOS 的 Dock 上增加“文件夹”，把多个 App 分类收纳进去。点击文件夹，它会在 Dock 上展开，显示其中的 App；点击 App 即可打开。
 
+## 安装
+
+需要 macOS 15 或更高版本。
+
+1. 在 [Releases](https://github.com/rakuyoMo/Flotilla/releases) 页面下载最新版本的 `Flotilla-X.Y.Z.zip`
+2. 双击解压，把 `Flotilla.app` 拖到“应用程序”文件夹
+3. 打开 Flotilla
+
+### 第一次打开
+
+Flotilla 没有经过 Apple 公证。第一次打开时，系统会提示 Apple 无法验证它是否包含恶意软件，并拒绝打开。
+
+点击“完成”关闭提示，然后按以下步骤放行：
+
+1. 打开“系统设置 › 隐私与安全性”
+   - macOS 27 里这一页是“隐私与安全”
+2. 向下滚动到“安全性”，在提示 Flotilla 已被阻止的那一行点击“仍要打开”
+   - 这个按钮只在尝试打开 Flotilla 之后的一小时内出现
+3. 按提示输入登录密码确认
+
+之后 Flotilla 就能像其它 App 一样正常打开。
+
+也可以在终端里移除 Flotilla 的隔离属性，之后直接打开：
+
+```bash
+xattr -d com.apple.quarantine /Applications/Flotilla.app
+```
+
 ## 使用方法
 
 Flotilla 启动后没有 Dock 图标，只在菜单栏显示一个文件夹图标。
@@ -64,7 +92,7 @@ Flotilla 通过辅助功能读取 Dock 的界面信息，用来：
   - macOS 27 里这一页是“隐私与安全 › 设备控制和数据访问”
   - 这一行会显示当前是否已授权
 
-自行打包的 Flotilla 使用 ad-hoc 签名，重新打包后原来的授权可能失效，需要重新授权。
+Flotilla 使用 ad-hoc 签名，换用新版本或重新打包后，原来的授权可能失效，需要重新授权。
 
 ## Flotilla 对 Dock 的改动
 

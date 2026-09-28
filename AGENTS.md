@@ -52,6 +52,7 @@ Sources/FlotillaDockTile/  Dock tile 的 stub 可执行文件，由打包脚本�
 Tests/FlotillaTests/    单元测试（Swift Testing）
 Scripts/bundle.sh       打包脚本：组装 .app 并签名
 docs/requirements/      需求文档：00 为总览，01–05 为按实现顺序拆分的阶段
+.github/workflows/      GitHub Actions：`ci.yml` 检查与构建，`release.yml` 发布新版本
 ```
 
 ## 开发注意事项
@@ -182,6 +183,28 @@ docs/requirements/      需求文档：00 为总览，01–05 为按实现顺序
   - [takuarc/FolderDock](https://github.com/takuarc/FolderDock)：自定义许可证禁止商用，与 GPL-3.0 不兼容
   - [benianwalls/Dock-Folders-App](https://github.com/benianwalls/Dock-Folders-App)：没有许可证
 
+## 发布流程
+
+版本号记在 `Sources/Flotilla/Info.plist` 的 `CFBundleShortVersionString` 与 `CFBundleVersion` 里，两者手工维护、始终相同，格式为 `X.Y.Z`。
+
+发布一个新版本：
+
+1. 从本仓库的分支向 `main` 开 PR，把 Info.plist 的两个版本号改成新版本
+   - fork 来的 PR 拿不到发布所需的写权限
+2. PR 标题写 `release: X.Y.Z`，三段都是不带前导零的整数，不带 `v`
+3. 合并后，GitHub Actions 自动：
+   - 在合并提交上打 tag `vX.Y.Z`
+   - 打包并压缩为 `Flotilla-X.Y.Z.zip`
+   - 创建 GitHub Release，附上 zip 与自动生成的更新说明
+
+标题以 `release:` 开头（不区分大小写）的 PR 合并后，以下任一情况都会让发布失败：
+
+- 标题不是完整的 `release: X.Y.Z`
+- Info.plist 的两个版本号与标题不一致
+- tag `vX.Y.Z` 已存在
+
+失败时到仓库的 Actions 页面查看原因，修好后再开一个 release PR。
+
 ## commit message
 
 - 格式为 `<type>: <简述>`，代码标识用反引号，默认不带正文
@@ -193,7 +216,8 @@ docs/requirements/      需求文档：00 为总览，01–05 为按实现顺序
   - `chore`：构建、依赖、流程工具
   - `style`：行为不变的排版、注释措辞、命名整改
   - `test`：只动测试
-- 简述用中文写成一句“改动结果”
+  - `release`：把 Info.plist 的版本号改成新版本，见“发布流程”
+- 简述用中文写成一句“改动结果”；`release` 例外，简述就是版本号本身，如 `release: 1.0.0`
 - 标题不超过 50 个字符，中文一字算一，可用 `printf '%s' '<标题>' | wc -m` 核对
 - 不含任何 AI 署名：`Co-Authored-By`、`Generated with`、🤖 之类的行与尾注一律不写
 
