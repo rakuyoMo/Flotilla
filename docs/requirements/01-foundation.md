@@ -60,7 +60,8 @@ Dock 与 ⌘Tab 里的 Flotilla 图标跟随“系统设置 › 外观 › 图�
     - 透明 · 深色：灰度 = 0.075 + 0.79 L
     - 色调 · 深色：各通道 = 0.08 + 0.92 L × 色调颜色的对应通道；系统颜色按深色外观取值
     - 系数按 Dock 对包里白天版的处理效果拟合
-  - 色调颜色取 `NSWorkspace.shared` 私有的 `currentIconAppearanceConfiguration` 所返回对象的 `resolvedIconTintColor`，取不到时用强调色 `NSColor.controlAccentColor`
+  - 色调颜色取 `NSWorkspace.shared` 私有的 `currentIconAppearanceConfiguration` 所返回对象的 `resolvedIconTintColor`；取不到时不设运行时图标，由 Dock 按系统设置的颜色处理白天版，只是底板是浅色
+  - 取不到夜间版资源或处理失败时同样不设：上一种样式设的图标与当前样式不符
   - 没有“图标与小组件样式”的系统（macOS 15 起、26 之前）上 `AppleIconAppearanceTheme` 不存在，按“默认”处理：显示白天版，与系统里其它 App 一致
 - 启动时、`NSApplication.didBecomeActiveNotification` 时、样式或色调颜色变化时、系统深浅外观变化时重新设置：`.accessory` 期间设的图标切到 `.regular` 后不沿用
 - 访达、启动台等处只显示包里的白天版：没有 `actool`，生成不了 Assets.car；icns 内嵌的深色变体系统也不读

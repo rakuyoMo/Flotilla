@@ -108,7 +108,7 @@ final class AppIconController: NSObject {
 // MARK: - Private
 
 extension AppIconController {
-    /// 把 App 图标设成当前样式对应的一版；不需要换时交还包里的默认图标
+    /// 把 App 图标设成当前样式对应的一版；不需要换或生成不了时交还包里的默认图标
     @objc
     private func updateIcon() {
         let variant = Self.variant(
@@ -122,10 +122,9 @@ extension AppIconController {
             return
         }
 
-        // 取不到或处理不了时保持现有图标，原因已由 `icon(for:)` 记入日志
-        guard let icon = Self.icon(for: variant) else { return }
-
-        NSApp.applicationIconImage = icon
+        // 生成不了时同样设为 nil：上一种样式设的运行时图标与当前样式不符，默认图标至少由 Dock 按当前样式处理；
+        // 原因已由 `icon(for:)` 记入日志
+        NSApp.applicationIconImage = Self.icon(for: variant)
     }
 }
 
@@ -134,11 +133,11 @@ extension AppIconController {
 extension AppIconController {
     /// 按变体生成运行时图标：夜间版原样，或按当前色调颜色去色、着色
     /// - Parameter variant: 要生成的变体
-    /// - Returns: 生成的图标；取不到夜间版资源或处理失败时为 nil
+    /// - Returns: 生成的图标；取不到夜间版资源、取不到色调颜色或处理失败时为 nil
     private static func icon(for variant: AppIconVariant) -> NSImage? {
         // 直接运行可执行文件、没有 .app 包时取不到资源
         guard let nightIcon = Bundle.main.image(forResource: darkIconName) else {
-            logger.error("找不到 App 图标资源 \(darkIconName, privacy: .public)，保持现有图标")
+            logger.error("找不到 App 图标资源 \(darkIconName, privacy: .public)，交还默认图标")
             return nil
         }
 
@@ -153,7 +152,9 @@ extension AppIconController {
             render = DarkIconStyleRenderer.clear
 
         case .tintedNight:
-            let tintColor = iconTintColor()
+            // 取不到色调颜色时不生成，交还包里的默认图标：Dock 按系统设置的颜色处理它，只是底板是浅色
+            guard let tintColor = iconTintColor() else { return nil }
+
             render = { DarkIconStyleRenderer.tinted($0, tintColor: tintColor) }
         }
 
@@ -161,12 +162,12 @@ extension AppIconController {
         var rect = CGRect(x: 0, y: 0, width: 1024, height: 1024)
 
         guard let source = nightIcon.cgImage(forProposedRect: &rect, context: nil, hints: nil) else {
-            logger.error("夜间版图标转不成位图，保持现有图标")
+            logger.error("夜间版图标转不成位图，交还默认图标")
             return nil
         }
 
         guard let processed = render(source) else {
-            logger.error("处理夜间版图标失败，保持现有图标")
+            logger.error("处理夜间版图标失败，交还默认图标")
             return nil
         }
 
@@ -177,12 +178,12 @@ extension AppIconController {
     ///
     /// 全局偏好只存颜色名，“自动”时连名字都没有，解析后的颜色要从 `NSWorkspace` 的私有配置对象取：
     /// `currentIconAppearanceConfiguration` 返回 SkyLight 的 `SLSIconAppearanceConfiguration`，
-    /// 其 `resolvedIconTintColor` 是 `NSColor`（macOS 27 实测，“自动”时为 `systemBlueColor`）；取不到时退回强调色
-    private static func iconTintColor() -> NSColor {
+    /// 其 `resolvedIconTintColor` 是 `NSColor`（macOS 27 实测，“自动”时为 `systemBlueColor`）；取不到时为 nil
+    private static func iconTintColor() -> NSColor? {
         let configurationSelector = NSSelectorFromString("currentIconAppearanceConfiguration")
         let tintColorKey = "resolvedIconTintColor"
 
-        // 私有接口，逐步确认存在再取，任何一步不满足都退回强调色
+        // 私有接口，逐步确认存在再取，任何一步不满足都算取不到
         guard
             NSWorkspace.shared.responds(to: configurationSelector),
             let configuration = NSWorkspace.shared
@@ -191,8 +192,8 @@ extension AppIconController {
             configuration.responds(to: NSSelectorFromString(tintColorKey)),
             let tintColor = configuration.value(forKey: tintColorKey) as? NSColor
         else {
-            logger.error("取不到“图标与小组件样式”的色调颜色，改用强调色")
-            return .controlAccentColor
+            logger.error("取不到“图标与小组件样式”的色调颜色，交还默认图标")
+            return nil
         }
 
         return tintColor
