@@ -179,6 +179,27 @@ extension FolderTreeViewController: NSTextFieldDelegate {
         store.rename(folderID: folder.id, to: textField.stringValue)
         dockTileSynchronizer?.releaseTile(for: folder.id)
     }
+
+    /// 按 Esc 取消编辑时名称保持原样，同样算名称定下来了：解除搁置，tile 带着原名出现
+    ///
+    /// 实测 outline view 取消编辑时不发 `controlTextDidEndEditing`，只能在这里得知
+    func control(
+        _ control: NSControl,
+        textView _: NSTextView,
+        doCommandBy commandSelector: Selector
+    ) -> Bool {
+        guard commandSelector == #selector(NSResponder.cancelOperation(_:)) else { return false }
+
+        let row = outlineView.row(for: control)
+        let node = outlineView.item(atRow: row) as? FolderTreeNode
+
+        if let folder = node?.folder {
+            dockTileSynchronizer?.releaseTile(for: folder.id)
+        }
+
+        // 取消编辑本身仍交给 outline view 处理
+        return false
+    }
 }
 
 // MARK: - Actions
