@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mise run release *)",
+      "Bash(gh pr checks *)",
+      "Bash(gh pr merge *)",
+      "Bash(gh pr view *)",
+      "Bash(gh run list *)",
+      "Bash(gh run watch *)",
+      "Bash(gh release view *)",
+      "Bash(sleep *)"
+    ]
+  }
+}
