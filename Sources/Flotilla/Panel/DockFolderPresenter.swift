@@ -80,7 +80,7 @@ final class DockFolderPresenter: NSObject {
 // MARK: - Event Handling
 
 extension DockFolderPresenter {
-    /// 收起面板：Esc、启动 App、屏幕参数变化、当前文件夹被删除
+    /// 收起面板：Esc、启动 App、打开文件或网页、屏幕参数变化、当前文件夹被删除
     @objc
     private func dismiss() {
         apply(state.dismiss())
