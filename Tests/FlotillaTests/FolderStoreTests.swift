@@ -72,9 +72,11 @@ final class FolderStoreTests {
 
         let report = file("/Users/Shared/报告.pdf")
         let example = try webPage("https://example.com/", title: "Example Domain")
+
         store.addItems([report, example], to: root.id)
 
         let notes = file("/Users/Shared/笔记.rtfd/")
+
         store.addItems(
             [
                 file("/Users/Shared/报告.pdf"),
@@ -261,6 +263,7 @@ final class FolderStoreTests {
 
         let report = file("/Users/Shared/报告.pdf")
         let example = try webPage("https://example.com/", title: nil)
+
         store.addItems([report, example], to: source.id)
 
         #expect(!store.canMove(itemID: report.id, to: nil))
