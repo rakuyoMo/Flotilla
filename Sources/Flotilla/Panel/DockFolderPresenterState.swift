@@ -116,7 +116,7 @@ extension DockFolderPresenterState {
         return toggle(folderID: folderID)
     }
 
-    /// 由 Esc、启动 App、屏幕参数变化、文件夹被删除等原因收起
+    /// 由 Esc、启动 App、打开文件或网页、屏幕参数变化、文件夹被删除等原因收起
     mutating func dismiss() -> DockFolderPresenterTransition {
         guard presentedFolderID != nil else { return .unchanged }
 

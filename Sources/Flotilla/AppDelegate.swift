@@ -68,7 +68,7 @@ extension AppDelegate: NSApplicationDelegate {
         registerAsURLHandler()
     }
 
-    /// 处理 stub 发来的请求：展开或收起面板交给面板处理，拖到 tile 上的 App 加入根文件夹；
+    /// 处理 stub 发来的请求：展开或收起面板交给面板处理，拖到 tile 上的 App 与文件加入根文件夹；
     /// 整个过程不激活 Flotilla
     func application(_: NSApplication, open urls: [URL]) {
         for url in urls {
@@ -86,19 +86,20 @@ extension AppDelegate: NSApplicationDelegate {
 
                 dockFolderPresenter.handleURLSignal(folderID: folderID)
 
-            // 只加入 App bundle，与从访达拖进设置窗口时的判断相同；同一次拖放重复送达时由 `addApps` 去重
-            case .addApps(let folderID, let appURLs):
+            // 同一次拖放重复送达时由 `addItems` 去重
+            case .addItems(let folderID, let fileURLs):
                 // stub 只代表根文件夹，指向其它文件夹的 URL 一律忽略
                 guard FolderStore.shared.rootFolders.contains(where: { $0.id == folderID }) else {
                     Self.logger.notice("忽略不存在的根文件夹：\(folderID.uuidString, privacy: .public)")
                     continue
                 }
 
-                let bundleURLs = appURLs.filter {
-                    AppReference.isApplicationBundle($0)
+                // Dock 对普通文件夹也会拉起 stub，分类时它与不存在的文件一起被略过
+                let items = fileURLs.compactMap {
+                    FolderItem(url: $0, title: nil)
                 }
 
-                FolderStore.shared.addApps(bundleURLs, to: folderID)
+                FolderStore.shared.addItems(items, to: folderID)
             }
         }
     }

@@ -3,7 +3,7 @@ import UniformTypeIdentifiers
 
 // MARK: - FolderTreeCellView
 
-/// 文件夹树的一行：图标、名称与状态文字；文件夹名可编辑，App 名只读
+/// 文件夹树的一行：图标、名称与状态文字；文件夹名可编辑，App、文件与网页的名称只读
 final class FolderTreeCellView: NSTableCellView {
     /// 行视图的复用标识
     static let reuseIdentifier = NSUserInterfaceItemIdentifier("FolderTreeCell")
@@ -83,17 +83,26 @@ final class FolderTreeCellView: NSTableCellView {
     /// 用节点内容填充这一行
     /// - Parameter node: 这一行对应的节点
     func configure(with node: FolderTreeNode) {
+        // 只有文件夹名可编辑：App、文件与网页的名称来自访达或浏览器
+        textField?.isEditable = node.folder != nil
+
         switch node.item {
         case .app(let app):
             imageView?.image = app.icon
             textField?.stringValue = app.displayName
-            textField?.isEditable = false
 
         // 根文件夹与子文件夹都用系统的通用文件夹图标：设置窗口里不渲染文件夹内的 App 图标
         case .folder(let folder):
             imageView?.image = NSWorkspace.shared.icon(for: .folder)
             textField?.stringValue = folder.name
-            textField?.isEditable = true
+
+        case .file(let file):
+            imageView?.image = file.icon
+            textField?.stringValue = file.displayName
+
+        case .webPage(let webPage):
+            imageView?.image = webPage.icon
+            textField?.stringValue = webPage.displayName
         }
     }
 }

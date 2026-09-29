@@ -5,7 +5,8 @@ import Testing
 
 // MARK: - FolderTreeDataSourceTests
 
-/// 设置窗口文件夹树的拖放落点：outline view 给出的建议位置要换算成 `FolderStore.move` 能接受的目标
+/// 设置窗口文件夹树的拖放：outline view 给出的建议位置要换算成 `FolderStore.move` 能接受的目标；
+/// 从访达、浏览器拖入的东西只有能加入文件夹的才被接收
 @MainActor
 final class FolderTreeDataSourceTests {
     /// 本用例独占的临时目录
@@ -34,7 +35,11 @@ final class FolderTreeDataSourceTests {
         work = store.addRootFolder(named: "工作")
         development = try #require(store.addSubfolder(named: "开发", to: work.id))
 
-        store.addApps([URL(filePath: "/System/Applications/Chess.app")], to: work.id)
+        let chess = try #require(
+            FolderItem(url: URL(filePath: "/System/Applications/Chess.app"), title: nil)
+        )
+
+        store.addItems([chess], to: work.id)
         appID = try #require(store.folder(id: work.id)?.items.last?.id)
 
         dataSource = FolderTreeDataSource(store: store)
@@ -133,5 +138,132 @@ final class FolderTreeDataSourceTests {
         )
 
         #expect(destination == nil)
+    }
+
+    // MARK: 从外部拖入
+
+    /// 浏览器拖出的网址落在文件夹行上，加入带标题的网页
+    @Test
+    func dropsWebPageWithTitleOntoFolder() throws {
+        let pasteboardItem = NSPasteboardItem()
+        pasteboardItem.setString("https://example.com/", forType: .URL)
+        pasteboardItem.setString(
+            " Example Domain ",
+            forType: FolderTreeDataSource.urlNamePasteboardType
+        )
+
+        let result = try drop([pasteboardItem], onto: work.id)
+
+        #expect(result.operation == .copy)
+        #expect(result.accepted)
+
+        guard case .webPage(let webPage) = try #require(store.folder(id: work.id)).items.last else {
+            Issue.record("文件夹末尾应当是网页")
+            return
+        }
+
+        #expect(webPage.url.absoluteString == "https://example.com/")
+        #expect(webPage.title == "Example Domain")
+    }
+
+    /// 访达拖出的文件落在文件夹行上，加入文件
+    @Test
+    func dropsFileOntoFolder() throws {
+        let fileURL = directory.appending(path: "报告.txt")
+        try Data("报告".utf8).write(to: fileURL)
+
+        let pasteboardItem = NSPasteboardItem()
+        pasteboardItem.setString(fileURL.absoluteString, forType: .fileURL)
+
+        let result = try drop([pasteboardItem], onto: work.id)
+
+        #expect(result.operation == .copy)
+        #expect(result.accepted)
+
+        guard case .file(let file) = try #require(store.folder(id: work.id)).items.last else {
+            Issue.record("文件夹末尾应当是文件")
+            return
+        }
+
+        #expect(file.url.path(percentEncoded: false) == fileURL.path(percentEncoded: false))
+    }
+
+    /// 只拖了普通文件夹时不接收：它在访达里显示成文件夹，不是文件
+    @Test
+    func rejectsPlainFolderOnly() throws {
+        let folderURL = directory.appending(path: "普通文件夹", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)
+
+        let pasteboardItem = NSPasteboardItem()
+        pasteboardItem.setString(folderURL.absoluteString, forType: .fileURL)
+
+        let before = store.rootFolders
+        let result = try drop([pasteboardItem], onto: work.id)
+
+        #expect(result.operation.isEmpty)
+        #expect(!result.accepted)
+        #expect(store.rootFolders == before)
+    }
+
+    /// 文件行与网页行不能作为落点：它们不能包含其它项
+    @Test
+    func rejectsDropOnFileOrWebPageRow() throws {
+        let report = FolderItem.file(FileReference(id: UUID(), url: URL(filePath: "/etc/hosts")))
+        let exampleURL = try #require(URL(string: "https://example.com/"))
+        let example = FolderItem.webPage(WebPageReference(id: UUID(), url: exampleURL, title: nil))
+
+        store.addItems([report, example], to: work.id)
+        dataSource.reloadNodes()
+
+        let before = store.rootFolders
+
+        for rowID in [report.id, example.id] {
+            let pasteboardItem = NSPasteboardItem()
+            pasteboardItem.setString("https://example.org/", forType: .URL)
+
+            let result = try drop([pasteboardItem], onto: rowID)
+
+            #expect(result.operation.isEmpty)
+            #expect(!result.accepted)
+        }
+
+        #expect(store.rootFolders == before)
+    }
+
+    /// 把剪贴板项从外部拖到某一行上，分别走一遍校验与放下
+    /// - Returns: 校验给出的拖放操作，以及放下是否被接收
+    private func drop(
+        _ pasteboardItems: [NSPasteboardItem],
+        onto itemID: UUID
+    ) throws -> (operation: NSDragOperation, accepted: Bool) {
+        let pasteboard = NSPasteboard.withUniqueName()
+        defer { pasteboard.releaseGlobally() }
+
+        pasteboard.clearContents()
+        pasteboard.writeObjects(pasteboardItems)
+
+        let info = DraggingInfoStub(pasteboard: pasteboard)
+        let node = try #require(dataSource.node(withID: itemID))
+
+        // 校验时数据源会把落点改到文件夹行上，需要一个显示这棵树的 outline view
+        let outlineView = NSOutlineView()
+        outlineView.dataSource = dataSource
+        outlineView.reloadData()
+
+        let operation = dataSource.outlineView(
+            outlineView,
+            validateDrop: info,
+            proposedItem: node,
+            proposedChildIndex: NSOutlineViewDropOnItemIndex
+        )
+
+        let accepted = dataSource.outlineView(
+            outlineView,
+            acceptDrop: info,
+            item: node,
+            childIndex: NSOutlineViewDropOnItemIndex
+        )
+
+        return (operation, accepted)
     }
 }

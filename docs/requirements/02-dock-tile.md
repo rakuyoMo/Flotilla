@@ -8,9 +8,10 @@
 - 基于 `NSApplication` 运行（`DockTileAppDelegate`），仍是 `LSUIElement` + `LSBackgroundOnly` 的后台 App。
 - 行为：读取 `Bundle.main.infoDictionary["FlotillaFolderID"]`，在 `applicationDidFinishLaunching` 里拼出 URL，用 `NSWorkspace.shared.open(_:configuration:completionHandler:)` 打开，配置 `activates = false`
   - 由点击 tile 启动：`flotilla://folder/<id>`
-  - 由把 App 拖到 tile 上启动：AppKit 在 `applicationDidFinishLaunching` 之前经 `application(_:open:)` 送来被拖的项；收齐后打开 `flotilla://folder/<id>/apps?path=<路径>&path=<路径>`，每个被拖的项一个 `path` 查询项，取值为它的 POSIX 路径，由 `URLComponents` 编码
+  - 由把 App 或文件拖到 tile 上启动：AppKit 在 `applicationDidFinishLaunching` 之前经 `application(_:open:)` 送来被拖的项；收齐后打开 `flotilla://folder/<id>/items?path=<路径>&path=<路径>`，每个被拖的项一个 `path` 查询项，取值为它的 POSIX 路径，由 `URLComponents` 编码
     - 实测（macOS 27，探针 stub）：回调顺序为 `applicationWillFinishLaunching` → `application(_:open:)` → `applicationDidFinishLaunching`，后两个在同一毫秒；一次拖放多个 App 时一次 `open` 送齐；`applicationDidFinishLaunching` 之后 1.5 秒内没有迟到的回调；由点击启动时没有 `open`，只有 `applicationShouldOpenUntitledFile`
-  - 每次启动只发一个 URL；同一次拖放被系统重复送达时，由 Flotilla 侧 `FolderStore.addApps` 的去重吸收
+    - 实测（macOS 27，探针 stub）：拖放以 `aevt/odoc` 事件送达，收到的都是文件 URL，文件包、App 与文件夹的以 `/` 结尾
+  - 每次启动只发一个 URL；同一次拖放被系统重复送达时，由 Flotilla 侧 `FolderStore.addItems` 的去重吸收
   - 等到回调（最多 5 秒）后退出
   - 缺少 id 或打开失败时记录日志并以非零状态退出
 - 不得激活任何 App：点击或拖放之前的前台 App 必须保持前台。
@@ -39,9 +40,15 @@
   - `LSMinimumSystemVersion = 15.0`
   - `LSUIElement = true`、`LSBackgroundOnly = true`
   - `FlotillaFolderID = <id>`
-  - `CFBundleDocumentTypes`，只有一项：`CFBundleTypeName = Application`、`CFBundleTypeRole = Viewer`、`LSHandlerRank = Alternate`、`LSItemContentTypes = [com.apple.application, com.apple.application-bundle]`
-    - 取自 [macos-dock-folders](https://github.com/wjvalue/macos-dock-folders)（MIT）：从访达把 App 拖到 tile 上时，tile 高亮为放置目标，松手后 Launch Services 以“打开文档”的方式启动 stub；`Alternate` 让 stub 不成为 App 的默认打开方式
-    - 实测（macOS 27，带 `LSBackgroundOnly` 的探针 stub）：拖 App 悬停时 Dock 把 tile 压暗（亮度 229 → 104），松手后以 `odoc` 事件拉起 stub，不会把 App 加成新 tile；拖 `.txt` 时不高亮、不拉起 stub，文件滑回访达；访达的图标视图与列表视图结果一致
+  - `CFBundleDocumentTypes`，两项：
+    - App：`CFBundleTypeName = Application`、`CFBundleTypeRole = Viewer`、`LSHandlerRank = Alternate`、`LSItemContentTypes = [com.apple.application, com.apple.application-bundle]`
+      - 取自 [macos-dock-folders](https://github.com/wjvalue/macos-dock-folders)（MIT）：从访达把 App 拖到 tile 上时，tile 高亮为放置目标，松手后 Launch Services 以“打开文档”的方式启动 stub；`Alternate` 让 stub 不成为 App 的默认打开方式
+      - 实测（macOS 27，带 `LSBackgroundOnly` 的探针 stub）：拖 App 悬停时 Dock 把 tile 压暗（亮度 229 → 104），松手后以 `odoc` 事件拉起 stub，不会把 App 加成新 tile；访达的图标视图与列表视图结果一致
+    - 文件（需求 14，见 06）：`CFBundleTypeName = File`、`CFBundleTypeRole = Viewer`、`LSHandlerRank = None`、`LSItemContentTypes = [public.data, com.apple.package]`
+      - `LSHandlerRank` 必须是 `None`：实测（macOS 27）`Alternate` 会让 stub 出现在访达的“打开方式”里
+      - 实测（macOS 27）：从访达拖 `.txt`、`.pdf`、`.rtfd`、`.webloc` 与未知扩展名的文件，tile 压暗为放置目标，松手后以 `odoc` 拉起 stub；stub 不出现在“打开方式”里，各类文件的默认打开 App 不变
+      - 实测（macOS 27）：声明了 `public.data` 或 `com.apple.package`，Dock 对普通文件夹也高亮并拉起 stub，Dock 这一层拦不住，由 Flotilla 分类时略过
+    - Dock 只在 stub 提供服务（`NSServices`）时接收网址的拖放，那会在“系统设置 › 键盘 › 键盘快捷键 › 服务”里给每个根文件夹加一项
     - Dock 上的 tile 之间不能互相拖放：拖动 Dock 图标时整个过程由 Dock 接管，只能排序或拖出
 - 每次生成或更新后执行 `/usr/bin/codesign --force --sign - <bundle>`。
 - 签名后再用 `NSWorkspace.setIcon(_:forFile:)` 把 `Icon.icns` 设为 bundle 的自定义图标：macOS 26 起，系统把 icns 形式的 App 图标装进灰色圆角底板（macOS 27 实测如此），自定义图标不受影响。
@@ -136,7 +143,7 @@
 
 - 点击 tile：stub 被启动，Flotilla 收到 URL，`DockFolderPresenter` 收到对应 id。
 - Flotilla 未运行时点击 tile：Flotilla 被拉起并收到 URL。
-- 从访达把 App 拖到 tile 上：tile 高亮，stub 以打开文档的方式被启动，Flotilla 收到 `flotilla://folder/<id>/apps?path=…`，由 `DockTileRequest` 解析，只保留 App bundle（`AppReference.isApplicationBundle`）后加入该根文件夹；整个过程不激活 Flotilla，前台 App 保持前台。
+- 从访达把 App 或文件拖到 tile 上：tile 高亮，stub 以打开文档的方式被启动，Flotilla 收到 `flotilla://folder/<id>/items?path=…`，由 `DockTileRequest` 解析，经 `FolderItem(url:title:)` 分类后加入该根文件夹，普通文件夹被略过；整个过程不激活 Flotilla，前台 App 保持前台。
 - 实测（macOS 27，tile 在左侧 App 区域）：点击 tile 时 Dock 不弹跳、不显示运行指示灯，前台 App 保持前台；图标按渲染结果原样显示，系统没有另套灰色底板。
 
 ## 单元测试

@@ -19,7 +19,7 @@ final class FolderPanelController {
     /// 面板窗口
     let panel = FolderPanel()
 
-    /// 请求收起面板：按下 Esc、点击 App 项之后调用，由 `DockFolderPresenter` 更新状态并收起
+    /// 请求收起面板：按下 Esc、点击 App、文件或网页之后调用，由 `DockFolderPresenter` 更新状态并收起
     var dismissRequestHandler: (() -> Void)? = nil
 
     /// 面板的 contentView，承载全部层级；展开与收起的动画作用在它的图层上
@@ -174,7 +174,8 @@ extension FolderPanelController {
 // MARK: - Navigation
 
 extension FolderPanelController {
-    /// 点击网格中的一项：App 直接启动并收起面板（需求 9），子文件夹在同一个面板里进入
+    /// 点击网格中的一项：App 直接启动、文件用默认 App 打开、网页用默认浏览器打开，随即收起面板（需求 9）；
+    /// 子文件夹在同一个面板里进入
     private func select(_ item: FolderItem) {
         switch item {
         case .app(let app):
@@ -182,6 +183,12 @@ extension FolderPanelController {
 
         case .folder(let folder):
             enter(folder)
+
+        case .file(let file):
+            open(file.url, named: file.displayName)
+
+        case .webPage(let webPage):
+            open(webPage.url, named: webPage.displayName)
         }
     }
 
@@ -246,6 +253,24 @@ extension FolderPanelController {
             guard let error else { return }
 
             Self.logger.error("启动 \(name, privacy: .public) 失败：\(error.localizedDescription, privacy: .public)")
+        }
+
+        dismissRequestHandler?()
+    }
+
+    /// 用默认 App 打开文件或网页，随即请求收起面板
+    /// - Parameters:
+    ///   - url: 文件 URL 或网址
+    ///   - name: 显示名，只用于日志
+    private func open(_ url: URL, named name: String) {
+        // 文件已不在、没有能打开它的 App 时只记日志，面板照常收起
+        NSWorkspace.shared.open(
+            url,
+            configuration: NSWorkspace.OpenConfiguration()
+        ) { _, error in
+            guard let error else { return }
+
+            Self.logger.error("打开 \(name, privacy: .public) 失败：\(error.localizedDescription, privacy: .public)")
         }
 
         dismissRequestHandler?()

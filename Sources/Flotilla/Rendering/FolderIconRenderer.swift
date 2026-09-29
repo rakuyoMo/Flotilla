@@ -53,7 +53,7 @@ enum FolderIconRenderer {
     ) -> NSImage {
         let count = min(max(previewIconCount, 0), Preferences.maximumPreviewIconCount)
 
-        // 按顺序取前几个 App，跳过子文件夹
+        // 按顺序取前几个 App，跳过子文件夹、文件与网页
         let previewIcons = folder.items
             .compactMap { item -> AppReference? in
                 guard case .app(let app) = item else { return nil }

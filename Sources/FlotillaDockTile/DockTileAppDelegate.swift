@@ -6,7 +6,8 @@ import os
 /// stub 的应用 delegate：启动完成后以不激活任何 App 的方式打开一个 `flotilla://` URL，等到结果后退出
 ///
 /// - 由点击 tile 启动：打开 `flotilla://folder/<id>`
-/// - 由把 App 拖到 tile 上启动：打开 `flotilla://folder/<id>/apps?path=<路径>&path=<路径>`，每个被拖的项一个 `path`
+/// - 由把 App 或文件拖到 tile 上启动：打开 `flotilla://folder/<id>/items?path=<路径>&path=<路径>`，
+///   每个被拖的项一个 `path`
 @MainActor
 final class DockTileAppDelegate: NSObject {
     /// 等待打开结果的最长时间（秒）
@@ -86,7 +87,7 @@ extension DockTileAppDelegate {
 
         guard !droppedURLs.isEmpty else { return components.url }
 
-        components.path += "/apps"
+        components.path += "/items"
         components.queryItems = droppedURLs.map {
             URLQueryItem(name: "path", value: $0.path(percentEncoded: false))
         }

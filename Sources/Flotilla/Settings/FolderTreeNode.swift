@@ -12,7 +12,7 @@ final class FolderTreeNode {
     /// 父节点；根文件夹为 nil
     private(set) weak var parent: FolderTreeNode? = nil
 
-    /// 子节点，顺序与 `Folder.items` 一致；App 没有子节点
+    /// 子节点，顺序与 `Folder.items` 一致；App、文件与网页没有子节点
     private(set) var children: [FolderTreeNode] = []
 
     /// 这一行是文件夹时返回该文件夹
@@ -21,7 +21,7 @@ final class FolderTreeNode {
         return folder
     }
 
-    /// 这一行所属的文件夹：文件夹行是自身，App 行是它的父文件夹
+    /// 这一行所属的文件夹：文件夹行是自身，App、文件与网页行是它的父文件夹
     var containingFolderID: UUID? {
         folder?.id ?? parent?.folder?.id
     }

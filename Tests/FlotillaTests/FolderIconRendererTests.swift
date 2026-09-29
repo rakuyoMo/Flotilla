@@ -122,20 +122,28 @@ struct FolderIconRendererTests {
         #expect(requestedFour == requestedTwo)
     }
 
-    /// 子文件夹不参与预览，跳过它继续取后面的 App
+    /// 子文件夹、文件与网页不参与预览，跳过它们继续取后面的 App
     @Test(arguments: [FolderIconAppearance.dark, .light])
-    func subfoldersAreSkipped(appearance: FolderIconAppearance) throws {
+    func nonAppItemsAreSkipped(appearance: FolderIconAppearance) throws {
         let apps = makeFolder(appCount: 1).items
-        let withSubfolder = Folder(
+        let webPageURL = try #require(URL(string: "https://example.com/"))
+
+        let otherItems: [FolderItem] = [
+            .folder(Folder(id: UUID(), name: "子文件夹", items: [])),
+            .file(FileReference(id: UUID(), url: URL(filePath: "/etc/hosts"))),
+            .webPage(WebPageReference(id: UUID(), url: webPageURL, title: nil)),
+        ]
+
+        let withOtherItems = Folder(
             id: UUID(),
             name: "混排",
-            items: [.folder(Folder(id: UUID(), name: "子文件夹", items: []))] + apps
+            items: otherItems + apps
         )
 
         let appsOnly = Folder(id: UUID(), name: "仅 App", items: apps)
 
         let mixed = try renderedPixels(
-            of: withSubfolder,
+            of: withOtherItems,
             previewIconCount: 1,
             appearance: appearance
         )

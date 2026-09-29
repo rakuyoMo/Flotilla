@@ -51,34 +51,87 @@ final class FolderStoreTests {
 
     /// 同一文件夹内相同 URL 的 App 只保留一份，其它文件夹不受影响
     @Test
-    func addAppsSkipsDuplicatesWithinFolder() throws {
+    func addItemsSkipsDuplicateAppsWithinFolder() throws {
         let store = FolderStore(fileURL: fileURL)
         let first = store.addRootFolder(named: "一")
         let second = store.addRootFolder(named: "二")
 
-        store.addApps([chess, calendar, chess], to: first.id)
-        store.addApps([chess], to: first.id)
-        store.addApps([chess], to: second.id)
+        store.addItems(apps(chess, calendar, chess), to: first.id)
+        store.addItems(apps(chess), to: first.id)
+        store.addItems(apps(chess), to: second.id)
 
         #expect(try appURLs(in: first.id, of: store) == [chess, calendar])
         #expect(try appURLs(in: second.id, of: store) == [chess])
     }
 
-    /// 同一个 App 的不同 URL 写法（结尾斜杠、`..`）视为同一个 App
+    /// 文件与网页同样按 URL 去重，已有的与同一批里的都跳过；网页只比网址，标题不同也算同一个网页
     @Test
-    func addAppsNormalizesURLSpelling() throws {
+    func addItemsSkipsDuplicateFilesAndWebPages() throws {
         let store = FolderStore(fileURL: fileURL)
         let root = store.addRootFolder(named: "根")
 
-        store.addApps(
+        let report = file("/Users/Shared/报告.pdf")
+        let example = try webPage("https://example.com/", title: "Example Domain")
+
+        store.addItems([report, example], to: root.id)
+
+        let notes = file("/Users/Shared/笔记.rtfd/")
+
+        store.addItems(
             [
-                URL(filePath: "/System/Applications/Chess.app"),
-                URL(filePath: "/System/Applications/Utilities/../Chess.app/"),
+                file("/Users/Shared/报告.pdf"),
+                try webPage("https://example.com/", title: "另一个标题"),
+                notes,
+                file("/Users/Shared/笔记.rtfd/"),
             ],
             to: root.id
         )
 
-        #expect(try appURLs(in: root.id, of: store) == [chess])
+        #expect(try items(in: root.id, of: store) == [report, example, notes])
+    }
+
+    /// App、文件与网页混在一批加入，只发一次变更通知：设置窗口与 Dock tile 只按一次变更刷新
+    @Test
+    func addItemsNotifiesOnceForMixedBatch() async throws {
+        let store = FolderStore(fileURL: fileURL)
+        let root = store.addRootFolder(named: "根")
+
+        let batch = try [
+            FolderItem.app(AppReference(id: UUID(), url: chess)),
+            file("/Users/Shared/报告.pdf"),
+            webPage("https://example.com/", title: nil),
+        ]
+
+        await confirmation(expectedCount: 1) { changed in
+            let observer = NotificationCenter.default.addObserver(
+                forName: FolderStore.didChangeNotification,
+                object: store,
+                queue: nil
+            ) { _ in
+                changed()
+            }
+
+            defer { NotificationCenter.default.removeObserver(observer) }
+
+            store.addItems(batch, to: root.id)
+        }
+
+        #expect(try items(in: root.id, of: store) == batch)
+    }
+
+    /// 子文件夹不经 `addItems` 加入，混在批里时被忽略
+    @Test
+    func addItemsIgnoresSubfolders() throws {
+        let store = FolderStore(fileURL: fileURL)
+        let root = store.addRootFolder(named: "根")
+
+        let subfolder = Folder(id: UUID(), name: "子", items: [])
+        let chessItems = apps(chess)
+
+        store.addItems([.folder(subfolder)] + chessItems, to: root.id)
+
+        #expect(try items(in: root.id, of: store) == chessItems)
+        #expect(store.folder(id: subfolder.id) == nil)
     }
 
     /// 重命名任意层级的文件夹
@@ -101,7 +154,7 @@ final class FolderStoreTests {
         let child = try #require(store.addSubfolder(named: "子", to: root.id))
         let grandchild = try #require(store.addSubfolder(named: "孙", to: child.id))
 
-        store.addApps([chess], to: grandchild.id)
+        store.addItems(apps(chess), to: grandchild.id)
 
         store.remove(itemID: child.id)
 
@@ -116,7 +169,7 @@ final class FolderStoreTests {
         let store = FolderStore(fileURL: fileURL)
         let root = store.addRootFolder(named: "根")
 
-        store.addApps([chess, calendar], to: root.id)
+        store.addItems(apps(chess, calendar), to: root.id)
         let chessID = try #require(store.folder(id: root.id)?.items.first?.id)
 
         store.remove(itemID: chessID)
@@ -132,7 +185,7 @@ final class FolderStoreTests {
         let store = FolderStore(fileURL: fileURL)
         let root = store.addRootFolder(named: "根")
 
-        store.addApps([chess, calendar, calculator], to: root.id)
+        store.addItems(apps(chess, calendar, calculator), to: root.id)
         let chessID = try #require(store.folder(id: root.id)?.items.first?.id)
 
         store.move(itemID: chessID, to: root.id, at: 3)
@@ -146,7 +199,7 @@ final class FolderStoreTests {
         let store = FolderStore(fileURL: fileURL)
         let root = store.addRootFolder(named: "根")
 
-        store.addApps([chess, calendar, calculator], to: root.id)
+        store.addItems(apps(chess, calendar, calculator), to: root.id)
         let calculatorID = try #require(store.folder(id: root.id)?.items.last?.id)
 
         store.move(itemID: calculatorID, to: root.id, at: 0)
@@ -161,8 +214,8 @@ final class FolderStoreTests {
         let source = store.addRootFolder(named: "源")
         let target = store.addRootFolder(named: "目标")
 
-        store.addApps([chess], to: source.id)
-        store.addApps([calendar], to: target.id)
+        store.addItems(apps(chess), to: source.id)
+        store.addItems(apps(calendar), to: target.id)
         let chessID = try #require(store.folder(id: source.id)?.items.first?.id)
 
         store.move(itemID: chessID, to: target.id, at: 0)
@@ -190,7 +243,7 @@ final class FolderStoreTests {
         let store = FolderStore(fileURL: fileURL)
         let root = store.addRootFolder(named: "根")
 
-        store.addApps([chess], to: root.id)
+        store.addItems(apps(chess), to: root.id)
         let chessID = try #require(store.folder(id: root.id)?.items.first?.id)
 
         #expect(!store.canMove(itemID: chessID, to: nil))
@@ -199,6 +252,30 @@ final class FolderStoreTests {
 
         #expect(store.rootFolders.map(\.id) == [root.id])
         #expect(try appURLs(in: root.id, of: store) == [chess])
+    }
+
+    /// 文件与网页和 App 一样只能放在文件夹里：不能移到根层级，能在文件夹之间移动
+    @Test
+    func filesAndWebPagesStayInsideFolders() throws {
+        let store = FolderStore(fileURL: fileURL)
+        let source = store.addRootFolder(named: "源")
+        let target = store.addRootFolder(named: "目标")
+
+        let report = file("/Users/Shared/报告.pdf")
+        let example = try webPage("https://example.com/", title: nil)
+
+        store.addItems([report, example], to: source.id)
+
+        #expect(!store.canMove(itemID: report.id, to: nil))
+        #expect(!store.canMove(itemID: example.id, to: nil))
+
+        store.move(itemID: report.id, to: nil, at: 0)
+        store.move(itemID: example.id, to: target.id, at: 0)
+        store.move(itemID: report.id, to: target.id, at: 1)
+
+        #expect(store.rootFolders.map(\.id) == [source.id, target.id])
+        #expect(try items(in: source.id, of: store).isEmpty)
+        #expect(try items(in: target.id, of: store) == [example, report])
     }
 
     /// 文件夹不能移入自身或自己的子孙，否则整棵子树会从数据中消失
@@ -230,8 +307,8 @@ final class FolderStoreTests {
         let root = store.addRootFolder(named: "根")
         let child = try #require(store.addSubfolder(named: "子", to: root.id))
 
-        store.addApps([chess], to: child.id)
-        store.addApps([calendar], to: root.id)
+        store.addItems(apps(chess), to: child.id)
+        store.addItems(apps(calendar), to: root.id)
 
         let reloaded = FolderStore(fileURL: fileURL)
 
@@ -287,7 +364,7 @@ final class FolderStoreTests {
             let root = store.addRootFolder(named: "根")
             store.rename(folderID: root.id, to: "根")
             store.rename(folderID: root.id, to: "新根")
-            store.addApps([], to: root.id)
+            store.addItems([], to: root.id)
             store.remove(itemID: UUID())
             _ = try #require(store.addSubfolder(named: "子", to: root.id))
         }
@@ -310,6 +387,30 @@ extension FolderStoreTests {
     /// 测试用的 App URL
     private var calculator: URL {
         URL(filePath: "/System/Applications/Calculator.app/")
+    }
+
+    /// 为每个 App URL 新建一项
+    private func apps(_ urls: URL...) -> [FolderItem] {
+        urls.map {
+            .app(AppReference(id: UUID(), url: $0))
+        }
+    }
+
+    /// 新建一个文件项
+    private func file(_ path: String) -> FolderItem {
+        .file(FileReference(id: UUID(), url: URL(filePath: path)))
+    }
+
+    /// 新建一个网页项
+    private func webPage(_ address: String, title: String?) throws -> FolderItem {
+        let url = try #require(URL(string: address))
+
+        return .webPage(WebPageReference(id: UUID(), url: url, title: title))
+    }
+
+    /// 按顺序列出文件夹里的项
+    private func items(in folderID: UUID, of store: FolderStore) throws -> [FolderItem] {
+        try #require(store.folder(id: folderID)).items
     }
 
     /// 按顺序列出文件夹里 App 的 URL

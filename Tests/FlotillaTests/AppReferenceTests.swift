@@ -5,7 +5,7 @@ import Testing
 
 // MARK: - AppReferenceTests
 
-/// 从访达拖进设置窗口、把 App 拖到 Dock 上的 tile，只有 App bundle 会被加入文件夹
+/// 要加入文件夹的 URL 据此分出 App：只有 App bundle 是 App
 struct AppReferenceTests {
     /// App bundle 被识别为 App
     @Test

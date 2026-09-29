@@ -78,7 +78,7 @@ final class FolderGridView: NSView {
 // MARK: - Private
 
 extension FolderGridView {
-    /// 一项显示的名称与图标：App 用自己的图标与显示名，子文件夹用渲染出的文件夹图标与文件夹名
+    /// 一项显示的名称与图标：App、文件与网页用各自的图标与显示名，子文件夹用渲染出的文件夹图标与文件夹名
     private func content(of item: FolderItem) -> (title: String, icon: NSImage) {
         switch item {
         case .app(let app):
@@ -86,6 +86,12 @@ extension FolderGridView {
 
         case .folder(let folder):
             (folder.name, folderIcon(of: folder))
+
+        case .file(let file):
+            (file.displayName, file.icon)
+
+        case .webPage(let webPage):
+            (webPage.displayName, webPage.icon)
         }
     }
 
