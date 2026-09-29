@@ -22,7 +22,11 @@ final class FolderTreeViewControllerTests {
         let work = store.addRootFolder(named: "工作")
         _ = try #require(store.addSubfolder(named: "开发", to: work.id))
 
-        store.addApps([URL(filePath: "/System/Applications/Chess.app")], to: work.id)
+        let chess = try #require(
+            FolderItem(url: URL(filePath: "/System/Applications/Chess.app"), title: nil)
+        )
+
+        store.addItems([chess], to: work.id)
     }
 
     /// 删除本用例的临时目录

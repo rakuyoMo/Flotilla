@@ -168,7 +168,11 @@ extension FolderTreeDataSource: NSOutlineViewDataSource {
         let urls = Self.appURLs(in: info.draggingPasteboard)
         guard let folder = proposedParent?.folder, !urls.isEmpty else { return false }
 
-        store.addApps(urls, to: folder.id)
+        let apps = urls.compactMap {
+            FolderItem(url: $0, title: nil)
+        }
+
+        store.addItems(apps, to: folder.id)
 
         return true
     }

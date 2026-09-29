@@ -66,7 +66,7 @@ extension FolderStore {
         Self.findParent(of: itemID, in: rootItems)
     }
 
-    /// 判断能否把一项移入某个文件夹：App 只能放进文件夹，文件夹不能移入自身或自己的子孙
+    /// 判断能否把一项移入某个文件夹：App、文件与网页只能放进文件夹，文件夹不能移入自身或自己的子孙
     /// - Parameters:
     ///   - itemID: 要移动的项
     ///   - folderID: 目标文件夹，nil 表示根层级
@@ -120,36 +120,38 @@ extension FolderStore {
         return folder
     }
 
-    /// 把 App 追加到文件夹末尾；该文件夹内已有相同 URL 的 App 时跳过
-    func addApps(_ urls: [URL], to folderID: UUID) {
-        // App bundle 是目录：统一成带结尾斜杠的标准路径，同一个 App 不会因 URL 写法不同而被重复加入
-        let appURLs = urls.map {
-            URL(
-                filePath: $0.standardizedFileURL.path(percentEncoded: false),
-                directoryHint: .isDirectory
-            )
-        }
-
-        var items = rootItems
+    /// 把 App、文件与网页追加到文件夹末尾，一次提交、只发一次变更通知
+    ///
+    /// 与该文件夹已有的项、以及本批已加入的项同类且 URL 相同时跳过；子文件夹不经这里添加，传进来就忽略
+    /// - Parameters:
+    ///   - items: 由 `FolderItem(url:title:)` 新建的项，id 不与树里已有的项重复
+    ///   - folderID: 目标文件夹
+    func addItems(_ items: [FolderItem], to folderID: UUID) {
+        var tree = rootItems
         var added = false
 
-        let found = Self.modifyFolder(id: folderID, in: &items) { folder in
-            for url in appURLs {
-                // 与已有的项以及本次已加入的项比对，同一个 App 在一个文件夹里只出现一次
-                let exists = folder.items.contains {
-                    guard case .app(let app) = $0 else { return false }
-                    return app.url == url
+        let found = Self.modifyFolder(id: folderID, in: &tree) { folder in
+            for item in items {
+                // 子文件夹只由 `addSubfolder(named:to:)` 新建
+                if case .folder = item {
+                    continue
                 }
+
+                // 与已有的项以及本批已加入的项比对，同一个 App、文件或网页在一个文件夹里只出现一次
+                let exists = folder.items.contains {
+                    Self.isDuplicate($0, of: item)
+                }
+
                 guard !exists else { continue }
 
-                folder.items.append(.app(AppReference(id: UUID(), url: url)))
+                folder.items.append(item)
                 added = true
             }
         }
 
         guard found, added else { return }
 
-        rootItems = items
+        rootItems = tree
         commit()
     }
 
@@ -352,6 +354,23 @@ extension FolderStore {
 
         _ = modifyFolder(id: folderID, in: &items) {
             $0.items.insert(item, at: min(max(index, 0), $0.items.count))
+        }
+    }
+
+    /// 两项是否同类且 URL 相同；子文件夹之间不算重复
+    private static func isDuplicate(_ lhs: FolderItem, of rhs: FolderItem) -> Bool {
+        switch (lhs, rhs) {
+        case (.app(let lhs), .app(let rhs)):
+            lhs.url == rhs.url
+
+        case (.file(let lhs), .file(let rhs)):
+            lhs.url == rhs.url
+
+        case (.webPage(let lhs), .webPage(let rhs)):
+            lhs.url == rhs.url
+
+        default:
+            false
         }
     }
 }

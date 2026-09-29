@@ -7,4 +7,10 @@ enum FolderItemKind: String, Codable {
 
     /// 对应 `FolderItem.folder`
     case folder
+
+    /// 对应 `FolderItem.file`
+    case file
+
+    /// 对应 `FolderItem.webPage`
+    case webPage
 }

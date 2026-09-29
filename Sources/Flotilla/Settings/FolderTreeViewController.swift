@@ -248,7 +248,11 @@ extension FolderTreeViewController {
         panel.beginSheetModal(for: window) { [weak self, panel] response in
             guard response == .OK else { return }
 
-            self?.store.addApps(panel.urls, to: folderID)
+            let apps = panel.urls.compactMap {
+                FolderItem(url: $0, title: nil)
+            }
+
+            self?.store.addItems(apps, to: folderID)
         }
     }
 

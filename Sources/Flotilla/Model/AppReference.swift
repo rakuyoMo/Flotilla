@@ -31,7 +31,7 @@ extension AppReference {
 extension AppReference {
     /// URL 是否指向 App bundle：内容类型符合 `.applicationBundle`；文件不存在时为否
     ///
-    /// 设置窗口从访达拖入、把 App 拖到 Dock 上的 tile，两处按同一个标准判断
+    /// `FolderItem(url:title:)` 据此把要加入文件夹的 URL 分成 App 与文件
     static func isApplicationBundle(_ url: URL) -> Bool {
         let contentType = try? url
             .resourceValues(forKeys: [.contentTypeKey])
