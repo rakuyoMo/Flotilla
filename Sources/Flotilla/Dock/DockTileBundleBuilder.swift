@@ -29,8 +29,12 @@ struct DockTileBundleBuilder {
 
     /// stub 的 Info.plist 内容；`FlotillaFolderID` 由 stub 读取后拼出 `flotilla://folder/<id>`
     ///
-    /// `CFBundleDocumentTypes` 声明 stub 能打开 App：从访达把 App 拖到 tile 上时，tile 高亮为放置目标，
-    /// 松手后 Launch Services 以“打开文档”的方式启动 stub；`Alternate` 让 stub 不成为 App 的默认打开方式
+    /// `CFBundleDocumentTypes` 声明 stub 能打开 App 与文件：从访达把它们拖到 tile 上时，tile 高亮为放置目标，
+    /// 松手后 Launch Services 以“打开文档”的方式启动 stub
+    /// - App 一项为 `Alternate`：stub 不成为 App 的默认打开方式
+    /// - 文件一项必须为 `None`：`Alternate` 会让 stub 出现在访达的“打开方式”里
+    /// - 实测（macOS 27）声明了 `public.data` 或 `com.apple.package`，Dock 对普通文件夹也高亮并拉起 stub，
+    ///   由 Flotilla 分类时略过
     static func infoDictionary(for folder: Folder) -> [String: Any] {
         [
             "CFBundleExecutable": executableName,
@@ -52,6 +56,15 @@ struct DockTileBundleBuilder {
                     "LSItemContentTypes": [
                         "com.apple.application",
                         "com.apple.application-bundle",
+                    ],
+                ],
+                [
+                    "CFBundleTypeName": "File",
+                    "CFBundleTypeRole": "Viewer",
+                    "LSHandlerRank": "None",
+                    "LSItemContentTypes": [
+                        "public.data",
+                        "com.apple.package",
                     ],
                 ],
             ],

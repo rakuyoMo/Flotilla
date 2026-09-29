@@ -107,29 +107,39 @@ final class DockTileBundleBuilderTests {
         #expect(info["FlotillaFolderID"] as? String == id)
     }
 
-    /// Info.plist 声明 stub 能打开 App：从访达把 App 拖到 tile 上时，Dock 才把 tile 当作放置目标；
-    /// 排位为 `Alternate`，stub 不会成为 App 的默认打开方式
+    /// Info.plist 声明 stub 能打开 App 与文件：从访达把它们拖到 tile 上时，Dock 才把 tile 当作放置目标；
+    /// App 一项排位为 `Alternate`，stub 不会成为 App 的默认打开方式；文件一项排位为 `None`，
+    /// `Alternate` 会让 stub 出现在访达的“打开方式”里
     @Test
-    func infoDeclaresApplicationDocumentType() throws {
+    func infoDeclaresApplicationAndFileDocumentTypes() throws {
         let folder = makeFolder(name: "工作")
         try builder.write(folder: folder, icon: makeIcon(for: folder))
 
         let info = try readInfo(of: folder)
         let documentTypes = try #require(info["CFBundleDocumentTypes"] as? [[String: Any]])
-        let documentType = try #require(documentTypes.first)
 
-        #expect(documentTypes.count == 1)
-        #expect(documentType["CFBundleTypeName"] as? String == "Application")
-        #expect(documentType["CFBundleTypeRole"] as? String == "Viewer")
-        #expect(documentType["LSHandlerRank"] as? String == "Alternate")
+        try #require(documentTypes.count == 2)
+
+        let application = documentTypes[0]
+
+        #expect(application["CFBundleTypeName"] as? String == "Application")
+        #expect(application["CFBundleTypeRole"] as? String == "Viewer")
+        #expect(application["LSHandlerRank"] as? String == "Alternate")
 
         #expect(
-            documentType["LSItemContentTypes"] as? [String]
+            application["LSItemContentTypes"] as? [String]
                 == ["com.apple.application", "com.apple.application-bundle"]
         )
+
+        let file = documentTypes[1]
+
+        #expect(file["CFBundleTypeName"] as? String == "File")
+        #expect(file["CFBundleTypeRole"] as? String == "Viewer")
+        #expect(file["LSHandlerRank"] as? String == "None")
+        #expect(file["LSItemContentTypes"] as? [String] == ["public.data", "com.apple.package"])
     }
 
-    /// 已被 Launch Services 记录的旧版 stub（没有声明能打开 App）改写后重新注册：随即能接收 App，仍不接收其它文件
+    /// 已被 Launch Services 记录的旧版 stub（没有声明文档类型）改写后重新注册：随即能接收 App 与文件
     ///
     /// 实测不重新注册时，Launch Services 一直按旧记录判断，App 拖不到 tile 上
     @Test
@@ -153,12 +163,15 @@ final class DockTileBundleBuilderTests {
             arguments: ["-f", stubURL.path(percentEncoded: false)]
         )
 
+        let hostsURL = URL(filePath: "/etc/hosts")
+
         #expect(try !canAccept(chessURL, stubURL: stubURL))
+        #expect(try !canAccept(hostsURL, stubURL: stubURL))
 
         try builder.write(folder: folder, icon: makeIcon(for: folder))
 
         #expect(try canAccept(chessURL, stubURL: stubURL))
-        #expect(try !canAccept(URL(filePath: "/etc/hosts"), stubURL: stubURL))
+        #expect(try canAccept(hostsURL, stubURL: stubURL))
     }
 
     /// 名称与图标都没变时不改写：每次改写都可能触发 Dock 重启
