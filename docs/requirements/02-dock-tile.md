@@ -10,7 +10,7 @@
   - 由点击 tile 启动：`flotilla://folder/<id>`
   - 由把 App 拖到 tile 上启动：AppKit 在 `applicationDidFinishLaunching` 之前经 `application(_:open:)` 送来被拖的项；收齐后打开 `flotilla://folder/<id>/apps?path=<路径>&path=<路径>`，每个被拖的项一个 `path` 查询项，取值为它的 POSIX 路径，由 `URLComponents` 编码
     - 实测（macOS 27，探针 stub）：回调顺序为 `applicationWillFinishLaunching` → `application(_:open:)` → `applicationDidFinishLaunching`，后两个在同一毫秒；一次拖放多个 App 时一次 `open` 送齐；`applicationDidFinishLaunching` 之后 1.5 秒内没有迟到的回调；由点击启动时没有 `open`，只有 `applicationShouldOpenUntitledFile`
-  - 每次启动只发一个 URL；同一次拖放被系统重复送达时，由 Flotilla 侧 `FolderStore.addApps` 的去重吸收
+  - 每次启动只发一个 URL；同一次拖放被系统重复送达时，由 Flotilla 侧 `FolderStore.addItems` 的去重吸收
   - 等到回调（最多 5 秒）后退出
   - 缺少 id 或打开失败时记录日志并以非零状态退出
 - 不得激活任何 App：点击或拖放之前的前台 App 必须保持前台。

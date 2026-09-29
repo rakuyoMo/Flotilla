@@ -101,7 +101,7 @@
   - 由点击 tile 启动：打开 `flotilla://folder/<id>`，与 02 一致
   - 由拖放启动：AppKit 在 `applicationDidFinishLaunching` 之前经 `application(_:open:)` 送来被拖的 URL，可能分多次送到，全部收齐后在 `applicationDidFinishLaunching` 里打开 `flotilla://folder/<id>/apps?path=<路径>&path=<路径>`：每个被拖的项一个 `path` 查询项，取值为它的 POSIX 路径，由 `URLComponents` 编码
   - 其余不变：`activates = false`，等到回调（最多 5 秒）后退出；缺少 id 或打开失败时记日志并以非零状态退出
-- 同一次拖放的事件可能被系统重复送达（参考项目实测）；stub 每次启动只发一个 URL，重复到达的 URL 由 Flotilla 侧 `addApps` 的去重吸收。
+- 同一次拖放的事件可能被系统重复送达（参考项目实测）；stub 每次启动只发一个 URL，重复到达的 URL 由 Flotilla 侧 `addItems` 的去重吸收。
 
 ### Flotilla 侧
 
@@ -122,8 +122,8 @@
   - `flotilla://folder/<uuid>` → `.toggleFolder`
   - `flotilla://folder/<uuid>/apps?path=…&path=…` → `.addApps`：`path` 解码后按目录 URL（`URL(filePath:directoryHint: .isDirectory)`）给出，顺序与查询项一致；没有任何 `path` 时视为无法识别
   - 其它 URL 一律为 nil
-- `AppDelegate.application(_:open:)`：`.toggleFolder` 交给 `DockFolderPresenter`；`.addApps` 先确认 id 是根文件夹（stub 只代表根文件夹，其它 id 一律忽略），再只保留 App bundle（内容类型符合 `.applicationBundle`），交给 `FolderStore.shared.addApps(_:to:)`；整个过程不激活 Flotilla。
-  - App bundle 的判断与设置窗口从访达拖入时相同，抽到 `AppReference.isApplicationBundle(_ url: URL) -> Bool` 供两处共用
+- `AppDelegate.application(_:open:)`：`.toggleFolder` 交给 `DockFolderPresenter`；`.addApps` 先确认 id 是根文件夹（stub 只代表根文件夹，其它 id 一律忽略），再只保留 App bundle（内容类型符合 `.applicationBundle`），经 `FolderItem(url:title:)` 建项后交给 `FolderStore.shared.addItems(_:to:)`（见 06）；整个过程不激活 Flotilla。
+  - App bundle 的判断抽到 `AppReference.isApplicationBundle(_ url: URL) -> Bool`，`FolderItem(url:title:)` 为要加入的 URL 分类时同样用它
 - 加入之后，文件夹树、tile 图标与面板都按既有的变更通知更新，不另加提示。
 
 ## 界面本地化（需求 12）

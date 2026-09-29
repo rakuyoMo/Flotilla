@@ -144,7 +144,7 @@
 文件：`FolderGridLayout`（纯计算）、`FolderGridView`、`FolderGridItemView`。
 
 - 项的顺序就是 `folder.items` 的顺序。
-  - App 项显示 `AppReference.icon` 与 `displayName`
+  - App、文件与网页项显示各自的 `icon` 与 `displayName`
   - 子文件夹项显示 `FolderIconRenderer.render(folder:previewIconCount:pointSize:appearance:)`（数量取 `Preferences.shared.previewIconCount`，外观取网格视图的 `effectiveAppearance`，系统外观变化时立即换图）与 `name`。
 - 面板主体内：顶部是高 32 pt 的标题区，其下是网格；网格左右各留 17 pt、底部留 12 pt。
   - 单元格 128 × 128 pt，彼此紧贴、没有间距。
@@ -156,7 +156,7 @@
   - 只显示一行，过长时在中间省略（`…`），最大宽度约 120 pt
   - 基线距单元格顶边 119 pt。
 - 悬停：没有任何高亮。
-- 按下：该项图标变暗到原亮度的约 47.5%（RGB × 0.475），文字与背景不变；在同一项上抬起才触发（进入子文件夹或启动 App）。
+- 按下：该项图标变暗到原亮度的约 47.5%（RGB × 0.475），文字与背景不变；在同一项上抬起才触发（进入子文件夹，启动 App，或打开文件与网页）。
   - 浅色外观实测同为 0.476，与外观无关
 - 列数规则（c 为网格项数）：
   - 取 n = ⌈√c⌉，在 n 列与 n + 1 列中取总格数更少的一个：比较 n × ⌈c / n⌉ 与 (n + 1) × ⌈c / (n + 1)⌉，前者不大于后者时取 n 列
@@ -218,8 +218,9 @@
 ## 行为规则
 
 - `toggle(folderID:)`：未展开时展开该文件夹的根层级；已展开同一文件夹时收起；已展开另一个文件夹时直接切换，旧面板立即消失，新面板按展开动画出现。
-- 收起的触发：见“点击信号”；另有 Esc、点击 App 项（需求 9）、屏幕参数变化、正在展示的文件夹被删除。
+- 收起的触发：见“点击信号”；另有 Esc、点击 App、文件或网页项（需求 9、14）、屏幕参数变化、正在展示的文件夹被删除。
 - 点击 App 项：`NSWorkspace.shared.openApplication(at:configuration:)`，随即收起面板。
+- 点击文件或网页项：`NSWorkspace.shared.open(_:configuration:completionHandler:)`，用默认 App 或默认浏览器打开，随即收起面板（见 06）。
 - 展示期间 `FolderStore` 变化：当前文件夹被删则收起；内容变化则重建网格，能保留当前层级就保留。
 - 面板不得让 Flotilla 成为活动 App；不得对 Dock tile 做任何事。
 - 实测原生展开期间 Dock 一直保持显示，鼠标离开 Dock 也不隐藏；放大状态冻结在点击那一刻，鼠标经过其它 tile 也不放大；收起后 Dock 才按自动隐藏规则隐藏。

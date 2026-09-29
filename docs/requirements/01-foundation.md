@@ -111,6 +111,8 @@ struct Folder: Codable, Hashable, Identifiable {
 enum FolderItem: Codable, Hashable, Identifiable {
     case app(AppReference)
     case folder(Folder)
+    case file(FileReference)
+    case webPage(WebPageReference)
 }
 
 struct AppReference: Codable, Hashable, Identifiable {
@@ -121,7 +123,8 @@ struct AppReference: Codable, Hashable, Identifiable {
 
 - `FolderItem.id` 返回所包含项的 id。
 - `AppReference` 提供 `displayName`（`FileManager.default.displayName(atPath:)`）与 `icon`（`NSWorkspace.shared.icon(forFile:)`）。
-- JSON 编码里 `FolderItem` 用显式类型标签区分两种情况，解码要兼容任意嵌套深度。
+- 文件、网页两种情况（`FileReference`、`WebPageReference`）与为要加入的 URL 分类的 `FolderItem(url:title:)` 见 [06](06-files-and-web-pages.md)（需求 14）。
+- JSON 编码里 `FolderItem` 用显式类型标签区分各种情况，解码要兼容任意嵌套深度。
 
 ### `FolderStore`
 
@@ -132,7 +135,7 @@ struct AppReference: Codable, Hashable, Identifiable {
 - 变更：
   - `addRootFolder(named:) -> Folder`
   - `addSubfolder(named:to parentID:) -> Folder?`
-  - `addApps(_ urls: [URL], to folderID: UUID)`：同一文件夹内已存在相同 URL 的 App 时跳过
+  - `addItems(_ items: [FolderItem], to folderID: UUID)`：把 App、文件与网页追加到末尾；同一文件夹内已存在同类且 URL 相同的项时跳过（见 06）
   - `rename(folderID:to:)`
   - `remove(itemID:)`：文件夹连同内容一起删
   - `move(itemID:to folderID: UUID?, at index: Int)`：`folderID` 为 nil 表示移到根层级（只允许文件夹）；禁止把文件夹移入自身或自己的子孙
@@ -187,7 +190,7 @@ enum FolderIconRenderer {
 
   - 深色取自 [macos-dock-folders](https://github.com/wjvalue/macos-dock-folders)（MIT）的 `glass-dark` 样式，换算到上面的结构：它的渐变两端是同一灰度色彩空间里的 0.20、0.08，不透明度同为 0.96，分别作为渐变两端的灰度与底板整体的不透明度；边线的白色、不透明度 0.16 照搬，宽度与浅色相同
   - 深色取值还没有与系统深色图标实测对照
-- 预览：取 `folder.items` 里前 `previewIconCount` 个 `.app` 项（保持顺序，跳过子文件夹）的图标，按 2×2 网格放在底板上
+- 预览：取 `folder.items` 里前 `previewIconCount` 个 `.app` 项（保持顺序，跳过子文件夹、文件与网页）的图标，按 2×2 网格放在底板上
   - `previewIconCount` 为 0 或文件夹内没有 App 时只画底板。
 - 网格几何：
   - App 图标自带四边各 100/1024 的透明边，网格按可见底板定：每个预览的可见底板边长约 0.28，相邻两个间距约 0.064，整体居中，可见范围约 [0.186, 0.814]
@@ -214,18 +217,18 @@ enum FolderIconRenderer {
 
 ### 文件夹区
 
-- `NSOutlineView` 展示完整的树：根文件夹、子文件夹、App。
-  - 每行显示图标与名称；文件夹图标用系统的通用文件夹图标（`NSWorkspace.shared.icon(for: .folder)`），根文件夹与子文件夹相同，不渲染其中的 App 图标，也不随预览数量与系统外观变化（需求 13）；App 图标用 `AppReference.icon`。
+- `NSOutlineView` 展示完整的树：根文件夹、子文件夹、App、文件与网页。
+  - 每行显示图标与名称；文件夹图标用系统的通用文件夹图标（`NSWorkspace.shared.icon(for: .folder)`），根文件夹与子文件夹相同，不渲染其中的 App 图标，也不随预览数量与系统外观变化（需求 13）；App、文件与网页的图标用各自的 `icon`。
 - 树随 `FolderStore.didChangeNotification` 刷新，尽量保留展开状态与选中项。
 - 底部按钮：
   - “新建文件夹”：有选中项时在其所属文件夹内新建子文件夹（选中的是文件夹则在该文件夹内），无选中项时新建根文件夹
     - 默认名“未命名文件夹”，新建后立即进入重命名编辑
   - “添加 App…”：`NSOpenPanel`，只允许 `.applicationBundle`，允许多选，起始目录 `/Applications`；加入选中项所属的文件夹；无选中项时按钮禁用
   - “删除”：删除选中项；无选中项时禁用
-- 重命名：双击文件夹名进入编辑；App 名不可编辑。
+- 重命名：双击文件夹名进入编辑；App、文件与网页的名称不可编辑。
 - 拖拽：
-  - 树内拖拽排序与移动：App 可拖到任意文件夹内；文件夹可拖到其它文件夹内，也可拖到根层级；禁止拖入自身或自己的子孙
-  - 从访达拖入 `.app` 到某个文件夹上，加入该文件夹
+  - 树内拖拽排序与移动：App、文件与网页可拖到任意文件夹内；文件夹可拖到其它文件夹内，也可拖到根层级；禁止拖入自身或自己的子孙
+  - 从访达拖入 App 与文件、从浏览器拖入网页到某个文件夹上，加入该文件夹；普通文件夹不接收（见 06）
 
 ### 通用区
 
