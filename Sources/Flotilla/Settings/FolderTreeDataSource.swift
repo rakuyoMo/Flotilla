@@ -2,13 +2,17 @@ import AppKit
 
 // MARK: - FolderTreeDataSource
 
-/// 设置窗口文件夹树的数据源：把 `FolderStore` 的树转换成行节点，并处理树内拖动与从访达拖入 App
+/// 设置窗口文件夹树的数据源：把 `FolderStore` 的树转换成行节点，
+/// 并处理树内拖动、从访达拖入 App 与文件、从浏览器拖入网页
 @MainActor
 final class FolderTreeDataSource: NSObject {
     /// 树内拖动时写进剪贴板的类型，内容为被拖动项的 id
     static let itemIDPasteboardType = NSPasteboard.PasteboardType(
         "com.rakuyo.flotilla.folder-item-id"
     )
+
+    /// 浏览器拖出网址时，同一个剪贴板项里的网页标题
+    static let urlNamePasteboardType = NSPasteboard.PasteboardType("public.url-name")
 
     /// 根文件夹对应的节点
     private(set) var rootNodes: [FolderTreeNode] = []
@@ -61,7 +65,7 @@ final class FolderTreeDataSource: NSObject {
         proposedParent: FolderTreeNode?,
         childIndex: Int
     ) -> (folderID: UUID?, index: Int)? {
-        // App 行不能包含其它项
+        // App、文件与网页行不能包含其它项
         if let proposedParent, proposedParent.folder == nil {
             return nil
         }
@@ -109,7 +113,8 @@ extension FolderTreeDataSource: NSOutlineViewDataSource {
         return pasteboardItem
     }
 
-    /// 校验落点：树内拖动按移动规则判断；从访达拖入的 App 只能落在文件夹上
+    /// 校验落点：树内拖动按移动规则判断；从外部拖入的 App、文件与网页只能落在文件夹上，
+    /// 一个能加入的都没有时不接收
     func outlineView(
         _ outlineView: NSOutlineView,
         validateDrop info: any NSDraggingInfo,
@@ -131,18 +136,18 @@ extension FolderTreeDataSource: NSOutlineViewDataSource {
         guard
             let proposedParent,
             proposedParent.folder != nil,
-            !Self.appURLs(in: info.draggingPasteboard).isEmpty
+            !Self.droppedItems(in: info.draggingPasteboard).isEmpty
         else {
             return []
         }
 
-        // 拖入的 App 总是追加到文件夹末尾，因此高亮整个文件夹行，而不是显示插入线
+        // 拖入的项总是追加到文件夹末尾，因此高亮整个文件夹行，而不是显示插入线
         outlineView.setDropItem(proposedParent, dropChildIndex: NSOutlineViewDropOnItemIndex)
 
         return .copy
     }
 
-    /// 执行放下：树内拖动改为移动，从访达拖入的 App 加入目标文件夹
+    /// 执行放下：树内拖动改为移动，从外部拖入的 App、文件与网页加入目标文件夹
     func outlineView(
         _: NSOutlineView,
         acceptDrop info: any NSDraggingInfo,
@@ -165,14 +170,10 @@ extension FolderTreeDataSource: NSOutlineViewDataSource {
             return true
         }
 
-        let urls = Self.appURLs(in: info.draggingPasteboard)
-        guard let folder = proposedParent?.folder, !urls.isEmpty else { return false }
+        let items = Self.droppedItems(in: info.draggingPasteboard)
+        guard let folder = proposedParent?.folder, !items.isEmpty else { return false }
 
-        let apps = urls.compactMap {
-            FolderItem(url: $0, title: nil)
-        }
-
-        store.addItems(apps, to: folder.id)
+        store.addItems(items, to: folder.id)
 
         return true
     }
@@ -188,14 +189,16 @@ extension FolderTreeDataSource {
             .flatMap(UUID.init(uuidString:))
     }
 
-    /// 剪贴板里的 App bundle URL，其它文件忽略
-    private static func appURLs(in pasteboard: NSPasteboard) -> [URL] {
-        let urls = (pasteboard.pasteboardItems ?? [])
-            .compactMap { $0.string(forType: .fileURL) }
-            .compactMap { URL(string: $0) }
+    /// 剪贴板里能加入文件夹的项：每个剪贴板项先取文件 URL，没有再取网址；网址带上同一项里的网页标题
+    ///
+    /// 分类交给 `FolderItem(url:title:)`，普通文件夹与 `http`、`https` 以外的网址被略过
+    private static func droppedItems(in pasteboard: NSPasteboard) -> [FolderItem] {
+        (pasteboard.pasteboardItems ?? []).compactMap {
+            let urlString = $0.string(forType: .fileURL) ?? $0.string(forType: .URL)
 
-        return urls.filter {
-            AppReference.isApplicationBundle($0)
+            guard let url = urlString.flatMap(URL.init(string:)) else { return nil }
+
+            return FolderItem(url: url, title: $0.string(forType: urlNamePasteboardType))
         }
     }
 

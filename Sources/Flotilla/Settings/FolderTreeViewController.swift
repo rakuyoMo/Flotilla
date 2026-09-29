@@ -49,7 +49,7 @@ final class FolderTreeViewController: NSViewController {
     private let removeButton = NSButton(
         title: String(
             localized: "folders.remove",
-            comment: "文件夹区的按钮：删除选中的文件夹或 App"
+            comment: "文件夹区的按钮：删除选中的文件夹、App、文件或网页"
         ),
         target: nil,
         action: nil
@@ -273,7 +273,7 @@ extension FolderTreeViewController {
         store.remove(itemID: node.item.id)
     }
 
-    /// 双击文件夹行时进入重命名；App 名不可编辑
+    /// 双击文件夹行时进入重命名；App、文件与网页的名称不可编辑
     @objc
     private func renameClickedFolder() {
         let row = outlineView.clickedRow
@@ -315,7 +315,7 @@ extension FolderTreeViewController {
 // MARK: - Private
 
 extension FolderTreeViewController {
-    /// 配置 outline view：单列、无表头、支持树内拖动与从访达拖入
+    /// 配置 outline view：单列、无表头、支持树内拖动、从访达拖入与从浏览器拖入
     private func configureOutlineView() {
         let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("name"))
         column.resizingMask = .autoresizingMask
@@ -338,6 +338,7 @@ extension FolderTreeViewController {
         outlineView.registerForDraggedTypes([
             FolderTreeDataSource.itemIDPasteboardType,
             .fileURL,
+            .URL,
         ])
         outlineView.setDraggingSourceOperationMask(.move, forLocal: true)
     }
