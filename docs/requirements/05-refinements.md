@@ -86,12 +86,13 @@
 
 ### stub 声明可接收 App
 
-- stub 的 Info.plist 增加 `CFBundleDocumentTypes`，只有一项：
+- stub 的 Info.plist 增加 `CFBundleDocumentTypes`，其中接收 App 的一项：
   - `CFBundleTypeName = Application`
   - `CFBundleTypeRole = Viewer`
   - `LSHandlerRank = Alternate`
   - `LSItemContentTypes = [com.apple.application, com.apple.application-bundle]`
   - 取自 [macos-dock-folders](https://github.com/wjvalue/macos-dock-folders)（MIT）：从访达把 App 拖到 Dock 上的 tile 时，tile 高亮为放置目标，松手后 Launch Services 以“打开文档”的方式启动 stub；`Alternate` 让 stub 不成为 App 的默认打开方式
+  - 接收文件的另一项见 06（需求 14）
 - stub 改写后除 `codesign` 外再执行 `lsregister -f <bundle>`（`/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister`），Launch Services 才知道它接收的文档类型。
 - Dock 上的 tile 之间不能互相拖放：拖动 Dock 图标时整个过程由 Dock 接管，只能排序或拖出。来源只能是访达等其它 App 里的 `.app`。
 
@@ -99,7 +100,7 @@
 
 - stub 改为基于 `NSApplication` 运行，仍是 `LSUIElement` + `LSBackgroundOnly` 的后台 App，不激活任何 App：
   - 由点击 tile 启动：打开 `flotilla://folder/<id>`，与 02 一致
-  - 由拖放启动：AppKit 在 `applicationDidFinishLaunching` 之前经 `application(_:open:)` 送来被拖的 URL，可能分多次送到，全部收齐后在 `applicationDidFinishLaunching` 里打开 `flotilla://folder/<id>/apps?path=<路径>&path=<路径>`：每个被拖的项一个 `path` 查询项，取值为它的 POSIX 路径，由 `URLComponents` 编码
+  - 由拖放启动：AppKit 在 `applicationDidFinishLaunching` 之前经 `application(_:open:)` 送来被拖的 URL，可能分多次送到，全部收齐后在 `applicationDidFinishLaunching` 里打开 `flotilla://folder/<id>/items?path=<路径>&path=<路径>`：每个被拖的项一个 `path` 查询项，取值为它的 POSIX 路径，由 `URLComponents` 编码
   - 其余不变：`activates = false`，等到回调（最多 5 秒）后退出；缺少 id 或打开失败时记日志并以非零状态退出
 - 同一次拖放的事件可能被系统重复送达（参考项目实测）；stub 每次启动只发一个 URL，重复到达的 URL 由 Flotilla 侧 `addItems` 的去重吸收。
 
@@ -112,18 +113,18 @@
       /// 展开或收起根文件夹的面板
       case toggleFolder(UUID)
 
-      /// 把这些 App 加入根文件夹
-      case addApps(folderID: UUID, appURLs: [URL])
+      /// 把拖到 tile 上的这些项加入根文件夹
+      case addItems(folderID: UUID, fileURLs: [URL])
 
       init?(url: URL)
   }
   ```
 
   - `flotilla://folder/<uuid>` → `.toggleFolder`
-  - `flotilla://folder/<uuid>/apps?path=…&path=…` → `.addApps`：`path` 解码后按目录 URL（`URL(filePath:directoryHint: .isDirectory)`）给出，顺序与查询项一致；没有任何 `path` 时视为无法识别
+  - `flotilla://folder/<uuid>/items?path=…&path=…` → `.addItems`：`path` 解码后用 `URL(filePath:)` 还原，stub 送来的文件包、App 与文件夹路径以 `/` 结尾，还原成目录 URL；顺序与查询项一致；没有任何 `path` 时视为无法识别
   - 其它 URL 一律为 nil
-- `AppDelegate.application(_:open:)`：`.toggleFolder` 交给 `DockFolderPresenter`；`.addApps` 先确认 id 是根文件夹（stub 只代表根文件夹，其它 id 一律忽略），再只保留 App bundle（内容类型符合 `.applicationBundle`），经 `FolderItem(url:title:)` 建项后交给 `FolderStore.shared.addItems(_:to:)`（见 06）；整个过程不激活 Flotilla。
-  - App bundle 的判断抽到 `AppReference.isApplicationBundle(_ url: URL) -> Bool`，`FolderItem(url:title:)` 为要加入的 URL 分类时同样用它
+- `AppDelegate.application(_:open:)`：`.toggleFolder` 交给 `DockFolderPresenter`；`.addItems` 先确认 id 是根文件夹（stub 只代表根文件夹，其它 id 一律忽略），再经 `FolderItem(url:title:)` 分类后交给 `FolderStore.shared.addItems(_:to:)`（见 06）；整个过程不激活 Flotilla。
+  - App bundle 的判断在 `AppReference.isApplicationBundle(_ url: URL) -> Bool`，由 `FolderItem(url:title:)` 分类时调用
 - 加入之后，文件夹树、tile 图标与面板都按既有的变更通知更新，不另加提示。
 
 ## 界面本地化（需求 12）
@@ -195,6 +196,6 @@
 - 真实 Dock 上：
   - 把 tile 拖出 Dock 后，Flotilla 不加回；设置窗口里该根文件夹显示“不在 Dock 上”，选中后“添加到 Dock”可用，点击后 tile 回到 Dock、状态消失
   - 新建根文件夹仍自动出现在 Dock 上；重启 Flotilla 后被拖出的 tile 仍不加回
-  - 从访达把一个或多个 App 拖到 tile 上：tile 高亮，松手后 App 出现在该文件夹里；前台 App 保持前台；拖非 App 的文件不接收
+  - 从访达把一个或多个 App 拖到 tile 上：tile 高亮，松手后 App 出现在该文件夹里；前台 App 保持前台；拖文件与普通文件夹的结果见 06
   - 系统语言或 Flotilla 的单独语言设置切到五种语言之一时，菜单、设置窗口与面板返回按钮的辅助功能标签都换成对应语言；其它语言显示英文
   - 设置窗口里文件夹行显示系统文件夹图标，切换外观不重绘

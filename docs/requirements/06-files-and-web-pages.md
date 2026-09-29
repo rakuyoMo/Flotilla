@@ -9,6 +9,10 @@
     - 普通文件夹（不是文件包的目录，包括卷）不接收
     - `.webloc` 这类网址文件按文件处理
   - **网页**：scheme 为 `http` 或 `https` 的网址，连同加入时浏览器给出的网页标题（可能没有）
+- 加入途径与 App 现有的拖放对齐，不加新按钮：
+  - 设置窗口：从访达拖文件、从浏览器拖网页到文件夹行上
+  - Dock tile：从访达拖文件到 tile 上；网页不能拖到 tile 上
+  - “添加 App…”保持只选 App
 - 与 App 一样只记路径或网址：
   - 不跟踪文件的移动或改名；文件不在了，点击时记日志
   - 不抓取网页标题或网站图标
@@ -48,7 +52,8 @@ enum FolderItem: Codable, Hashable, Identifiable {
 - `FileReference`：`displayName` 为 `FileManager.default.displayName(atPath:)`，`icon` 为 `NSWorkspace.shared.icon(forFile:)`，与 `AppReference` 相同。
 - `WebPageReference`：
   - `displayName`：有标题用标题，没有时用 `url.absoluteString`
-  - `icon`：网址文件（`com.apple.web-internet-location`）的图标
+  - `icon`：与 Dock 右侧网页 tile 相同，取 `/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/BookmarkIcon.icns`（蓝色地球）；所有网页共用，只加载一次；读不到时退回网址文件（`com.apple.web-internet-location`）的图标
+    - 实测（macOS 27）：Dock 右侧网页 tile 的图标与 `BookmarkIcon.icns` 逐像素比对一致；`NSWorkspace` 按 `com.apple.web-internet-location`、`com.apple.internet-location`、`public.url` 取到的图标都不是它
 - JSON 与 App、子文件夹一样平铺，类型标签为 `file` 与 `webPage`：
 
   ```json
@@ -61,7 +66,7 @@ enum FolderItem: Codable, Hashable, Identifiable {
 
 ### 分类
 
-要加入文件夹的 URL 只在一处分类，设置窗口的拖入、“添加 App…”与拖到 tile 上的 App 共用：
+要加入文件夹的 URL 只在一处分类，设置窗口的拖入、“添加 App…”与拖到 tile 上的项共用：
 
 ```swift
 extension FolderItem {
@@ -96,6 +101,7 @@ extension FolderItem {
   - outline view 在已有的类型之外注册 `.URL`（`public.url`）
   - 逐个剪贴板项取 URL：先 `public.file-url`，没有再 `public.url`
   - 网页标题取同一剪贴板项的 `public.url-name`
+  - 实测（macOS 27）：从 Chrome 地址栏左侧的“查看网站信息”按钮拖出网址，剪贴板只有一项，其中 `public.url` 是网址、`public.url-name` 是网页标题
   - 交给 `FolderItem(url:title:)`；一个能加入的项都没有时不接收，例如只拖了普通文件夹
 - 文件行、网页行显示图标与 `displayName`，名称不可编辑。
 - 拖动排序、移入其它文件夹、删除，规则与 App 行相同；文件行与网页行不能作为落点。
@@ -109,6 +115,50 @@ extension FolderItem {
   - 打开失败时记日志，写法与 App 启动失败相同
   - 随即收起面板，与需求 9 对 App 的处理一致
 - App 仍用 `openApplication(at:configuration:)` 启动。
+
+## Dock tile
+
+### stub 声明可接收文件
+
+- stub 的 `CFBundleDocumentTypes` 保留接收 App 的一项（见 05），追加一项：
+  - `CFBundleTypeName = File`
+  - `CFBundleTypeRole = Viewer`
+  - `LSHandlerRank = None`
+  - `LSItemContentTypes = [public.data, com.apple.package]`
+- `LSHandlerRank` 必须是 `None`：实测（macOS 27）`Alternate` 会让 stub 出现在访达的“打开方式”里。
+- 实测（macOS 27）：
+  - 从访达把 `.txt`、`.pdf`、`.rtfd`、`.webloc` 与未知扩展名的文件拖到 tile 上，tile 压暗为放置目标，松手后以 `odoc` 拉起 stub，`application(_:open:)` 收到文件 URL；前台 App 仍是访达
+  - `.app` 仍被接收
+  - stub 不出现在访达的“打开方式”里，各类文件的默认打开 App 不变
+  - 普通文件夹同样高亮并拉起 stub：声明了 `public.data` 或 `com.apple.package`，Dock 就对文件夹一并接收，只有声明具体类型时才按类型判断。Dock 这一层拦不住，由 Flotilla 分类时略过：tile 会高亮，但不会加入
+  - 改写 Info.plist 并 `lsregister -f` 之后，不重启 Dock，下一次拖动就按新声明判断
+- Info.plist 变了，现有 stub 在下一次同步里按 02 的逐字节比对被改写（连同可执行文件）并重新登记。
+
+### 请求
+
+- stub 由拖放启动时打开 `flotilla://folder/<id>/items?path=<路径>&path=<路径>`：每个被拖的项一个 `path`，取值为它的 POSIX 路径；stub 只会收到文件 URL
+- `DockTileRequest`：
+
+  ```swift
+  enum DockTileRequest: Equatable {
+      /// 展开或收起根文件夹的面板
+      case toggleFolder(UUID)
+
+      /// 把拖到 tile 上的这些项加入根文件夹
+      case addItems(folderID: UUID, fileURLs: [URL])
+
+      init?(url: URL)
+  }
+  ```
+
+  - `path` 用 `URL(filePath:)` 还原：stub 送来的文件包、App 与文件夹路径以 `/` 结尾，还原成目录 URL；分类时还会再规整
+  - `apps` 路由不再识别；没有任何 `path` 时同样为 nil
+- `AppDelegate.application(_:open:)`：`.addItems` 先确认 id 是根文件夹，再逐个经 `FolderItem(url:title:)` 分类后交给 `addItems`；普通文件夹与已不存在的文件在分类时被略过。
+
+### 网页
+
+- 网页不能拖到 tile 上，只能拖进设置窗口。
+- Dock 只在 stub 提供服务（`NSServices`）时接收网址的拖放，那会在“系统设置 › 键盘 › 键盘快捷键 › 服务”里给每个根文件夹加一项。
 
 ## 单元测试
 
@@ -128,13 +178,16 @@ extension FolderItem {
   - 文件 URL 加入文件；只有普通文件夹时不接收
   - 落在文件行或网页行上不接收
 - 文件夹图标的预览跳过子文件夹、文件与网页
+- `DockTileRequest`：`items` 路由的解析，路径含空格、中文与 URL 的保留字符，文件包、App 路径以 `/` 结尾时还原成目录 URL；多个 `path` 保持顺序；`apps` 路由与没有 `path` 的 URL 为 nil
+- stub 的 Info.plist：含上述 File 一项，`LSHandlerRank` 为 `None`；旧版 stub 改写并重新登记后，能接收 App 与普通文件
 
 ## 文档回写
 
-- 00：目标、需求清单第 14 条、术语里“文件夹”的定义、模块划分表、阶段列表
+- 00：目标、需求清单第 14 条、术语里“文件夹”的定义、模块划分表（新增的两个类型，`FolderItem`、`DockTileRequest` 与 stub 的职责）、阶段列表
 - 01：数据模型、`FolderStore` 的 `addItems`、设置窗口的行与拖入、预览跳过的项
-- 02、05：`addApps` 改为 `addItems`
+- 02：stub 的 `CFBundleDocumentTypes`、拖放启动时的 URL、信号链路
 - 03：网格的项、点击文件与网页的行为、收起的触发
+- 05：stub 发出的 URL、`DockTileRequest`、`AppDelegate` 的处理、验收里拖文件的结果
 - `README.md`：开头一句，以及“管理文件夹”“Dock 上的文件夹”“展开与收起”三节
 - `AGENTS.md`：项目概述；需求文档范围改为 01–06
 
@@ -148,5 +201,10 @@ extension FolderItem {
 - 面板：
   - 显示文件与网页
   - 点文件用默认 App 打开并收起；点网页用默认浏览器打开并收起
+- Dock tile：
+  - 从访达把 `.txt`、`.pdf` 拖到 tile 上：tile 高亮，松手后加入该文件夹；前台 App 保持前台
+  - 拖普通文件夹：tile 高亮，但不会加入
+  - 把 App 拖到 tile 上照常加入
+  - 访达的“打开方式”里没有 stub
 - tile 与面板里子文件夹的图标只预览 App
 - 退出重开 Flotilla 后数据仍在

@@ -30,7 +30,7 @@
 11. 把 App 图标拖到 Dock 上的文件夹图标上，即把该 App 加入这个文件夹。
 12. 界面支持英文、简体中文、繁体中文、日文、韩文。
 13. 设置窗口里的文件夹图标用固定图标，不渲染其中的 App 图标。
-14. 文件夹里还可以放文件与网页，像 Dock 右侧区域那样：把文件从访达、把网页从浏览器拖到设置窗口的文件夹上，点击后用默认 App 或浏览器打开。
+14. 文件夹里还可以放文件与网页，像 Dock 右侧区域那样：把文件从访达拖到设置窗口的文件夹上或 Dock 上的文件夹图标上，把网页从浏览器拖到设置窗口的文件夹上，点击后用默认 App 或浏览器打开。
 
 初版不给用户更多选择：除需求 2 的数量设置外，不增加任何其它设置项，不提供网格以外的展示样式。
 
@@ -84,9 +84,9 @@ Flotilla 是一个无 Dock 图标的常驻后台 App（`LSUIElement`），只有
 | `Dock/` | `DockTileSynchronizer` | 让 Dock 上的 tile 与根文件夹保持一致 | 02 |
 | `Panel/` | `DockTileLocator` | 通过 Accessibility 定位 tile | 03 |
 | `Panel/` | `FolderPanel` 及各视图 | 面板窗口、背景、网格、导航 | 03 |
-| `Sources/FlotillaDockTile/` | stub 的可执行文件 | 打开 `flotilla://` URL 后退出；被拖放启动时带上被拖的 App | 02、05 |
+| `Sources/FlotillaDockTile/` | stub 的可执行文件 | 打开 `flotilla://` URL 后退出；被拖放启动时带上被拖的 App 与文件 | 02、05、06 |
 | `Dock/` | `DockTileAdditionTracker` | 决定哪些根文件夹要添加 tile 的纯逻辑 | 05 |
-| `Dock/` | `DockTileRequest` | stub 通过 URL 发来的请求：展开面板或加入 App | 05 |
+| `Dock/` | `DockTileRequest` | stub 通过 URL 发来的请求：展开面板，或加入拖到 tile 上的 App 与文件 | 05、06 |
 | `Resources/` | `Localizable.strings` | 五种语言的界面文字 | 05 |
 | `Tests/FlotillaTests/` | 单元测试 | Swift Testing | 各阶段 |
 
@@ -99,7 +99,7 @@ Flotilla 是一个无 Dock 图标的常驻后台 App（`LSUIElement`），只有
 3. [03 展开面板](03-folder-panel.md)：面板定位、外观、网格、嵌套导航、动效、收起规则
 4. [04 集成验收](04-integration.md)：端到端验证、文档回写、清理
 5. [05 Dock 状态、拖放加入与本地化](05-refinements.md)：tile 被拖出后的状态与重新添加、拖 App 到 tile 上加入文件夹、界面本地化、设置窗口的固定文件夹图标
-6. [06 文件夹里的文件与网页](06-files-and-web-pages.md)：文件与网页的数据模型、设置窗口的拖入、面板里的打开
+6. [06 文件夹里的文件与网页](06-files-and-web-pages.md)：文件与网页的数据模型、设置窗口的拖入、把文件拖到 tile 上加入、面板里的打开
 
 ## 公共约束
 
