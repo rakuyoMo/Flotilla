@@ -18,15 +18,36 @@ struct WebPageReference: Codable, Hashable, Identifiable {
 // MARK: - Display
 
 extension WebPageReference {
+    /// 所有网页共用的图标，只加载一次
+    @MainActor
+    private static let sharedIcon = makeIcon()
+
     /// 显示的名称：有标题用标题，没有时用网址
     var displayName: String {
-        #warning("TODO: 没有标题时显示什么，按探针 29 测到的 Dock 网页 tile 规则确定")
-        return title ?? url.absoluteString
+        title ?? url.absoluteString
     }
 
-    /// 网页的图标：网址文件（`.webloc`）的图标
+    /// 网页的图标：与 Dock 右侧网页 tile 相同的蓝色地球
+    @MainActor
     var icon: NSImage {
-        #warning("TODO: 网页图标按探针 29 测到的 Dock 网页 tile 图标确定")
+        Self.sharedIcon
+    }
+}
+
+// MARK: - Private
+
+extension WebPageReference {
+    /// 读取 Dock 右侧网页 tile 用的 `BookmarkIcon.icns`；读不到时退回网址文件（`.webloc`）的图标
+    ///
+    /// 实测（macOS 27）`NSWorkspace` 按 `com.apple.web-internet-location`、`public.url` 等类型取到的图标都不是它
+    private static func makeIcon() -> NSImage {
+        let bookmarkIconURL = URL(
+            filePath: "/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/BookmarkIcon.icns"
+        )
+
+        if let icon = NSImage(contentsOf: bookmarkIconURL) {
+            return icon
+        }
 
         let webInternetLocation = UTType("com.apple.web-internet-location") ?? .internetLocation
 
