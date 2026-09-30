@@ -136,6 +136,9 @@ extension DockFolderPresenter {
         switch event.type {
         // 按下：按住 Control 或 Command 的左键点击由 Dock 弹出菜单或在访达中显示，不启动 stub，不算点击 tile
         case .leftMouseDown, .rightMouseDown, .otherMouseDown:
+            // 读访达里的文件夹期间的按下（例如点系统隐私授权框）排到读取结束后才处理到，既不算点面板外，也不算点 tile
+            guard !panelController.readPeriods.contains(event.timestamp) else { return }
+
             let isPlainLeftClick = event.type == .leftMouseDown
                 && event.modifierFlags.isDisjoint(with: [.control, .command])
 
@@ -164,6 +167,9 @@ extension DockFolderPresenter {
     /// 发往 Flotilla 自己窗口的按下：面板以外的都按外部点击处理
     private func handleLocalMouseDown(_ event: NSEvent) {
         guard event.window !== panelController.panel else { return }
+
+        // 读访达里的文件夹期间的按下排到读取结束后才处理到，不算点面板外
+        guard !panelController.readPeriods.contains(event.timestamp) else { return }
 
         apply(state.mouseDown(
             onTile: nil,

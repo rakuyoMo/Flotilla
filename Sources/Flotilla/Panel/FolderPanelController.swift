@@ -23,6 +23,9 @@ final class FolderPanelController {
     /// 请求收起面板：按下 Esc、点击 App、文件或网页之后调用，由 `DockFolderPresenter` 更新状态并收起
     var dismissRequestHandler: (() -> Void)? = nil
 
+    /// 本次展开里各次读访达里的文件夹占住主线程的时段，`DockFolderPresenter` 据此忽略这期间的鼠标按下
+    private(set) var readPeriods = FinderFolderReadPeriods()
+
     /// 面板的 contentView，承载全部层级；展开与收起的动画作用在它的图层上
     private let containerView = NSView()
 
@@ -215,7 +218,7 @@ extension FolderPanelController {
         let items: [FolderItem]
 
         do {
-            items = try finderFolderContents.items(of: finderFolder)
+            items = try readItems(of: finderFolder)
         } catch {
             Self.logger.error(
                 "读取 \(finderFolder.displayName, privacy: .public) 的内容失败：\(error.localizedDescription, privacy: .public)"
@@ -521,8 +524,23 @@ extension FolderPanelController {
     /// 按当前的导航路径与文件夹树解析出当前层级的内容；访达里的文件夹的层级重新读取
     private func currentPathContent() -> FolderPanelLevelContent? {
         Self.levelContent(at: path, in: store.rootFolders) {
-            try? finderFolderContents.items(of: $0)
+            try? readItems(of: $0)
         }
+    }
+
+    /// 读出访达里的文件夹里的各项，并记下这次读取占住主线程的时段
+    ///
+    /// 第一次读受保护的位置时读取等到用户回答隐私授权框，这期间的鼠标按下要据此认出来
+    /// - Throws: 读不出内容时抛出：已删除、没有权限、隐私授权被拒
+    private func readItems(of finderFolder: FileReference) throws -> [FolderItem] {
+        let start = ProcessInfo.processInfo.systemUptime
+
+        // 读取成功、失败都记下：授权框被拒时，点“不允许”的按下同样排在读取之后才处理
+        defer {
+            readPeriods.record(start ... ProcessInfo.processInfo.systemUptime)
+        }
+
+        return try finderFolderContents.items(of: finderFolder)
     }
 
     /// 记下层级网格当前的滚动位置
@@ -545,6 +563,7 @@ extension FolderPanelController {
         anchor = nil
         scrollOffsets = [:]
         finderFolderContents = FinderFolderContents()
+        readPeriods = FinderFolderReadPeriods()
     }
 }
 
