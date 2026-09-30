@@ -302,7 +302,8 @@ extension FolderPanelController {
     ///   - url: 文件 URL 或网址
     ///   - name: 显示名，只用于日志
     private func open(_ url: URL, named name: String) {
-        // 文件已不在、没有能打开它的 App 时只记日志，面板照常收起
+        // 打开失败时系统按 `OpenConfiguration` 的默认设置提示用户，例如文件已不在时弹出“找不到”；
+        // 这里另记日志，面板照常收起
         NSWorkspace.shared.open(
             url,
             configuration: NSWorkspace.OpenConfiguration()
