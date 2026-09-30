@@ -124,7 +124,7 @@ final class FinderFolderContentsTests {
         )
 
         let expected = try urls
-            .map { url in
+            .map { url -> (name: String, url: URL, isApp: Bool) in
                 let normalizedURL = try #require(FileReference.normalizedURL(url))
 
                 return (
