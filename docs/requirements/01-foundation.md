@@ -118,11 +118,12 @@ enum FolderItem: Codable, Hashable, Identifiable {
 struct AppReference: Codable, Hashable, Identifiable {
     let id: UUID
     let url: URL
+    let bookmark: Data?
 }
 ```
 
 - `FolderItem.id` 返回所包含项的 id。
-- `AppReference` 提供 `displayName`（`FileManager.default.displayName(atPath:)`）与 `icon`（`NSWorkspace.shared.icon(forFile:)`）。
+- `AppReference` 提供 `displayName`（`FileManager.default.displayName(atPath:)`）与 `icon`（`NSWorkspace.shared.icon(forFile:)`）；书签与文件的相同，App 移动或改名后据此跟到新位置，见 [08](08-finder-folder-stacks.md)（需求 19）。
 - 文件、网页两种情况（`FileReference`、`WebPageReference`）与为要加入的 URL 分类的 `FolderItem(url:title:)` 见 [06](06-files-and-web-pages.md)（需求 14）；访达里的文件夹与文件的书签见 [07](07-file-items-refinements.md)（需求 15、18）。
 - JSON 编码里 `FolderItem` 用显式类型标签区分各种情况，解码要兼容任意嵌套深度。
 
@@ -135,8 +136,8 @@ struct AppReference: Codable, Hashable, Identifiable {
 - 变更：
   - `addRootFolder(named:) -> Folder`
   - `addSubfolder(named:to parentID:) -> Folder?`
-  - `addItems(_ items: [FolderItem], to folderID: UUID)`：把 App、文件与网页追加到末尾；同一文件夹内已存在同类且 URL 相同的项时跳过（见 06）；去重之前先按书签更新该文件夹里的文件（见 07）
-  - `updateFileLocations(in:)`：按书签把文件项跟到新位置（见 07）
+  - `addItems(_ items: [FolderItem], to folderID: UUID)`：把 App、文件与网页追加到末尾；同一文件夹内已存在同类且 URL 相同的项时跳过（见 06）；去重之前先按书签更新该文件夹里的 App 与文件（见 07、08）
+  - `updateItemLocations(in:)`：按书签把 App 项与文件项跟到新位置（见 07、08）
   - `rename(folderID:to:)`
   - `remove(itemID:)`：文件夹连同内容一起删
   - `move(itemID:to folderID: UUID?, at index: Int)`：`folderID` 为 nil 表示移到根层级（只允许文件夹）；禁止把文件夹移入自身或自己的子孙

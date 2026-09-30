@@ -22,7 +22,7 @@
   - 设置窗口：从访达把文件夹拖到文件夹行上
   - Dock tile：从访达把文件夹拖到 tile 上
   - 设置窗口的“添加文件…”
-- 面板里显示它在访达里的图标与名称；点击与文件相同，`NSWorkspace.open` 交给访达打开，面板随即收起，不在面板里展开它的内容
+- 面板里显示它在访达里的图标与名称；点击后在同一个面板里展开它的内容，见 [08](08-finder-folder-stacks.md)
 - 其余与文件相同：名称不可编辑、只能放在文件夹里、同一个文件夹里按 URL 去重
 - stub 的 `CFBundleDocumentTypes` 与 06 相同：06 实测 Dock 对访达里的文件夹也高亮并拉起 stub
 
@@ -42,7 +42,7 @@
 
 ### 需求 18 跟随移动
 
-- 只管文件项（含访达里的文件夹）；App 不加书签，网页不涉及
+- 文件项（含访达里的文件夹）带书签跟随；App 同样带书签、按同一套规则跟随，见 08；网页不涉及
 - 文件被移进废纸篓：跟着书签走
 - 找不到文件（已删除、卷未挂载）：这一项保持原样，照旧显示，点击时照旧记日志
 - 点击打开时用的就是更新后的 URL，不另外解析书签
@@ -73,7 +73,7 @@ struct FileReference: Codable, Hashable, Identifiable {
 
 `FolderItem(url:title:)` 处理本地 URL：
 
-1. `FileReference.normalizedURL(_:)` 规整：
+1. `normalizedURL(_:)` 规整（App 与文件共用，见 08）：
    - 路径先标准化（`standardizedFileURL`），同一个文件不因 URL 写法不同而重复加入
    - 读不到资源属性（不存在）时为 nil
    - 目录按目录 URL 记录，其余按文件 URL 记录
@@ -85,11 +85,13 @@ struct FileReference: Codable, Hashable, Identifiable {
 ### 按书签找当前位置
 
 ```swift
-extension FileReference {
-    /// 按书签找到文件的当前位置，返回更新后的引用；位置与书签都不用改、或找不到文件时为 nil
-    func relocated() -> FileReference?
+extension BookmarkedReference {
+    /// 按书签找到当前位置，返回更新后的引用；位置与书签都不用改、或找不到时为 nil
+    func relocated() -> Self?
 }
 ```
+
+- App 与文件共用这一份规则与实现，见 08
 
 - 有书签：
   - 解析选项 `[.withoutUI, .withoutMounting]`：不弹界面、不挂载卷
@@ -103,7 +105,7 @@ extension FileReference {
 
 ### `FolderStore`
 
-- `updateFileLocations(in folderID: UUID? = nil)`：按书签更新文件项
+- `updateItemLocations(in folderID: UUID? = nil)`：按书签更新文件项与 App 项（App 见 08）
   - nil 为整棵树，否则限定这个文件夹及其子孙
   - 有变化时一次提交；没有变化时不提交、不发通知
 - `addItems(_:to:)`：去重之前先更新目标文件夹及其子孙里的文件项，与加入合成一次提交
@@ -160,7 +162,7 @@ extension FileReference {
   - 文件项有、没有书签都往返一致
   - 书签以 base64 写在 `bookmark` 键里；没有书签时 JSON 里没有 `bookmark`
   - 没有 `bookmark` 键的 JSON 照常解码
-- 跟随（`FolderStoreFileLocationTests`，临时目录）：
+- 跟随（`FolderStoreItemLocationTests`，临时目录；App 的用例见 08）：
   - 文件改名、文件移到别的目录、访达里的文件夹改名：URL 更新、id 不变、只发一次变更通知
   - 只更新指定文件夹及其子孙，其它根文件夹不动
   - 什么都没变：不发通知
@@ -182,7 +184,7 @@ extension FileReference {
 - 访达里的文件夹：
   - 从访达拖到设置窗口的文件夹行上：加入，行里显示它的图标与名称，双击不进入编辑
   - 从访达拖到 tile 上：tile 高亮，松手后加入；前台 App 保持前台
-  - 面板里显示它的图标与名称；点击后访达打开它，面板收起
+  - 面板里显示它的图标与名称；点击后在面板里展开，见 08
 - “添加文件…”：
   - 无选中项时禁用；选中项后可用，sheet 里能选文件与文件夹、能多选
   - 选中的文件、文件夹与 App 加入选中项所属的文件夹

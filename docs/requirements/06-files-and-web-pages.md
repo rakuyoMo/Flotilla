@@ -114,6 +114,7 @@ extension FolderItem {
 - 网格里文件与网页和 App 一样显示图标与 `displayName`。
 - 点击：
   - 文件用默认 App 打开，网页用默认浏览器打开：`NSWorkspace.shared.open(_:configuration:completionHandler:)`
+  - 访达里的文件夹在面板里展开，见 [08](08-finder-folder-stacks.md)
   - 打开失败时记日志，写法与 App 启动失败相同
   - 随即收起面板，与需求 9 对 App 的处理一致
 - App 仍用 `openApplication(at:configuration:)` 启动。
