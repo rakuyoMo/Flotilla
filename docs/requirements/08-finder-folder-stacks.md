@@ -27,6 +27,10 @@
   - 标题是它在访达里的显示名；有返回按钮
   - 网格是目录内容，最后追加一格“在访达中打开”
 - 读不出内容（已删除、没有权限、隐私授权被拒）：不进入，按 `NSWorkspace.open` 交给访达、收起面板，并记日志
+- 读目录期间发生的鼠标按下，既不算点面板外，也不算点 tile：读取结束后处理到时忽略
+  - 读取在主线程同步进行，第一次读受保护的位置时要等用户回答隐私授权框；用户点授权框的按下排到读取结束后才处理，当成点面板外会让刚进入的层级随即收起
+  - 进入、返回与文件夹树变化重建时的读取都算
+  - 读取之后的按下照旧：点面板外收起、点 tile 切换
 - 不提供排序或显示方式的选择，不监听磁盘变化（00：“初版不给用户更多选择”）
 
 ## 数据模型
@@ -91,6 +95,9 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
   - 返回时父层级是重新读出来的，缩回动画按 id 找图标、滚动位置按层级 id 恢复
   - 按所在层级与名称记而不是按完整路径：最外层的访达里的文件夹按书签跟到新位置后，里面各项与更深的层级仍解析得到
 - 读取在主线程同步进行；只在进入、返回与文件夹树变化重建时读取
+  - 每次读取记下起止时间（`FinderFolderReadPeriods`，系统启动以来的秒数），读取失败也记；面板隐藏时清空
+  - 全局与本地鼠标监听收到按下时，按事件自己的发生时间（`NSEvent.timestamp`）判断是否落在任一次读取期间，落在其中的忽略
+  - 看任一次而不只看最近一次：连点两下时，第二下可能在第一次读取结束后又进入一层、再读一次，第一次读取期间的按下排在这之后才处理到
 
 ### 网格只建看得见的格
 
@@ -145,7 +152,11 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
   - `.app`、`.rtfd` 的 `isPackage` 为真；`/` 是目录、不是文件包
   - 在主线程上，一个 URL 读过的资源属性会缓存到主线程 run loop 下一次运行；测试里同一个 URL 先读属性、再删文件、再读，读到的仍是删除前的值
 - 隐私授权：第一次读“文稿”“桌面”“下载”、iCloud 云盘、外接或网络卷时，系统弹出授权框，读取等到用户回答；允许就展开，拒绝就按读不出内容处理
+  - 授权框属于别的进程，用户点它的按下由全局鼠标监听收到；主线程这时被读取占住，按下排到读取结束后才处理
   - 未在屏上触发验证
+- 事件时间：`NSEvent.timestamp` 与 `ProcessInfo.systemUptime` 是同一个时钟，都是开机以来不含睡眠的秒数（`CLOCK_UPTIME_RAW`）
+  - 测量时开机以来睡眠过约 22 小时：`systemUptime` 与 `CLOCK_UPTIME_RAW` 相等，比含睡眠的 `CLOCK_MONOTONIC_RAW` 少约 78700 s
+  - 全局鼠标监听被动收到的移动、按下、抬起：`timestamp` 比处理时的 `systemUptime` 早 1–6 ms；对应 `CGEvent.timestamp` 是同一时刻的纳秒数
 - 滚动视图与文档视图：
   - 文档视图刚放进 `NSClipView` 时（`viewDidMoveToSuperview`），clip view 还没按它翻转坐标，此时的 `visibleRect` 落在网格底部，不能据此建格
   - 新建的视图 `needsLayout` 默认为真，放进窗口后由窗口的排版调用它的 `layout()`
@@ -174,6 +185,7 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
   - 目录内容（`FinderFolderContentsTests`）：隐藏文件被跳过；按 `localizedStandardCompare` 排序；App、访达里的文件夹、文件包、普通文件、指向目录的符号链接各自的分类；同一次展开里 id 不变；目录已删除时抛错
     - 预取的结果与逐项单独读取一致：顺序按 `FileManager.displayName(atPath:)`（“Tool.app”排在“Tool 2.app”前）、URL 等于 `normalizedURL(_:)` 的结果、App 的判断相同
   - 导航解析（`FolderPanelNavigationTests`）：Flotilla 文件夹 → 访达里的文件夹 → 其中的子目录逐层解析；那一项被删除、目录已删除、没有权限时为 nil；那一项的 URL 变了时按新 URL 读，更深的层级照常解析
+  - 读取期间的按下（`FinderFolderReadPeriodsTests`）：读取期间（含开始与结束那一刻）的按下被忽略；读取之前、之后的按下照旧处理；先后两次读取之后，第一次读取期间的按下仍被忽略
   - 格数（`FolderPanelLevelContentTests`）：访达里的文件夹为目录项数 + 1，空目录为 1；Flotilla 文件夹没有这一格；网格按格数摆出单元格
   - 网格只建看得见的格（`FolderGridViewTests`，100 项加“在访达中打开”，15 行显示 5 行）：
     - 初始只建第 0–5 行；滚到第 8 行后补建第 7–13 行，已建的保留
