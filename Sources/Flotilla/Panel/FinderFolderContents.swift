@@ -25,7 +25,10 @@ struct FinderFolderContents {
 
         // 先算好显示名再排序，排序过程中不反复读取
         let namedURLs = urls.map {
-            (url: $0, name: FileManager.default.displayName(atPath: $0.path(percentEncoded: false)))
+            (
+                url: $0,
+                name: FileManager.default.displayName(atPath: $0.path(percentEncoded: false))
+            )
         }
 
         // `localizedStandardCompare` 让 `a2` 排在 `a10` 前面，与访达“名称”的顺序一致
