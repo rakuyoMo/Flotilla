@@ -39,10 +39,18 @@ extension BookmarkedReference {
             return nil
         }
 
-        let isDirectory = values.isDirectory ?? false
+        return normalizedURL(url, isDirectory: values.isDirectory ?? false)
+    }
 
-        return URL(
-            filePath: path,
+    /// 已经知道是不是目录时的规整写法，与 `normalizedURL(_:)` 相同，但不再读取资源属性
+    ///
+    /// 面板读访达里的文件夹时，读目录已一次取齐各项是不是目录，逐项再读会让内容很多的目录展开变慢
+    /// - Parameters:
+    ///   - url: 本地 URL
+    ///   - isDirectory: 它是不是目录
+    static func normalizedURL(_ url: URL, isDirectory: Bool) -> URL {
+        URL(
+            filePath: url.standardizedFileURL.path(percentEncoded: false),
             directoryHint: isDirectory ? .isDirectory : .notDirectory
         )
     }

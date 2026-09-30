@@ -67,7 +67,7 @@ struct FolderPanelLevelContentTests {
         }
     }
 
-    /// 按格数建一个网格
+    /// 按格数建一个网格并排好版：不在滚动视图里时整个网格都算看得见，单元格全部建出
     private func makeGridView(
         items: [FolderItem],
         openInFinderHandler: (() -> Void)?
@@ -79,11 +79,15 @@ struct FolderPanelLevelContentTests {
             availableSize: CGSize(width: 2000, height: 2000)
         )
 
-        return FolderGridView(
+        let grid = FolderGridView(
             items: items,
             layout: layout,
             previewIconCount: 0,
             openInFinderHandler: openInFinderHandler
         ) { _ in }
+
+        grid.layoutSubtreeIfNeeded()
+
+        return grid
     }
 }

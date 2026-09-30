@@ -17,18 +17,21 @@ struct FinderFolderContents {
     /// - Returns: 按显示名排好序的各项
     /// - Throws: 读不出内容时抛出：已删除、没有权限、隐私授权被拒
     mutating func items(of finderFolder: FileReference) throws -> [FolderItem] {
+        // 读目录时一并取齐排序与分类要用的属性，之后各项只读这份缓存，不再逐项访问磁盘
         let urls = try FileManager.default.contentsOfDirectory(
             at: finderFolder.url,
-            includingPropertiesForKeys: [],
+            includingPropertiesForKeys: [.localizedNameKey, .isDirectoryKey, .contentTypeKey],
             options: [.skipsHiddenFiles]
         )
 
-        // 先算好显示名再排序，排序过程中不反复读取
-        let namedURLs = urls.map {
-            (
-                url: $0,
-                name: FileManager.default.displayName(atPath: $0.path(percentEncoded: false))
-            )
+        // 先取出显示名再排序，排序过程中不反复读取；预取的显示名与 `FileManager.displayName(atPath:)` 相同，
+        // 取不到时同样退回文件名
+        let namedURLs = urls.map { url in
+            let name = try? url
+                .resourceValues(forKeys: [.localizedNameKey])
+                .localizedName
+
+            return (url: url, name: name ?? url.lastPathComponent)
         }
 
         // `localizedStandardCompare` 让 `a2` 排在 `a10` 前面，与访达“名称”的顺序一致
@@ -45,17 +48,23 @@ struct FinderFolderContents {
 // MARK: - Private
 
 extension FinderFolderContents {
-    /// 目录里的一项：App bundle 为 App，其余为文件；读目录之后又被删掉的为 nil
+    /// 目录里的一项：App bundle 为 App，其余为文件；读目录时已取不到属性（刚被删掉）的为 nil
     /// - Parameters:
     ///   - url: 这一项的 URL
     ///   - levelID: 所在层级的 id
     private mutating func item(at url: URL, in levelID: UUID) -> FolderItem? {
+        // 是否目录与内容类型都取自读目录时的预取，不再访问磁盘
+        guard let values = try? url.resourceValues(forKeys: [.isDirectoryKey]) else { return nil }
+
         // 按加入文件夹时的同一规则记录 URL：目录为目录 URL，其余为文件 URL
-        guard let normalizedURL = FileReference.normalizedURL(url) else { return nil }
+        let normalizedURL = FileReference.normalizedURL(
+            url,
+            isDirectory: values.isDirectory ?? false
+        )
 
         let id = itemID(named: url.lastPathComponent, in: levelID)
 
-        if AppReference.isApplicationBundle(normalizedURL) {
+        if AppReference.isApplicationBundle(url) {
             return .app(AppReference(id: id, url: normalizedURL, bookmark: nil))
         }
 

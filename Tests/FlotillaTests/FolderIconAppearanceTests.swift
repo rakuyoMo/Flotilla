@@ -45,6 +45,9 @@ struct FolderIconAppearanceTests {
             openInFinderHandler: nil
         ) { _ in }
 
+        // 单元格在排版时才建
+        grid.layoutSubtreeIfNeeded()
+
         let itemView = try #require(
             grid.subviews.compactMap { $0 as? FolderGridItemView }.first
         )
@@ -57,6 +60,58 @@ struct FolderIconAppearanceTests {
                     == expectedIcon(appearance: expected, pointSize: FolderPanelMetrics.iconSize)
             )
         }
+    }
+
+    /// 滚动时才建的子文件夹单元格按建的时候的外观渲染：外观在它建出之前变过，也不会留着旧外观的底板
+    @Test
+    func laterBuiltFolderIconUsesCurrentAppearance() throws {
+        // 7 列 8 行，面板显示 5 行：最后两行起初不建
+        let items = Array(repeating: FolderItem.folder(subfolder), count: 56)
+
+        let layout = FolderGridLayout(
+            itemCount: items.count,
+            availableSize: CGSize(width: 10_000, height: 10_000)
+        )
+
+        let scrollView = NSScrollView(frame: CGRect(
+            x: 0,
+            y: 0,
+            width: layout.gridSize.width,
+            height: CGFloat(layout.visibleRowCount) * FolderPanelMetrics.cellSize
+        ))
+
+        let grid = FolderGridView(
+            items: items,
+            layout: layout,
+            previewIconCount: 4,
+            openInFinderHandler: nil
+        ) { _ in }
+
+        scrollView.documentView = grid
+        grid.appearance = NSAppearance(named: .darkAqua)
+        scrollView.layoutSubtreeIfNeeded()
+
+        // 外观变浅之后再滚到底，最后一格这时才建
+        grid.appearance = NSAppearance(named: .aqua)
+
+        let clipView = scrollView.contentView
+
+        clipView.scroll(to: CGPoint(
+            x: 0,
+            y: grid.bounds.height - clipView.bounds.height
+        ))
+
+        let lastFrame = try #require(layout.cellFrames.last)
+        let lastItemView = try #require(
+            grid.subviews
+                .compactMap { $0 as? FolderGridItemView }
+                .first { $0.frame == lastFrame }
+        )
+
+        #expect(
+            lastItemView.icon.tiffRepresentation
+                == expectedIcon(appearance: .light, pointSize: FolderPanelMetrics.iconSize)
+        )
     }
 }
 

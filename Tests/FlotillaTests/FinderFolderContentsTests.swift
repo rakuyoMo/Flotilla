@@ -84,6 +84,61 @@ final class FinderFolderContentsTests {
         #expect(Set(names(of: items)) == ["资料", "笔记.rtfd", "报告.txt", "链接"])
     }
 
+    /// 读目录时一次取齐的属性与逐项单独读取的结果一致：顺序按 `FileManager.displayName(atPath:)`，
+    /// URL 按 `normalizedURL(_:)` 规整，App 的判断相同
+    ///
+    /// “Tool.app”与“Tool 2.app”按文件名排序与按显示名（“Tool”“Tool 2”）排序正好相反；
+    /// 隐藏了扩展名的文件、名称里的“:”（访达里显示为“/”）的显示名也都不同于文件名
+    @Test
+    func matchesPerEntryLookups() throws {
+        for name in ["Tool.app", "Tool 2.app", "资料", "笔记.rtfd"] {
+            try FileManager.default.createDirectory(
+                at: directory.appending(path: name),
+                withIntermediateDirectories: true
+            )
+        }
+
+        for name in ["报告.txt", "a:1.txt", "隐藏扩展名.txt", "noext"] {
+            try writeFile(name)
+        }
+
+        var hiddenExtension = URLResourceValues()
+        hiddenExtension.hasHiddenExtension = true
+
+        var hiddenExtensionURL = directory.appending(path: "隐藏扩展名.txt")
+        try hiddenExtensionURL.setResourceValues(hiddenExtension)
+
+        try FileManager.default.createSymbolicLink(
+            at: directory.appending(path: "链接"),
+            withDestinationURL: directory.appending(path: "资料")
+        )
+
+        var contents = FinderFolderContents()
+        let items = try contents.items(of: finderFolder())
+
+        // 逐项单独读取：各自读显示名、规整 URL、判断是不是 App
+        let urls = try FileManager.default.contentsOfDirectory(
+            at: directory,
+            includingPropertiesForKeys: nil,
+            options: [.skipsHiddenFiles]
+        )
+
+        let expected = try urls
+            .map { url in
+                let normalizedURL = try #require(FileReference.normalizedURL(url))
+
+                return (
+                    name: FileManager.default.displayName(atPath: url.path(percentEncoded: false)),
+                    url: normalizedURL,
+                    isApp: AppReference.isApplicationBundle(normalizedURL)
+                )
+            }
+            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+
+        #expect(items.compactMap(url(of:)) == expected.map(\.url))
+        #expect(items.map(isApp(_:)) == expected.map(\.isApp))
+    }
+
     /// 同一次展开里再读同一个目录，各项的 id 不变；另一次展开重新分配
     @Test
     func keepsItemIDsWithinOneExpansion() throws {
@@ -131,6 +186,27 @@ extension FinderFolderContentsTests {
     /// 在临时目录里写一个文件
     private func writeFile(_ name: String) throws {
         try Data(name.utf8).write(to: directory.appending(path: name))
+    }
+
+    /// 一项的 URL；目录里读出的只有 App 与文件
+    private func url(of item: FolderItem) -> URL? {
+        switch item {
+        case .app(let app):
+            app.url
+
+        case .file(let file):
+            file.url
+
+        case .folder, .webPage:
+            nil
+        }
+    }
+
+    /// 一项是不是 App
+    private func isApp(_ item: FolderItem) -> Bool {
+        guard case .app = item else { return false }
+
+        return true
     }
 
     /// 各文件项的文件名，App 不算
