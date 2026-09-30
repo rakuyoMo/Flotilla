@@ -52,11 +52,14 @@ final class FolderTreeCellView: NSTableCellView {
         nameField.setContentHuggingPriority(.defaultLow, for: .horizontal)
         nameField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
-        // 位置文字紧跟名称、占满剩下的宽度；两者都放不下时先截断位置，再截断名称
         locationLabel.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
         locationLabel.textColor = .secondaryLabelColor
-        locationLabel.lineBreakMode = .byTruncatingTail
         locationLabel.isHidden = true
+
+        // 位置在中间省略：开头的 `~/` 与离它最近的那一级目录都留着
+        locationLabel.lineBreakMode = .byTruncatingMiddle
+
+        // 位置文字紧跟名称、占满剩下的宽度；两者都放不下时先截断位置，再截断名称
         locationLabel.setContentHuggingPriority(.defaultLow - 1, for: .horizontal)
         locationLabel.setContentCompressionResistancePriority(.defaultLow - 1, for: .horizontal)
 

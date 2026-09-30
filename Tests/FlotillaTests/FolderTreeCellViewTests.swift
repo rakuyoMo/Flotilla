@@ -6,7 +6,7 @@ import Testing
 // MARK: - FolderTreeCellViewTests
 
 /// 设置窗口里访达里的文件夹与 Flotilla 的文件夹图标相同，只靠名称后的位置文字区分：
-/// 只有访达里的文件夹这一行显示，行视图复用后其余各行不能残留；宽度不够时先让出位置，名称尽量完整
+/// 只有访达里的文件夹这一行显示，行视图复用后其余各行不能残留；宽度不够时先让出位置、在中间省略，名称尽量完整
 @MainActor
 final class FolderTreeCellViewTests {
     /// 本用例独占的临时目录
@@ -104,12 +104,19 @@ final class FolderTreeCellViewTests {
         cell.layoutSubtreeIfNeeded()
 
         let nameField = try #require(cell.textField)
-        let locationField = try #require(
-            textFields(in: cell).first { $0 !== nameField && $0.stringValue == cell.locationText }
-        )
+        let locationField = try #require(locationField(in: cell))
 
         #expect(nameField.frame.width >= nameField.intrinsicContentSize.width)
         #expect(locationField.frame.width < locationField.intrinsicContentSize.width)
+    }
+
+    /// 位置截断时在中间省略：开头的 `~/` 与离它最近的那一级目录都留着，仍能看出它在哪
+    @Test
+    func locationTruncatesInMiddle() throws {
+        let cell = try configuredCell(with: directory.appending(path: "资料"))
+        let locationField = try #require(locationField(in: cell))
+
+        #expect(locationField.lineBreakMode == .byTruncatingMiddle)
     }
 }
 
@@ -124,6 +131,13 @@ extension FolderTreeCellViewTests {
         cell.configure(with: FolderTreeNode(item: item, parent: nil))
 
         return cell
+    }
+
+    /// 行里显示位置文字的文本框；这一行不显示位置时为 nil
+    private func locationField(in cell: FolderTreeCellView) -> NSTextField? {
+        textFields(in: cell).first {
+            $0 !== cell.textField && $0.stringValue == cell.locationText
+        }
     }
 
     /// 视图及其子孙里的全部文本框
