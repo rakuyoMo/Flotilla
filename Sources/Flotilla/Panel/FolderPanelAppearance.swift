@@ -158,12 +158,52 @@ enum FolderPanelAppearance {
         }
     }
 
+    /// “在访达中打开”的图标与面板材质的合成方式，取 Core Animation 的合成滤镜名
+    ///
+    /// 深色原生是叠加（plus-lighter）：黑、灰、白、红四种底色上，图标处每个通道都比材质高出同样的量
+    var openInFinderCompositingFilter: String {
+        switch self {
+        case .dark:
+            return "plusL"
+
+        case .light:
+            #warning("TODO: 浅色外观未与原生对照，按深色的叠加量对称取叠暗（plus-darker）")
+            return "plusD"
+        }
+    }
+
     /// 与视图的实际外观最接近的一种；高对比度等变体归入对应的深色或浅色
     /// - Parameter appearance: 视图的 `effectiveAppearance`
     init(_ appearance: NSAppearance) {
         self = appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
             ? .dark
             : .light
+    }
+
+    /// “在访达中打开”图标的颜色，按 `openInFinderCompositingFilter` 与材质合成
+    ///
+    /// 叠加时加上的量就是颜色本身；叠暗时减去的量是 1 减去颜色。取 sRGB 灰：屏上读数与 sRGB 的数值一致
+    /// - Parameter isPressed: 是否处于按下状态
+    func openInFinderIconColor(isPressed: Bool) -> NSColor {
+        let blend = isPressed
+            ? FolderPanelMetrics.openInFinderPressedIconBlend
+            : FolderPanelMetrics.openInFinderIconBlend
+
+        let white =
+            switch self {
+            case .dark:
+                blend
+
+            case .light:
+                1 - blend
+            }
+
+        return NSColor(
+            srgbRed: white,
+            green: white,
+            blue: white,
+            alpha: 1
+        )
     }
 
     /// 返回按钮的底色，悬停不变

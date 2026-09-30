@@ -30,10 +30,6 @@ final class FolderGridView: NSView {
     /// 已建的子文件夹与它的单元格：系统外观变化时，按新外观重新渲染这些单元格的图标
     private var folderItemViews: [(folder: Folder, itemView: FolderGridItemView)] = []
 
-    /// “在访达中打开”的单元格，它那一行露出之前为 nil；
-    /// 它的图标按外观的文字颜色着色，系统外观变化时重新着色
-    private var openInFinderItemView: FolderGridItemView? = nil
-
     /// 自上而下排列，与 `FolderGridLayout` 的坐标系一致，滚动视图初始停在顶部
     override var isFlipped: Bool {
         true
@@ -126,16 +122,13 @@ final class FolderGridView: NSView {
         buildCells(near: rect)
     }
 
-    /// 系统外观变化时，已建的子文件夹图标换成对应外观的底板，“在访达中打开”的图标换成对应外观的颜色；
-    /// 之后才建的单元格按建的时候的外观渲染
+    /// 系统外观变化时，已建的子文件夹图标换成对应外观的底板；之后才建的单元格按建的时候的外观渲染
     override func viewDidChangeEffectiveAppearance() {
         super.viewDidChangeEffectiveAppearance()
 
         for (folder, itemView) in folderItemViews {
             itemView.icon = folderIcon(of: folder)
         }
-
-        openInFinderItemView?.icon = openInFinderIcon()
     }
 }
 
@@ -229,34 +222,16 @@ extension FolderGridView {
             comment: "访达里的文件夹在面板里展开后，网格末尾那一格的名称"
         )
 
+        // 图标只给原图的形状，颜色与合成方式由单元格按外观决定
         let itemView = FolderGridItemView(
             title: title,
-            icon: openInFinderIcon(),
+            icon: Self.openInFinderSourceIcon,
+            style: .openInFinder,
             clickHandler: openInFinderHandler
         )
 
         itemView.frame = frame
         addSubview(itemView)
-        openInFinderItemView = itemView
-    }
-
-    /// “在访达中打开”的图标：Dock 自己的箭头图，按网格当前外观的文字颜色着色，铺满图标画布
-    private func openInFinderIcon() -> NSImage {
-        #warning("TODO: 按原生实测校准“在访达中打开”一格的外观")
-
-        let source = Self.openInFinderSourceIcon
-        let color = FolderPanelAppearance(effectiveAppearance).textColor
-        let side = FolderPanelMetrics.iconSize
-
-        // 先铺满颜色，再只留下原图不透明的部分，得到按文字颜色着色的箭头
-        return NSImage(size: CGSize(width: side, height: side), flipped: false) { rect in
-            color.setFill()
-            rect.fill()
-
-            source.draw(in: rect, from: .zero, operation: .destinationIn, fraction: 1)
-
-            return true
-        }
     }
 }
 
