@@ -11,7 +11,7 @@ final class FolderGridView: NSView {
     /// 子文件夹与它的单元格：系统外观变化时，按新外观重新渲染这些单元格的图标
     private var folderItemViews: [(folder: Folder, itemView: FolderGridItemView)] = []
 
-    /// 子文件夹图标里叠加的 App 图标数量
+    /// 子文件夹图标里叠加的预览图标数量
     private let previewIconCount: Int
 
     /// 自上而下排列，与 `FolderGridLayout` 的坐标系一致，滚动视图初始停在顶部
@@ -23,7 +23,7 @@ final class FolderGridView: NSView {
     /// - Parameters:
     ///   - items: 文件夹内的项，顺序即展示顺序
     ///   - layout: 按项数算好的布局
-    ///   - previewIconCount: 子文件夹图标里叠加的 App 图标数量
+    ///   - previewIconCount: 子文件夹图标里叠加的预览图标数量
     ///   - selectionHandler: 点击某一项后执行
     init(
         items: [FolderItem],

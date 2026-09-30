@@ -348,7 +348,7 @@ extension DockTileSynchronizer {
     /// 按当前外观渲染根文件夹的图标，内容有变化时改写它的 stub
     /// - Parameters:
     ///   - folder: 根文件夹
-    ///   - previewIconCount: 图标里叠加的 App 图标数量
+    ///   - previewIconCount: 图标里叠加的预览图标数量
     /// - Returns: stub 是否被改写；写入失败时为 nil
     private func writeStub(of folder: Folder, previewIconCount: Int) -> Bool? {
         // stub 图标没有所在的视图，按 App 当前的外观取底板颜色

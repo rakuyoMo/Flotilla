@@ -91,7 +91,7 @@ final class FolderTreeCellView: NSTableCellView {
             imageView?.image = app.icon
             textField?.stringValue = app.displayName
 
-        // 根文件夹与子文件夹都用系统的通用文件夹图标：设置窗口里不渲染文件夹内的 App 图标
+        // 根文件夹与子文件夹都用系统的通用文件夹图标：设置窗口里不渲染文件夹的预览
         case .folder(let folder):
             imageView?.image = NSWorkspace.shared.icon(for: .folder)
             textField?.stringValue = folder.name
