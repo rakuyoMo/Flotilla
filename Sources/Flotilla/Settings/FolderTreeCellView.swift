@@ -3,13 +3,18 @@ import UniformTypeIdentifiers
 
 // MARK: - FolderTreeCellView
 
-/// 文件夹树的一行：图标、名称与状态文字；文件夹名可编辑，App、文件与网页的名称只读
+/// 文件夹树的一行：图标、名称、访达里的文件夹所在的位置与状态文字；文件夹名可编辑，App、文件与网页的名称只读
 final class FolderTreeCellView: NSTableCellView {
     /// 行视图的复用标识
     static let reuseIdentifier = NSUserInterfaceItemIdentifier("FolderTreeCell")
 
     /// 图标边长
     private static let iconSize: CGFloat = 20
+
+    /// 访达里的文件夹名称后的位置文字，与“不在 Dock 上”同样的灰色小字；其余各行隐藏
+    ///
+    /// 设置窗口里访达里的文件夹与 Flotilla 的文件夹图标相同，靠它区分
+    private let locationLabel = NSTextField(labelWithString: "")
 
     /// 名称右侧的状态文字“不在 Dock 上”，默认隐藏
     private let notOnDockLabel = NSTextField(
@@ -25,7 +30,12 @@ final class FolderTreeCellView: NSTableCellView {
         set { notOnDockLabel.isHidden = !newValue }
     }
 
-    /// 创建图标、名称与状态文字三个子视图并完成布局
+    /// 这一行显示的位置文字；不显示时为 nil
+    var locationText: String? {
+        locationLabel.isHidden ? nil : locationLabel.stringValue
+    }
+
+    /// 创建图标、名称、位置文字与状态文字四个子视图并完成布局
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
 
@@ -42,14 +52,22 @@ final class FolderTreeCellView: NSTableCellView {
         nameField.setContentHuggingPriority(.defaultLow, for: .horizontal)
         nameField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
+        // 位置文字紧跟名称、占满剩下的宽度；两者都放不下时先截断位置，再截断名称
+        locationLabel.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+        locationLabel.textColor = .secondaryLabelColor
+        locationLabel.lineBreakMode = .byTruncatingTail
+        locationLabel.isHidden = true
+        locationLabel.setContentHuggingPriority(.defaultLow - 1, for: .horizontal)
+        locationLabel.setContentCompressionResistancePriority(.defaultLow - 1, for: .horizontal)
+
         notOnDockLabel.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
         notOnDockLabel.textColor = .secondaryLabelColor
         notOnDockLabel.isHidden = true
         notOnDockLabel.setContentHuggingPriority(.defaultHigh, for: .horizontal)
         notOnDockLabel.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
 
-        // 隐藏的状态文字不占位置，名称随之占满整行
-        let labelRow = NSStackView(views: [nameField, notOnDockLabel])
+        // 隐藏的位置文字与状态文字不占位置，名称随之占满整行
+        let labelRow = NSStackView(views: [nameField, locationLabel, notOnDockLabel])
         labelRow.orientation = .horizontal
         labelRow.alignment = .firstBaseline
         labelRow.distribution = .fill
@@ -86,6 +104,12 @@ final class FolderTreeCellView: NSTableCellView {
         // 只有文件夹名可编辑：App、文件与网页的名称来自访达或浏览器
         textField?.isEditable = node.folder != nil
 
+        // 只有访达里的文件夹这一行显示位置，行视图复用时其余各行要隐藏
+        let location = Self.location(of: node.item)
+
+        locationLabel.stringValue = location ?? ""
+        locationLabel.isHidden = location == nil
+
         switch node.item {
         case .app(let app):
             imageView?.image = app.icon
@@ -104,5 +128,35 @@ final class FolderTreeCellView: NSTableCellView {
             imageView?.image = webPage.icon
             textField?.stringValue = webPage.displayName
         }
+    }
+}
+
+// MARK: - Private
+
+extension FolderTreeCellView {
+    /// 访达里的文件夹所在的位置：父目录的路径，家目录写成 `~`，例如 `~/Documents`
+    /// - Returns: 不是访达里的文件夹（Flotilla 的文件夹、App、文件、文件包、网页、已删除的），或是没有父目录的 `/` 时为 nil
+    private static func location(of item: FolderItem) -> String? {
+        guard
+            case .file(let file) = item,
+            file.isFinderFolder,
+            file.url.path(percentEncoded: false) != "/"
+        else {
+            return nil
+        }
+
+        let components = file.url
+            .deletingLastPathComponent()
+            .pathComponents
+
+        let homeComponents = URL.homeDirectory.pathComponents
+
+        // 在家目录之内：家目录这一段写成 `~`
+        if components.starts(with: homeComponents) {
+            return (["~"] + components.dropFirst(homeComponents.count)).joined(separator: "/")
+        }
+
+        // 第一段是根目录 `/`，其余各段以 `/` 连接
+        return "/" + components.dropFirst().joined(separator: "/")
     }
 }
