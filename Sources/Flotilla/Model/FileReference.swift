@@ -29,3 +29,23 @@ extension FileReference {
         NSWorkspace.shared.icon(forFile: url.path(percentEncoded: false))
     }
 }
+
+// MARK: - Finder Folder
+
+extension FileReference {
+    /// 是否是访达里的文件夹：目录且不是文件包，含卷；文件包、符号链接、替身与读不到属性（已删除）的都不是
+    ///
+    /// 面板里据此决定点击后在面板里展开它，还是交给默认 App 打开；设置窗口据此标出它所在的位置
+    var isFinderFolder: Bool {
+        // 读不到属性（已删除）时不是
+        guard
+            let values = try? url.resourceValues(forKeys: [.isDirectoryKey, .isPackageKey]),
+            let isDirectory = values.isDirectory,
+            let isPackage = values.isPackage
+        else {
+            return false
+        }
+
+        return isDirectory && !isPackage
+    }
+}

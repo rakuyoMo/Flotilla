@@ -41,7 +41,8 @@ struct FolderIconAppearanceTests {
         let grid = FolderGridView(
             items: [.folder(subfolder)],
             layout: layout,
-            previewIconCount: 4
+            previewIconCount: 4,
+            openInFinderHandler: nil
         ) { _ in }
 
         let itemView = try #require(
