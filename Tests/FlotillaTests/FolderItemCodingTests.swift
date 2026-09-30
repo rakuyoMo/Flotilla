@@ -116,6 +116,28 @@ struct FolderItemCodingTests {
         #expect(decoded == [.file(report)])
     }
 
+    /// App 有、没有书签都往返一致；书签以 base64 写在 `bookmark` 键里，没有书签时不写这个键
+    @Test
+    func appBookmarkRoundTripsAndIsOmittedWhenNil() throws {
+        let bookmark = Data("书签".utf8)
+
+        let items: [FolderItem] = [
+            .app(AppReference(
+                id: UUID(),
+                url: URL(filePath: "/System/Applications/Chess.app/"),
+                bookmark: bookmark
+            )),
+            .app(makeApp("Calendar")),
+        ]
+
+        let data = try JSONEncoder().encode(items)
+        let objects = try jsonObjects(encoding: items)
+
+        #expect(try JSONDecoder().decode([FolderItem].self, from: data) == items)
+        #expect(objects[0]["bookmark"] as? String == bookmark.base64EncodedString())
+        #expect(!objects[1].keys.contains("bookmark"))
+    }
+
     /// 网页没有标题时 JSON 里不写 `title` 键，有标题时照常写出
     @Test
     func webPageWithoutTitleOmitsTitleKey() throws {
@@ -147,7 +169,11 @@ struct FolderItemCodingTests {
 
         let decoded = try JSONDecoder().decode([FolderItem].self, from: json)
 
-        let chess = AppReference(id: appID, url: URL(filePath: "/System/Applications/Chess.app/"))
+        let chess = AppReference(
+            id: appID,
+            url: URL(filePath: "/System/Applications/Chess.app/"),
+            bookmark: nil
+        )
 
         #expect(decoded == [
             .app(chess),
@@ -167,7 +193,11 @@ struct FolderItemCodingTests {
 
     /// 引用 `/System/Applications` 下的系统 App
     private func makeApp(_ name: String) -> AppReference {
-        AppReference(id: UUID(), url: URL(filePath: "/System/Applications/\(name).app"))
+        AppReference(
+            id: UUID(),
+            url: URL(filePath: "/System/Applications/\(name).app"),
+            bookmark: nil
+        )
     }
 
     /// 引用一个文件

@@ -337,7 +337,7 @@ extension FolderIconRendererTests {
             id: UUID(),
             name: "测试",
             items: appURLs.prefix(appCount).map {
-                .app(AppReference(id: UUID(), url: $0))
+                .app(AppReference(id: UUID(), url: $0, bookmark: nil))
             }
         )
     }

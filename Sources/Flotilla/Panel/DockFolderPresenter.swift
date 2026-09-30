@@ -198,7 +198,7 @@ extension DockFolderPresenter {
 
     /// 定位 tile 并展开；Dock 正在重启等原因定位不到时由定位器退化到鼠标位置，连屏幕都没有时放弃并同步状态
     ///
-    /// 展开之后按书签把这个根文件夹里的文件跟到新位置，有变化时经 `folderStoreDidChange` 重建网格
+    /// 展开之后按书签把这个根文件夹里的 App 与文件跟到新位置，有变化时经 `folderStoreDidChange` 重建网格
     private func expand(_ folderID: UUID) {
         guard
             let folder = store.rootFolders.first(where: { $0.id == folderID }),
@@ -213,7 +213,7 @@ extension DockFolderPresenter {
 
         // 推迟到下一轮主线程：展开不因解析书签而变慢，提交引起的重建也不会在展开途中重入 `apply`
         DispatchQueue.main.async { [weak self] in
-            self?.store.updateFileLocations(in: folderID)
+            self?.store.updateItemLocations(in: folderID)
         }
     }
 

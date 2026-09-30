@@ -3,12 +3,12 @@ import Testing
 
 @testable import Flotilla
 
-// MARK: - FolderStoreFileLocationTests
+// MARK: - FolderStoreItemLocationTests
 
-/// 文件移动或改名后，文件项按书签跟到新位置：点击时才能打开，tile 图标才画得出它；
+/// App 与文件移动或改名后，这一项按书签跟到新位置：点击时才能打开，tile 图标才画得出它；
 /// 位置没变时不能提交，否则每次展开面板、每次设置窗口来到前台都会让 Dock 同步一遍
 @MainActor
-final class FolderStoreFileLocationTests {
+final class FolderStoreItemLocationTests {
     /// 本用例独占的临时目录
     private let directory = FileManager.default.temporaryDirectory
         .appending(path: "FlotillaTests-\(UUID().uuidString)")
@@ -42,7 +42,7 @@ final class FolderStoreFileLocationTests {
         try move("报告.txt", to: "年度报告.txt")
 
         try await expectNotifications(1) {
-            store.updateFileLocations()
+            store.updateItemLocations()
         }
 
         let file = try onlyFile(in: work.id)
@@ -56,15 +56,11 @@ final class FolderStoreFileLocationTests {
     func movedFileFollows() async throws {
         let original = try addFile(named: "报告.txt")
 
-        try FileManager.default.createDirectory(
-            at: directory.appending(path: "归档"),
-            withIntermediateDirectories: true
-        )
-
+        try createDirectory("归档")
         try move("报告.txt", to: "归档/报告.txt")
 
         try await expectNotifications(1) {
-            store.updateFileLocations()
+            store.updateItemLocations()
         }
 
         let file = try onlyFile(in: work.id)
@@ -76,24 +72,20 @@ final class FolderStoreFileLocationTests {
     /// 访达里的文件夹改名后同样跟上，仍按目录 URL 记录
     @Test
     func renamedFinderFolderFollows() async throws {
-        try FileManager.default.createDirectory(
-            at: directory.appending(path: "资料"),
-            withIntermediateDirectories: true
-        )
+        try createDirectory("资料")
 
         let original = try add(directory.appending(path: "资料"))
 
         try move("资料", to: "旧资料")
 
         try await expectNotifications(1) {
-            store.updateFileLocations()
+            store.updateItemLocations()
         }
 
         let file = try onlyFile(in: work.id)
-        let expectedURL = URL(filePath: path(of: "旧资料"), directoryHint: .isDirectory)
 
         #expect(file.id == original.id)
-        #expect(file.url == expectedURL)
+        #expect(file.url == directoryURL(of: "旧资料"))
     }
 
     /// 只更新指定文件夹及其子孙，其它根文件夹里改了名的文件保持原样
@@ -108,7 +100,7 @@ final class FolderStoreFileLocationTests {
         try move("报告.txt", to: "年度报告.txt")
         try move("照片.txt", to: "旧照片.txt")
 
-        store.updateFileLocations(in: work.id)
+        store.updateItemLocations(in: work.id)
 
         #expect(try onlyFile(in: archive.id).url == fileURL(of: "年度报告.txt"))
         #expect(try onlyFile(in: personal.id).url == inPersonal.url)
@@ -123,7 +115,7 @@ final class FolderStoreFileLocationTests {
         let before = store.rootFolders
 
         try await expectNotifications(0) {
-            store.updateFileLocations()
+            store.updateItemLocations()
         }
 
         #expect(store.rootFolders == before)
@@ -148,7 +140,7 @@ final class FolderStoreFileLocationTests {
         let before = store.rootFolders
 
         try await expectNotifications(0) {
-            store.updateFileLocations()
+            store.updateItemLocations()
         }
 
         #expect(store.rootFolders == before)
@@ -163,7 +155,7 @@ final class FolderStoreFileLocationTests {
         let before = store.rootFolders
 
         try await expectNotifications(0) {
-            store.updateFileLocations()
+            store.updateItemLocations()
         }
 
         #expect(store.rootFolders == before)
@@ -178,7 +170,7 @@ final class FolderStoreFileLocationTests {
         store.addItems([.file(legacy)], to: work.id)
 
         try await expectNotifications(1) {
-            store.updateFileLocations()
+            store.updateItemLocations()
         }
 
         let file = try onlyFile(in: work.id)
@@ -186,6 +178,103 @@ final class FolderStoreFileLocationTests {
         #expect(file.id == legacy.id)
         #expect(file.url == legacy.url)
         #expect(file.bookmark != nil)
+    }
+
+    // MARK: App
+
+    /// App 改名后换成新路径，id 不变，只发一次变更通知
+    @Test
+    func renamedAppFollows() async throws {
+        let original = try addApp(named: "Tool.app")
+
+        try move("Tool.app", to: "Tool 2.app")
+
+        try await expectNotifications(1) {
+            store.updateItemLocations()
+        }
+
+        let app = try onlyApp(in: work.id)
+
+        #expect(app.id == original.id)
+        #expect(app.url == directoryURL(of: "Tool 2.app"))
+    }
+
+    /// App 移到别的目录后换成新路径，id 不变，只发一次变更通知
+    @Test
+    func movedAppFollows() async throws {
+        let original = try addApp(named: "Tool.app")
+
+        try createDirectory("应用程序")
+        try move("Tool.app", to: "应用程序/Tool.app")
+
+        try await expectNotifications(1) {
+            store.updateItemLocations()
+        }
+
+        let app = try onlyApp(in: work.id)
+
+        #expect(app.id == original.id)
+        #expect(app.url == directoryURL(of: "应用程序/Tool.app"))
+    }
+
+    /// App 被原地换成新版本、旧版本移到别处：书签解析按路径优先，留在原路径并重建书签；
+    /// 之后再移动新版本，跟着新版本走，而不是跟到被换走的旧版本
+    @Test
+    func replacedAppFollowsNewVersion() async throws {
+        let original = try addApp(named: "Tool.app")
+
+        try createDirectory("废纸篓")
+        try move("Tool.app", to: "废纸篓/Tool.app")
+        try createDirectory("Tool.app")
+
+        try await expectNotifications(1) {
+            store.updateItemLocations()
+        }
+
+        let replaced = try onlyApp(in: work.id)
+
+        #expect(replaced.url == original.url)
+        #expect(replaced.bookmark != original.bookmark)
+
+        try move("Tool.app", to: "Tool 2.app")
+
+        store.updateItemLocations()
+
+        #expect(try onlyApp(in: work.id).url == directoryURL(of: "Tool 2.app"))
+    }
+
+    /// 没有书签的 App 项在 App 还在原路径时补建书签，路径不变
+    @Test
+    func appWithoutBookmarkGainsBookmark() async throws {
+        try createDirectory("Tool.app")
+
+        let legacy = AppReference(id: UUID(), url: directoryURL(of: "Tool.app"), bookmark: nil)
+        store.addItems([.app(legacy)], to: work.id)
+
+        try await expectNotifications(1) {
+            store.updateItemLocations()
+        }
+
+        let app = try onlyApp(in: work.id)
+
+        #expect(app.id == legacy.id)
+        #expect(app.url == legacy.url)
+        #expect(app.bookmark != nil)
+    }
+
+    /// 没有书签的 App 项在 App 已删除时保持原样，也不发通知
+    @Test
+    func deletedAppWithoutBookmarkStaysUnchanged() async throws {
+        let legacy = AppReference(id: UUID(), url: directoryURL(of: "Tool.app"), bookmark: nil)
+        store.addItems([.app(legacy)], to: work.id)
+
+        let before = store.rootFolders
+
+        try await expectNotifications(0) {
+            store.updateItemLocations()
+        }
+
+        #expect(store.rootFolders == before)
     }
 
     // MARK: 加入
@@ -210,11 +299,39 @@ final class FolderStoreFileLocationTests {
         #expect(file.id == original.id)
         #expect(file.url == fileURL(of: "年度报告.txt"))
     }
+
+    /// App 改名后把新路径加入同一个文件夹：已有的那一项跟到新路径，不重复加入，只发一次变更通知
+    @Test
+    func addingRenamedAppDoesNotDuplicate() async throws {
+        let original = try addApp(named: "Tool.app")
+
+        try move("Tool.app", to: "Tool 2.app")
+
+        let renamed = try #require(
+            FolderItem(url: directory.appending(path: "Tool 2.app"), title: nil)
+        )
+
+        try await expectNotifications(1) {
+            store.addItems([renamed], to: work.id)
+        }
+
+        let app = try onlyApp(in: work.id)
+
+        #expect(app.id == original.id)
+        #expect(app.url == directoryURL(of: "Tool 2.app"))
+    }
 }
 
 // MARK: - Private
 
-extension FolderStoreFileLocationTests {
+extension FolderStoreItemLocationTests {
+    /// 项是 App 时返回它的引用
+    private static func appReference(of item: FolderItem) -> AppReference? {
+        guard case .app(let app) = item else { return nil }
+
+        return app
+    }
+
     /// 项是文件时返回它的引用
     private static func fileReference(of item: FolderItem) -> FileReference? {
         guard case .file(let file) = item else { return nil }
@@ -242,6 +359,26 @@ extension FolderStoreFileLocationTests {
         return file
     }
 
+    /// 在临时目录里新建一个 `.app` 目录，经分类后作为 App 加入“工作”，返回加入的 App 项
+    private func addApp(named name: String) throws -> AppReference {
+        try createDirectory(name)
+
+        let item = try #require(FolderItem(url: directory.appending(path: name), title: nil))
+        let app = try #require(Self.appReference(of: item), "应当是 App")
+
+        store.addItems([item], to: work.id)
+
+        return app
+    }
+
+    /// 在临时目录里新建目录
+    private func createDirectory(_ name: String) throws {
+        try FileManager.default.createDirectory(
+            at: directory.appending(path: name),
+            withIntermediateDirectories: true
+        )
+    }
+
     /// 在临时目录里移动或改名
     private func move(_ source: String, to destination: String) throws {
         try FileManager.default.moveItem(
@@ -257,6 +394,15 @@ extension FolderStoreFileLocationTests {
         try #require(items.count == 1, "文件夹里应当只有一项：\(items)")
 
         return try #require(Self.fileReference(of: items[0]), "应当是文件")
+    }
+
+    /// 文件夹里唯一的一项，它必须是 App
+    private func onlyApp(in folderID: UUID) throws -> AppReference {
+        let items = try #require(store.folder(id: folderID)).items
+
+        try #require(items.count == 1, "文件夹里应当只有一项：\(items)")
+
+        return try #require(Self.appReference(of: items[0]), "应当是 App")
     }
 
     /// 执行 body，期间 `FolderStore` 恰好发出 expectedCount 次变更通知
@@ -282,6 +428,11 @@ extension FolderStoreFileLocationTests {
     /// 临时目录里某一项的 POSIX 路径
     private func path(of name: String) -> String {
         directory.appending(path: name).path(percentEncoded: false)
+    }
+
+    /// 临时目录里某个目录的目录 URL，与分类后记录的写法一致
+    private func directoryURL(of name: String) -> URL {
+        URL(filePath: path(of: name), directoryHint: .isDirectory)
     }
 
     /// 临时目录里某个文件的文件 URL，与分类后记录的写法一致

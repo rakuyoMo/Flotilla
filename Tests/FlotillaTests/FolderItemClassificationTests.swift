@@ -152,6 +152,33 @@ final class FolderItemClassificationTests {
         #expect(!isStale)
     }
 
+    /// 新建的 App 项同样带着书签，书签解析回的正是这个 App：App 移动或改名后才能据此找到它
+    @Test
+    func newAppCarriesBookmarkToItself() throws {
+        let item = FolderItem(url: URL(filePath: path(of: "Tool.app")), title: nil)
+
+        guard case .app(let app) = item else {
+            Issue.record("App bundle 应当是 App：\(String(describing: item))")
+            return
+        }
+
+        let bookmark = try #require(app.bookmark)
+        var isStale = false
+
+        let resolvedURL = try URL(
+            resolvingBookmarkData: bookmark,
+            options: [.withoutUI, .withoutMounting],
+            relativeTo: nil,
+            bookmarkDataIsStale: &isStale
+        )
+
+        #expect(
+            resolvedURL.resolvingSymlinksInPath().path(percentEncoded: false)
+                == app.url.resolvingSymlinksInPath().path(percentEncoded: false)
+        )
+        #expect(!isStale)
+    }
+
     // MARK: 网址
 
     /// `http` 与 `https` 网址是网页，带上浏览器给出的标题

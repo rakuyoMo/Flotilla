@@ -20,7 +20,8 @@ struct FolderPanelNavigationTests {
     /// 一个 App 项
     private let app = FolderItem.app(AppReference(
         id: UUID(),
-        url: URL(filePath: "/System/Applications/Chess.app")
+        url: URL(filePath: "/System/Applications/Chess.app"),
+        bookmark: nil
     ))
 
     /// 根文件夹下的子文件夹

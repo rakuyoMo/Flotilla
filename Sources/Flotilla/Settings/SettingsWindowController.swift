@@ -72,12 +72,12 @@ final class SettingsWindowController: NSWindowController {
 // MARK: NSWindowDelegate
 
 extension SettingsWindowController: NSWindowDelegate {
-    /// 窗口每次来到前台都刷新辅助功能权限状态与 tile 的状态，并把文件跟到新位置：
-    /// 从系统设置授权回来、把 tile 拖出 Dock、在访达里移动或改名文件后再点开窗口，即可看到结果
+    /// 窗口每次来到前台都刷新辅助功能权限状态与 tile 的状态，并把 App 与文件跟到新位置：
+    /// 从系统设置授权回来、把 tile 拖出 Dock、在访达里移动或改名 App 与文件后再点开窗口，即可看到结果
     func windowDidBecomeKey(_: Notification) {
         generalSettingsViewController.refreshAccessibilityStatus()
         folderTreeViewController.refreshDockStatus()
-        folderTreeViewController.updateFileLocations()
+        folderTreeViewController.updateItemLocations()
     }
 
     /// 设置窗口关闭后，若没有其它可见窗口就回到 `.accessory`，Dock 图标随之消失
