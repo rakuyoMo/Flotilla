@@ -19,13 +19,14 @@
 "folders.newFolder" = "新規フォルダ";
 "folders.untitledFolder" = "名称未設定フォルダ";
 "folders.addApps" = "アプリを追加…";
+"folders.addFiles" = "ファイルを追加…";
 "folders.addToDock" = "Dockに追加";
 "folders.notOnDock" = "Dockにありません";
 "folders.remove" = "削除";
 
 /* 设置窗口的通用区 */
 "general.sectionTitle" = "一般";
-"general.previewIconCount" = "フォルダアイコンに表示するアプリアイコンの数：";
+"general.previewIconCount" = "フォルダアイコンに表示するアイコンの数：";
 "general.accessibility" = "アクセシビリティの権限：";
 "general.accessibilityGranted" = "許可済み";
 "general.accessibilityNotGranted" = "未許可";

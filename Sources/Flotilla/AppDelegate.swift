@@ -43,12 +43,15 @@ final class AppDelegate: NSObject {
 // MARK: NSApplicationDelegate
 
 extension AppDelegate: NSApplicationDelegate {
-    /// 已有 Flotilla 在运行时把它带到前台并退出；否则开始同步 Dock tile、监听 tile 的点击
+    /// 已有 Flotilla 在运行时把它带到前台并退出；否则把文件跟到新位置，再开始同步 Dock tile、监听 tile 的点击
     ///
     /// 被 stub 拉起时，AppKit 在 `applicationDidFinishLaunching` 之前就送来 URL，面板必须在此之前就绪
     func applicationWillFinishLaunching(_: Notification) {
         // 两个实例会同时改写 Dock 偏好：检查必须早于任何初始化，Dock 同步从下面开始
         exitIfAnotherInstanceIsRunning()
+
+        // 没运行期间移动或改名的文件先跟到新位置，Dock 第一次同步渲染的 tile 图标就用上新位置
+        FolderStore.shared.updateFileLocations()
 
         startDockIntegration()
     }
@@ -94,7 +97,7 @@ extension AppDelegate: NSApplicationDelegate {
                     continue
                 }
 
-                // Dock 对普通文件夹也会拉起 stub，分类时它与不存在的文件一起被略过
+                // 访达里的文件夹同样作为文件加入；已不存在的文件在分类时被略过
                 let items = fileURLs.compactMap {
                     FolderItem(url: $0, title: nil)
                 }

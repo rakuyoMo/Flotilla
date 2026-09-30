@@ -398,7 +398,7 @@ extension FolderStoreTests {
 
     /// 新建一个文件项
     private func file(_ path: String) -> FolderItem {
-        .file(FileReference(id: UUID(), url: URL(filePath: path)))
+        .file(FileReference(id: UUID(), url: URL(filePath: path), bookmark: nil))
     }
 
     /// 新建一个网页项

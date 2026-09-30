@@ -40,15 +40,16 @@ struct FolderItemCodingTests {
         #expect(decoded == [root])
     }
 
-    /// 文件与网页（有标题、没有标题）编码后再解码必须与原值一致
+    /// 文件（有、没有书签）与网页（有、没有标题）编码后再解码必须与原值一致
     @Test
     func filesAndWebPagesRoundTrip() throws {
         let root = Folder(
             id: UUID(),
             name: "根",
             items: [
-                .file(FileReference(id: UUID(), url: URL(filePath: "/Users/Shared/报告.pdf"))),
-                .file(FileReference(id: UUID(), url: URL(filePath: "/Users/Shared/笔记.rtfd/"))),
+                makeFile("/Users/Shared/报告.pdf", bookmark: Data("书签".utf8)),
+                makeFile("/Users/Shared/笔记.rtfd/", bookmark: nil),
+                makeFile("/Users/Shared/资料/", bookmark: Data("书签".utf8)),
                 try makeWebPage("https://example.com/", title: "Example Domain"),
                 try makeWebPage("https://example.org/", title: nil),
             ]
@@ -66,13 +67,53 @@ struct FolderItemCodingTests {
         let items: [FolderItem] = [
             .app(makeApp("Chess")),
             .folder(Folder(id: UUID(), name: "子文件夹", items: [])),
-            .file(FileReference(id: UUID(), url: URL(filePath: "/Users/Shared/报告.pdf"))),
+            makeFile("/Users/Shared/报告.pdf", bookmark: nil),
             try makeWebPage("https://example.com/", title: "Example Domain"),
         ]
 
         let objects = try jsonObjects(encoding: items)
 
         #expect(objects.map { $0["type"] as? String } == ["app", "folder", "file", "webPage"])
+    }
+
+    /// 文件的书签以 base64 写在 `bookmark` 键里；没有书签时不写这个键
+    @Test
+    func fileWithoutBookmarkOmitsBookmarkKey() throws {
+        let bookmark = Data("书签".utf8)
+
+        let items = [
+            makeFile("/Users/Shared/报告.pdf", bookmark: bookmark),
+            makeFile("/Users/Shared/笔记.rtfd/", bookmark: nil),
+        ]
+
+        let objects = try jsonObjects(encoding: items)
+
+        #expect(objects[0]["bookmark"] as? String == bookmark.base64EncodedString())
+        #expect(!objects[1].keys.contains("bookmark"))
+    }
+
+    /// 没有 `bookmark` 键的文件照常解码，书签为 nil：升级前加入的文件不会丢失
+    @Test
+    func fileWithoutBookmarkKeyDecodes() throws {
+        let fileID = UUID()
+
+        let json = Data(
+            #"""
+            [
+                {"type": "file", "id": "\#(fileID.uuidString)", "url": "file:///Users/Shared/report.pdf"}
+            ]
+            """#.utf8
+        )
+
+        let decoded = try JSONDecoder().decode([FolderItem].self, from: json)
+
+        let report = FileReference(
+            id: fileID,
+            url: URL(filePath: "/Users/Shared/report.pdf"),
+            bookmark: nil
+        )
+
+        #expect(decoded == [.file(report)])
     }
 
     /// 网页没有标题时 JSON 里不写 `title` 键，有标题时照常写出
@@ -127,6 +168,11 @@ struct FolderItemCodingTests {
     /// 引用 `/System/Applications` 下的系统 App
     private func makeApp(_ name: String) -> AppReference {
         AppReference(id: UUID(), url: URL(filePath: "/System/Applications/\(name).app"))
+    }
+
+    /// 引用一个文件
+    private func makeFile(_ path: String, bookmark: Data?) -> FolderItem {
+        .file(FileReference(id: UUID(), url: URL(filePath: path), bookmark: bookmark))
     }
 
     /// 引用一个网页

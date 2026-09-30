@@ -6,20 +6,19 @@
 
 - 文件夹里的项在 App、子文件夹之外新增两种：
   - **文件**：访达里 App 以外的任何文件，包括 `.rtfd`、`.pages` 这类在访达里显示成单个文件的文件包
-    - 普通文件夹（不是文件包的目录，包括卷）不接收
+    - 访达里的文件夹（不是文件包的目录，包括卷）同样是文件，见 [07](07-file-items-refinements.md)
     - `.webloc` 这类网址文件按文件处理
   - **网页**：scheme 为 `http` 或 `https` 的网址，连同加入时浏览器给出的网页标题（可能没有）
-- 加入途径与 App 现有的拖放对齐，不加新按钮：
-  - 设置窗口：从访达拖文件、从浏览器拖网页到文件夹行上
+- 加入途径与 App 现有的拖放对齐：
+  - 设置窗口：从访达拖文件、从浏览器拖网页到文件夹行上；“添加文件…”按钮见 07
   - Dock tile：从访达拖文件到 tile 上；网页不能拖到 tile 上
   - “添加 App…”保持只选 App
-- 与 App 一样只记路径或网址：
-  - 不跟踪文件的移动或改名；文件不在了，点击时记日志
-  - 不抓取网页标题或网站图标
+- 文件带书签，移动或改名后跟到新位置（见 07）；找不到文件时，点击记日志
+- 网页只记网址与加入时的标题，不抓取网页标题或网站图标
 - 同一个文件夹里，同类且 URL 相同的项只出现一次；网页只比网址，标题不同也算同一个网页。
 - 文件与网页和 App 一样只能放在文件夹里，不能放在根层级。
-- tile 与面板里子文件夹图标的预览（需求 2）只取 App 图标，跳过子文件夹、文件与网页；“文件夹图标内显示的 App 图标数量”的设置不变。
-- 不新增本地化文字。
+- tile 与面板里子文件夹图标的预览（需求 2）按顺序取前几项，只跳过子文件夹，App、文件与网页都算，见 07。
+- 本阶段不新增本地化文字；“添加文件…”与预览数量的新文字见 07。
 
 ## 数据模型
 
@@ -28,8 +27,11 @@
 struct FileReference: Codable, Hashable, Identifiable {
     let id: UUID
 
-    /// 文件包是目录 URL，其余是文件 URL
+    /// 文件包、访达里的文件夹与卷是目录 URL，其余是文件 URL
     let url: URL
+
+    /// 书签，见 07
+    let bookmark: Data?
 }
 
 /// 对一个网页的引用
@@ -66,12 +68,12 @@ enum FolderItem: Codable, Hashable, Identifiable {
 
 ### 分类
 
-要加入文件夹的 URL 只在一处分类，设置窗口的拖入、“添加 App…”与拖到 tile 上的项共用：
+要加入文件夹的 URL 只在一处分类，设置窗口的拖入、“添加 App…”“添加文件…”与拖到 tile 上的项共用：
 
 ```swift
 extension FolderItem {
-    /// 为要加入文件夹的 URL 建一个新项：App bundle 为 App，其余文件与文件包为文件，http、https 网址为网页；
-    /// 普通文件夹、不存在的文件与其它网址返回 nil
+    /// 为要加入文件夹的 URL 建一个新项：App bundle 为 App，其余存在的一切为文件，http、https 网址为网页；
+    /// 不存在的文件与其它网址返回 nil
     init?(url: URL, title: String?)
 }
 ```
@@ -80,11 +82,11 @@ extension FolderItem {
   - 路径先标准化（`standardizedFileURL`），同一个 App 或文件不因 URL 写法不同（结尾斜杠、`..`）而重复加入
   - 读不到资源属性（文件不存在）时为 nil
   - App 的判断用 `AppReference.isApplicationBundle(_:)`，按目录 URL 记录
-  - 其余目录：`isPackage` 为真时是文件，按目录 URL 记录；否则是普通文件夹，为 nil
+  - 其余目录（文件包、访达里的文件夹、卷）是文件，按目录 URL 记录，见 07
   - 其余都是文件，按文件 URL 记录
 - 网址：scheme 不区分大小写，只接受 `http` 与 `https`
   - 标题去掉首尾空白，空串视为没有
-- 实测：新建的空 `.rtfd` 目录 `isPackage` 为真；空的 `.app` 目录内容类型是 `com.apple.application-bundle`；卷根目录 `isPackage` 为假。
+- 实测：空的 `.app` 目录内容类型是 `com.apple.application-bundle`。
 
 ### `FolderStore`
 
@@ -102,10 +104,10 @@ extension FolderItem {
   - 逐个剪贴板项取 URL：先 `public.file-url`，没有再 `public.url`
   - 网页标题取同一剪贴板项的 `public.url-name`
   - 实测（macOS 27）：从 Chrome 地址栏左侧的“查看网站信息”按钮拖出网址，剪贴板只有一项，其中 `public.url` 是网址、`public.url-name` 是网页标题
-  - 交给 `FolderItem(url:title:)`；一个能加入的项都没有时不接收，例如只拖了普通文件夹
+  - 交给 `FolderItem(url:title:)`；一个能加入的项都没有时不接收，例如只拖了已不存在的文件或 `ftp:` 网址
 - 文件行、网页行显示图标与 `displayName`，名称不可编辑。
 - 拖动排序、移入其它文件夹、删除，规则与 App 行相同；文件行与网页行不能作为落点。
-- “添加 App…”保持只选 App，选中的 URL 经 `FolderItem(url:title:)` 后交给 `addItems`。
+- “添加 App…”保持只选 App，选中的 URL 经 `FolderItem(url:title:)` 后交给 `addItems`；“添加文件…”见 07。
 
 ## 面板
 
@@ -130,7 +132,7 @@ extension FolderItem {
   - 从访达把 `.txt`、`.pdf`、`.rtfd`、`.webloc` 与未知扩展名的文件拖到 tile 上，tile 压暗为放置目标，松手后以 `odoc` 拉起 stub，`application(_:open:)` 收到文件 URL；前台 App 仍是访达
   - `.app` 仍被接收
   - stub 不出现在访达的“打开方式”里，各类文件的默认打开 App 不变
-  - 普通文件夹同样高亮并拉起 stub：声明了 `public.data` 或 `com.apple.package`，Dock 就对文件夹一并接收，只有声明具体类型时才按类型判断。Dock 这一层拦不住，由 Flotilla 分类时略过：tile 会高亮，但不会加入
+  - 访达里的文件夹同样高亮并拉起 stub：声明了 `public.data` 或 `com.apple.package`，Dock 就对文件夹一并接收，只有声明具体类型时才按类型判断；它作为文件加入，见 07
   - 改写 Info.plist 并 `lsregister -f` 之后，不重启 Dock，下一次拖动就按新声明判断
 - Info.plist 变了，现有 stub 在下一次同步里按 02 的逐字节比对被改写（连同可执行文件）并重新登记。
 
@@ -153,7 +155,7 @@ extension FolderItem {
 
   - `path` 用 `URL(filePath:)` 还原：stub 送来的文件包、App 与文件夹路径以 `/` 结尾，还原成目录 URL；分类时还会再规整
   - `apps` 路由不再识别；没有任何 `path` 时同样为 nil
-- `AppDelegate.application(_:open:)`：`.addItems` 先确认 id 是根文件夹，再逐个经 `FolderItem(url:title:)` 分类后交给 `addItems`；普通文件夹与已不存在的文件在分类时被略过。
+- `AppDelegate.application(_:open:)`：`.addItems` 先确认 id 是根文件夹，再逐个经 `FolderItem(url:title:)` 分类后交给 `addItems`；已不存在的文件在分类时被略过。
 
 ### 网页
 
@@ -165,7 +167,7 @@ extension FolderItem {
 - 编解码：文件、网页（有、没有标题）往返一致；没有标题时 JSON 里没有 `title`；只有 `app`、`folder` 的旧 JSON 照常解码
 - `FolderItem(url:title:)`，用临时目录：
   - 普通文件为文件；文件包（`.rtfd` 目录）为文件，按目录 URL 记录；`.app` 目录为 App
-  - 普通文件夹、卷根目录与不存在的路径为 nil
+  - 不存在的路径为 nil；访达里的文件夹、卷根目录见 07
   - 同一个 App 的不同 URL 写法得到同一个 URL
   - `http`、`https` 为网页并带标题；标题去掉首尾空白，只有空白时为 nil；`ftp:`、`mailto:` 为 nil
 - `FolderStore.addItems`：
@@ -175,9 +177,9 @@ extension FolderItem {
   - 文件与网页不能移到根层级，能在文件夹之间移动
 - 设置窗口的数据源（用只带剪贴板的 `NSDraggingInfo` 替身，不开窗口）：
   - 带 `public.url` 与 `public.url-name` 的剪贴板落在文件夹行上，加入带标题的网页
-  - 文件 URL 加入文件；只有普通文件夹时不接收
+  - 文件 URL 加入文件；一个能加入的都没有时不接收，见 07
   - 落在文件行或网页行上不接收
-- 文件夹图标的预览跳过子文件夹、文件与网页
+- 文件夹图标的预览见 07
 - `DockTileRequest`：`items` 路由的解析，路径含空格、中文与 URL 的保留字符，文件包、App 路径以 `/` 结尾时还原成目录 URL；多个 `path` 保持顺序；`apps` 路由与没有 `path` 的 URL 为 nil
 - stub 的 Info.plist：含上述 File 一项，`LSHandlerRank` 为 `None`；旧版 stub 改写并重新登记后，能接收 App 与普通文件
 
@@ -195,7 +197,7 @@ extension FolderItem {
 
 - `mise run swift:lint`、`swift test`、`mise run bundle` 全部通过
 - 设置窗口：
-  - 从访达把 `.txt`、`.pdf` 拖到文件夹行上，加入；拖普通文件夹不接收
+  - 从访达把 `.txt`、`.pdf` 拖到文件夹行上，加入；拖访达里的文件夹的结果见 07
   - 从 Chrome 把网址拖到文件夹行上，加入并带标题
   - 文件行、网页行显示图标与名称，双击不进入编辑；能拖动排序、移入其它文件夹，不能拖到根层级
 - 面板：
@@ -203,8 +205,8 @@ extension FolderItem {
   - 点文件用默认 App 打开并收起；点网页用默认浏览器打开并收起
 - Dock tile：
   - 从访达把 `.txt`、`.pdf` 拖到 tile 上：tile 高亮，松手后加入该文件夹；前台 App 保持前台
-  - 拖普通文件夹：tile 高亮，但不会加入
+  - 拖访达里的文件夹的结果见 07
   - 把 App 拖到 tile 上照常加入
   - 访达的“打开方式”里没有 stub
-- tile 与面板里子文件夹的图标只预览 App
+- tile 与面板里子文件夹图标的预览见 07
 - 退出重开 Flotilla 后数据仍在

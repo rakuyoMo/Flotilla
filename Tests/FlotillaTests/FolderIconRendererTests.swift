@@ -122,42 +122,74 @@ struct FolderIconRendererTests {
         #expect(requestedFour == requestedTwo)
     }
 
-    /// 子文件夹、文件与网页不参与预览，跳过它们继续取后面的 App
+    /// 子文件夹不参与预览，跳过它继续取后面的文件、网页与 App
     @Test(arguments: [FolderIconAppearance.dark, .light])
-    func nonAppItemsAreSkipped(appearance: FolderIconAppearance) throws {
-        let apps = makeFolder(appCount: 1).items
-        let webPageURL = try #require(URL(string: "https://example.com/"))
+    func subfoldersAreSkipped(appearance: FolderIconAppearance) throws {
+        let previewed = try [file, webPage()] + makeFolder(appCount: 1).items
+        let subfolder = FolderItem.folder(Folder(id: UUID(), name: "子文件夹", items: []))
 
-        let otherItems: [FolderItem] = [
-            .folder(Folder(id: UUID(), name: "子文件夹", items: [])),
-            .file(FileReference(id: UUID(), url: URL(filePath: "/etc/hosts"))),
-            .webPage(WebPageReference(id: UUID(), url: webPageURL, title: nil)),
-        ]
-
-        let withOtherItems = Folder(
-            id: UUID(),
-            name: "混排",
-            items: otherItems + apps
-        )
-
-        let appsOnly = Folder(id: UUID(), name: "仅 App", items: apps)
-
-        let mixed = try renderedPixels(
-            of: withOtherItems,
-            previewIconCount: 1,
+        let withSubfolder = try renderedPixels(
+            of: Folder(id: UUID(), name: "混排", items: [subfolder] + previewed),
+            previewIconCount: 3,
             appearance: appearance
         )
 
-        let plain = try renderedPixels(
-            of: appsOnly,
-            previewIconCount: 1,
+        let withoutSubfolder = try renderedPixels(
+            of: Folder(id: UUID(), name: "无子文件夹", items: previewed),
+            previewIconCount: 3,
             appearance: appearance
         )
 
-        #expect(mixed == plain)
+        #expect(withSubfolder == withoutSubfolder)
     }
 
-    /// 预览数量为 0 与文件夹里没有 App 时都只画底板，两者画面相同
+    /// 文件与网页和 App 一样进入预览，按文件夹里的顺序排进单元格
+    @Test(arguments: [FolderIconAppearance.dark, .light])
+    func filesAndWebPagesArePreviewedInOrder(appearance: FolderIconAppearance) throws {
+        let fileFirst = try renderedPixels(
+            of: Folder(id: UUID(), name: "文件在前", items: [file, webPage()]),
+            previewIconCount: 2,
+            appearance: appearance
+        )
+
+        let webPageFirst = try renderedPixels(
+            of: Folder(id: UUID(), name: "网页在前", items: [webPage(), file]),
+            previewIconCount: 2,
+            appearance: appearance
+        )
+
+        let plateOnly = try renderedPixels(
+            of: makeFolder(appCount: 0),
+            previewIconCount: 2,
+            appearance: appearance
+        )
+
+        #expect(fileFirst != plateOnly)
+        #expect(fileFirst != webPageFirst)
+    }
+
+    /// 文件、网页与 App 混排时同样只取前 `previewIconCount` 项
+    @Test(arguments: [FolderIconAppearance.dark, .light])
+    func mixedItemsStopAtPreviewCount(appearance: FolderIconAppearance) throws {
+        let apps = makeFolder(appCount: 3).items
+        let items = try [file, webPage()] + apps
+
+        let allItems = try renderedPixels(
+            of: Folder(id: UUID(), name: "五项", items: items),
+            previewIconCount: 4,
+            appearance: appearance
+        )
+
+        let firstFour = try renderedPixels(
+            of: Folder(id: UUID(), name: "前四项", items: Array(items.prefix(4))),
+            previewIconCount: 4,
+            appearance: appearance
+        )
+
+        #expect(allItems == firstFour)
+    }
+
+    /// 预览数量为 0 与文件夹里没有任何项时都只画底板，两者画面相同
     @Test(arguments: [FolderIconAppearance.dark, .light])
     func emptyPreviewDrawsPlateOnly(appearance: FolderIconAppearance) throws {
         let countZero = try renderedPixels(
@@ -166,13 +198,13 @@ struct FolderIconRendererTests {
             appearance: appearance
         )
 
-        let noApps = try renderedPixels(
+        let noItems = try renderedPixels(
             of: makeFolder(appCount: 0),
             previewIconCount: 4,
             appearance: appearance
         )
 
-        #expect(countZero == noApps)
+        #expect(countZero == noItems)
     }
 
     /// 底板与系统 App 图标的底板重合：按 1024 像素栅格化后，不透明部分的包围盒是 [100, 923]
@@ -287,6 +319,18 @@ struct FolderIconRendererTests {
 // MARK: - Private
 
 extension FolderIconRendererTests {
+    /// 用作预览的文件：通用文稿图标，与系统 App、网页的图标都不同
+    private var file: FolderItem {
+        .file(FileReference(id: UUID(), url: URL(filePath: "/etc/hosts"), bookmark: nil))
+    }
+
+    /// 用作预览的网页：蓝色地球图标
+    private func webPage() throws -> FolderItem {
+        let url = try #require(URL(string: "https://example.com/"))
+
+        return .webPage(WebPageReference(id: UUID(), url: url, title: nil))
+    }
+
     /// 构造包含前 appCount 个系统 App 的文件夹
     private func makeFolder(appCount: Int) -> Folder {
         Folder(

@@ -3,7 +3,7 @@ import AppKit
 // MARK: - FolderTreeDataSource
 
 /// 设置窗口文件夹树的数据源：把 `FolderStore` 的树转换成行节点，
-/// 并处理树内拖动、从访达拖入 App 与文件、从浏览器拖入网页
+/// 并处理树内拖动、从访达拖入 App、文件与访达里的文件夹、从浏览器拖入网页
 @MainActor
 final class FolderTreeDataSource: NSObject {
     /// 树内拖动时写进剪贴板的类型，内容为被拖动项的 id
@@ -191,7 +191,7 @@ extension FolderTreeDataSource {
 
     /// 剪贴板里能加入文件夹的项：每个剪贴板项先取文件 URL，没有再取网址；网址带上同一项里的网页标题
     ///
-    /// 分类交给 `FolderItem(url:title:)`，普通文件夹与 `http`、`https` 以外的网址被略过
+    /// 分类交给 `FolderItem(url:title:)`，已不存在的文件与 `http`、`https` 以外的网址被略过
     private static func droppedItems(in pasteboard: NSPasteboard) -> [FolderItem] {
         (pasteboard.pasteboardItems ?? []).compactMap {
             let urlString = $0.string(forType: .fileURL) ?? $0.string(forType: .URL)

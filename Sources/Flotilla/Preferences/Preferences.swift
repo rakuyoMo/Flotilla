@@ -20,7 +20,7 @@ final class Preferences {
     /// 存放设置的 `UserDefaults`
     private let defaults: UserDefaults
 
-    /// 渲染进文件夹图标的 App 图标数量，默认取上限 4；读写都夹在 `0...maximumPreviewIconCount`
+    /// 渲染进文件夹图标的预览图标数量：按顺序取前几个 App、文件或网页，默认取上限 4；读写都夹在 `0...maximumPreviewIconCount`
     var previewIconCount: Int {
         get {
             let stored = defaults.object(forKey: Self.previewIconCountKey) as? Int

@@ -188,17 +188,43 @@ final class FolderTreeDataSourceTests {
         #expect(file.url.path(percentEncoded: false) == fileURL.path(percentEncoded: false))
     }
 
-    /// 只拖了普通文件夹时不接收：它在访达里显示成文件夹，不是文件
+    /// 访达里的文件夹落在文件夹行上，作为文件加入，按目录 URL 记录
     @Test
-    func rejectsPlainFolderOnly() throws {
-        let folderURL = directory.appending(path: "普通文件夹", directoryHint: .isDirectory)
+    func dropsFinderFolderOntoFolder() throws {
+        let folderURL = directory.appending(path: "资料", directoryHint: .isDirectory)
         try FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)
 
         let pasteboardItem = NSPasteboardItem()
         pasteboardItem.setString(folderURL.absoluteString, forType: .fileURL)
 
-        let before = store.rootFolders
         let result = try drop([pasteboardItem], onto: work.id)
+
+        #expect(result.operation == .copy)
+        #expect(result.accepted)
+
+        guard case .file(let file) = try #require(store.folder(id: work.id)).items.last else {
+            Issue.record("文件夹末尾应当是访达里的文件夹")
+            return
+        }
+
+        #expect(file.url.hasDirectoryPath)
+        #expect(file.url.path(percentEncoded: false) == folderURL.path(percentEncoded: false))
+    }
+
+    /// 一个能加入的项都没有时不接收：已不存在的文件、`http`、`https` 以外的网址
+    @Test
+    func rejectsItemsThatCannotBeAdded() throws {
+        let missingFile = NSPasteboardItem()
+        missingFile.setString(
+            directory.appending(path: "不存在的文件.txt").absoluteString,
+            forType: .fileURL
+        )
+
+        let ftpAddress = NSPasteboardItem()
+        ftpAddress.setString("ftp://example.com/file.txt", forType: .URL)
+
+        let before = store.rootFolders
+        let result = try drop([missingFile, ftpAddress], onto: work.id)
 
         #expect(result.operation.isEmpty)
         #expect(!result.accepted)
@@ -208,7 +234,9 @@ final class FolderTreeDataSourceTests {
     /// 文件行与网页行不能作为落点：它们不能包含其它项
     @Test
     func rejectsDropOnFileOrWebPageRow() throws {
-        let report = FolderItem.file(FileReference(id: UUID(), url: URL(filePath: "/etc/hosts")))
+        let report = FolderItem.file(
+            FileReference(id: UUID(), url: URL(filePath: "/etc/hosts"), bookmark: nil)
+        )
         let exampleURL = try #require(URL(string: "https://example.com/"))
         let example = FolderItem.webPage(WebPageReference(id: UUID(), url: exampleURL, title: nil))
 

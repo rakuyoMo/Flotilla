@@ -7,7 +7,7 @@ import Testing
 /// 因此五张表的键必须完全一致、没有空值，并且与代码里引用的键一一对应
 struct LocalizationTests {
     /// 支持的语言，即 `Sources/Flotilla/Resources` 下的 `.lproj` 目录名
-    private static let languages = ["en", "zh-Hans", "zh-Hant", "ja", "ko"]
+    static let languages = ["en", "zh-Hans", "zh-Hant", "ja", "ko"]
 
     /// App 源码目录：本文件位于 `Tests/FlotillaTests/` 下，所在目录向上两级是仓库根目录
     private static let sourcesURL = URL(filePath: #filePath)
@@ -54,11 +54,11 @@ struct LocalizationTests {
     }
 }
 
-// MARK: - Private
+// MARK: - Tables
 
 extension LocalizationTests {
     /// 读取并解析一种语言的 `Localizable.strings`：它是 OpenStep 格式的属性列表，顶层为字典
-    private static func table(for language: String) throws -> [String: String] {
+    static func table(for language: String) throws -> [String: String] {
         let url = sourcesURL.appending(path: "Resources/\(language).lproj/Localizable.strings")
         let data = try Data(contentsOf: url)
 
@@ -69,7 +69,11 @@ extension LocalizationTests {
 
         return try #require(propertyList as? [String: String])
     }
+}
 
+// MARK: - Private
+
+extension LocalizationTests {
     /// 扫描 App 源码里全部 `String(localized: "键"` 形式的调用，取出引用的键；
     /// 调用可能跨行书写，括号与参数标签之间允许空白
     private static func keysReferencedInCode() throws -> Set<String> {
