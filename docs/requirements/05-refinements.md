@@ -74,9 +74,9 @@
 ### 设置窗口
 
 - 文件夹树里，tile 不在 Dock 上的根文件夹这一行，在名称右侧显示状态文字“不在 Dock 上”：次要文字颜色（`secondaryLabelColor`）、小号系统字体；在 Dock 上的根文件夹、子文件夹与 App 都不显示。
-- 底部按钮行新增“添加到 Dock”，排在“添加 App…”之后；只有选中的是 tile 不在 Dock 上的根文件夹时可用，点击后调用 `addTile(for:)`。
+- 底部按钮行新增“添加到 Dock”，排在“添加文件…”（见 07）之后；只有选中的是 tile 不在 Dock 上的根文件夹时可用，点击后调用 `addTile(for:)`。
 - 文件夹树每次重建或刷新状态时读取一次 `rootFolderIDsRemovedFromDock()`，行的状态与按钮的可用状态都用这一次读取的结果；点击“添加到 Dock”后立即刷新一次，状态文字随即消失。
-- `FolderStore.didChangeNotification` 时重建整棵树；`DockTileSynchronizer.didSynchronizeNotification`、`DockTileSynchronizer.dockTilesDidChangeNotification` 与设置窗口成为 key window 时只原地刷新已显示各行的状态与按钮的可用状态，不重建。
+- `FolderStore.didChangeNotification` 时重建整棵树；`DockTileSynchronizer.didSynchronizeNotification`、`DockTileSynchronizer.dockTilesDidChangeNotification` 与设置窗口成为 key window 时只原地刷新已显示各行的状态与按钮的可用状态，不重建；设置窗口成为 key window 时另按书签更新文件位置，有变化才重建（见 07）。
   - 新建根文件夹后立即进入改名，随后的同步与 Dock 偏好里 tile 的变化都会发出通知；实测 view-based `NSOutlineView` 在编辑中 `reloadData` 会结束编辑，并把输入到一半的名称提交出去
 - “新建文件夹”新建根文件夹时，先加入数据源再立即 `holdTile(for:)`（同步器收到变更通知后要等防抖间隔才同步，搁置赶得上）；名称编辑结束（`controlTextDidEndEditing`）时写回名称并 `releaseTile(for:)`
   - 按 Esc 取消编辑时名称保持原样，同样 `releaseTile(for:)`：实测 outline view 取消编辑时不发 `controlTextDidEndEditing`，在 `control(_:textView:doCommandBy:)` 收到 `cancelOperation(_:)` 时解除搁置，返回 false，取消编辑仍交给 outline view
@@ -153,11 +153,12 @@
 | `folders.newFolder` | New Folder | 新建文件夹 | 新增檔案夾 | 新規フォルダ | 새로운 폴더 |
 | `folders.untitledFolder` | Untitled Folder | 未命名文件夹 | 未命名檔案夾 | 名称未設定フォルダ | 제목 없는 폴더 |
 | `folders.addApps` | Add Apps… | 添加 App… | 加入 App… | アプリを追加… | 앱 추가… |
+| `folders.addFiles` | Add Files… | 添加文件… | 加入檔案… | ファイルを追加… | 파일 추가… |
 | `folders.addToDock` | Add to Dock | 添加到 Dock | 加入 Dock | Dockに追加 | Dock에 추가 |
 | `folders.notOnDock` | Not in Dock | 不在 Dock 上 | 不在 Dock 上 | Dockにありません | Dock에 없음 |
 | `folders.remove` | Delete | 删除 | 刪除 | 削除 | 삭제 |
 | `general.sectionTitle` | General | 通用 | 一般 | 一般 | 일반 |
-| `general.previewIconCount` | App icons shown in folder icon: | 文件夹图标内显示的 App 图标数量： | 檔案夾圖像內顯示的 App 圖像數量： | フォルダアイコンに表示するアプリアイコンの数： | 폴더 아이콘에 표시할 앱 아이콘 수: |
+| `general.previewIconCount` | Icons shown in folder icon: | 文件夹图标内显示的图标数量： | 檔案夾圖像內顯示的圖像數量： | フォルダアイコンに表示するアイコンの数： | 폴더 아이콘에 표시할 아이콘 수: |
 | `general.accessibility` | Accessibility permission: | 辅助功能权限： | 輔助使用權限： | アクセシビリティの権限： | 손쉬운 사용 권한: |
 | `general.accessibilityGranted` | Granted | 已授权 | 已授權 | 許可済み | 허용됨 |
 | `general.accessibilityNotGranted` | Not granted | 未授权 | 未授權 | 未許可 | 허용되지 않음 |
@@ -196,6 +197,6 @@
 - 真实 Dock 上：
   - 把 tile 拖出 Dock 后，Flotilla 不加回；设置窗口里该根文件夹显示“不在 Dock 上”，选中后“添加到 Dock”可用，点击后 tile 回到 Dock、状态消失
   - 新建根文件夹仍自动出现在 Dock 上；重启 Flotilla 后被拖出的 tile 仍不加回
-  - 从访达把一个或多个 App 拖到 tile 上：tile 高亮，松手后 App 出现在该文件夹里；前台 App 保持前台；拖文件与普通文件夹的结果见 06
+  - 从访达把一个或多个 App 拖到 tile 上：tile 高亮，松手后 App 出现在该文件夹里；前台 App 保持前台；拖文件与访达里的文件夹的结果见 06、07
   - 系统语言或 Flotilla 的单独语言设置切到五种语言之一时，菜单、设置窗口与面板返回按钮的辅助功能标签都换成对应语言；其它语言显示英文
   - 设置窗口里文件夹行显示系统文件夹图标，切换外观不重绘

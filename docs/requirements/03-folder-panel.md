@@ -220,8 +220,9 @@
 - `toggle(folderID:)`：未展开时展开该文件夹的根层级；已展开同一文件夹时收起；已展开另一个文件夹时直接切换，旧面板立即消失，新面板按展开动画出现。
 - 收起的触发：见“点击信号”；另有 Esc、点击 App、文件或网页项（需求 9、14）、屏幕参数变化、正在展示的文件夹被删除。
 - 点击 App 项：`NSWorkspace.shared.openApplication(at:configuration:)`，随即收起面板。
-- 点击文件或网页项：`NSWorkspace.shared.open(_:configuration:completionHandler:)`，用默认 App 或默认浏览器打开，随即收起面板（见 06）。
+- 点击文件或网页项：`NSWorkspace.shared.open(_:configuration:completionHandler:)`，用默认 App 或默认浏览器打开，随即收起面板（见 06）；访达里的文件夹是文件项，交给访达打开（见 07）。
 - 展示期间 `FolderStore` 变化：当前文件夹被删则收起；内容变化则重建网格，能保留当前层级就保留。
+- 展开之后，推迟到下一轮主线程按书签更新这个根文件夹里的文件位置；有变化时照上一条重建网格（见 07）。
 - 面板不得让 Flotilla 成为活动 App；不得对 Dock tile 做任何事。
 - 实测原生展开期间 Dock 一直保持显示，鼠标离开 Dock 也不隐藏；放大状态冻结在点击那一刻，鼠标经过其它 tile 也不放大；收起后 Dock 才按自动隐藏规则隐藏。
   - Flotilla 做不到让 Dock 保持显示时，面板位置保持不动、不跟随 Dock 移动，差异写进汇报。

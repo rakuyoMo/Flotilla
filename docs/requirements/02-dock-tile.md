@@ -47,7 +47,7 @@
     - 文件（需求 14，见 06）：`CFBundleTypeName = File`、`CFBundleTypeRole = Viewer`、`LSHandlerRank = None`、`LSItemContentTypes = [public.data, com.apple.package]`
       - `LSHandlerRank` 必须是 `None`：实测（macOS 27）`Alternate` 会让 stub 出现在访达的“打开方式”里
       - 实测（macOS 27）：从访达拖 `.txt`、`.pdf`、`.rtfd`、`.webloc` 与未知扩展名的文件，tile 压暗为放置目标，松手后以 `odoc` 拉起 stub；stub 不出现在“打开方式”里，各类文件的默认打开 App 不变
-      - 实测（macOS 27）：声明了 `public.data` 或 `com.apple.package`，Dock 对普通文件夹也高亮并拉起 stub，Dock 这一层拦不住，由 Flotilla 分类时略过
+      - 实测（macOS 27）：声明了 `public.data` 或 `com.apple.package`，Dock 对访达里的文件夹也高亮并拉起 stub，它作为文件加入（见 07）
     - Dock 只在 stub 提供服务（`NSServices`）时接收网址的拖放，那会在“系统设置 › 键盘 › 键盘快捷键 › 服务”里给每个根文件夹加一项
     - Dock 上的 tile 之间不能互相拖放：拖动 Dock 图标时整个过程由 Dock 接管，只能排序或拖出
 - 每次生成或更新后执行 `/usr/bin/codesign --force --sign - <bundle>`。
@@ -143,7 +143,7 @@
 
 - 点击 tile：stub 被启动，Flotilla 收到 URL，`DockFolderPresenter` 收到对应 id。
 - Flotilla 未运行时点击 tile：Flotilla 被拉起并收到 URL。
-- 从访达把 App 或文件拖到 tile 上：tile 高亮，stub 以打开文档的方式被启动，Flotilla 收到 `flotilla://folder/<id>/items?path=…`，由 `DockTileRequest` 解析，经 `FolderItem(url:title:)` 分类后加入该根文件夹，普通文件夹被略过；整个过程不激活 Flotilla，前台 App 保持前台。
+- 从访达把 App 或文件拖到 tile 上：tile 高亮，stub 以打开文档的方式被启动，Flotilla 收到 `flotilla://folder/<id>/items?path=…`，由 `DockTileRequest` 解析，经 `FolderItem(url:title:)` 分类后加入该根文件夹，访达里的文件夹同样加入（见 07）；整个过程不激活 Flotilla，前台 App 保持前台。
 - 实测（macOS 27，tile 在左侧 App 区域）：点击 tile 时 Dock 不弹跳、不显示运行指示灯，前台 App 保持前台；图标按渲染结果原样显示，系统没有另套灰色底板。
 
 ## 单元测试
