@@ -4,7 +4,8 @@ import QuartzCore
 
 // MARK: - FolderPanelController
 
-/// 管理全局唯一的面板：按 tile 摆放、构建每个层级、嵌套导航（需求 1），以及展开、收起与转场动画
+/// 管理全局唯一的面板：按 tile 摆放、构建每个层级、嵌套导航（需求 1）与访达里的文件夹的展开（需求 20），
+/// 以及展开、收起与转场动画
 ///
 /// 每个层级是一个 `FolderPanelLevel`，四周带着阴影留白；窗口 frame 是当前全部层级的并集。
 /// 展开与收起只对 contentView 图层的 transform 与 opacity 做动画，锚点在 tile 图标中心
@@ -22,6 +23,9 @@ final class FolderPanelController {
     /// 请求收起面板：按下 Esc、点击 App、文件或网页之后调用，由 `DockFolderPresenter` 更新状态并收起
     var dismissRequestHandler: (() -> Void)? = nil
 
+    /// 本次展开里各次读访达里的文件夹占住主线程的时段，`DockFolderPresenter` 据此忽略这期间的鼠标按下
+    private(set) var readPeriods = FinderFolderReadPeriods()
+
     /// 面板的 contentView，承载全部层级；展开与收起的动画作用在它的图层上
     private let containerView = NSView()
 
@@ -37,7 +41,7 @@ final class FolderPanelController {
     /// 展开、收起时整个面板缩放的锚点（tile 图标中心），AppKit 屏幕坐标
     private var scaleAnchor = CGPoint.zero
 
-    /// 从根文件夹到当前层级的文件夹 id
+    /// 从根文件夹到当前层级的各层 id：根文件夹、子文件夹或访达里的文件夹
     private var path: [UUID] = []
 
     /// 当前层级
@@ -46,8 +50,11 @@ final class FolderPanelController {
     /// 转场中正在淡出、缩走的层级，动画结束后移除
     private var departingLevels: [FolderPanelLevel] = []
 
-    /// 本次展开中各文件夹网格的滚动位置，返回上一层时恢复
+    /// 本次展开中各层级网格的滚动位置，按层级的 id 记录，返回上一层时恢复
     private var scrollOffsets: [UUID: CGPoint] = [:]
+
+    /// 本次展开里读出的访达里的文件夹的内容，让其中各项的 id 在这一次展开里保持不变
+    private var finderFolderContents = FinderFolderContents()
 
     /// 动画代数：每次立即隐藏、开始收起都加一，过期的收起收尾据此放弃
     private var animationGeneration = 0
@@ -71,36 +78,46 @@ final class FolderPanelController {
         }
     }
 
-    /// 沿导航路径在文件夹树里逐层查找，返回当前层级的文件夹
-    /// - Returns: 根文件夹已不是根文件夹，或路径上任何一层已不在上一层之内时为 nil
-    static func folder(at path: [UUID], in rootFolders: [Folder]) -> Folder? {
+    /// 沿导航路径逐层查找，返回当前层级的内容：在当前层的项里找下一层的 id，子文件夹取它本身，访达里的文件夹读出目录
+    /// - Parameters:
+    ///   - path: 从根文件夹到当前层级的各层 id
+    ///   - rootFolders: 文件夹树的根文件夹
+    ///   - finderFolderItems: 读出访达里的文件夹里的各项；读不出来时为 nil
+    /// - Returns: 根文件夹已不是根文件夹、路径上任何一层已不在上一层之内、或某一层读不出来时为 nil
+    static func levelContent(
+        at path: [UUID],
+        in rootFolders: [Folder],
+        finderFolderItems: (FileReference) -> [FolderItem]?
+    ) -> FolderPanelLevelContent? {
         guard
             let rootID = path.first,
-            var folder = rootFolders.first(where: { $0.id == rootID })
+            let rootFolder = rootFolders.first(where: { $0.id == rootID })
         else {
             return nil
         }
 
-        for folderID in path.dropFirst() {
-            let subfolder = folder.items.lazy
-                .compactMap { item -> Folder? in
-                    guard
-                        case .folder(let subfolder) = item,
-                        subfolder.id == folderID
-                    else {
-                        return nil
-                    }
+        var content = FolderPanelLevelContent.folder(rootFolder)
 
-                    return subfolder
-                }
-                .first
+        for levelID in path.dropFirst() {
+            guard let item = content.items.first(where: { $0.id == levelID }) else { return nil }
 
-            guard let subfolder else { return nil }
+            switch item {
+            case .folder(let subfolder):
+                content = .folder(subfolder)
 
-            folder = subfolder
+            // 访达里的文件夹按它当前的 URL 读，它可能刚按书签跟到新位置
+            case .file(let finderFolder) where finderFolder.isFinderFolder:
+                guard let items = finderFolderItems(finderFolder) else { return nil }
+
+                content = .finderFolder(finderFolder, items: items)
+
+            // 已不再是访达里的文件夹，或是 App、网页：进不去
+            default:
+                return nil
+            }
         }
 
-        return folder
+        return content
     }
 }
 
@@ -114,7 +131,7 @@ extension FolderPanelController {
         self.anchor = anchor
         path = [rootFolder.id]
 
-        let (level, placement) = makeLevel(for: rootFolder, anchor: anchor)
+        let (level, placement) = makeLevel(for: .folder(rootFolder), anchor: anchor)
         scaleAnchor = placement.anchor
         install(level)
 
@@ -148,12 +165,12 @@ extension FolderPanelController {
         }
     }
 
-    /// 文件夹树变化后按新数据重建当前层级，保留滚动位置，不带动画
-    /// - Returns: 当前文件夹已不在该根文件夹之下时为 false，由调用方收起面板
+    /// 文件夹树变化后按新数据重建当前层级，保留滚动位置，不带动画；访达里的文件夹的层级重新读取
+    /// - Returns: 当前层级已不在该根文件夹之下、或某一层读不出来时为 false，由调用方收起面板
     func reload() -> Bool {
         guard
             let anchor,
-            let folder = Self.folder(at: path, in: store.rootFolders)
+            let content = currentPathContent()
         else {
             return false
         }
@@ -164,7 +181,7 @@ extension FolderPanelController {
 
         // 转场中的层级一并丢弃，只留下按新数据重建的当前层级
         removeAllLevels()
-        install(makeLevel(for: folder, anchor: anchor).level)
+        install(makeLevel(for: content, anchor: anchor).level)
         updateMousePassthrough()
 
         return true
@@ -175,14 +192,18 @@ extension FolderPanelController {
 
 extension FolderPanelController {
     /// 点击网格中的一项：App 直接启动、文件用默认 App 打开、网页用默认浏览器打开，随即收起面板（需求 9）；
-    /// 子文件夹在同一个面板里进入
+    /// 子文件夹与访达里的文件夹在同一个面板里进入
     private func select(_ item: FolderItem) {
         switch item {
         case .app(let app):
             launch(app)
 
         case .folder(let folder):
-            enter(folder)
+            enter(.folder(folder))
+
+        // 点击时才判断是不是访达里的文件夹：文件包、符号链接、替身与已删除的都按文件打开
+        case .file(let file) where file.isFinderFolder:
+            enter(finderFolder: file)
 
         case .file(let file):
             open(file.url, named: file.displayName)
@@ -192,21 +213,39 @@ extension FolderPanelController {
         }
     }
 
-    /// 进入子文件夹：新层级从被点击的子文件夹图标里长出来，旧层级原地淡出
-    private func enter(_ folder: Folder) {
+    /// 进入访达里的文件夹：读出目录里的各项再进入；读不出来时交给访达打开，随即收起面板
+    private func enter(finderFolder: FileReference) {
+        let items: [FolderItem]
+
+        do {
+            items = try readItems(of: finderFolder)
+        } catch {
+            Self.logger.error(
+                "读取 \(finderFolder.displayName, privacy: .public) 的内容失败：\(error.localizedDescription, privacy: .public)"
+            )
+
+            open(finderFolder.url, named: finderFolder.displayName)
+            return
+        }
+
+        enter(.finderFolder(finderFolder, items: items))
+    }
+
+    /// 进入子文件夹或访达里的文件夹：新层级从被点击的图标里长出来，旧层级原地淡出
+    private func enter(_ content: FolderPanelLevelContent) {
         guard
             let anchor,
             let parent = currentLevel,
-            let iconCenter = parent.iconCenterOnScreen(of: folder.id)
+            let iconCenter = parent.iconCenterOnScreen(of: content.id)
         else {
             return
         }
 
         saveScrollOffset(of: parent)
-        path.append(folder.id)
+        path.append(content.id)
 
         // 新层级叠在旧层级之上，旧层级转入淡出队列
-        let level = makeLevel(for: folder, anchor: anchor).level
+        let level = makeLevel(for: content, anchor: anchor).level
         departingLevels.append(parent)
         install(level)
         updateMousePassthrough()
@@ -215,7 +254,7 @@ extension FolderPanelController {
         fadeOut(parent)
     }
 
-    /// 返回上一层：当前层级缩回父层级里该子文件夹的图标并淡出，父层级原地淡入；上一层已不存在时收起面板
+    /// 返回上一层：当前层级缩回父层级里它的图标并淡出，父层级原地淡入；上一层已不存在或读不出来时收起面板
     private func goBack() {
         guard
             let anchor,
@@ -227,18 +266,18 @@ extension FolderPanelController {
 
         path.removeLast()
 
-        guard let parentFolder = Self.folder(at: path, in: store.rootFolders) else {
+        guard let parentContent = currentPathContent() else {
             dismissRequestHandler?()
             return
         }
 
         // 父层级按记下的滚动位置重建，放在子层级下面
-        let parent = makeLevel(for: parentFolder, anchor: anchor).level
+        let parent = makeLevel(for: parentContent, anchor: anchor).level
         departingLevels.append(child)
         install(parent, below: child.view)
         updateMousePassthrough()
 
-        animateReturn(of: child, to: parent.iconCenterOnScreen(of: child.folderID))
+        animateReturn(of: child, to: parent.iconCenterOnScreen(of: child.id))
         fadeIn(parent)
     }
 
@@ -263,7 +302,8 @@ extension FolderPanelController {
     ///   - url: 文件 URL 或网址
     ///   - name: 显示名，只用于日志
     private func open(_ url: URL, named name: String) {
-        // 文件已不在、没有能打开它的 App 时只记日志，面板照常收起
+        // 打开失败时系统按 `OpenConfiguration` 的默认设置提示用户，例如文件已不在时弹出“找不到”；
+        // 这里另记日志，面板照常收起
         NSWorkspace.shared.open(
             url,
             configuration: NSWorkspace.OpenConfiguration()
@@ -283,14 +323,14 @@ extension FolderPanelController {
     /// 构建一个层级：背景、标题区与网格，并按 tile 算出它在屏幕上的位置
     /// - Returns: 层级，以及算出它位置的 `FolderPanelPlacement`
     private func makeLevel(
-        for folder: Folder,
+        for content: FolderPanelLevelContent,
         anchor: DockTileAnchor
     ) -> (level: FolderPanelLevel, placement: FolderPanelPlacement) {
         let visibleFrame = anchor.screen.visibleFrame
 
-        // 网格的列数与显示行数受 tile 旁可用的空间限制
+        // 网格的列数与显示行数受 tile 旁可用的空间限制；访达里的文件夹多出“在访达中打开”一格
         let layout = FolderGridLayout(
-            itemCount: folder.items.count,
+            itemCount: content.cellCount,
             availableSize: FolderPanelPlacement.availableBodySize(
                 tileFrame: anchor.tileFrame,
                 edge: anchor.edge,
@@ -323,19 +363,19 @@ extension FolderPanelController {
             edge: anchor.edge
         )
 
-        view.bodyView.addSubview(makeHeader(for: folder, bodySize: layout.bodySize))
+        view.bodyView.addSubview(makeHeader(title: content.title, bodySize: layout.bodySize))
 
-        // 空文件夹只有标题区，格内为空
-        let scrollView = folder.items.isEmpty
+        // 空的 Flotilla 文件夹只有标题区，格内为空；空的访达里的文件夹仍有“在访达中打开”一格
+        let scrollView = content.cellCount == 0
             ? nil
-            : makeScrollView(for: folder, layout: layout)
+            : makeScrollView(for: content, layout: layout)
 
         if let scrollView {
             view.bodyView.addSubview(scrollView)
         }
 
         let level = FolderPanelLevel(
-            folderID: folder.id,
+            id: content.id,
             view: view,
             screenFrame: screenFrame,
             scrollView: scrollView,
@@ -347,14 +387,14 @@ extension FolderPanelController {
 
     /// 标题区：占面板主体顶部，子层级带返回按钮
     private func makeHeader(
-        for folder: Folder,
+        title: String,
         bodySize: CGSize
     ) -> FolderNavigationHeaderView {
         let backHandler: (() -> Void)? = path.count > 1
             ? { [weak self] in self?.goBack() }
             : nil
 
-        let header = FolderNavigationHeaderView(title: folder.name, backHandler: backHandler)
+        let header = FolderNavigationHeaderView(title: title, backHandler: backHandler)
         let height = FolderPanelMetrics.headerHeight
 
         header.frame = CGRect(
@@ -367,9 +407,9 @@ extension FolderPanelController {
         return header
     }
 
-    /// 网格所在的滚动视图：向右伸进主体右侧的留白，overlay 滚动条落在留白里；恢复这个文件夹上次的滚动位置
+    /// 网格所在的滚动视图：向右伸进主体右侧的留白，overlay 滚动条落在留白里；恢复这一层上次的滚动位置
     private func makeScrollView(
-        for folder: Folder,
+        for content: FolderPanelLevelContent,
         layout: FolderGridLayout
     ) -> NSScrollView {
         let cell = FolderPanelMetrics.cellSize
@@ -390,15 +430,21 @@ extension FolderPanelController {
         scrollView.verticalScrollElasticity = layout.needsScrolling ? .automatic : .none
         scrollView.horizontalScrollElasticity = .none
 
+        // “在访达中打开”由访达打开这一层的目录，随即收起面板
+        let openInFinderHandler: (() -> Void)? = content.finderFolderURL.map { url in
+            { [weak self] in self?.open(url, named: content.title) }
+        }
+
         scrollView.documentView = FolderGridView(
-            items: folder.items,
+            items: content.items,
             layout: layout,
-            previewIconCount: preferences.previewIconCount
+            previewIconCount: preferences.previewIconCount,
+            openInFinderHandler: openInFinderHandler
         ) { [weak self] in
             self?.select($0)
         }
 
-        if let offset = scrollOffsets[folder.id] {
+        if let offset = scrollOffsets[content.id] {
             scrollView.contentView.scroll(to: offset)
             scrollView.reflectScrolledClipView(scrollView.contentView)
         }
@@ -476,11 +522,33 @@ extension FolderPanelController {
         currentLevel = nil
     }
 
+    /// 按当前的导航路径与文件夹树解析出当前层级的内容；访达里的文件夹的层级重新读取
+    private func currentPathContent() -> FolderPanelLevelContent? {
+        Self.levelContent(at: path, in: store.rootFolders) {
+            try? readItems(of: $0)
+        }
+    }
+
+    /// 读出访达里的文件夹里的各项，并记下这次读取占住主线程的时段
+    ///
+    /// 第一次读受保护的位置时读取等到用户回答隐私授权框，这期间的鼠标按下要据此认出来
+    /// - Throws: 读不出内容时抛出：已删除、没有权限、隐私授权被拒
+    private func readItems(of finderFolder: FileReference) throws -> [FolderItem] {
+        let start = ProcessInfo.processInfo.systemUptime
+
+        // 读取成功、失败都记下：授权框被拒时，点“不允许”的按下同样排在读取之后才处理
+        defer {
+            readPeriods.record(start ... ProcessInfo.processInfo.systemUptime)
+        }
+
+        return try finderFolderContents.items(of: finderFolder)
+    }
+
     /// 记下层级网格当前的滚动位置
     private func saveScrollOffset(of level: FolderPanelLevel) {
         guard let scrollView = level.scrollView else { return }
 
-        scrollOffsets[level.folderID] = scrollView.contentView.bounds.origin
+        scrollOffsets[level.id] = scrollView.contentView.bounds.origin
     }
 
     /// 立即隐藏面板，丢弃进行中的动画与全部层级
@@ -495,6 +563,8 @@ extension FolderPanelController {
         path = []
         anchor = nil
         scrollOffsets = [:]
+        finderFolderContents = FinderFolderContents()
+        readPeriods = FinderFolderReadPeriods()
     }
 }
 

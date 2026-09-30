@@ -157,13 +157,13 @@ final class FolderTreeViewController: NSViewController {
         updateButtons()
     }
 
-    /// 按书签把整棵树里的文件跟到新位置
+    /// 按书签把整棵树里的 App 与文件跟到新位置
     ///
     /// 正在编辑文件夹名时跳过：有变化就会重建树，重建会结束编辑并提交输入到一半的名称
-    func updateFileLocations() {
+    func updateItemLocations() {
         guard !isEditingFolderName else { return }
 
-        store.updateFileLocations()
+        store.updateItemLocations()
     }
 }
 

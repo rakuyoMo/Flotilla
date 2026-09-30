@@ -110,18 +110,14 @@ extension FolderItem {
         // 目录按目录 URL 记录，其余按文件 URL 记录；App bundle 是目录，与 `AppReference` 已有的数据一致
         guard let normalizedURL = FileReference.normalizedURL(url) else { return nil }
 
+        // 书签让 App 与文件移动或改名后仍能找到；建不起来时只按路径找
+        let bookmark = try? normalizedURL.bookmarkData()
+
         if AppReference.isApplicationBundle(normalizedURL) {
-            return .app(AppReference(id: UUID(), url: normalizedURL))
+            return .app(AppReference(id: UUID(), url: normalizedURL, bookmark: bookmark))
         }
 
-        // 书签让文件移动或改名后仍能找到；建不起来时只按路径找
-        let file = FileReference(
-            id: UUID(),
-            url: normalizedURL,
-            bookmark: try? normalizedURL.bookmarkData()
-        )
-
-        return .file(file)
+        return .file(FileReference(id: UUID(), url: normalizedURL, bookmark: bookmark))
     }
 
     /// 网址对应的网页：只接受 `http` 与 `https`，其它网址为 nil

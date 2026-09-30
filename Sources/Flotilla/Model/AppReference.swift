@@ -4,12 +4,17 @@ import UniformTypeIdentifiers
 // MARK: - AppReference
 
 /// 对一个 App bundle 的引用
-struct AppReference: Codable, Hashable, Identifiable {
+///
+/// 带着书签：App 移动或改名后，按书签找到新位置
+struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
     /// 这一项的唯一标识；同一个 App 放进不同文件夹时各有各的 id
     let id: UUID
 
     /// App bundle 的文件 URL
     let url: URL
+
+    /// App 的书签，App 移动或改名后据此找到新位置；建不起来时为 nil，只按路径找
+    let bookmark: Data?
 }
 
 // MARK: - Display

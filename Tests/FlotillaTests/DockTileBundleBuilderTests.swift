@@ -25,7 +25,8 @@ final class DockTileBundleBuilderTests {
     private let apps = ["Calculator", "Chess"].map {
         FolderItem.app(AppReference(
             id: UUID(),
-            url: URL(filePath: "/System/Applications/\($0).app")
+            url: URL(filePath: "/System/Applications/\($0).app"),
+            bookmark: nil
         ))
     }
 

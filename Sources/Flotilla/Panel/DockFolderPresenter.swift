@@ -136,6 +136,9 @@ extension DockFolderPresenter {
         switch event.type {
         // 按下：按住 Control 或 Command 的左键点击由 Dock 弹出菜单或在访达中显示，不启动 stub，不算点击 tile
         case .leftMouseDown, .rightMouseDown, .otherMouseDown:
+            // 读访达里的文件夹期间的按下（例如点系统隐私授权框）排到读取结束后才处理到，既不算点面板外，也不算点 tile
+            guard !panelController.readPeriods.contains(event.timestamp) else { return }
+
             let isPlainLeftClick = event.type == .leftMouseDown
                 && event.modifierFlags.isDisjoint(with: [.control, .command])
 
@@ -164,6 +167,9 @@ extension DockFolderPresenter {
     /// 发往 Flotilla 自己窗口的按下：面板以外的都按外部点击处理
     private func handleLocalMouseDown(_ event: NSEvent) {
         guard event.window !== panelController.panel else { return }
+
+        // 读访达里的文件夹期间的按下排到读取结束后才处理到，不算点面板外
+        guard !panelController.readPeriods.contains(event.timestamp) else { return }
 
         apply(state.mouseDown(
             onTile: nil,
@@ -198,7 +204,7 @@ extension DockFolderPresenter {
 
     /// 定位 tile 并展开；Dock 正在重启等原因定位不到时由定位器退化到鼠标位置，连屏幕都没有时放弃并同步状态
     ///
-    /// 展开之后按书签把这个根文件夹里的文件跟到新位置，有变化时经 `folderStoreDidChange` 重建网格
+    /// 展开之后按书签把这个根文件夹里的 App 与文件跟到新位置，有变化时经 `folderStoreDidChange` 重建网格
     private func expand(_ folderID: UUID) {
         guard
             let folder = store.rootFolders.first(where: { $0.id == folderID }),
@@ -213,7 +219,7 @@ extension DockFolderPresenter {
 
         // 推迟到下一轮主线程：展开不因解析书签而变慢，提交引起的重建也不会在展开途中重入 `apply`
         DispatchQueue.main.async { [weak self] in
-            self?.store.updateFileLocations(in: folderID)
+            self?.store.updateItemLocations(in: folderID)
         }
     }
 

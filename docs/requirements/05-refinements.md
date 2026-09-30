@@ -76,7 +76,7 @@
 - 文件夹树里，tile 不在 Dock 上的根文件夹这一行，在名称右侧显示状态文字“不在 Dock 上”：次要文字颜色（`secondaryLabelColor`）、小号系统字体；在 Dock 上的根文件夹、子文件夹与 App 都不显示。
 - 底部按钮行新增“添加到 Dock”，排在“添加文件…”（见 07）之后；只有选中的是 tile 不在 Dock 上的根文件夹时可用，点击后调用 `addTile(for:)`。
 - 文件夹树每次重建或刷新状态时读取一次 `rootFolderIDsRemovedFromDock()`，行的状态与按钮的可用状态都用这一次读取的结果；点击“添加到 Dock”后立即刷新一次，状态文字随即消失。
-- `FolderStore.didChangeNotification` 时重建整棵树；`DockTileSynchronizer.didSynchronizeNotification`、`DockTileSynchronizer.dockTilesDidChangeNotification` 与设置窗口成为 key window 时只原地刷新已显示各行的状态与按钮的可用状态，不重建；设置窗口成为 key window 时另按书签更新文件位置，有变化才重建（见 07）。
+- `FolderStore.didChangeNotification` 时重建整棵树；`DockTileSynchronizer.didSynchronizeNotification`、`DockTileSynchronizer.dockTilesDidChangeNotification` 与设置窗口成为 key window 时只原地刷新已显示各行的状态与按钮的可用状态，不重建；设置窗口成为 key window 时另按书签更新 App 与文件的位置，有变化才重建（见 07、08）。
   - 新建根文件夹后立即进入改名，随后的同步与 Dock 偏好里 tile 的变化都会发出通知；实测 view-based `NSOutlineView` 在编辑中 `reloadData` 会结束编辑，并把输入到一半的名称提交出去
 - “新建文件夹”新建根文件夹时，先加入数据源再立即 `holdTile(for:)`（同步器收到变更通知后要等防抖间隔才同步，搁置赶得上）；名称编辑结束（`controlTextDidEndEditing`）时写回名称并 `releaseTile(for:)`
   - 按 Esc 取消编辑时名称保持原样，同样 `releaseTile(for:)`：实测 outline view 取消编辑时不发 `controlTextDidEndEditing`，在 `control(_:textView:doCommandBy:)` 收到 `cancelOperation(_:)` 时解除搁置，返回 false，取消编辑仍交给 outline view
@@ -164,8 +164,10 @@
 | `general.accessibilityNotGranted` | Not granted | 未授权 | 未授權 | 未許可 | 허용되지 않음 |
 | `general.openSystemSettings` | Open System Settings | 打开系统设置 | 打開系統設定 | システム設定を開く | 시스템 설정 열기 |
 | `panel.back` | Back | 返回 | 返回 | 戻る | 뒤로 |
+| `panel.openInFinder` | Open in Finder | 在访达中打开 | 在Finder裡打開 | Finderで開く | Finder에서 열기 |
 
 - `panel.back` 是面板返回按钮的辅助功能标签；状态栏图标的辅助功能描述“Flotilla”是 App 名，不本地化。
+- `panel.openInFinder` 照抄 Dock 自己的 `SHOW_IN_FINDER`，照原生原样不加中英文之间的空格（见 08）。
 
 ## 设置窗口的文件夹图标（需求 13）
 

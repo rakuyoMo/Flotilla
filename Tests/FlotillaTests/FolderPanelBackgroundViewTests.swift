@@ -106,7 +106,7 @@ struct FolderPanelBackgroundViewTests {
         let tip = tip(facing: .bottom)
         let screenFrame = CGRect(x: 100, y: 20, width: 666, height: 428)
         let level = FolderPanelLevel(
-            folderID: UUID(),
+            id: UUID(),
             view: FolderPanelBackgroundView(
                 frame: CGRect(origin: .zero, size: screenFrame.size),
                 bodyRect: body,

@@ -13,7 +13,7 @@
   - 设置窗口：从访达拖文件、从浏览器拖网页到文件夹行上；“添加文件…”按钮见 07
   - Dock tile：从访达拖文件到 tile 上；网页不能拖到 tile 上
   - “添加 App…”保持只选 App
-- 文件带书签，移动或改名后跟到新位置（见 07）；找不到文件时，点击记日志
+- 文件带书签，移动或改名后跟到新位置（见 07）；找不到文件时，点击后系统按 `NSWorkspace` 的默认设置弹出“找不到”的提示，同时记日志，面板收起
 - 网页只记网址与加入时的标题，不抓取网页标题或网站图标
 - 同一个文件夹里，同类且 URL 相同的项只出现一次；网页只比网址，标题不同也算同一个网页。
 - 文件与网页和 App 一样只能放在文件夹里，不能放在根层级。
@@ -114,7 +114,9 @@ extension FolderItem {
 - 网格里文件与网页和 App 一样显示图标与 `displayName`。
 - 点击：
   - 文件用默认 App 打开，网页用默认浏览器打开：`NSWorkspace.shared.open(_:configuration:completionHandler:)`
+  - 访达里的文件夹在面板里展开，见 [08](08-finder-folder-stacks.md)
   - 打开失败时记日志，写法与 App 启动失败相同
+  - `OpenConfiguration` 用默认设置（`promptsUserIfNeeded` 为真），打开失败时系统另外提示用户，例如找不到文件时弹出“找不到”
   - 随即收起面板，与需求 9 对 App 的处理一致
 - App 仍用 `openApplication(at:configuration:)` 启动。
 

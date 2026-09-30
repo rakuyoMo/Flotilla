@@ -8,7 +8,7 @@ final class FolderNavigationHeaderView: NSView {
     /// 返回按钮；根层级没有
     private let backButton: FolderNavigationBackButton?
 
-    /// 当前文件夹名
+    /// 当前层级的名称
     private let titleField = FolderPanelLabel(labelWithString: "")
 
     /// 自上而下排列，与面板主体顶边的实测距离一致
@@ -18,7 +18,7 @@ final class FolderNavigationHeaderView: NSView {
 
     /// 创建标题区
     /// - Parameters:
-    ///   - title: 当前文件夹名
+    ///   - title: 当前层级的名称：文件夹名，或访达里的文件夹在访达中显示的名称
     ///   - backHandler: 点击返回按钮后执行；为 nil 时不显示返回按钮
     init(title: String, backHandler: (() -> Void)?) {
         backButton = backHandler.map { FolderNavigationBackButton(clickHandler: $0) }

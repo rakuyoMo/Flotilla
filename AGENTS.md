@@ -4,7 +4,7 @@
 
 ## 项目概述
 
-Flotilla 是一个原生 macOS App：在 Dock 上增加“文件夹”，把多个 App 分类收纳进去，文件夹里也可以放文件、访达里的文件夹与网页；点击文件夹后在 Dock 上展开，显示其中的内容，点击即可打开。
+Flotilla 是一个原生 macOS App：在 Dock 上增加“文件夹”，把多个 App 分类收纳进去，文件夹里也可以放文件、访达里的文件夹与网页；点击文件夹后在 Dock 上展开，显示其中的内容，点击即可打开，访达里的文件夹则像 Dock 叠放那样继续展开。
 
 - 纯开源的个人工具，只在 GitHub 分发
 - 许可证为 [GPL-3.0](LICENSE)
@@ -53,7 +53,7 @@ Sources/FlotillaDockTile/  Dock tile 的 stub 可执行文件，由打包脚本�
 Tests/FlotillaTests/    单元测试（Swift Testing）
 Scripts/bundle.sh       打包脚本：组装 .app 并签名
 Scripts/release.sh      发版脚本：改版本号并开 release PR
-docs/requirements/      需求文档：00 为总览，01–07 为按实现顺序拆分的阶段
+docs/requirements/      需求文档：00 为总览，01–08 为按实现顺序拆分的阶段
 .github/workflows/      GitHub Actions：`ci.yml` 检查与构建，`release.yml` 发布新版本
 .claude/skills/release/ Claude Code 的 `release` skill：用自然语言发布新版本
 ```
