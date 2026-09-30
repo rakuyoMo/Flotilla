@@ -56,7 +56,7 @@ final class GeneralSettingsViewController: NSViewController {
         let previewIconCountLabel = NSTextField(
             labelWithString: String(
                 localized: "general.previewIconCount",
-                comment: "预览图标数选择器左侧的标签：Dock 上的文件夹图标里最多显示几个 App 图标"
+                comment: "预览图标数选择器左侧的标签：Dock 上的文件夹图标里最多显示几个 App、文件或网页的图标"
             )
         )
 

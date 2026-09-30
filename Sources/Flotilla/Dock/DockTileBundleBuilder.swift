@@ -33,8 +33,8 @@ struct DockTileBundleBuilder {
     /// 松手后 Launch Services 以“打开文档”的方式启动 stub
     /// - App 一项为 `Alternate`：stub 不成为 App 的默认打开方式
     /// - 文件一项必须为 `None`：`Alternate` 会让 stub 出现在访达的“打开方式”里
-    /// - 实测（macOS 27）声明了 `public.data` 或 `com.apple.package`，Dock 对普通文件夹也高亮并拉起 stub，
-    ///   由 Flotilla 分类时略过
+    /// - 实测（macOS 27）声明了 `public.data` 或 `com.apple.package`，Dock 对访达里的文件夹也高亮并拉起 stub，
+    ///   它同样作为文件加入
     static func infoDictionary(for folder: Folder) -> [String: Any] {
         [
             "CFBundleExecutable": executableName,

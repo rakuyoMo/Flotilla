@@ -11,9 +11,9 @@ final class FolderItemClassificationTests {
     private let directory = FileManager.default.temporaryDirectory
         .appending(path: "FlotillaTests-\(UUID().uuidString)")
 
-    /// 在临时目录里建好普通文件、普通文件夹、文件包与 App bundle
+    /// 在临时目录里建好普通文件、访达里的文件夹、文件包与 App bundle
     init() throws {
-        for name in ["普通文件夹", "笔记.rtfd", "Tool.app"] {
+        for name in ["资料", "笔记.rtfd", "Tool.app"] {
             try FileManager.default.createDirectory(
                 at: directory.appending(path: name),
                 withIntermediateDirectories: true
@@ -90,18 +90,66 @@ final class FolderItemClassificationTests {
         #expect(urls == [chess, chess])
     }
 
-    /// 普通文件夹、卷与不存在的路径都不接收
+    /// 访达里的文件夹是文件，按目录 URL 记录：点击时交给访达打开
     @Test
-    func foldersAndMissingPathsAreRejected() {
-        let urls = [
-            URL(filePath: path(of: "普通文件夹")),
-            URL(filePath: "/"),
-            URL(filePath: path(of: "不存在的文件.txt")),
-        ]
+    func finderFolderIsFile() {
+        let item = FolderItem(url: URL(filePath: path(of: "资料")), title: nil)
 
-        for url in urls {
-            #expect(FolderItem(url: url, title: nil) == nil, "\(url.path(percentEncoded: false))")
+        guard case .file(let file) = item else {
+            Issue.record("访达里的文件夹应当是文件：\(String(describing: item))")
+            return
         }
+
+        #expect(file.url == URL(filePath: path(of: "资料"), directoryHint: .isDirectory))
+    }
+
+    /// 卷的根目录同样是文件，按目录 URL 记录
+    @Test
+    func volumeRootIsFile() {
+        let item = FolderItem(url: URL(filePath: "/"), title: nil)
+
+        guard case .file(let file) = item else {
+            Issue.record("卷的根目录应当是文件：\(String(describing: item))")
+            return
+        }
+
+        #expect(file.url == URL(filePath: "/", directoryHint: .isDirectory))
+    }
+
+    /// 不存在的路径不接收
+    @Test
+    func missingPathIsRejected() {
+        let url = URL(filePath: path(of: "不存在的文件.txt"))
+
+        #expect(FolderItem(url: url, title: nil) == nil)
+    }
+
+    /// 新建的文件项带着书签，书签解析回的正是这个文件：文件移动或改名后才能据此找到它
+    @Test
+    func newFileCarriesBookmarkToItself() throws {
+        let item = FolderItem(url: directory.appending(path: "报告.txt"), title: nil)
+
+        guard case .file(let file) = item else {
+            Issue.record("普通文件应当是文件：\(String(describing: item))")
+            return
+        }
+
+        let bookmark = try #require(file.bookmark)
+        var isStale = false
+
+        let resolvedURL = try URL(
+            resolvingBookmarkData: bookmark,
+            options: [.withoutUI, .withoutMounting],
+            relativeTo: nil,
+            bookmarkDataIsStale: &isStale
+        )
+
+        // 书签解析出的是 `/private/var` 这类解析过符号链接的写法，按解析后的路径比较
+        #expect(
+            resolvedURL.resolvingSymlinksInPath().path(percentEncoded: false)
+                == file.url.resolvingSymlinksInPath().path(percentEncoded: false)
+        )
+        #expect(!isStale)
     }
 
     // MARK: 网址

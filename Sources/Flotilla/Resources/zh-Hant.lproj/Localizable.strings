@@ -19,13 +19,14 @@
 "folders.newFolder" = "新增檔案夾";
 "folders.untitledFolder" = "未命名檔案夾";
 "folders.addApps" = "加入 App…";
+"folders.addFiles" = "加入檔案…";
 "folders.addToDock" = "加入 Dock";
 "folders.notOnDock" = "不在 Dock 上";
 "folders.remove" = "刪除";
 
 /* 设置窗口的通用区 */
 "general.sectionTitle" = "一般";
-"general.previewIconCount" = "檔案夾圖像內顯示的 App 圖像數量：";
+"general.previewIconCount" = "檔案夾圖像內顯示的圖像數量：";
 "general.accessibility" = "輔助使用權限：";
 "general.accessibilityGranted" = "已授權";
 "general.accessibilityNotGranted" = "未授權";

@@ -3,7 +3,7 @@ import UniformTypeIdentifiers
 
 // MARK: - FolderTreeViewController
 
-/// 设置窗口的文件夹区：展示完整的文件夹树，提供新建、添加 App、添加到 Dock、删除、重命名与拖拽；
+/// 设置窗口的文件夹区：展示完整的文件夹树，提供新建、添加 App、添加文件、添加到 Dock、删除、重命名与拖拽；
 /// tile 不在 Dock 上的根文件夹标出“不在 Dock 上”
 @MainActor
 final class FolderTreeViewController: NSViewController {
@@ -35,6 +35,16 @@ final class FolderTreeViewController: NSViewController {
         action: nil
     )
 
+    /// “添加文件…”按钮，无选中项时禁用
+    private let addFilesButton = NSButton(
+        title: String(
+            localized: "folders.addFiles",
+            comment: "文件夹区的按钮：选择文件或访达里的文件夹，加入选中项所属的文件夹"
+        ),
+        target: nil,
+        action: nil
+    )
+
     /// “添加到 Dock”按钮，只有选中 tile 不在 Dock 上的根文件夹时可用
     private let addToDockButton = NSButton(
         title: String(
@@ -61,6 +71,19 @@ final class FolderTreeViewController: NSViewController {
     /// 当前选中行的节点
     private var selectedNode: FolderTreeNode? {
         outlineView.item(atRow: outlineView.selectedRow) as? FolderTreeNode
+    }
+
+    /// 是否正在编辑文件夹名：第一响应者是字段编辑器，且它正在编辑的文本框在树里
+    private var isEditingFolderName: Bool {
+        guard
+            let fieldEditor = outlineView.window?.firstResponder as? NSTextView,
+            fieldEditor.isFieldEditor,
+            let textField = fieldEditor.delegate as? NSTextField
+        else {
+            return false
+        }
+
+        return textField.isDescendant(of: outlineView)
     }
 
     /// 创建文件夹区
@@ -132,6 +155,15 @@ final class FolderTreeViewController: NSViewController {
         }
 
         updateButtons()
+    }
+
+    /// 按书签把整棵树里的文件跟到新位置
+    ///
+    /// 正在编辑文件夹名时跳过：有变化就会重建树，重建会结束编辑并提交输入到一半的名称
+    func updateFileLocations() {
+        guard !isEditingFolderName else { return }
+
+        store.updateFileLocations()
     }
 }
 
@@ -232,28 +264,24 @@ extension FolderTreeViewController {
     /// 选择 App 并加入选中项所属的文件夹
     @objc
     private func addApps() {
-        guard
-            let folderID = selectedNode?.containingFolderID,
-            let window = view.window
-        else {
-            return
-        }
-
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.applicationBundle]
         panel.allowsMultipleSelection = true
         panel.canChooseDirectories = false
         panel.directoryURL = URL(filePath: "/Applications")
 
-        panel.beginSheetModal(for: window) { [weak self, panel] response in
-            guard response == .OK else { return }
+        addItems(chosenIn: panel)
+    }
 
-            let apps = panel.urls.compactMap {
-                FolderItem(url: $0, title: nil)
-            }
+    /// 选择文件与访达里的文件夹，加入选中项所属的文件夹；不限类型，选到的 App 按分类规则成为 App
+    @objc
+    private func addFiles() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = true
 
-            self?.store.addItems(apps, to: folderID)
-        }
+        addItems(chosenIn: panel)
     }
 
     /// 把选中的根文件夹重新添加到 Dock；记为待添加后它就不再算被拖出，状态随即刷新
@@ -371,6 +399,9 @@ extension FolderTreeViewController {
         addAppsButton.target = self
         addAppsButton.action = #selector(addApps)
 
+        addFilesButton.target = self
+        addFilesButton.action = #selector(addFiles)
+
         addToDockButton.target = self
         addToDockButton.action = #selector(addSelectedFolderToDock)
         addToDockButton.isHidden = dockTileSynchronizer == nil
@@ -379,7 +410,10 @@ extension FolderTreeViewController {
         removeButton.action = #selector(removeSelectedItem)
 
         let buttonRow = NSStackView()
-        buttonRow.setViews([newFolderButton, addAppsButton, addToDockButton], in: .leading)
+        buttonRow.setViews(
+            [newFolderButton, addAppsButton, addFilesButton, addToDockButton],
+            in: .leading
+        )
         buttonRow.setViews([removeButton], in: .trailing)
 
         let stackView = NSStackView(views: [titleLabel, scrollView, buttonRow])
@@ -397,13 +431,35 @@ extension FolderTreeViewController {
         return stackView
     }
 
-    /// 根据选中项更新“添加 App…”“添加到 Dock”与“删除”的可用状态
+    /// 根据选中项更新“添加 App…”“添加文件…”“添加到 Dock”与“删除”的可用状态
     private func updateButtons() {
         let hasSelection = selectedNode != nil
         addAppsButton.isEnabled = hasSelection
+        addFilesButton.isEnabled = hasSelection
         removeButton.isEnabled = hasSelection
 
         addToDockButton.isEnabled = selectedNode.map { isRemovedFromDock($0) } ?? false
+    }
+
+    /// 以 sheet 弹出选择面板，把选中的 URL 分类后加入选中项所属的文件夹
+    private func addItems(chosenIn panel: NSOpenPanel) {
+        guard
+            let folderID = selectedNode?.containingFolderID,
+            let window = view.window
+        else {
+            return
+        }
+
+        panel.beginSheetModal(for: window) { [weak self, panel] response in
+            guard response == .OK else { return }
+
+            // 分类交给 `FolderItem(url:title:)`，与拖入走同一套规则
+            let items = panel.urls.compactMap {
+                FolderItem(url: $0, title: nil)
+            }
+
+            self?.store.addItems(items, to: folderID)
+        }
     }
 
     /// 这一行是否为被拖出 Dock 的根文件夹；Dock 集成不可用时一律为否

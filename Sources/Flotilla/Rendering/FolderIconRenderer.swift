@@ -2,7 +2,7 @@ import AppKit
 
 // MARK: - FolderIconRenderer
 
-/// 把文件夹渲染成图标（需求 2）：磨砂的圆角方形底板上，按 2×2 网格放前几个 App 的图标
+/// 把文件夹渲染成图标（需求 2）：磨砂的圆角方形底板上，按 2×2 网格放前几个 App、文件或网页的图标
 ///
 /// 底板的位置、大小与圆角和 macOS 26 起系统 App 图标的底板一致，放进 Dock 后与相邻的 App 图标对齐；
 /// 底板颜色随外观分深浅，取值见 `FolderIconAppearance`
@@ -38,13 +38,16 @@ enum FolderIconRenderer {
     private static let previewShadowOffset: CGFloat = 5 / 1024
 
     /// 渲染文件夹图标
+    ///
+    /// 在主线程执行：网页的图标只在主线程读取
     /// - Parameters:
     ///   - folder: 要渲染的文件夹
-    ///   - previewIconCount: 叠加的 App 图标数量上限，超出 `0...Preferences.maximumPreviewIconCount` 时夹取
+    ///   - previewIconCount: 叠加的图标数量上限，超出 `0...Preferences.maximumPreviewIconCount` 时夹取
     ///   - pointSize: 输出图像的边长（点）
     ///   - appearance: 底板按哪种外观取色
     /// - Returns: 用绘制闭包构造的图像，与分辨率无关，调用方可按任意像素尺寸栅格化；
     ///   底板颜色在这里就已定下，不随绘制时的外观变化，外观变了要重新渲染
+    @MainActor
     static func render(
         folder: Folder,
         previewIconCount: Int,
@@ -53,14 +56,13 @@ enum FolderIconRenderer {
     ) -> NSImage {
         let count = min(max(previewIconCount, 0), Preferences.maximumPreviewIconCount)
 
-        // 按顺序取前几个 App，跳过子文件夹、文件与网页
-        let previewIcons = folder.items
-            .compactMap { item -> AppReference? in
-                guard case .app(let app) = item else { return nil }
-                return app
-            }
-            .prefix(count)
-            .map(\.icon)
+        // 按顺序取前几项，跳过子文件夹；惰性求值，只读取用得上的图标
+        let previewIcons = Array(
+            folder.items
+                .lazy
+                .compactMap { previewIcon(of: $0) }
+                .prefix(count)
+        )
 
         // 绘制闭包在每次栅格化时按目标分辨率重新执行；翻转坐标系，让几何按 y 轴自上而下计算
         return NSImage(
@@ -170,6 +172,24 @@ extension FolderIconRenderer {
             CGColor(gray: appearance.plateEdgeWhite, alpha: appearance.plateEdgeOpacity)
         )
         context.strokePath()
+    }
+
+    /// 一项在预览里的图标：App、文件与网页用各自的图标；子文件夹不参与预览，为 nil
+    @MainActor
+    private static func previewIcon(of item: FolderItem) -> NSImage? {
+        switch item {
+        case .app(let app):
+            app.icon
+
+        case .folder:
+            nil
+
+        case .file(let file):
+            file.icon
+
+        case .webPage(let webPage):
+            webPage.icon
+        }
     }
 
     /// 画一个预览图标，下方带一层柔和的投影

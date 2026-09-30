@@ -122,15 +122,20 @@ extension FolderStore {
 
     /// 把 App、文件与网页追加到文件夹末尾，一次提交、只发一次变更通知
     ///
-    /// 与该文件夹已有的项、以及本批已加入的项同类且 URL 相同时跳过；子文件夹不经这里添加，传进来就忽略
+    /// 与该文件夹已有的项、以及本批已加入的项同类且 URL 相同时跳过；子文件夹不经这里添加，传进来就忽略。
+    /// 比对之前先按书签把该文件夹里的文件跟到新位置，与加入合成一次提交
     /// - Parameters:
     ///   - items: 由 `FolderItem(url:title:)` 新建的项，id 不与树里已有的项重复
     ///   - folderID: 目标文件夹
     func addItems(_ items: [FolderItem], to folderID: UUID) {
         var tree = rootItems
         var added = false
+        var relocated = false
 
         let found = Self.modifyFolder(id: folderID, in: &tree) { folder in
+            // 文件改名后再把它拖进同一个文件夹时，已有的那一项先换成新路径，下面才认得出是同一个文件
+            relocated = Self.updateFileLocations(in: &folder.items)
+
             for item in items {
                 // 子文件夹只由 `addSubfolder(named:to:)` 新建
                 if case .folder = item {
@@ -149,7 +154,30 @@ extension FolderStore {
             }
         }
 
-        guard found, added else { return }
+        guard found, added || relocated else { return }
+
+        rootItems = tree
+        commit()
+    }
+
+    /// 按书签把文件项跟到文件的当前位置：文件移动或改名后换成新位置，id 不变
+    ///
+    /// 有变化时一次提交；没有变化时不提交、不发通知。找不到的文件保持原样
+    /// - Parameter folderID: 只更新这个文件夹及其子孙；nil 表示整棵树
+    func updateFileLocations(in folderID: UUID? = nil) {
+        var tree = rootItems
+        var changed = false
+
+        // 限定文件夹时只遍历它的子树；找不到这个文件夹时什么都不变
+        if let folderID {
+            _ = Self.modifyFolder(id: folderID, in: &tree) {
+                changed = Self.updateFileLocations(in: &$0.items)
+            }
+        } else {
+            changed = Self.updateFileLocations(in: &tree)
+        }
+
+        guard changed else { return }
 
         rootItems = tree
         commit()
@@ -355,6 +383,34 @@ extension FolderStore {
         _ = modifyFolder(id: folderID, in: &items) {
             $0.items.insert(item, at: min(max(index, 0), $0.items.count))
         }
+    }
+
+    /// 按书签更新 items 及其子孙里的文件项；有任何一项变化时返回 true
+    private static func updateFileLocations(in items: inout [FolderItem]) -> Bool {
+        var changed = false
+
+        for index in items.indices {
+            switch items[index] {
+            case .file(let file):
+                guard let relocated = file.relocated() else { continue }
+
+                items[index] = .file(relocated)
+                changed = true
+
+            // 子文件夹里有变化时，把修改后的子文件夹写回这一层
+            case .folder(var folder):
+                guard updateFileLocations(in: &folder.items) else { continue }
+
+                items[index] = .folder(folder)
+                changed = true
+
+            // App 与网页不涉及位置
+            case .app, .webPage:
+                continue
+            }
+        }
+
+        return changed
     }
 
     /// 两项是否同类且 URL 相同；子文件夹之间不算重复

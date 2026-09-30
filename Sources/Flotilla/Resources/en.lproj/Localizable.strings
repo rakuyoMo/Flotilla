@@ -19,13 +19,14 @@
 "folders.newFolder" = "New Folder";
 "folders.untitledFolder" = "Untitled Folder";
 "folders.addApps" = "Add Apps…";
+"folders.addFiles" = "Add Files…";
 "folders.addToDock" = "Add to Dock";
 "folders.notOnDock" = "Not in Dock";
 "folders.remove" = "Delete";
 
 /* 设置窗口的通用区 */
 "general.sectionTitle" = "General";
-"general.previewIconCount" = "App icons shown in folder icon:";
+"general.previewIconCount" = "Icons shown in folder icon:";
 "general.accessibility" = "Accessibility permission:";
 "general.accessibilityGranted" = "Granted";
 "general.accessibilityNotGranted" = "Not granted";
