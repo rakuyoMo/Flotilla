@@ -104,19 +104,19 @@ final class FolderTreeCellViewTests {
         cell.layoutSubtreeIfNeeded()
 
         let nameField = try #require(cell.textField)
-        let locationField = try #require(locationField(in: cell))
+        let location = try #require(locationField(in: cell))
 
         #expect(nameField.frame.width >= nameField.intrinsicContentSize.width)
-        #expect(locationField.frame.width < locationField.intrinsicContentSize.width)
+        #expect(location.frame.width < location.intrinsicContentSize.width)
     }
 
     /// 位置截断时在中间省略：开头的 `~/` 与离它最近的那一级目录都留着，仍能看出它在哪
     @Test
     func locationTruncatesInMiddle() throws {
         let cell = try configuredCell(with: directory.appending(path: "资料"))
-        let locationField = try #require(locationField(in: cell))
+        let location = try #require(locationField(in: cell))
 
-        #expect(locationField.lineBreakMode == .byTruncatingMiddle)
+        #expect(location.lineBreakMode == .byTruncatingMiddle)
     }
 }
 
