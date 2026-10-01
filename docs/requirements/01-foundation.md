@@ -236,6 +236,7 @@ enum FolderIconRenderer {
 ### 通用区
 
 - “文件夹图标内显示的图标数量”：`NSPopUpButton`，选项 0–4，绑定 `Preferences.previewIconCount`
+- “访达里的文件夹”：`NSButton` 复选框“显示隐藏文件”，默认不勾，绑定 `Preferences.showsHiddenFiles`；切换后不发设置变更通知，见 08 的需求 23
 - “辅助功能权限”：显示“已授权”或“未授权”（`AXIsProcessTrusted()`）
   - 旁边一个“打开系统设置”按钮，打开 `x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility`
   - 窗口每次显示时刷新状态
