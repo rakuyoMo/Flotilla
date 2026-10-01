@@ -3,7 +3,7 @@ import AppKit
 // MARK: - FolderGridView
 
 /// 一个层级的网格：按 `FolderGridLayout` 摆放每一项的单元格，作为滚动视图的文档视图；
-/// 访达里的文件夹的层级在末尾另有一格“在访达中打开”
+/// 访达里的文件夹的层级在末尾另有一格“在访达中打开”，其中的文件换上内容缩略图
 ///
 /// 只为与可见区域相交的行（上下各多一行）建单元格，滚动时按需补建，建过的不删：
 /// 访达里的文件夹可能有上千项，一次建齐会让展开明显卡顿
@@ -17,6 +17,9 @@ final class FolderGridView: NSView {
 
     /// 子文件夹图标里叠加的预览图标数量
     private let previewIconCount: Int
+
+    /// 为文件请求内容缩略图；只有访达里的文件夹的层级有，为 nil 时文件显示图标
+    private let fileThumbnailLoader: FileThumbnailLoader?
 
     /// 点击“在访达中打开”后执行；为 nil 时没有这一格
     private let openInFinderHandler: (() -> Void)?
@@ -40,17 +43,20 @@ final class FolderGridView: NSView {
     ///   - items: 这一层的项，顺序即展示顺序
     ///   - layout: 按格数算好的布局
     ///   - previewIconCount: 子文件夹图标里叠加的预览图标数量
+    ///   - fileThumbnailLoader: 为文件请求内容缩略图；只有访达里的文件夹的层级传入，为 nil 时文件显示图标
     ///   - openInFinderHandler: 点击“在访达中打开”后执行；为 nil 时没有这一格
     ///   - selectionHandler: 点击某一项后执行
     init(
         items: [FolderItem],
         layout: FolderGridLayout,
         previewIconCount: Int,
+        fileThumbnailLoader: FileThumbnailLoader?,
         openInFinderHandler: (() -> Void)?,
         selectionHandler: @escaping (FolderItem) -> Void
     ) {
         self.items = items
         self.previewIconCount = previewIconCount
+        self.fileThumbnailLoader = fileThumbnailLoader
         self.openInFinderHandler = openInFinderHandler
         self.selectionHandler = selectionHandler
 
@@ -106,6 +112,15 @@ final class FolderGridView: NSView {
             name: NSView.boundsDidChangeNotification,
             object: clipView
         )
+    }
+
+    /// 离开窗口（离开这一层、面板收起）时，取消还没完成的缩略图请求，晚到的结果不再换上
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+
+        guard window == nil else { return }
+
+        fileThumbnailLoader?.cancelAll()
     }
 
     /// 排版时为可见的行建单元格：第一次显示之前，滚动位置已经恢复，建的正是那里的行
@@ -182,6 +197,13 @@ extension FolderGridView {
         // 记下子文件夹的单元格：外观变化时只有文件夹图标需要重新渲染
         if case .folder(let folder) = item {
             folderItemViews.append((folder, itemView))
+        }
+
+        // 访达里的文件夹的层级里，文件先显示图标，内容缩略图生成后换上；结果只落到发起请求的这一格
+        if case .file(let file) = item, let fileThumbnailLoader {
+            fileThumbnailLoader.loadThumbnail(of: file.url) { [weak itemView] in
+                itemView?.icon = $0
+            }
         }
     }
 

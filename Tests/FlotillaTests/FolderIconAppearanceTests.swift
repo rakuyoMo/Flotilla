@@ -42,6 +42,7 @@ struct FolderIconAppearanceTests {
             items: [.folder(subfolder)],
             layout: layout,
             previewIconCount: 4,
+            fileThumbnailLoader: nil,
             openInFinderHandler: nil
         ) { _ in }
 
@@ -84,6 +85,7 @@ struct FolderIconAppearanceTests {
             items: items,
             layout: layout,
             previewIconCount: 4,
+            fileThumbnailLoader: nil,
             openInFinderHandler: nil
         ) { _ in }
 

@@ -44,6 +44,15 @@ struct FolderPanelLevelContentTests {
         #expect(FolderPanelLevelContent.folder(empty).cellCount == 0)
     }
 
+    /// 只有访达里的文件夹的层级里，文件显示内容缩略图：与原生叠放一致；Flotilla 的文件夹照旧显示图标
+    @Test
+    func onlyFinderFolderShowsFileThumbnails() {
+        let folder = Folder(id: UUID(), name: "工作", items: makeFiles(3))
+
+        #expect(FolderPanelLevelContent.finderFolder(finderFolder, items: makeFiles(3)).showsFileThumbnails)
+        #expect(!FolderPanelLevelContent.folder(folder).showsFileThumbnails)
+    }
+
     /// 网格按格数摆出单元格：访达里的文件夹多出末尾那一格
     @Test
     func gridViewAddsOpenInFinderCell() {
@@ -83,6 +92,7 @@ struct FolderPanelLevelContentTests {
             items: items,
             layout: layout,
             previewIconCount: 0,
+            fileThumbnailLoader: nil,
             openInFinderHandler: openInFinderHandler
         ) { _ in }
 

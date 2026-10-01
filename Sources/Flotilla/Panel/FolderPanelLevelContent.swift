@@ -50,6 +50,17 @@ enum FolderPanelLevelContent: Equatable {
         return finderFolder.url
     }
 
+    /// 网格里的文件是否显示内容缩略图：访达里的文件夹与原生叠放一致显示缩略图，Flotilla 的文件夹照旧显示图标
+    var showsFileThumbnails: Bool {
+        switch self {
+        case .folder:
+            false
+
+        case .finderFolder:
+            true
+        }
+    }
+
     /// 网格的格数：访达里的文件夹多出末尾的“在访达中打开”，空目录也有这一格
     var cellCount: Int {
         finderFolderURL == nil ? items.count : items.count + 1

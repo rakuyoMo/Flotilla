@@ -368,7 +368,11 @@ extension FolderPanelController {
         // 空的 Flotilla 文件夹只有标题区，格内为空；空的访达里的文件夹仍有“在访达中打开”一格
         let scrollView = content.cellCount == 0
             ? nil
-            : makeScrollView(for: content, layout: layout)
+            : makeScrollView(
+                for: content,
+                layout: layout,
+                scale: anchor.screen.backingScaleFactor
+            )
 
         if let scrollView {
             view.bodyView.addSubview(scrollView)
@@ -408,9 +412,14 @@ extension FolderPanelController {
     }
 
     /// 网格所在的滚动视图：向右伸进主体右侧的留白，overlay 滚动条落在留白里；恢复这一层上次的滚动位置
+    /// - Parameters:
+    ///   - content: 这一层展示的内容
+    ///   - layout: 按格数算好的布局
+    ///   - scale: 面板所在屏幕的倍数，文件的内容缩略图按它生成
     private func makeScrollView(
         for content: FolderPanelLevelContent,
-        layout: FolderGridLayout
+        layout: FolderGridLayout,
+        scale: CGFloat
     ) -> NSScrollView {
         let cell = FolderPanelMetrics.cellSize
         let sideInset = FolderPanelMetrics.gridSideInset
@@ -435,10 +444,16 @@ extension FolderPanelController {
             { [weak self] in self?.open(url, named: content.title) }
         }
 
+        // 访达里的文件夹的层级里，文件按原生叠放显示内容缩略图
+        let fileThumbnailLoader = content.showsFileThumbnails
+            ? FileThumbnailLoader(scale: scale)
+            : nil
+
         scrollView.documentView = FolderGridView(
             items: content.items,
             layout: layout,
             previewIconCount: preferences.previewIconCount,
+            fileThumbnailLoader: fileThumbnailLoader,
             openInFinderHandler: openInFinderHandler
         ) { [weak self] in
             self?.select($0)
