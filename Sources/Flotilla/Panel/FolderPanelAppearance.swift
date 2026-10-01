@@ -20,11 +20,12 @@ enum FolderPanelAppearance {
 
     /// 文字颜色
     ///
+    /// 深色原生文字在四种底色上都等于白色以不透明度 0.95 叠在材质上；
     /// 浅色原生文字在四种底色上都等于材质 × 0.15，即黑色、不透明度 0.85
     var textColor: NSColor {
         switch self {
         case .dark:
-            .white
+            NSColor(white: 1, alpha: 0.95)
 
         case .light:
             NSColor(white: 0, alpha: 0.85)

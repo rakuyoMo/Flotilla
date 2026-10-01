@@ -5,7 +5,7 @@ import Testing
 
 // MARK: - FolderPanelTests
 
-/// 面板窗口跟随系统外观：原生弹窗在浅色外观下是浅色材质、黑色文字，深色外观下保持原有的白色文字
+/// 面板窗口跟随系统外观：原生弹窗在浅色外观下是浅色材质、黑色文字，深色外观下是深色材质、白色文字
 @MainActor
 struct FolderPanelTests {
     /// 面板不固定外观，材质与文字随系统切换深浅
@@ -16,14 +16,14 @@ struct FolderPanelTests {
         #expect(panel.appearance == nil)
     }
 
-    /// 标题与名称的颜色按视图外观解析：深色为纯白，浅色为黑色、不透明度 0.85
+    /// 标题与名称的颜色按视图外观解析：深色为白色、不透明度 0.95，浅色为黑色、不透明度 0.85
     @Test
     func textColorResolvesPerAppearance() throws {
         let dark = try #require(resolvedTextColor(in: .darkAqua))
         let light = try #require(resolvedTextColor(in: .aqua))
 
         #expect(dark.redComponent == 1)
-        #expect(dark.alphaComponent == 1)
+        #expect(abs(dark.alphaComponent - 0.95) < 0.001)
 
         #expect(light.redComponent == 0)
         #expect(abs(light.alphaComponent - 0.85) < 0.001)
