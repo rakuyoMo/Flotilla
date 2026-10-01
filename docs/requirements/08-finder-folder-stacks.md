@@ -152,6 +152,31 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
 - 位置在中间省略：开头的 `~/` 与离它最近的那一级目录都留着
 - 书签跟随改了 URL 后，树按通知重建，位置随之更新
 
+## 隐私授权框的用途说明
+
+- 第一次读受保护的位置时系统弹出授权框（见“平台事实”），框里显示 Flotilla 写明的用途：读取访达里的文件夹的内容，在面板里展开
+- 每个会弹授权框的位置一个键，六个键用同一句话；授权框的标题已写明 App 名与位置，说明里不重复位置
+
+  | 键 | 位置 |
+  |---|---|
+  | `NSDocumentsFolderUsageDescription` | 文稿 |
+  | `NSDesktopFolderUsageDescription` | 桌面 |
+  | `NSDownloadsFolderUsageDescription` | 下载 |
+  | `NSFileProviderDomainUsageDescription` | iCloud 云盘等文件提供方 |
+  | `NSRemovableVolumesUsageDescription` | 外接卷 |
+  | `NSNetworkVolumesUsageDescription` | 网络卷 |
+
+- 英文写在 `Info.plist`（开发语言 `en`）；五个 `.lproj` 各有一张 `InfoPlist.strings`，键与 `Info.plist` 相同
+  - 用词与 `Localizable.strings` 一致：zh-Hant 用“Finder”“檔案夾”
+
+  | 语言 | 文案 |
+  |---|---|
+  | en | Flotilla needs to read the contents of Finder folders to expand them in its panel on the Dock. |
+  | zh-Hans | Flotilla 需要读取访达里文件夹的内容，才能在 Dock 上的面板里展开它们。 |
+  | zh-Hant | Flotilla 需要讀取 Finder 裡檔案夾的內容，才能在 Dock 上的面板裡展開它們。 |
+  | ja | FinderのフォルダをDockのパネルで展開するには、Flotillaがフォルダの内容を読み込む必要があります。 |
+  | ko | Finder 폴더를 Dock의 패널에서 펼치려면 Flotilla가 폴더의 내용을 읽어야 합니다. |
+
 ## 平台事实
 
 以下都是 macOS 27、APFS 上的实测。
@@ -166,6 +191,10 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
 - 打开已不存在的项：`NSWorkspace.open` 用默认的 `OpenConfiguration`（`promptsUserIfNeeded` 为真）时，回调给出错误，同时 `CoreServicesUIAgent` 弹出“找不到该文件。”的提示框，有“好”与帮助按钮
   - 实测的是已删除的访达里的文件夹；已删除的文件走同一个打开方法、同一份设置，没有单独实测
 - 隐私授权：第一次读“文稿”“桌面”“下载”、iCloud 云盘、外接或网络卷时，系统弹出授权框，读取等到用户回答；允许就展开，拒绝就按读不出内容处理
+  - 授权框里有 Flotilla 的用途说明，见“隐私授权框的用途说明”
+  - 键与授权服务的对应取自 `/System/Library/PrivateFrameworks/TCC.framework/Support/tccd` 的字符串，授权框文案在同一框架的 `Localizable.loctable`
+  - iCloud 云盘是文件提供方扩展（`com.apple.fileprovider-nonui`），授权框属于 `kTCCServiceFileProviderDomain`，对应 `NSFileProviderDomainUsageDescription`
+    - 这个服务的授权框文案是 `“%@”想要访问受“%@”管理的文件。`，后一处是文件提供方的名称
   - 授权框属于别的进程，用户点它的按下由全局鼠标监听收到；主线程这时被读取占住，按下排到读取结束后才处理
   - 未在屏上触发验证
 - 事件时间：`NSEvent.timestamp` 与 `ProcessInfo.systemUptime` 是同一个时钟，都是开机以来不含睡眠的秒数（`CLOCK_UPTIME_RAW`）
@@ -219,6 +248,9 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
   - 宽度不够时先截断位置，名称保持完整
   - 位置在中间省略
 - 新键五种语言齐全：`LocalizationTests` 自动覆盖
+- 隐私授权框的用途说明（`PrivacyUsageDescriptionTests`）：
+  - `Info.plist` 有上表六个键，值非空
+  - 五张 `InfoPlist.strings` 都能解析、没有空值，键集合与 `Info.plist` 里的用途说明键相同
 
 ## 验收
 
