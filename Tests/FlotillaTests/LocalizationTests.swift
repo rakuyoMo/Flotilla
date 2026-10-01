@@ -10,7 +10,7 @@ struct LocalizationTests {
     static let languages = ["en", "zh-Hans", "zh-Hant", "ja", "ko"]
 
     /// App 源码目录：本文件位于 `Tests/FlotillaTests/` 下，所在目录向上两级是仓库根目录
-    private static let sourcesURL = URL(filePath: #filePath)
+    static let sourcesURL = URL(filePath: #filePath)
         .deletingLastPathComponent()
         .deletingLastPathComponent()
         .deletingLastPathComponent()
@@ -57,9 +57,13 @@ struct LocalizationTests {
 // MARK: - Tables
 
 extension LocalizationTests {
-    /// 读取并解析一种语言的 `Localizable.strings`：它是 OpenStep 格式的属性列表，顶层为字典
-    static func table(for language: String) throws -> [String: String] {
-        let url = sourcesURL.appending(path: "Resources/\(language).lproj/Localizable.strings")
+    /// 读取并解析一种语言的一张 `.strings` 表，默认是界面文字的 `Localizable.strings`：
+    /// 它是 OpenStep 格式的属性列表，顶层为字典
+    static func table(
+        _ name: String = "Localizable",
+        for language: String
+    ) throws -> [String: String] {
+        let url = sourcesURL.appending(path: "Resources/\(language).lproj/\(name).strings")
         let data = try Data(contentsOf: url)
 
         let propertyList = try PropertyListSerialization.propertyList(

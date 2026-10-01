@@ -1,0 +1,7 @@
+/* 隐私授权框里的用途说明 */
+"NSDesktopFolderUsageDescription" = "Flotilla 需要读取访达里文件夹的内容，才能在 Dock 上的面板里展开它们。";
+"NSDocumentsFolderUsageDescription" = "Flotilla 需要读取访达里文件夹的内容，才能在 Dock 上的面板里展开它们。";
+"NSDownloadsFolderUsageDescription" = "Flotilla 需要读取访达里文件夹的内容，才能在 Dock 上的面板里展开它们。";
+"NSFileProviderDomainUsageDescription" = "Flotilla 需要读取访达里文件夹的内容，才能在 Dock 上的面板里展开它们。";
+"NSNetworkVolumesUsageDescription" = "Flotilla 需要读取访达里文件夹的内容，才能在 Dock 上的面板里展开它们。";
+"NSRemovableVolumesUsageDescription" = "Flotilla 需要读取访达里文件夹的内容，才能在 Dock 上的面板里展开它们。";
