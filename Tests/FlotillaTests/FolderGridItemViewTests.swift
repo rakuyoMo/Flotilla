@@ -67,7 +67,7 @@ struct FolderGridItemViewTests {
     }
 
     /// “在访达中打开”的图标：深色以 plus-lighter 合成，平时每个通道加 124、按下加 50；
-    /// 浅色以 plus-darker 合成，减去同样的量
+    /// 浅色以 plus-darker 合成，平时减 127、按下减 194
     @Test
     func openInFinderIconBlendsWithMaterial() throws {
         let (window, itemView) = makeItemView(style: .openInFinder) { }
@@ -75,7 +75,7 @@ struct FolderGridItemViewTests {
 
         let cases: [(NSAppearance.Name, String, normal: Int, pressed: Int)] = [
             (.darkAqua, "plusL", 124, 50),
-            (.aqua, "plusD", 255 - 124, 255 - 50),
+            (.aqua, "plusD", 255 - 127, 255 - 194),
         ]
 
         for (name, filter, normal, pressed) in cases {
