@@ -315,13 +315,13 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
   - `URL.pathExtension` 与 `NSString.pathExtension` 都为空；资源属性的类型是 `public.data`，可执行的是 `public.unix-executable`，目录是 `public.folder`
   - `NSWorkspace.icon(forFile:)` 却把开头的“.”后面当成扩展名：
     - 文件：`.a`、`..a` 是归档图标，`.z`、`.zip` 是压缩包，`.json`、`.pdf`、`.png`、`.txt`、`.mp3`、`.gitignore` 是对应类型或认领这个扩展名的 App 给的图标，名为 `.app` 的文件是带“?”的文稿；可执行的 `.sh` 是 shell 脚本的图标，按类型取是可执行文件的图标
-    - 普通目录：`.rtfd`、`.pages`、`.key`、`.bundle`、`.framework`、`.pkg`、`.photoslibrary` 是对应文稿或 bundle 的图标；它们的 `isPackage` 为假，Launch Services 的种类是“文件夹”，QuickLook 的 `.icon` 表示也是文件夹；访达里的样子未在屏上核对
+    - 普通目录：`.rtfd`、`.pages`、`.key`、`.bundle`、`.framework`、`.pkg`、`.photoslibrary` 是对应文稿或 bundle 的图标；它们的 `isPackage` 为假，Launch Services 的种类是“文件夹”，QuickLook 的 `.icon` 表示也是文件夹；访达 ⌘⇧. 下名为 `.bundle`、`.pkg`、`.rtfd`、`.app` 的普通目录都是文件夹图标
     - 不是已知扩展名的（`.中`、`.env`、`.git`、`.config`）与按类型取的相同
   - 资源属性 `effectiveIconKey` 与 `icon(forFile:)` 相同
   - 符号链接：类型是 `public.symlink`，`icon(forFile:)` 是目标的图标加替身箭头，同样按名称当扩展名：名为 `.zip` 的链接是压缩包加箭头，指向 `.a` 的链接是归档加箭头
   - 带 bundle 标志的目录：`isPackage` 为真，类型是 `com.apple.package`，按类型取是带“?”的文稿
   - 粘贴过自定义图标：`icon(forFile:)` 与 `effectiveIconKey` 给出自定义图标，按类型取给出类型的图标；`customIconKey` 读出来是 nil
-  - 访达 ⌘⇧. 下 `.a`、`.z`、`.中` 都是带“?”的通用文稿；没有扩展名的普通文件（如 `n`）同样带“?”，按 `public.data` 取的是不带“?”的空白文稿
+  - 访达 ⌘⇧. 下 `.a`、`.z`、`.zip`、`.json`、`.gitignore`、`.中` 都是带“?”的通用文稿；没有扩展名的普通文件（如 `n`）同样带“?”，按 `public.data` 取的是不带“?”的空白文稿
 - `contentsOfDirectory` 的 `.skipsHiddenFiles` 跳过以 `.` 开头的项，也跳过带 `hidden` 标志的项
 - 打开已不存在的项：`NSWorkspace.open` 用默认的 `OpenConfiguration`（`promptsUserIfNeeded` 为真）时，回调给出错误，同时 `CoreServicesUIAgent` 弹出“找不到该文件。”的提示框，有“好”与帮助按钮
   - 实测的是已删除的访达里的文件夹；已删除的文件走同一个打开方法、同一份设置，没有单独实测
