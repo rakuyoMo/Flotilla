@@ -20,11 +20,12 @@ enum FolderPanelAppearance {
 
     /// 文字颜色
     ///
+    /// 深色原生文字在四种底色上都等于白色以不透明度 0.95 叠在材质上；
     /// 浅色原生文字在四种底色上都等于材质 × 0.15，即黑色、不透明度 0.85
     var textColor: NSColor {
         switch self {
         case .dark:
-            .white
+            NSColor(white: 1, alpha: 0.95)
 
         case .light:
             NSColor(white: 0, alpha: 0.85)
@@ -160,15 +161,15 @@ enum FolderPanelAppearance {
 
     /// “在访达中打开”的图标与面板材质的合成方式，取 Core Animation 的合成滤镜名
     ///
-    /// 深色原生是叠加（plus-lighter）：黑、灰、白、红四种底色上，图标处每个通道都比材质高出同样的量
+    /// 黑、灰、白、红四种底色上，原生图标处每个通道都与材质相差同样的量：
+    /// 深色是叠加（plus-lighter），比材质高；浅色是叠暗（plus-darker），比材质低
     var openInFinderCompositingFilter: String {
         switch self {
         case .dark:
-            return "plusL"
+            "plusL"
 
         case .light:
-            #warning("TODO: 浅色外观未与原生对照，按深色的叠加量对称取叠暗（plus-darker）")
-            return "plusD"
+            "plusD"
         }
     }
 
@@ -183,19 +184,25 @@ enum FolderPanelAppearance {
     /// “在访达中打开”图标的颜色，按 `openInFinderCompositingFilter` 与材质合成
     ///
     /// 叠加时加上的量就是颜色本身；叠暗时减去的量是 1 减去颜色。取 sRGB 灰：屏上读数与 sRGB 的数值一致
+    ///
+    /// 原生实测：深色平时加 124 / 255、按下加 50 / 255；浅色平时减 127 / 255、按下减 194 / 255
     /// - Parameter isPressed: 是否处于按下状态
     func openInFinderIconColor(isPressed: Bool) -> NSColor {
-        let blend = isPressed
-            ? FolderPanelMetrics.openInFinderPressedIconBlend
-            : FolderPanelMetrics.openInFinderIconBlend
+        let white: CGFloat =
+            switch (self, isPressed) {
+            // 叠加：颜色就是加上的量
+            case (.dark, false):
+                124 / 255
 
-        let white =
-            switch self {
-            case .dark:
-                blend
+            case (.dark, true):
+                50 / 255
 
-            case .light:
-                1 - blend
+            // 叠暗：颜色是 1 减去减掉的量，按下时减得更多
+            case (.light, false):
+                1 - 127 / 255
+
+            case (.light, true):
+                1 - 194 / 255
             }
 
         return NSColor(

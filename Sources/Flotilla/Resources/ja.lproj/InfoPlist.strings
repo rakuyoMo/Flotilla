@@ -1,0 +1,7 @@
+/* 隐私授权框里的用途说明 */
+"NSDesktopFolderUsageDescription" = "FinderのフォルダをDockのパネルで展開するには、Flotillaがフォルダの内容を読み込む必要があります。";
+"NSDocumentsFolderUsageDescription" = "FinderのフォルダをDockのパネルで展開するには、Flotillaがフォルダの内容を読み込む必要があります。";
+"NSDownloadsFolderUsageDescription" = "FinderのフォルダをDockのパネルで展開するには、Flotillaがフォルダの内容を読み込む必要があります。";
+"NSFileProviderDomainUsageDescription" = "FinderのフォルダをDockのパネルで展開するには、Flotillaがフォルダの内容を読み込む必要があります。";
+"NSNetworkVolumesUsageDescription" = "FinderのフォルダをDockのパネルで展開するには、Flotillaがフォルダの内容を読み込む必要があります。";
+"NSRemovableVolumesUsageDescription" = "FinderのフォルダをDockのパネルで展開するには、Flotillaがフォルダの内容を読み込む必要があります。";

@@ -134,7 +134,9 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
   - 深色：叠加（plus-lighter）到面板材质上，图标所在图层的 `compositingFilter` 取 `plusL`
     - 每个通道平时加 124 / 255，按下时加 50 / 255；图是这个灰度的 sRGB 灰
     - 实测依据：黑、灰、白、红四种底色窗上，圆圈与箭头都比材质高出 124（按下 50），超过 255 的通道截止
-  - 浅色未与原生对照：按深色的量对称取叠暗（`plusD`），平时减 124 / 255、按下减 50 / 255，代码里有 `#warning`
+  - 浅色：叠暗（plus-darker）到面板材质上，`compositingFilter` 取 `plusD`
+    - 每个通道平时减 127 / 255，按下时减 194 / 255；图是 1 减去这个量的 sRGB 灰
+    - 实测依据：黑、灰、白、红四种底色窗上，圆圈与箭头都比材质低 127（按下 194），低于 0 的通道截止；大小、位置与形状与深色相同
   - macOS 15 的 behind-window popover 材质上叠加是否生效未实测，代码里有 `#warning`
   - 系统外观变化时，单元格自己换颜色与合成方式
 - 名称与其它格同一样式，按下时不变
@@ -152,6 +154,31 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
 - 位置在中间省略：开头的 `~/` 与离它最近的那一级目录都留着
 - 书签跟随改了 URL 后，树按通知重建，位置随之更新
 
+## 隐私授权框的用途说明
+
+- 第一次读受保护的位置时系统弹出授权框（见“平台事实”），框里显示 Flotilla 写明的用途：读取访达里的文件夹的内容，在面板里展开
+- 每个会弹授权框的位置一个键，六个键用同一句话；授权框的标题已写明 App 名与位置，说明里不重复位置
+
+  | 键 | 位置 |
+  |---|---|
+  | `NSDocumentsFolderUsageDescription` | 文稿 |
+  | `NSDesktopFolderUsageDescription` | 桌面 |
+  | `NSDownloadsFolderUsageDescription` | 下载 |
+  | `NSFileProviderDomainUsageDescription` | iCloud 云盘等文件提供方 |
+  | `NSRemovableVolumesUsageDescription` | 外接卷 |
+  | `NSNetworkVolumesUsageDescription` | 网络卷 |
+
+- 英文写在 `Info.plist`（开发语言 `en`）；五个 `.lproj` 各有一张 `InfoPlist.strings`，键与 `Info.plist` 相同
+  - 用词与 `Localizable.strings` 一致：zh-Hant 用“Finder”“檔案夾”
+
+  | 语言 | 文案 |
+  |---|---|
+  | en | Flotilla needs to read the contents of Finder folders to expand them in its panel on the Dock. |
+  | zh-Hans | Flotilla 需要读取访达里文件夹的内容，才能在 Dock 上的面板里展开它们。 |
+  | zh-Hant | Flotilla 需要讀取 Finder 裡檔案夾的內容，才能在 Dock 上的面板裡展開它們。 |
+  | ja | FinderのフォルダをDockのパネルで展開するには、Flotillaがフォルダの内容を読み込む必要があります。 |
+  | ko | Finder 폴더를 Dock의 패널에서 펼치려면 Flotilla가 폴더의 내용을 읽어야 합니다. |
+
 ## 平台事实
 
 以下都是 macOS 27、APFS 上的实测。
@@ -166,8 +193,16 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
 - 打开已不存在的项：`NSWorkspace.open` 用默认的 `OpenConfiguration`（`promptsUserIfNeeded` 为真）时，回调给出错误，同时 `CoreServicesUIAgent` 弹出“找不到该文件。”的提示框，有“好”与帮助按钮
   - 实测的是已删除的访达里的文件夹；已删除的文件走同一个打开方法、同一份设置，没有单独实测
 - 隐私授权：第一次读“文稿”“桌面”“下载”、iCloud 云盘、外接或网络卷时，系统弹出授权框，读取等到用户回答；允许就展开，拒绝就按读不出内容处理
-  - 授权框属于别的进程，用户点它的按下由全局鼠标监听收到；主线程这时被读取占住，按下排到读取结束后才处理
-  - 未在屏上触发验证
+  - 授权框里有 Flotilla 的用途说明，见“隐私授权框的用途说明”
+  - 键与授权服务的对应取自 `/System/Library/PrivateFrameworks/TCC.framework/Support/tccd` 的字符串，授权框文案在同一框架的 `Localizable.loctable`
+  - iCloud 云盘是文件提供方扩展（`com.apple.fileprovider-nonui`），授权框属于 `kTCCServiceFileProviderDomain`，对应 `NSFileProviderDomainUsageDescription`
+    - 这个服务的授权框文案是 `“%@”想要访问受“%@”管理的文件。`，后一处是文件提供方的名称
+  - 授权框由 `UserNotificationCenter` 显示，属于别的进程
+    - 发起读取的进程结束后，授权框仍留在屏上
+    - 用户点它的按下由全局鼠标监听收到；主线程这时被读取占住，按下排到读取结束后才处理
+  - 用途说明的显示在屏上实测过：用带同样 `Info.plist` 与 `InfoPlist.strings` 的临时 App 读“文稿”触发
+    - 授权框标题是 `“TCCProbe”想访问“文稿”文件夹中的文件。`，标题下是按系统语言取的那一句（系统语言为简体中文，显示 zh-Hans 那句）
+  - Flotilla 自己点“允许”“不允许”之后的展开与回退未在屏上验证
 - 事件时间：`NSEvent.timestamp` 与 `ProcessInfo.systemUptime` 是同一个时钟，都是开机以来不含睡眠的秒数（`CLOCK_UPTIME_RAW`）
   - 测量时开机以来睡眠过约 22 小时：`systemUptime` 与 `CLOCK_UPTIME_RAW` 相等，比含睡眠的 `CLOCK_MONOTONIC_RAW` 少约 78700 s
   - 全局鼠标监听被动收到的移动、按下、抬起：`timestamp` 比处理时的 `systemUptime` 早 1–6 ms；对应 `CGEvent.timestamp` 是同一时刻的纳秒数
@@ -211,7 +246,7 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
   - 单元格（`FolderGridItemViewTests`）：
     - 各项拖出单元格后恢复平常的样子，在单元格外抬起不触发
     - “在访达中打开”拖出单元格、拖出面板仍是按下的样子，在那里抬起触发一次
-    - “在访达中打开”的图标：深色 `plusL`、平时 124、按下 50；浅色 `plusD`、平时 131、按下 205
+    - “在访达中打开”的图标：深色 `plusL`、平时 124、按下 50；浅色 `plusD`、平时 128、按下 61
     - “在访达中打开”的图标按 100 pt 摆放，中心与其它格的图标相同
 - 需求 21（`FolderTreeCellViewTests`）：
   - 家目录之内的访达里的文件夹显示 `~/…`，家目录以外显示完整路径，`/` 不显示
@@ -219,6 +254,9 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
   - 宽度不够时先截断位置，名称保持完整
   - 位置在中间省略
 - 新键五种语言齐全：`LocalizationTests` 自动覆盖
+- 隐私授权框的用途说明（`PrivacyUsageDescriptionTests`）：
+  - `Info.plist` 有上表六个键，值非空
+  - 五张 `InfoPlist.strings` 都能解析、没有空值，键集合与 `Info.plist` 里的用途说明键相同
 
 ## 验收
 
@@ -232,4 +270,5 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
   - 最后一格“在访达中打开”：访达打开这一层，面板收起；图标的大小、颜色与按下的样子与原生叠放一致；按下后拖出面板再抬起也触发
   - 空文件夹只有“在访达中打开”一格；已删除的访达里的文件夹点击后系统弹出“找不到”的提示，同时记日志，面板收起
   - 上千项的访达里的文件夹点开不卡顿；快速滚动（含惯性）时不出现空白格
+- 隐私授权框：第一次读受保护的位置时，授权框里显示 Flotilla 的用途说明，语言跟随系统
 - 设置窗口：访达里的文件夹这一行在名称后显示灰色的位置；把窗口拉窄时先截断位置，在中间省略，开头的 `~/` 与最后一级目录都看得到

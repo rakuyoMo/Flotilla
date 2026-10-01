@@ -1,0 +1,7 @@
+/* 隐私授权框里的用途说明 */
+"NSDesktopFolderUsageDescription" = "Finder 폴더를 Dock의 패널에서 펼치려면 Flotilla가 폴더의 내용을 읽어야 합니다.";
+"NSDocumentsFolderUsageDescription" = "Finder 폴더를 Dock의 패널에서 펼치려면 Flotilla가 폴더의 내용을 읽어야 합니다.";
+"NSDownloadsFolderUsageDescription" = "Finder 폴더를 Dock의 패널에서 펼치려면 Flotilla가 폴더의 내용을 읽어야 합니다.";
+"NSFileProviderDomainUsageDescription" = "Finder 폴더를 Dock의 패널에서 펼치려면 Flotilla가 폴더의 내용을 읽어야 합니다.";
+"NSNetworkVolumesUsageDescription" = "Finder 폴더를 Dock의 패널에서 펼치려면 Flotilla가 폴더의 내용을 읽어야 합니다.";
+"NSRemovableVolumesUsageDescription" = "Finder 폴더를 Dock의 패널에서 펼치려면 Flotilla가 폴더의 내용을 읽어야 합니다.";

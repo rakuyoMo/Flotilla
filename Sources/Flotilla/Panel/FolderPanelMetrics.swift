@@ -86,12 +86,6 @@ enum FolderPanelMetrics {
     /// “在访达中打开”图标的边长：Dock 的 128 pt 原图按这个边长画，中心与其它格的图标相同，圆圈外径 64 pt、线宽 2.3 pt
     static let openInFinderIconSize: CGFloat = 100
 
-    /// “在访达中打开”的图标平时叠加到面板材质上的量：深色原生每个通道高出材质 124 / 255
-    static let openInFinderIconBlend: CGFloat = 124 / 255
-
-    /// “在访达中打开”按下时的叠加量：深色原生每个通道高出材质 50 / 255
-    static let openInFinderPressedIconBlend: CGFloat = 50 / 255
-
     /// 最多显示的行数，超出时网格滚动
     static let maximumVisibleRowCount = 5
 

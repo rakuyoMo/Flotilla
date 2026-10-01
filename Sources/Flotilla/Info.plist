@@ -37,5 +37,17 @@
 	<string>15.0</string>
 	<key>LSUIElement</key>
 	<true/>
+	<key>NSDesktopFolderUsageDescription</key>
+	<string>Flotilla needs to read the contents of Finder folders to expand them in its panel on the Dock.</string>
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>Flotilla needs to read the contents of Finder folders to expand them in its panel on the Dock.</string>
+	<key>NSDownloadsFolderUsageDescription</key>
+	<string>Flotilla needs to read the contents of Finder folders to expand them in its panel on the Dock.</string>
+	<key>NSFileProviderDomainUsageDescription</key>
+	<string>Flotilla needs to read the contents of Finder folders to expand them in its panel on the Dock.</string>
+	<key>NSNetworkVolumesUsageDescription</key>
+	<string>Flotilla needs to read the contents of Finder folders to expand them in its panel on the Dock.</string>
+	<key>NSRemovableVolumesUsageDescription</key>
+	<string>Flotilla needs to read the contents of Finder folders to expand them in its panel on the Dock.</string>
 </dict>
 </plist>

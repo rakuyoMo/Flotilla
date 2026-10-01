@@ -98,7 +98,7 @@ Flotilla 是一个无 Dock 图标的常驻后台 App（`LSUIElement`），只有
 | `Sources/FlotillaDockTile/` | stub 的可执行文件 | 打开 `flotilla://` URL 后退出；被拖放启动时带上被拖的 App 与文件 | 02、05、06 |
 | `Dock/` | `DockTileAdditionTracker` | 决定哪些根文件夹要添加 tile 的纯逻辑 | 05 |
 | `Dock/` | `DockTileRequest` | stub 通过 URL 发来的请求：展开面板，或加入拖到 tile 上的 App 与文件 | 05、06 |
-| `Resources/` | `Localizable.strings` | 五种语言的界面文字 | 05 |
+| `Resources/` | `Localizable.strings`、`InfoPlist.strings` | 五种语言的界面文字与隐私授权框里的用途说明 | 05、08 |
 | `Tests/FlotillaTests/` | 单元测试 | Swift Testing | 各阶段 |
 
 ## 阶段与顺序
