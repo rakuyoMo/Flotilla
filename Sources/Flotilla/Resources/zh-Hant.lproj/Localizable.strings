@@ -27,6 +27,8 @@
 /* 设置窗口的通用区 */
 "general.sectionTitle" = "一般";
 "general.previewIconCount" = "檔案夾圖像內顯示的圖像數量：";
+"general.finderFolders" = "Finder 裡的檔案夾：";
+"general.showHiddenFiles" = "顯示隱藏檔案";
 "general.accessibility" = "輔助使用權限：";
 "general.accessibilityGranted" = "已授權";
 "general.accessibilityNotGranted" = "未授權";

@@ -313,6 +313,7 @@ extension FolderGridThumbnailTests {
             items: content.items,
             layout: layout,
             previewIconCount: 0,
+            hiddenItemIDs: [],
             fileThumbnailLoader: fileThumbnailLoader,
             openInFinderHandler: openInFinderHandler
         ) { _ in }

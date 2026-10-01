@@ -3,7 +3,7 @@ import ApplicationServices
 
 // MARK: - GeneralSettingsViewController
 
-/// 设置窗口的通用区：预览图标数，以及辅助功能权限的授权状态
+/// 设置窗口的通用区：预览图标数、访达里的文件夹是否显示隐藏文件，以及辅助功能权限的授权状态
 @MainActor
 final class GeneralSettingsViewController: NSViewController {
     /// 系统设置里辅助功能权限页的地址
@@ -16,6 +16,16 @@ final class GeneralSettingsViewController: NSViewController {
 
     /// 预览图标数的选择器，选项 0–4，第 n 项即数量 n
     private let previewIconCountPopUp = NSPopUpButton()
+
+    /// 访达里的文件夹在面板里展开时是否显示隐藏文件
+    private let showsHiddenFilesCheckbox = NSButton(
+        checkboxWithTitle: String(
+            localized: "general.showHiddenFiles",
+            comment: "访达里的文件夹一行的复选框：在面板里展开时显示隐藏文件"
+        ),
+        target: nil,
+        action: nil
+    )
 
     /// 辅助功能权限的授权状态
     private let accessibilityStatusLabel = NSTextField(labelWithString: "")
@@ -34,13 +44,17 @@ final class GeneralSettingsViewController: NSViewController {
         fatalError("init(coder:) has not been implemented")
     }
 
-    /// 区块标题与两行设置项自上而下排列
+    /// 区块标题与三行设置项自上而下排列
     override func loadView() {
         let counts = 0 ... Preferences.maximumPreviewIconCount
         previewIconCountPopUp.addItems(withTitles: counts.map { String($0) })
         previewIconCountPopUp.selectItem(at: preferences.previewIconCount)
         previewIconCountPopUp.target = self
         previewIconCountPopUp.action = #selector(previewIconCountChanged)
+
+        showsHiddenFilesCheckbox.state = preferences.showsHiddenFiles ? .on : .off
+        showsHiddenFilesCheckbox.target = self
+        showsHiddenFilesCheckbox.action = #selector(showsHiddenFilesChanged)
 
         let openSettingsButton = NSButton(
             title: String(
@@ -60,6 +74,13 @@ final class GeneralSettingsViewController: NSViewController {
             )
         )
 
+        let finderFoldersLabel = NSTextField(
+            labelWithString: String(
+                localized: "general.finderFolders",
+                comment: "显示隐藏文件复选框左侧的标签：设置作用于访达里的文件夹在面板里展开的内容"
+            )
+        )
+
         let accessibilityLabel = NSTextField(
             labelWithString: String(
                 localized: "general.accessibility",
@@ -70,6 +91,7 @@ final class GeneralSettingsViewController: NSViewController {
         // 两列网格：左列标签右对齐，右列控件左对齐，各行按首行基线对齐
         let gridView = NSGridView(views: [
             [previewIconCountLabel, previewIconCountPopUp],
+            [finderFoldersLabel, showsHiddenFilesCheckbox],
             [accessibilityLabel, accessibilityRow],
         ])
 
@@ -118,6 +140,12 @@ extension GeneralSettingsViewController {
     @objc
     private func previewIconCountChanged() {
         preferences.previewIconCount = previewIconCountPopUp.indexOfSelectedItem
+    }
+
+    /// 复选框变化时写回是否显示隐藏文件
+    @objc
+    private func showsHiddenFilesChanged() {
+        preferences.showsHiddenFiles = showsHiddenFilesCheckbox.state == .on
     }
 
     /// 打开系统设置的辅助功能权限页

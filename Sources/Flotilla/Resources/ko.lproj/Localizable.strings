@@ -27,6 +27,8 @@
 /* 设置窗口的通用区 */
 "general.sectionTitle" = "일반";
 "general.previewIconCount" = "폴더 아이콘에 표시할 아이콘 수:";
+"general.finderFolders" = "Finder 폴더:";
+"general.showHiddenFiles" = "숨김 파일 보기";
 "general.accessibility" = "손쉬운 사용 권한:";
 "general.accessibilityGranted" = "허용됨";
 "general.accessibilityNotGranted" = "허용되지 않음";

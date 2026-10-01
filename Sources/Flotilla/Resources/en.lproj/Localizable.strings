@@ -27,6 +27,8 @@
 /* 设置窗口的通用区 */
 "general.sectionTitle" = "General";
 "general.previewIconCount" = "Icons shown in folder icon:";
+"general.finderFolders" = "Finder folders:";
+"general.showHiddenFiles" = "Show hidden files";
 "general.accessibility" = "Accessibility permission:";
 "general.accessibilityGranted" = "Granted";
 "general.accessibilityNotGranted" = "Not granted";

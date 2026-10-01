@@ -27,6 +27,8 @@
 /* 设置窗口的通用区 */
 "general.sectionTitle" = "通用";
 "general.previewIconCount" = "文件夹图标内显示的图标数量：";
+"general.finderFolders" = "访达里的文件夹：";
+"general.showHiddenFiles" = "显示隐藏文件";
 "general.accessibility" = "辅助功能权限：";
 "general.accessibilityGranted" = "已授权";
 "general.accessibilityNotGranted" = "未授权";

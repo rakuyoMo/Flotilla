@@ -201,7 +201,7 @@ extension FolderPanelNavigationTests {
     /// 按本用例的一次展开解析导航路径
     private func resolve(_ path: [UUID], in rootFolders: [Folder]) -> FolderPanelLevelContent? {
         FolderPanelController.levelContent(at: path, in: rootFolders) {
-            try? finderFolderContents.items(of: $0)
+            try? finderFolderContents.items(of: $0, includingHiddenFiles: false)
         }
     }
 

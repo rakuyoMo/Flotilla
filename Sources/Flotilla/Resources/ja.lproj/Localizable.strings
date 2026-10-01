@@ -27,6 +27,8 @@
 /* 设置窗口的通用区 */
 "general.sectionTitle" = "一般";
 "general.previewIconCount" = "フォルダアイコンに表示するアイコンの数：";
+"general.finderFolders" = "Finderのフォルダ：";
+"general.showHiddenFiles" = "不可視ファイルを表示";
 "general.accessibility" = "アクセシビリティの権限：";
 "general.accessibilityGranted" = "許可済み";
 "general.accessibilityNotGranted" = "未許可";

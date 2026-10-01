@@ -32,7 +32,7 @@ final class FolderPanelController {
     /// 文件夹树的唯一数据源
     private let store: FolderStore
 
-    /// 用户设置，决定子文件夹图标里的预览数量
+    /// 用户设置，决定子文件夹图标里的预览数量，以及访达里的文件夹是否显示隐藏文件
     private let preferences: Preferences
 
     /// 本次展开的定位依据
@@ -65,7 +65,7 @@ final class FolderPanelController {
     /// 创建面板控制器
     /// - Parameters:
     ///   - store: 文件夹树的唯一数据源
-    ///   - preferences: 用户设置，决定子文件夹图标里的预览数量
+    ///   - preferences: 用户设置，决定子文件夹图标里的预览数量，以及访达里的文件夹是否显示隐藏文件
     init(store: FolderStore, preferences: Preferences) {
         self.store = store
         self.preferences = preferences
@@ -449,10 +449,12 @@ extension FolderPanelController {
             ? FileThumbnailLoader(scale: scale)
             : nil
 
+        // 隐藏的项只来自访达里的文件夹：本次展开读出的隐藏项按 id 交给网格，Flotilla 的文件夹里各项的 id 不在其中
         scrollView.documentView = FolderGridView(
             items: content.items,
             layout: layout,
             previewIconCount: preferences.previewIconCount,
+            hiddenItemIDs: finderFolderContents.hiddenItemIDs,
             fileThumbnailLoader: fileThumbnailLoader,
             openInFinderHandler: openInFinderHandler
         ) { [weak self] in
@@ -556,7 +558,11 @@ extension FolderPanelController {
             readPeriods.record(start ... ProcessInfo.processInfo.systemUptime)
         }
 
-        return try finderFolderContents.items(of: finderFolder)
+        // 是否显示隐藏文件按读取当时的设置：切换设置要点设置窗口，面板这时已经收起
+        return try finderFolderContents.items(
+            of: finderFolder,
+            includingHiddenFiles: preferences.showsHiddenFiles
+        )
     }
 
     /// 记下层级网格当前的滚动位置
