@@ -134,7 +134,9 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
   - 深色：叠加（plus-lighter）到面板材质上，图标所在图层的 `compositingFilter` 取 `plusL`
     - 每个通道平时加 124 / 255，按下时加 50 / 255；图是这个灰度的 sRGB 灰
     - 实测依据：黑、灰、白、红四种底色窗上，圆圈与箭头都比材质高出 124（按下 50），超过 255 的通道截止
-  - 浅色未与原生对照：按深色的量对称取叠暗（`plusD`），平时减 124 / 255、按下减 50 / 255，代码里有 `#warning`
+  - 浅色：叠暗（plus-darker）到面板材质上，`compositingFilter` 取 `plusD`
+    - 每个通道平时减 127 / 255，按下时减 194 / 255；图是 1 减去这个量的 sRGB 灰
+    - 实测依据：黑、灰、白、红四种底色窗上，圆圈与箭头都比材质低 127（按下 194），低于 0 的通道截止；大小、位置与形状与深色相同
   - macOS 15 的 behind-window popover 材质上叠加是否生效未实测，代码里有 `#warning`
   - 系统外观变化时，单元格自己换颜色与合成方式
 - 名称与其它格同一样式，按下时不变
@@ -240,7 +242,7 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
   - 单元格（`FolderGridItemViewTests`）：
     - 各项拖出单元格后恢复平常的样子，在单元格外抬起不触发
     - “在访达中打开”拖出单元格、拖出面板仍是按下的样子，在那里抬起触发一次
-    - “在访达中打开”的图标：深色 `plusL`、平时 124、按下 50；浅色 `plusD`、平时 131、按下 205
+    - “在访达中打开”的图标：深色 `plusL`、平时 124、按下 50；浅色 `plusD`、平时 128、按下 61
     - “在访达中打开”的图标按 100 pt 摆放，中心与其它格的图标相同
 - 需求 21（`FolderTreeCellViewTests`）：
   - 家目录之内的访达里的文件夹显示 `~/…`，家目录以外显示完整路径，`/` 不显示
