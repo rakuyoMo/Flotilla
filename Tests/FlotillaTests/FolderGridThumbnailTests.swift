@@ -76,7 +76,10 @@ struct FolderGridThumbnailTests {
 
         let app = AppReference(
             id: UUID(),
-            url: URL(filePath: "/System/Applications/Calculator.app/", directoryHint: .isDirectory),
+            url: URL(
+                filePath: "/System/Applications/Calculator.app/",
+                directoryHint: .isDirectory
+            ),
             bookmark: nil
         )
 

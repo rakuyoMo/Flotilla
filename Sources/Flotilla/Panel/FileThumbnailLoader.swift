@@ -24,7 +24,9 @@ final class FileThumbnailLoader {
 
     /// 按给定的方法生成缩略图；测试里传入假实现
     /// - Parameter generate: 生成一个文件的缩略图：结果在任意线程交给回调，生成不出时为 nil；返回取消这次请求的闭包
-    init(generate: @escaping (URL, @escaping @Sendable (NSImage?) -> Void) -> () -> Void) {
+    init(
+        generate: @escaping (URL, @escaping @Sendable (NSImage?) -> Void) -> () -> Void
+    ) {
         self.generate = generate
     }
 

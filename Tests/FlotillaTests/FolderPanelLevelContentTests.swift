@@ -49,8 +49,11 @@ struct FolderPanelLevelContentTests {
     func onlyFinderFolderShowsFileThumbnails() {
         let folder = Folder(id: UUID(), name: "工作", items: makeFiles(3))
 
-        #expect(FolderPanelLevelContent.finderFolder(finderFolder, items: makeFiles(3)).showsFileThumbnails)
-        #expect(!FolderPanelLevelContent.folder(folder).showsFileThumbnails)
+        let finderFolderContent = FolderPanelLevelContent.finderFolder(finderFolder, items: makeFiles(3))
+        let folderContent = FolderPanelLevelContent.folder(folder)
+
+        #expect(finderFolderContent.showsFileThumbnails)
+        #expect(!folderContent.showsFileThumbnails)
     }
 
     /// 网格按格数摆出单元格：访达里的文件夹多出末尾那一格
