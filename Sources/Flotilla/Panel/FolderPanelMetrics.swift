@@ -106,8 +106,13 @@ enum FolderPanelMetrics {
     /// 标题的字号
     static let headerTitleFontSize: CGFloat = 14
 
-    /// 标题基线与面板主体顶边的距离
-    static let headerTitleBaselineY: CGFloat = 23.5
+    /// 标题基线与面板主体顶边的距离：原生根层级与子层级渲染出的基线都在 23 pt
+    static let headerTitleBaselineY: CGFloat = 23
+
+    /// 原生标题框比文字宽（向上取整到点）多出的宽度
+    ///
+    /// 原生标题框宽为文字宽向上取整再加这个值，框的左边是居中位置向下取整到点，文字在框里居中
+    static let headerTitleFrameExtraWidth: CGFloat = 1
 
     /// 返回按钮在面板主体里的位置与尺寸，原点在主体左上角、y 向下
     static let backButtonFrame = CGRect(x: 15, y: 7, width: 21, height: 22)
