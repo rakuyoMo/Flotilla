@@ -57,7 +57,7 @@ extension BookmarkedReference {
     /// 按书签找到当前位置，返回更新后的引用；位置与书签都不用改、或找不到时为 nil
     ///
     /// 不弹界面、不挂载卷；移进废纸篓时同样跟过去。没有书签的项在原路径上还有东西时补建书签。
-    /// 文件按这里跟随；App 要用 `AppReference.relocatedApp(applicationURL:)`，它在这之上不跟进废纸篓、按 bundle id 找回
+    /// 文件按这里跟随；App 要用 `AppReference.relocatedApp(applicationURL:isVolumeMounted:)`，它在这之上不跟进废纸篓、按 bundle id 找回
     func relocated() -> Self? {
         guard let bookmark else {
             // 原路径上已经没有东西时建不起书签，这一项保持原样

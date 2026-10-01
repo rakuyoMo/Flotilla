@@ -131,6 +131,61 @@ final class AppReferenceRelocationTests {
         #expect(relocated == nil)
     }
 
+    // MARK: 卷
+
+    /// App 所在的卷没挂载时，别处装着同一个 bundle id 的另一份也不跟过去：这一项保持原样，
+    /// 卷挂回来后照常按书签解析到原路径
+    ///
+    /// 临时目录里卸不下卷：删掉 App 让书签解析失败、原路径上没有东西，卷没挂载由假的判断给出
+    @Test
+    func staysOnAppOfUnmountedVolume() throws {
+        let original = try addApp()
+
+        try createDirectory("应用程序")
+        try writeBundle("应用程序/Tool.app")
+        try FileManager.default.removeItem(at: directory.appending(path: "Tool.app"))
+
+        let unmounted = original.relocatedApp(
+            applicationURL: installedApp(at: "应用程序/Tool.app"),
+            isVolumeMounted: { _ in false }
+        )
+
+        #expect(unmounted == nil)
+
+        // 卷挂回来：原路径上又有了这个 App
+        try writeBundle("Tool.app")
+
+        // 真的卷挂回来时是同一个 App，记录不变（返回 nil）；这里放回的是新的 bundle，书签按它重建，位置仍是原路径
+        let remounted = original.relocatedApp { (_: String) -> URL? in
+            Issue.record("书签解析得到 App 时不该问 Launch Services")
+            return nil
+        } ?? original
+
+        #expect(remounted.id == original.id)
+        #expect(remounted.url == original.url)
+    }
+
+    /// 卷挂着、原路径上的 App 被删掉：按 bundle id 找回别处装着的那一份；卷是否挂载用真的判断，
+    /// 临时目录所在的启动卷必须判为挂载着，否则启动卷上的 App 都找不回
+    @Test
+    func recoversDeletedAppOnMountedVolume() throws {
+        let original = try addApp()
+        let bookmark = try #require(original.bookmark)
+
+        try createDirectory("应用程序")
+        try writeBundle("应用程序/Tool.app")
+        try FileManager.default.removeItem(at: directory.appending(path: "Tool.app"))
+
+        #expect(AppReference.isVolumeMounted(recordedIn: bookmark))
+
+        let recovered = try #require(
+            original.relocatedApp(applicationURL: installedApp(at: "应用程序/Tool.app"))
+        )
+
+        #expect(recovered.id == original.id)
+        #expect(recovered.url == directoryURL(of: "应用程序/Tool.app"))
+    }
+
     // MARK: bundle id
 
     /// 没有 bundle id 的旧数据，App 还在原处时补上，位置与书签不变；补上之后再刷新什么都不改
