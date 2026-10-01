@@ -5,7 +5,7 @@ import Testing
 
 // MARK: - FinderFolderContentsTests
 
-/// 访达里的文件夹在面板里展开时读出的内容：顺序与访达“名称”一致，隐藏文件不出现，
+/// 访达里的文件夹在面板里展开时读出的内容：顺序与访达“名称”一致，隐藏文件按设置跳过或标为隐藏，
 /// 每一项的身份决定点击后是启动、继续进入还是打开；同一次展开里 id 不变，返回时才找得到缩回的图标
 final class FinderFolderContentsTests {
     /// 本用例独占的临时目录，作为被展开的访达里的文件夹
@@ -22,16 +22,38 @@ final class FinderFolderContentsTests {
         try? FileManager.default.removeItem(at: directory)
     }
 
-    /// 以 `.` 开头的隐藏文件被跳过
+    /// 默认不显示隐藏文件：以 `.` 开头的文件与目录、带 `hidden` 标志的文件都被跳过
     @Test
     func skipsHiddenFiles() throws {
-        try writeFile(".DS_Store")
+        try writeHiddenEntries()
         try writeFile("报告.txt")
 
         var contents = FinderFolderContents()
-        let items = try contents.items(of: finderFolder())
+        let items = try contents.items(of: finderFolder(), includingHiddenFiles: false)
 
         #expect(names(of: items) == ["报告.txt"])
+        #expect(contents.hiddenItemIDs.isEmpty)
+    }
+
+    /// 显示隐藏文件时与访达的 ⌘⇧. 一致：以 `.` 开头的文件与目录、带 `hidden` 标志的文件都读出来并标为隐藏，
+    /// 面板据此把它们画成半透明；`.DS_Store` 与 `.localized` 仍不显示。关掉之后再读，又被跳过
+    @Test
+    func showsHiddenFilesWhenAsked() throws {
+        try writeHiddenEntries()
+        try writeFile("报告.txt")
+
+        let folder = try finderFolder()
+        var contents = FinderFolderContents()
+
+        let items = try contents.items(of: folder, includingHiddenFiles: true)
+        let hiddenItems = items.filter { contents.hiddenItemIDs.contains($0.id) }
+
+        #expect(Set(names(of: items)) == [".隐藏.txt", ".隐藏目录", "标志.txt", "报告.txt"])
+        #expect(Set(names(of: hiddenItems)) == [".隐藏.txt", ".隐藏目录", "标志.txt"])
+
+        let skipped = try contents.items(of: folder, includingHiddenFiles: false)
+
+        #expect(names(of: skipped) == ["报告.txt"])
     }
 
     /// 按显示名以 `localizedStandardCompare` 排序：`a2` 在 `a10` 前，不区分大小写
@@ -42,7 +64,7 @@ final class FinderFolderContentsTests {
         }
 
         var contents = FinderFolderContents()
-        let items = try contents.items(of: finderFolder())
+        let items = try contents.items(of: finderFolder(), includingHiddenFiles: false)
 
         #expect(names(of: items) == ["a2.txt", "a10.txt", "B.txt"])
     }
@@ -65,7 +87,7 @@ final class FinderFolderContentsTests {
         )
 
         var contents = FinderFolderContents()
-        let items = try contents.items(of: finderFolder())
+        let items = try contents.items(of: finderFolder(), includingHiddenFiles: false)
 
         let apps = items.compactMap { item -> String? in
             guard case .app(let app) = item else { return nil }
@@ -114,7 +136,7 @@ final class FinderFolderContentsTests {
         )
 
         var contents = FinderFolderContents()
-        let items = try contents.items(of: finderFolder())
+        let items = try contents.items(of: finderFolder(), includingHiddenFiles: false)
 
         // 逐项单独读取：各自读显示名、规整 URL、判断是不是 App
         let urls = try FileManager.default.contentsOfDirectory(
@@ -147,11 +169,11 @@ final class FinderFolderContentsTests {
         let folder = try finderFolder()
 
         var contents = FinderFolderContents()
-        let first = try contents.items(of: folder).map(\.id)
-        let second = try contents.items(of: folder).map(\.id)
+        let first = try contents.items(of: folder, includingHiddenFiles: false).map(\.id)
+        let second = try contents.items(of: folder, includingHiddenFiles: false).map(\.id)
 
         var nextExpansion = FinderFolderContents()
-        let third = try nextExpansion.items(of: folder).map(\.id)
+        let third = try nextExpansion.items(of: folder, includingHiddenFiles: false).map(\.id)
 
         #expect(first == second)
         #expect(first != third)
@@ -167,7 +189,7 @@ final class FinderFolderContentsTests {
         var contents = FinderFolderContents()
 
         #expect(throws: (any Error).self) {
-            try contents.items(of: folder)
+            try contents.items(of: folder, includingHiddenFiles: false)
         }
     }
 }
@@ -186,6 +208,26 @@ extension FinderFolderContentsTests {
     /// 在临时目录里写一个文件
     private func writeFile(_ name: String) throws {
         try Data(name.utf8).write(to: directory.appending(path: name))
+    }
+
+    /// 在临时目录里写出各种隐藏项：以 `.` 开头的文件与目录、带 `hidden` 标志的文件，
+    /// 以及访达显示隐藏文件时仍不显示的 `.DS_Store` 与 `.localized`
+    private func writeHiddenEntries() throws {
+        for name in [".隐藏.txt", ".DS_Store", ".localized", "标志.txt"] {
+            try writeFile(name)
+        }
+
+        try FileManager.default.createDirectory(
+            at: directory.appending(path: ".隐藏目录"),
+            withIntermediateDirectories: true
+        )
+
+        // 名称普通、只带 `hidden` 标志的文件
+        var flaggedURL = directory.appending(path: "标志.txt")
+        var values = URLResourceValues()
+        values.isHidden = true
+
+        try flaggedURL.setResourceValues(values)
     }
 
     /// 一项的 URL；目录里读出的只有 App 与文件

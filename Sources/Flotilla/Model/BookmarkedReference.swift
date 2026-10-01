@@ -13,12 +13,11 @@ protocol BookmarkedReference {
     /// 书签，移动或改名后据此找到新位置；建不起来时为 nil，只按路径找
     var bookmark: Data? { get }
 
-    /// 用给定的 id、位置与书签建一个引用
+    /// 同一项换成给定位置与书签后的引用，id 不变
     /// - Parameters:
-    ///   - id: 这一项的唯一标识
-    ///   - url: 记录的位置
-    ///   - bookmark: 书签；建不起来时为 nil
-    init(id: UUID, url: URL, bookmark: Data?)
+    ///   - url: 新的位置
+    ///   - bookmark: 新的书签；建不起来时为 nil
+    func replacingLocation(with url: URL, bookmark: Data?) -> Self
 }
 
 // MARK: - Location
@@ -57,13 +56,14 @@ extension BookmarkedReference {
 
     /// 按书签找到当前位置，返回更新后的引用；位置与书签都不用改、或找不到时为 nil
     ///
-    /// 不弹界面、不挂载卷；移进废纸篓时同样跟过去。没有书签的项在原路径上还有东西时补建书签
+    /// 不弹界面、不挂载卷；移进废纸篓时同样跟过去。没有书签的项在原路径上还有东西时补建书签。
+    /// 文件按这里跟随；App 要用 `AppReference.relocatedApp(applicationURL:isVolumeMounted:)`，它在这之上不跟进废纸篓、按 bundle id 找回
     func relocated() -> Self? {
         guard let bookmark else {
             // 原路径上已经没有东西时建不起书签，这一项保持原样
             guard let newBookmark = try? url.bookmarkData() else { return nil }
 
-            return Self(id: id, url: url, bookmark: newBookmark)
+            return replacingLocation(with: url, bookmark: newBookmark)
         }
 
         var isStale = false
@@ -95,7 +95,7 @@ extension BookmarkedReference {
             ? (try? newURL.bookmarkData()) ?? bookmark
             : bookmark
 
-        return Self(id: id, url: newURL, bookmark: newBookmark)
+        return replacingLocation(with: newURL, bookmark: newBookmark)
     }
 }
 

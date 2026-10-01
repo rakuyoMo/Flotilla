@@ -90,7 +90,8 @@ struct FolderGridThumbnailTests {
                 filePath: "/System/Applications/Calculator.app/",
                 directoryHint: .isDirectory
             ),
-            bookmark: nil
+            bookmark: nil,
+            bundleIdentifier: nil
         )
 
         let grid = makeGrid(for: .finderFolder(
@@ -312,6 +313,7 @@ extension FolderGridThumbnailTests {
             items: content.items,
             layout: layout,
             previewIconCount: 0,
+            hiddenItemIDs: [],
             fileThumbnailLoader: fileThumbnailLoader,
             openInFinderHandler: openInFinderHandler
         ) { _ in }

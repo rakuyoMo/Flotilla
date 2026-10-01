@@ -125,7 +125,8 @@ struct FolderItemCodingTests {
             .app(AppReference(
                 id: UUID(),
                 url: URL(filePath: "/System/Applications/Chess.app/"),
-                bookmark: bookmark
+                bookmark: bookmark,
+                bundleIdentifier: nil
             )),
             .app(makeApp("Calendar")),
         ]
@@ -136,6 +137,27 @@ struct FolderItemCodingTests {
         #expect(try JSONDecoder().decode([FolderItem].self, from: data) == items)
         #expect(objects[0]["bookmark"] as? String == bookmark.base64EncodedString())
         #expect(!objects[1].keys.contains("bookmark"))
+    }
+
+    /// App 的 bundle id 往返后保留，写在 `bundleIdentifier` 键里；没有时不写这个键：App 更新之后据此找回装好的那一份
+    @Test
+    func appBundleIdentifierRoundTripsAndIsOmittedWhenNil() throws {
+        let items: [FolderItem] = [
+            .app(AppReference(
+                id: UUID(),
+                url: URL(filePath: "/System/Applications/Chess.app/"),
+                bookmark: nil,
+                bundleIdentifier: "com.apple.Chess"
+            )),
+            .app(makeApp("Calendar")),
+        ]
+
+        let data = try JSONEncoder().encode(items)
+        let objects = try jsonObjects(encoding: items)
+
+        #expect(try JSONDecoder().decode([FolderItem].self, from: data) == items)
+        #expect(objects[0]["bundleIdentifier"] as? String == "com.apple.Chess")
+        #expect(!objects[1].keys.contains("bundleIdentifier"))
     }
 
     /// 网页没有标题时 JSON 里不写 `title` 键，有标题时照常写出
@@ -152,7 +174,7 @@ struct FolderItemCodingTests {
         #expect(!objects[1].keys.contains("title"))
     }
 
-    /// 只有 App 与子文件夹的旧数据照常解码，升级后用户的文件夹不会丢失
+    /// 只有 App 与子文件夹、App 没有书签与 bundle id 的旧数据照常解码，升级后用户的文件夹不会丢失
     @Test
     func legacyDataDecodes() throws {
         let appID = UUID()
@@ -172,7 +194,8 @@ struct FolderItemCodingTests {
         let chess = AppReference(
             id: appID,
             url: URL(filePath: "/System/Applications/Chess.app/"),
-            bookmark: nil
+            bookmark: nil,
+            bundleIdentifier: nil
         )
 
         #expect(decoded == [
@@ -196,7 +219,8 @@ struct FolderItemCodingTests {
         AppReference(
             id: UUID(),
             url: URL(filePath: "/System/Applications/\(name).app"),
-            bookmark: nil
+            bookmark: nil,
+            bundleIdentifier: nil
         )
     }
 

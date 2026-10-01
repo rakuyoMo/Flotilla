@@ -1,10 +1,12 @@
-# 08 App 跟随移动、访达里的文件夹展开与位置
+# 08 App 跟随移动与更新、访达里的文件夹展开、位置与隐藏文件
 
-先读 [00 总览](00-overview.md) 与 01–07 七份文档，并以 07 阶段合入后的代码为基线。本阶段交付需求 19–21：
+先读 [00 总览](00-overview.md) 与 01–07 七份文档，并以 07 阶段合入后的代码为基线。本阶段交付需求 19–23：
 
 - 需求 19：App 移动或改名后，这一项自动跟到新位置
 - 需求 20：访达里的文件夹在面板里像 Dock 叠放那样展开，网格末尾有“在访达中打开”
 - 需求 21：设置窗口里，访达里的文件夹这一行在名称后标出所在位置
+- 需求 22：App 更新后，文件夹里的这一项仍打开装好的那一份
+- 需求 23：设置里的开关，访达里的文件夹在面板里展开时显示隐藏文件
 
 称呼沿用 07：“文件夹”专指 Flotilla 的分组；磁盘上的目录称“访达里的文件夹”。
 
@@ -32,7 +34,58 @@
   - 读取在主线程同步进行，第一次读受保护的位置时要等用户回答隐私授权框；用户点授权框的按下排到读取结束后才处理，当成点面板外会让刚进入的层级随即收起
   - 进入、返回与文件夹树变化重建时的读取都算
   - 读取之后的按下照旧：点面板外收起、点 tile 切换
-- 不提供排序或显示方式的选择，不监听磁盘变化（00：“初版不给用户更多选择”）
+- 不提供排序或显示方式的选择，不监听磁盘变化（00：“初版不给用户更多选择”）；是否显示隐藏文件是唯一的开关，见需求 23
+
+### 需求 22 App 更新后不跟丢
+
+- App 更新之后，这一项仍打开装好的那一份：在需求 19 的书签跟随之上多三条，只对 App；文件仍按 07 跟进废纸篓
+- 不跟进废纸篓：书签解析到废纸篓里（用户的 `~/.Trash`，或其它卷上的 `.Trashes`）时，这一项的位置与书签都不变
+  - 废纸篓里的 App 启动不了，见“平台事实”
+  - 更新时旧版本移进废纸篓之后，新版本放回原路径：解析按路径优先，这时解析到新版本，书签过期，照常重建
+  - 判断用 `FileManager.getRelationship(_:of:in:toItemAt:)`：目录 `.trashDirectory`，域传空，结果为 `.contains`；抛错按不在废纸篓里处理
+- 记下 bundle id：`AppReference.bundleIdentifier`
+  - 加入时（`FolderItem(url:title:)`）从 bundle 的 `Info.plist` 读，读不到为 nil
+  - 旧数据没有这个字段，解码为 nil；原路径上的 App 还在时补上，与补建书签同一时机
+  - 跟到新位置、重建书签时按当前位置重读；读不到就沿用旧值
+  - 每次都从磁盘读（`CFBundleCopyInfoDictionaryInDirectory`）：`Bundle(url:)` 按路径缓存，见“平台事实”
+- 按 bundle id 找回：书签解析失败、或解析到废纸篓里，且有 bundle id 时，问 Launch Services 要这个 bundle id 的 App（`NSWorkspace.urlForApplication(withBundleIdentifier:)`）
+  - 这两种情况下原路径上一定没有东西：解析按路径优先
+  - 拿到的 App 存在、不在废纸篓里：跟过去，URL 按 `normalizedURL(_:)` 规整，按新位置建书签，id 不变
+  - 拿不到、已不存在或在废纸篓里：保持原样
+  - 书签记录的卷没有挂载：不找回，保持原样；卷挂回来照常按书签解析
+    - App 放在外接卷上、卷没挂载时，书签解析失败、原路径上也没有东西，但 App 仍在那个卷上
+    - 判断（`AppReference.isVolumeMounted(recordedIn:)`）：从书签里读出卷的 UUID（`URL.resourceValues(forKeys:fromBookmarkData:)`），在已挂载的卷（`FileManager.mountedVolumeURLs`）里找同一个 UUID；书签里读不到卷的 UUID 时按没挂载处理，见“平台事实”
+  - 没有书签的旧数据：原路径上没有东西又有 bundle id 时，同样按 bundle id 找回
+- 实现：`AppReference.relocatedApp(applicationURL:isVolumeMounted:)` 先按共用的 `relocated()` 跟随，再按上面三条取舍
+  - 位置、书签与 bundle id 都不用改时为 nil，`FolderStore` 只在有变化时提交
+  - Launch Services 的查询与卷是否挂载的判断是参数，默认走 `NSWorkspace` 与 `isVolumeMounted(recordedIn:)`，测试里换成假实现；`FolderStore` 不传它们
+- 调用时机与需求 19 相同；覆盖到哪些更新方式见“平台事实”
+
+### 需求 23 显示隐藏文件
+
+- 设置窗口通用区一行：左列“访达里的文件夹：”，右列复选框“显示隐藏文件”，默认不勾，见 01 的“通用区”
+  - `Preferences.showsHiddenFiles`，`UserDefaults` 键 `showsHiddenFiles`
+  - 切换它不发 `Preferences.didChangeNotification`：`DockTileSynchronizer` 监听这个通知，收到就重画 stub 图标，可能改写 stub、重启 Dock，而这个开关与 tile 的图标无关
+  - 面板读访达里的文件夹时取当时的值；切换要点设置窗口，面板这时已经收起，不监听设置的变化
+- 文字：两个新键；用词与 `Localizable.strings` 已有的一致，ja 的“不可視ファイル”与 ko 的“… 보기”取自访达自己的界面文字
+
+  | 键 | en | zh-Hans | zh-Hant | ja | ko |
+  |---|---|---|---|---|---|
+  | `general.finderFolders` | Finder folders: | 访达里的文件夹： | Finder 裡的檔案夾： | Finderのフォルダ： | Finder 폴더: |
+  | `general.showHiddenFiles` | Show hidden files | 显示隐藏文件 | 顯示隱藏檔案 | 不可視ファイルを表示 | 숨김 파일 보기 |
+
+- 只影响访达里的文件夹的层级：Flotilla 的文件夹的层级、设置窗口的树、Dock 上 tile 的图标都不变，“在访达中打开”那一格也不变
+- 打开后与访达的 ⌘⇧. 一致（实测见“平台事实”）：
+  - 显示：资源属性 `isHiddenKey` 为真的项都显示，包括以 `.` 开头的文件与目录、带 `hidden` 标志的文件；只有名为 `.DS_Store`、`.localized` 的仍不显示
+  - 半透明：隐藏的项图标与名称的不透明度都是 0.5（`FolderPanelMetrics.hiddenItemOpacity`）；有内容缩略图的隐藏文件同样换上缩略图、同样半透明
+  - 排序不变：隐藏的项与其它项混在一起，按显示名 `localizedStandardCompare` 排，开头的 `.` 也参与比较
+  - 按下：照旧压暗，与半透明叠加
+- 是否隐藏在读目录时一并预取，不逐项再读；`FinderFolderContents.hiddenItemIDs` 记下本次展开里隐藏的项，网格据此把它们的单元格设成半透明
+- 图标与访达一致：名称以“.”开头、没有扩展名的文件与访达里的文件夹，`FileReference.icon` 按资源属性 `contentTypeKey` 的类型取（`NSWorkspace.icon(for:)`），取不到类型时照旧
+  - `icon(forFile:)` 把名称开头的“.”后面当成扩展名，`.a`、`.zip` 会是归档、压缩包的图标，`.bundle` 目录会是 bundle 的图标（实测见“平台事实”）；按类型取，前两个是 `public.data` 的空白文稿，后一个是文件夹
+  - 照旧用 `icon(forFile:)`：有扩展名的（`.甲.txt`、`.swiftlint.yml`）、名称不以“.”开头的、符号链接、文件包；符号链接这样才带替身箭头，文件包按类型取是带“?”的文稿
+  - 粘贴过自定义图标的这类文件与文件夹显示类型的图标，不显示自定义图标
+  - 面板、设置窗口的树、Dock 上 tile 的预览都用 `FileReference.icon`，三处一致，不随“显示隐藏文件”变化
 
 ## 数据模型
 
@@ -42,7 +95,9 @@ protocol BookmarkedReference {
     var id: UUID { get }
     var url: URL { get }
     var bookmark: Data? { get }
-    init(id: UUID, url: URL, bookmark: Data?)
+
+    /// 同一项换成给定位置与书签后的引用，id 不变
+    func replacingLocation(with url: URL, bookmark: Data?) -> Self
 }
 
 struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
@@ -51,19 +106,25 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
 
     /// 建不起来时为 nil，只按路径找
     let bookmark: Data?
+
+    /// 读不到时为 nil
+    let bundleIdentifier: String?
 }
 ```
 
 - `BookmarkedReference` 的扩展提供 `normalizedURL(_:)` 与 `relocated()`，`AppReference` 与 `FileReference` 共用，规则见 07
+  - `replacingLocation(with:bookmark:)`：文件只换位置与书签；App 还按新位置重读 bundle id，读不到时沿用原来的
+  - App 在 `relocated()` 之上另有 `relocatedApp(applicationURL:isVolumeMounted:)`，见需求 22
 - `AppReference` 的书签与文件的完全相同：
   - `FolderItem(url:title:)` 新建 App 项时带上 `url.bookmarkData()`，建不起来为 nil
   - JSON 键 `bookmark`，nil 时不写；没有这个键的数据照常解码，书签为 nil
+- bundle id 的 JSON 键 `bundleIdentifier`，nil 时不写；没有这个键的数据照常解码，bundle id 为 nil
 
   ```json
-  { "type": "app", "id": "…", "url": "file:///Applications/Safari.app/", "bookmark": "Ym9va…" }
+  { "type": "app", "id": "…", "url": "file:///Applications/Safari.app/", "bookmark": "Ym9va…", "bundleIdentifier": "com.apple.Safari" }
   ```
 
-- `FolderStore.updateItemLocations(in:)` 按书签更新 App 项与文件项；`FolderTreeViewController.updateItemLocations()` 同理
+- `FolderStore.updateItemLocations(in:)` 按书签更新 App 项与文件项：App 项用 `relocatedApp()`，文件项用 `relocated()`；`FolderTreeViewController.updateItemLocations()` 同理
 
 ## 面板
 
@@ -82,8 +143,8 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
 
 ### 目录内容（`FinderFolderContents`）
 
-- `contentsOfDirectory`，跳过隐藏文件
-  - 读目录时一次预取排序与分类要用的属性：显示名（`localizedNameKey`）、是否目录、内容类型；之后只用预取的值，不再逐项读磁盘
+- `contentsOfDirectory`，按需求 23 的设置跳过或显示隐藏文件；显示时 `.DS_Store`、`.localized` 仍不显示
+  - 读目录时一次预取排序、分类与半透明要用的属性：显示名（`localizedNameKey`）、是否目录、内容类型、是否隐藏；之后只用预取的值，不再逐项读磁盘
   - 预取的显示名与 `FileManager.displayName(atPath:)` 相同；URL 用预取的“是否目录”按 `normalizedURL(_:)` 的同一规则规整
 - 按显示名排序，`localizedStandardCompare`：访达“名称”的顺序，`a2` 在 `a10` 前，不区分大小写
 - 分类：
@@ -216,12 +277,52 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
 以下都是 macOS 27、APFS 上的实测。
 
 - 书签解析**路径优先**：原路径上换成了另一个同名项（旧的被移走）时，解析到原路径，`bookmarkDataIsStale` 为真
-  - 这时按当前位置重建书签（07 的“书签过期时重建”），之后新的那个再移动，跟着新的走；App 被原地更新成新版本（旧版本移进废纸篓）正是这种情况
-  - 覆盖不到的：Flotilla 没运行期间，App 先被原地更新、又被移动，而旧版本仍在（例如在废纸篓里）时，书签指向旧版本
+  - 这时按当前位置重建书签（07 的“书签过期时重建”），之后新的那个再移动，跟着新的走
+- App 更新：用与仓库相同的 `BookmarkedReference`、`AppReference` 模拟各种更新方式，每一步按 Flotilla 的做法刷新一次
+  - `renamex_np` 原子交换（Sparkle 2）、两步改名（旧版本先挪到临时目录）、旧版本移进废纸篓再放新版本、原地换 `Contents`、删除后拷贝、`FileManager.replaceItemAt`：刷新落在更新完成之后时，记录的路径都不变，书签过期后重建，点击打开新版本
+  - 刷新落在“旧版本已挪走、新版本还没放进来”的空档里时，书签只找得到临时目录或废纸篓里的旧版本；按路径优先，之后也只会解析回那里，旧版本删掉后解析失败。需求 22 的不跟进废纸篓、按 bundle id 找回针对的正是这种情况
+    - 现实的例子：手动先把旧版本拖进废纸篓、再装新版本，中间展开过文件夹；`brew upgrade --cask` 先把旧版本挪回 Caskroom、解压新版本，最后放进 `/Applications` 并删掉旧版本
+  - Flotilla 没运行期间，App 先被原地更新、又被移动，而旧版本还在废纸篓里：书签只找得到废纸篓里的旧版本，需求 22 按 bundle id 找到新版本的新位置
+  - 覆盖不到的：刷新落在空档里、旧版本挪到废纸篓以外的地方且一直没有删掉时，这一项留在旧版本上
+- 废纸篓里的 App 启动不了：`NSWorkspace.openApplication` 失败，`NSCocoaErrorDomain` 3587，“could not be launched because it is in the Trash”
+- 废纸篓的判断（`FileManager.getRelationship(_:of: .trashDirectory, in:toItemAt:)`）：
+  - 域传空时，`~/.Trash` 与其它卷上 `.Trashes/<uid>` 里的项都是 `.contains`；只传 `.userDomainMask` 时认不出其它卷的
+  - 其它卷上不在废纸篓里的项，域传空时抛错（不支持）；不存在的路径同样抛错
+  - 临时目录里自造的 `.Trash` 不算废纸篓
+  - 其它卷用 `hdiutil` 建的 APFS 映像实测
+- 书签记录的卷没有挂载（`hdiutil` 建的映像挂在 `/Volumes` 下实测）：
+  - 按 `[.withoutUI, .withoutMounting]` 解析失败，错误是 `NSCocoaErrorDomain` 4（文件不存在），与卷挂着、文件已删除时相同，从错误分不出卷没挂载
+  - `URL.resourceValues(forKeys:fromBookmarkData:)` 照样读得出书签记录的卷：卷的 URL、UUID、名称；卷没挂载时，`mountedVolumeURLs` 里没有这个 UUID
+  - 卷挂回原位置：照常解析到原路径，书签不过期
+  - 书签按 UUID 认卷：同一个卷挂到别的位置，照样解析到新位置；同名的另一个卷挂在原位置时，原路径上没有东西就解析失败，有同名的项就按路径优先解析到它、书签过期
+  - APFS、HFS+、FAT32、exFAT 卷的书签都记着卷的 UUID；网络卷未实测
+  - 启动卷的系统卷与数据卷在 Foundation 里是 `/` 一个卷：临时目录、`/System/Applications` 里的项，书签记录的卷 URL 都是 `/`，UUID 都是数据卷的；`mountedVolumeURLs`（`options` 传空）里 `/` 的 UUID 也是它，不单独列出 `/System/Volumes/Data`
+  - 用仓库里的 `BookmarkedReference`、`AppReference` 走一遍：卷挂着、卸载、挂回原位置时 `relocatedApp` 都返回 nil；挂着时删掉卷上的 App，按 bundle id 跟到另一份
+- `Bundle(url:)` 按路径缓存：原地把 bundle 换成另一个 `CFBundleIdentifier` 后，读到的仍是旧值；`CFBundleCopyInfoDictionaryInDirectory` 读到新值
 - 资源属性：
   - 指向目录的符号链接 `isDirectory` 为假，按文件处理
   - `.app`、`.rtfd` 的 `isPackage` 为真；`/` 是目录、不是文件包
   - 在主线程上，一个 URL 读过的资源属性会缓存到主线程 run loop 下一次运行；测试里同一个 URL 先读属性、再删文件、再读，读到的仍是删除前的值
+- 访达的 ⌘⇧.（图标视图、深色）：
+  - 显示 `isHiddenKey` 为真的全部项：以 `.` 开头的文件与目录、带 `hidden` 标志的文件；只有 `.DS_Store`、`.localized` 仍不显示
+  - 带 `hidden` 标志的 `Icon\r` 显示为 `Icon?`，与预取的显示名相同
+  - 隐藏的项半透明：名称按底色算不透明度 0.499；图标的斜率 0.50，垫在比底色略亮的中性灰上，按底色折算 0.53–0.54
+  - 有内容缩略图的隐藏文件同样显示缩略图、同样半透明
+  - 排序与按显示名 `localizedStandardCompare` 完全一致：隐藏的项与其它项混排，开头的 `.` 当普通字符参与比较
+  - 访达按下即选中，没有单独的按下样子；隐藏的项选中后图标仍半透明
+  - ⌘⇧. 不写 `com.apple.finder` 的 `AppleShowAllFiles`
+- 名称以“.”开头、没有扩展名的项的图标（探针在临时目录里造各种名称，逐一对照 `icon(forFile:)` 与按类型取的图标）：
+  - `URL.pathExtension` 与 `NSString.pathExtension` 都为空；资源属性的类型是 `public.data`，可执行的是 `public.unix-executable`，目录是 `public.folder`
+  - `NSWorkspace.icon(forFile:)` 却把开头的“.”后面当成扩展名：
+    - 文件：`.a`、`..a` 是归档图标，`.z`、`.zip` 是压缩包，`.json`、`.pdf`、`.png`、`.txt`、`.mp3`、`.gitignore` 是对应类型或认领这个扩展名的 App 给的图标，名为 `.app` 的文件是带“?”的文稿；可执行的 `.sh` 是 shell 脚本的图标，按类型取是可执行文件的图标
+    - 普通目录：`.rtfd`、`.pages`、`.key`、`.bundle`、`.framework`、`.pkg`、`.photoslibrary` 是对应文稿或 bundle 的图标；它们的 `isPackage` 为假，Launch Services 的种类是“文件夹”，QuickLook 的 `.icon` 表示也是文件夹；访达 ⌘⇧. 下名为 `.bundle`、`.pkg`、`.rtfd`、`.app` 的普通目录都是文件夹图标
+    - 不是已知扩展名的（`.中`、`.env`、`.git`、`.config`）与按类型取的相同
+  - 资源属性 `effectiveIconKey` 与 `icon(forFile:)` 相同
+  - 符号链接：类型是 `public.symlink`，`icon(forFile:)` 是目标的图标加替身箭头，同样按名称当扩展名：名为 `.zip` 的链接是压缩包加箭头，指向 `.a` 的链接是归档加箭头
+  - 带 bundle 标志的目录：`isPackage` 为真，类型是 `com.apple.package`，按类型取是带“?”的文稿
+  - 粘贴过自定义图标：`icon(forFile:)` 与 `effectiveIconKey` 给出自定义图标，按类型取给出类型的图标；`customIconKey` 读出来是 nil
+  - 访达 ⌘⇧. 下 `.a`、`.z`、`.zip`、`.json`、`.gitignore`、`.中` 都是带“?”的通用文稿；没有扩展名的普通文件（如 `n`）同样带“?”，按 `public.data` 取的是不带“?”的空白文稿
+- `contentsOfDirectory` 的 `.skipsHiddenFiles` 跳过以 `.` 开头的项，也跳过带 `hidden` 标志的项
 - 打开已不存在的项：`NSWorkspace.open` 用默认的 `OpenConfiguration`（`promptsUserIfNeeded` 为真）时，回调给出错误，同时 `CoreServicesUIAgent` 弹出“找不到该文件。”的提示框，有“好”与帮助按钮
   - 实测的是已删除的访达里的文件夹；已删除的文件走同一个打开方法、同一份设置，没有单独实测
 - 隐私授权：第一次读“文稿”“桌面”“下载”、iCloud 云盘、外接或网络卷时，系统弹出授权框，读取等到用户回答；允许就展开，拒绝就按读不出内容处理
@@ -245,6 +346,7 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
 - 耗时：从读目录到新层级首屏画好，1000 项在 0.5 s 以内
   - 网格只建看得见的格：面板显示 5 行、7 列时首屏只建 42 格，建网格本身不到 1 ms
   - 读目录一次预取属性；预取里最慢的是显示名
+  - 预取再加上是否隐藏（需求 23）没有可测的差别：release 构建的独立进程读 1000 个文件，加与不加都约 0.03 s
   - 测量方式：测试进程（debug 构建）里离屏读临时目录，把网格放进 5 行高的滚动视图，排版后把可见区域画进位图；单位秒，每个条件在三到四个进程里各测三到五次，每个进程的第一次最慢
   - 首屏含建首屏的格（图标与显示名）、排版与绘制；扩展名各不相同时波动更大
 
@@ -304,7 +406,7 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
   - 分类：新建的 App 项带书签，书签解析回这个 App
   - 编解码：App 有、没有书签都往返一致，没有书签时 JSON 里没有 `bookmark`
 - 需求 20：
-  - 目录内容（`FinderFolderContentsTests`）：隐藏文件被跳过；按 `localizedStandardCompare` 排序；App、访达里的文件夹、文件包、普通文件、指向目录的符号链接各自的分类；同一次展开里 id 不变；目录已删除时抛错
+  - 目录内容（`FinderFolderContentsTests`）：默认跳过隐藏文件；按 `localizedStandardCompare` 排序；App、访达里的文件夹、文件包、普通文件、指向目录的符号链接各自的分类；同一次展开里 id 不变；目录已删除时抛错
     - 预取的结果与逐项单独读取一致：顺序按 `FileManager.displayName(atPath:)`（“Tool.app”排在“Tool 2.app”前）、URL 等于 `normalizedURL(_:)` 的结果、App 的判断相同
   - 导航解析（`FolderPanelNavigationTests`）：Flotilla 文件夹 → 访达里的文件夹 → 其中的子目录逐层解析；那一项被删除、目录已删除、没有权限时为 nil；那一项的 URL 变了时按新 URL 读，更深的层级照常解析
   - 读取期间的按下（`FinderFolderReadPeriodsTests`）：读取期间（含开始与结束那一刻）的按下被忽略；读取之前、之后的按下照旧处理；先后两次读取之后，第一次读取期间的按下仍被忽略
@@ -338,6 +440,26 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
   - 文件、文件包、已删除的访达里的文件夹、Flotilla 文件夹不显示；复用显示过位置的行视图不残留
   - 宽度不够时先截断位置，名称保持完整
   - 位置在中间省略
+- 需求 22（`AppReferenceRelocationTests`，临时目录里造带 `CFBundleIdentifier` 的 bundle；废纸篓用真的，用例结束时删掉自己放进去的项；Launch Services 换成假实现）：
+  - 刷新落在空档里、旧版本在废纸篓：不跟进去；新版本放回原路径后，记录的仍是原路径，书签按新版本重建，之后新版本移动时跟着它走
+  - 刷新落在空档里、旧版本挪到临时目录：先跟过去；旧版本删掉后按 bundle id 跟回新版本
+  - 更新后又被移动、旧版本在废纸篓：按 bundle id 找到新版本的新位置
+  - Launch Services 给不出、给出的在废纸篓里或已不存在：保持原样，返回 nil
+  - App 在原处：返回 nil，不问 Launch Services
+  - 卷没挂载（判断换成假实现；删掉 App 让书签解析失败）：Launch Services 给出别处同一个 bundle id 的 App 也保持原样，返回 nil；卷挂回来、原路径上又有这个 App 时，照常解析到原路径，不问 Launch Services
+  - 卷挂着、原路径上的 App 删掉：按 bundle id 找回；卷是否挂载用真的判断，临时目录所在的启动卷判为挂载着
+  - bundle id：旧数据在 App 还在时补上；没有书签、原路径上没有东西的旧数据按 bundle id 找回；跟到新位置时重读，读不到时沿用旧值
+  - 文件移进废纸篓仍跟过去
+  - 分类：新建的 App 项带 bundle id，没有 `Info.plist` 时为 nil
+  - 编解码：bundle id 往返后保留，nil 时 JSON 里没有 `bundleIdentifier`；没有这个键的旧数据照常解码
+- 需求 23：
+  - 目录内容（`FinderFolderContentsTests`）：默认跳过以 `.` 开头的文件与目录、带 `hidden` 标志的文件；打开后它们都读出来并标为隐藏，`.DS_Store` 与 `.localized` 仍不显示；关掉后再读又被跳过
+  - 网格（`FolderGridHiddenItemTests`）：隐藏的项半透明，普通的项不透明；按下隐藏的项照样压暗，半透明不变
+  - 设置（`PreferencesTests`）：默认不显示；切换不发 `Preferences.didChangeNotification`
+  - 设置窗口（`GeneralSettingsViewControllerTests`）：复选框反映当前的值，点击后写回；五种语言下窗口最窄时，各行控件不被压窄、不越出通用区
+  - 图标（`FileReferenceIconTests`，临时目录里造文件；图标按 32 pt、2 倍栅格化后逐字节比较）：
+    - `.a`、`.zip` 与按 `public.data` 取的相同；`.bundle` 目录与按文件夹类型取的相同
+    - 照旧按 `icon(forFile:)`：粘贴过自定义图标的 `.甲.txt` 与 `n` 显示自定义图标；名为 `.链接` 的符号链接；带 bundle 标志的 `.包`
 - 新键五种语言齐全：`LocalizationTests` 自动覆盖
 - 隐私授权框的用途说明（`PrivacyUsageDescriptionTests`）：
   - `Info.plist` 有上表六个键，值非空
@@ -350,7 +472,7 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
   - Flotilla 运行时在访达里给文件夹里的 App 改名：展开面板后是新名称，点击能启动
   - 退出 Flotilla、移动 App、再启动：tile 图标与面板都用上新位置
 - 访达里的文件夹：
-  - 点击后在面板里展开，标题是它的名称，有返回按钮；内容按名称排序，不含隐藏文件
+  - 点击后在面板里展开，标题是它的名称，有返回按钮；内容按名称排序，默认不含隐藏文件
   - 其中的 App 点击启动、文件点击打开，面板收起；其中的文件夹继续进入，返回时缩回被点的图标
   - 最后一格“在访达中打开”：访达打开这一层，面板收起；图标的大小、颜色与按下的样子与原生叠放一致；按下后拖出面板再抬起也触发
   - 空文件夹只有“在访达中打开”一格；已删除的访达里的文件夹点击后系统弹出“找不到”的提示，同时记日志，面板收起
@@ -360,3 +482,11 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
     - 进入子目录再返回、收起再展开，缩略图照常换上；上千项的目录滚动途中缩略图陆续换上，没有落错格
 - 隐私授权框：第一次读受保护的位置时，授权框里显示 Flotilla 的用途说明，语言跟随系统
 - 设置窗口：访达里的文件夹这一行在名称后显示灰色的位置；把窗口拉窄时先截断位置，在中间省略，开头的 `~/` 与最后一级目录都看得到
+- App 更新：
+  - Flotilla 运行时，先把文件夹里的 App 拖进废纸篓、展开一次面板，再放入新版本：再展开面板，点击启动的是新版本
+  - 退出 Flotilla，原地更新 App 后再把新版本移到别处（旧版本留在废纸篓），再启动：tile 图标与面板都用上新版本的新位置
+- 显示隐藏文件：
+  - 默认不勾：访达里的文件夹展开后不含隐藏文件
+  - 勾上后再展开：以 `.` 开头的文件与目录、带 `hidden` 标志的文件出现，图标与名称半透明，顺序与访达 ⌘⇧. 一致；`.DS_Store`、`.localized` 不出现；有缩略图的隐藏文件显示半透明的缩略图；按下压暗
+  - 切换开关时 Dock 不重启，tile 不变
+  - 五种语言下把窗口拉到最窄，这一行完整显示

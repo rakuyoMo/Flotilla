@@ -19,6 +19,9 @@ final class FolderGridView: NSView {
     /// 子文件夹图标里叠加的预览图标数量
     private let previewIconCount: Int
 
+    /// 隐藏的项的 id：访达里的文件夹显示隐藏文件时，这些项半透明
+    private let hiddenItemIDs: Set<UUID>
+
     /// 为文件请求内容缩略图；只有访达里的文件夹的层级有，为 nil 时文件显示图标
     private let fileThumbnailLoader: FileThumbnailLoader?
 
@@ -52,6 +55,7 @@ final class FolderGridView: NSView {
     ///   - items: 这一层的项，顺序即展示顺序
     ///   - layout: 按格数算好的布局
     ///   - previewIconCount: 子文件夹图标里叠加的预览图标数量
+    ///   - hiddenItemIDs: 隐藏的项的 id，这些项半透明
     ///   - fileThumbnailLoader: 为文件请求内容缩略图；只有访达里的文件夹的层级传入，为 nil 时文件显示图标
     ///   - openInFinderHandler: 点击“在访达中打开”后执行；为 nil 时没有这一格
     ///   - selectionHandler: 点击某一项后执行
@@ -59,12 +63,14 @@ final class FolderGridView: NSView {
         items: [FolderItem],
         layout: FolderGridLayout,
         previewIconCount: Int,
+        hiddenItemIDs: Set<UUID>,
         fileThumbnailLoader: FileThumbnailLoader?,
         openInFinderHandler: (() -> Void)?,
         selectionHandler: @escaping (FolderItem) -> Void
     ) {
         self.items = items
         self.previewIconCount = previewIconCount
+        self.hiddenItemIDs = hiddenItemIDs
         self.fileThumbnailLoader = fileThumbnailLoader
         self.openInFinderHandler = openInFinderHandler
         self.selectionHandler = selectionHandler
@@ -202,6 +208,11 @@ extension FolderGridView {
 
         itemView.frame = cellFrames[index]
         addSubview(itemView)
+
+        // 隐藏的项与访达显示隐藏文件时一样，图标与名称都半透明；换上的缩略图同样半透明，按下照样压暗
+        if hiddenItemIDs.contains(item.id) {
+            itemView.alphaValue = FolderPanelMetrics.hiddenItemOpacity
+        }
 
         // 记下子文件夹的单元格：外观变化时只有文件夹图标需要重新渲染
         if case .folder(let folder) = item {

@@ -26,7 +26,8 @@ final class FolderPanelNavigationTests {
     private let app = FolderItem.app(AppReference(
         id: UUID(),
         url: URL(filePath: "/System/Applications/Chess.app"),
-        bookmark: nil
+        bookmark: nil,
+        bundleIdentifier: nil
     ))
 
     /// 本用例里读访达里的文件夹用的内容，模拟一次展开
@@ -200,7 +201,7 @@ extension FolderPanelNavigationTests {
     /// 按本用例的一次展开解析导航路径
     private func resolve(_ path: [UUID], in rootFolders: [Folder]) -> FolderPanelLevelContent? {
         FolderPanelController.levelContent(at: path, in: rootFolders) {
-            try? finderFolderContents.items(of: $0)
+            try? finderFolderContents.items(of: $0, includingHiddenFiles: false)
         }
     }
 

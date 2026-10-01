@@ -95,6 +95,7 @@ struct FolderPanelLevelContentTests {
             items: items,
             layout: layout,
             previewIconCount: 0,
+            hiddenItemIDs: [],
             fileThumbnailLoader: nil,
             openInFinderHandler: openInFinderHandler
         ) { _ in }

@@ -5,7 +5,8 @@ import Testing
 
 // MARK: - PreferencesTests
 
-/// 预览图标数的默认值与夹取：Dock 图标的 2×2 网格放不下超出范围的值
+/// 预览图标数的默认值与夹取：Dock 图标的 2×2 网格放不下超出范围的值；
+/// 显示隐藏文件的开关默认关，切换它不发变更通知
 @MainActor
 final class PreferencesTests {
     /// 本用例独占的临时目录
@@ -76,5 +77,34 @@ final class PreferencesTests {
         }
 
         #expect(Preferences(defaults: defaults).previewIconCount == 2)
+    }
+
+    /// 访达里的文件夹默认不显示隐藏文件；切换后写入存储，但不发变更通知：
+    /// Dock 同步监听这个通知，收到就重画 stub 图标，可能改写 stub、重启 Dock，而这个开关与 tile 的图标无关
+    @Test
+    func showsHiddenFilesDefaultsOffAndDoesNotNotify() async {
+        let preferences = Preferences(defaults: defaults)
+
+        #expect(!preferences.showsHiddenFiles)
+
+        await confirmation(expectedCount: 0) { changed in
+            let observer = NotificationCenter.default.addObserver(
+                forName: Preferences.didChangeNotification,
+                object: preferences,
+                queue: nil
+            ) { _ in
+                changed()
+            }
+
+            defer { NotificationCenter.default.removeObserver(observer) }
+
+            preferences.showsHiddenFiles = true
+
+            #expect(Preferences(defaults: defaults).showsHiddenFiles)
+
+            preferences.showsHiddenFiles = false
+        }
+
+        #expect(!Preferences(defaults: defaults).showsHiddenFiles)
     }
 }

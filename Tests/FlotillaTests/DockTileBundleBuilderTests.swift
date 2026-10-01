@@ -26,7 +26,8 @@ final class DockTileBundleBuilderTests {
         FolderItem.app(AppReference(
             id: UUID(),
             url: URL(filePath: "/System/Applications/\($0).app"),
-            bookmark: nil
+            bookmark: nil,
+            bundleIdentifier: nil
         ))
     }
 

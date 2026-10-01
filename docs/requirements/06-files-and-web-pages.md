@@ -51,7 +51,7 @@ enum FolderItem: Codable, Hashable, Identifiable {
 }
 ```
 
-- `FileReference`：`displayName` 为 `FileManager.default.displayName(atPath:)`，`icon` 为 `NSWorkspace.shared.icon(forFile:)`，与 `AppReference` 相同。
+- `FileReference`：`displayName` 为 `FileManager.default.displayName(atPath:)`，`icon` 为 `NSWorkspace.shared.icon(forFile:)`，与 `AppReference` 相同；名称以“.”开头、没有扩展名的文件与访达里的文件夹按内容类型取，见 08 的需求 23。
   - 访达里的文件夹的层级里，面板网格另给文件换上内容缩略图，见 08 的“文件的内容缩略图”
 - `WebPageReference`：
   - `displayName`：有标题用标题，没有时用 `url.absoluteString`
