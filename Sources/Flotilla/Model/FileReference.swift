@@ -52,8 +52,6 @@ extension FileReference {
             return NSWorkspace.shared.icon(forFile: url.path(percentEncoded: false))
         }
 
-        #warning("TODO: 名称以“.”开头、没有扩展名的目录在访达里是文件夹图标，取自 Launch Services 的种类“文件夹”，未在屏上与访达核对")
-
         return NSWorkspace.shared.icon(for: contentType)
     }
 }
