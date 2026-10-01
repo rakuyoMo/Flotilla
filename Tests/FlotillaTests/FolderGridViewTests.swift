@@ -135,6 +135,7 @@ extension FolderGridViewTests {
             items: items,
             layout: layout,
             previewIconCount: 0,
+            fileThumbnailLoader: nil,
             openInFinderHandler: { }
         ) { _ in }
 

@@ -68,6 +68,12 @@ enum FolderPanelMetrics {
     /// 图标画布的边长：图标主体约 81 pt，macOS 26 起 App 图标主体占画布的 80%
     static let iconSize: CGFloat = 101
 
+    /// 文件内容缩略图的画布边长：QuickLook 在这个画布里画出长边 88 pt 的页面或图片，带圆角、亮边与投影
+    ///
+    /// 原生叠放的缩略图与按这个边长生成的逐项相同：外接框、中心与投影剖面（macOS 27、tilesize 64 实测）；
+    /// 画布居中放进图标画布，中心与图标相同
+    static let fileThumbnailSize: CGFloat = 100
+
     /// 图标中心与单元格顶边的距离
     static let iconCenterY: CGFloat = 56
 
@@ -100,8 +106,13 @@ enum FolderPanelMetrics {
     /// 标题的字号
     static let headerTitleFontSize: CGFloat = 14
 
-    /// 标题基线与面板主体顶边的距离
-    static let headerTitleBaselineY: CGFloat = 23.5
+    /// 标题基线与面板主体顶边的距离：原生根层级与子层级渲染出的基线都在 23 pt
+    static let headerTitleBaselineY: CGFloat = 23
+
+    /// 原生标题框比文字宽（向上取整到点）多出的宽度
+    ///
+    /// 原生标题框宽为文字宽向上取整再加这个值，框的左边是居中位置向下取整到点，文字在框里居中
+    static let headerTitleFrameExtraWidth: CGFloat = 1
 
     /// 返回按钮在面板主体里的位置与尺寸，原点在主体左上角、y 向下
     static let backButtonFrame = CGRect(x: 15, y: 7, width: 21, height: 22)

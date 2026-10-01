@@ -52,6 +52,7 @@ enum FolderItem: Codable, Hashable, Identifiable {
 ```
 
 - `FileReference`：`displayName` 为 `FileManager.default.displayName(atPath:)`，`icon` 为 `NSWorkspace.shared.icon(forFile:)`，与 `AppReference` 相同。
+  - 访达里的文件夹的层级里，面板网格另给文件换上内容缩略图，见 08 的“文件的内容缩略图”
 - `WebPageReference`：
   - `displayName`：有标题用标题，没有时用 `url.absoluteString`
   - `icon`：与 Dock 右侧网页 tile 相同，取 `/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/BookmarkIcon.icns`（蓝色地球）；所有网页共用，只加载一次；读不到时退回网址文件（`com.apple.web-internet-location`）的图标
