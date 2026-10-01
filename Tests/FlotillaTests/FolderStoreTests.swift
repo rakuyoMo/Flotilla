@@ -96,8 +96,7 @@ final class FolderStoreTests {
         let store = FolderStore(fileURL: fileURL)
         let root = store.addRootFolder(named: "根")
 
-        let batch = try [
-            FolderItem.app(AppReference(id: UUID(), url: chess, bookmark: nil)),
+        let batch = try apps(chess) + [
             file("/Users/Shared/报告.pdf"),
             webPage("https://example.com/", title: nil),
         ]
@@ -392,7 +391,12 @@ extension FolderStoreTests {
     /// 为每个 App URL 新建一项
     private func apps(_ urls: URL...) -> [FolderItem] {
         urls.map {
-            .app(AppReference(id: UUID(), url: $0, bookmark: nil))
+            .app(AppReference(
+                id: UUID(),
+                url: $0,
+                bookmark: nil,
+                bundleIdentifier: nil
+            ))
         }
     }
 

@@ -26,7 +26,8 @@ final class FolderPanelNavigationTests {
     private let app = FolderItem.app(AppReference(
         id: UUID(),
         url: URL(filePath: "/System/Applications/Chess.app"),
-        bookmark: nil
+        bookmark: nil,
+        bundleIdentifier: nil
     ))
 
     /// 本用例里读访达里的文件夹用的内容，模拟一次展开

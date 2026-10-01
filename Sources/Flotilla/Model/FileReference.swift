@@ -14,6 +14,14 @@ struct FileReference: BookmarkedReference, Codable, Hashable, Identifiable {
 
     /// 文件的书签，文件移动或改名后据此找到新位置；建不起来时为 nil，只按路径找
     let bookmark: Data?
+
+    /// 同一个文件换成给定位置与书签后的引用，id 不变
+    /// - Parameters:
+    ///   - url: 新的位置
+    ///   - bookmark: 新的书签；建不起来时为 nil
+    func replacingLocation(with url: URL, bookmark: Data?) -> Self {
+        Self(id: id, url: url, bookmark: bookmark)
+    }
 }
 
 // MARK: - Display

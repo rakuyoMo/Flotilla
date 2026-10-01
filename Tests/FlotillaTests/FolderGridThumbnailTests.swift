@@ -90,7 +90,8 @@ struct FolderGridThumbnailTests {
                 filePath: "/System/Applications/Calculator.app/",
                 directoryHint: .isDirectory
             ),
-            bookmark: nil
+            bookmark: nil,
+            bundleIdentifier: nil
         )
 
         let grid = makeGrid(for: .finderFolder(

@@ -64,8 +64,14 @@ extension FinderFolderContents {
 
         let id = itemID(named: url.lastPathComponent, in: levelID)
 
+        // 这些项只在这一次展开里，不跟随移动，书签与 bundle id 都用不上
         if AppReference.isApplicationBundle(url) {
-            return .app(AppReference(id: id, url: normalizedURL, bookmark: nil))
+            return .app(AppReference(
+                id: id,
+                url: normalizedURL,
+                bookmark: nil,
+                bundleIdentifier: nil
+            ))
         }
 
         return .file(FileReference(id: id, url: normalizedURL, bookmark: nil))

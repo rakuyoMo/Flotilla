@@ -113,8 +113,14 @@ extension FolderItem {
         // 书签让 App 与文件移动或改名后仍能找到；建不起来时只按路径找
         let bookmark = try? normalizedURL.bookmarkData()
 
+        // App 另记下 bundle id：更新之后书签找不到装好的那一份时，据此问 Launch Services
         if AppReference.isApplicationBundle(normalizedURL) {
-            return .app(AppReference(id: UUID(), url: normalizedURL, bookmark: bookmark))
+            return .app(AppReference(
+                id: UUID(),
+                url: normalizedURL,
+                bookmark: bookmark,
+                bundleIdentifier: AppReference.bundleIdentifier(at: normalizedURL)
+            ))
         }
 
         return .file(FileReference(id: UUID(), url: normalizedURL, bookmark: bookmark))

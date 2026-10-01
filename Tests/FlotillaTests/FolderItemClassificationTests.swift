@@ -179,6 +179,29 @@ final class FolderItemClassificationTests {
         #expect(!isStale)
     }
 
+    /// 新建的 App 项记下 bundle id：App 更新之后书签找不到装好的那一份时据此找回；没有 `Info.plist` 时为 nil
+    @Test
+    func newAppCarriesBundleIdentifier() throws {
+        try AppReferenceRelocationTests.writeBundle(
+            at: directory.appending(path: "Viewer.app", directoryHint: .isDirectory),
+            bundleIdentifier: "com.example.FlotillaTests.Viewer"
+        )
+
+        let viewer = FolderItem(url: URL(filePath: path(of: "Viewer.app")), title: nil)
+        let tool = FolderItem(url: URL(filePath: path(of: "Tool.app")), title: nil)
+
+        guard
+            case .app(let viewerApp) = viewer,
+            case .app(let toolApp) = tool
+        else {
+            Issue.record("App bundle 应当是 App：\(String(describing: viewer))、\(String(describing: tool))")
+            return
+        }
+
+        #expect(viewerApp.bundleIdentifier == "com.example.FlotillaTests.Viewer")
+        #expect(toolApp.bundleIdentifier == nil)
+    }
+
     // MARK: 网址
 
     /// `http` 与 `https` 网址是网页，带上浏览器给出的标题

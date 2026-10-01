@@ -248,7 +248,13 @@ final class FolderStoreItemLocationTests {
     func appWithoutBookmarkGainsBookmark() async throws {
         try createDirectory("Tool.app")
 
-        let legacy = AppReference(id: UUID(), url: directoryURL(of: "Tool.app"), bookmark: nil)
+        let legacy = AppReference(
+            id: UUID(),
+            url: directoryURL(of: "Tool.app"),
+            bookmark: nil,
+            bundleIdentifier: nil
+        )
+
         store.addItems([.app(legacy)], to: work.id)
 
         try await expectNotifications(1) {
@@ -265,7 +271,13 @@ final class FolderStoreItemLocationTests {
     /// 没有书签的 App 项在 App 已删除时保持原样，也不发通知
     @Test
     func deletedAppWithoutBookmarkStaysUnchanged() async throws {
-        let legacy = AppReference(id: UUID(), url: directoryURL(of: "Tool.app"), bookmark: nil)
+        let legacy = AppReference(
+            id: UUID(),
+            url: directoryURL(of: "Tool.app"),
+            bookmark: nil,
+            bundleIdentifier: nil
+        )
+
         store.addItems([.app(legacy)], to: work.id)
 
         let before = store.rootFolders

@@ -160,7 +160,8 @@ extension FolderStore {
         commit()
     }
 
-    /// 按书签把 App 项与文件项跟到当前位置：移动或改名后换成新位置，id 不变
+    /// 按书签把 App 项与文件项跟到当前位置：移动或改名后换成新位置，id 不变；
+    /// App 更新之后书签找不到装好的那一份时，按 bundle id 找回
     ///
     /// 有变化时一次提交；没有变化时不提交、不发通知。找不到的 App 与文件保持原样
     /// - Parameter folderID: 只更新这个文件夹及其子孙；nil 表示整棵树
@@ -391,8 +392,9 @@ extension FolderStore {
 
         for index in items.indices {
             switch items[index] {
+            // App 不跟进废纸篓，书签找不到时按 bundle id 找回装好的那一份
             case .app(let app):
-                guard let relocated = app.relocated() else { continue }
+                guard let relocated = app.relocatedApp() else { continue }
 
                 items[index] = .app(relocated)
                 changed = true
