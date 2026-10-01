@@ -138,7 +138,7 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
   - 原生在进入的转场第一帧（约 33 ms）就已是缩略图；Flotilla 先显示图标，请求到结果的耗时见“平台事实”
 - 实测依据：QuickLook 按 100 pt 画布、2 倍、图标模式生成的缩略图叠在同样的灰底上，与原生的外接框（含与不含投影）、中心与投影剖面逐项相同；Flotilla 单元格离屏画出的结果也相同
   - 按 101 pt 画布生成时，页面长边是 89 pt
-  - Flotilla 在屏上的显示待屏上对照
+  - 屏上对照：同一个目录在 Flotilla 面板与原生叠放里，按格子对齐、不平移逐像素比，13 个有缩略图的文件在灰、黑两种底上图标区最大差都是 2，外接框逐项相同；按下 `.txt`、`.png` 最大差也是 2
 
 ### 文件夹树变化
 
