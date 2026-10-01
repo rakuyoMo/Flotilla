@@ -6,11 +6,21 @@ import Testing
 // MARK: - FolderGridThumbnailTests
 
 /// 访达里的文件夹的层级里，文件按原生叠放显示内容缩略图，一眼看得出是哪份文件，而不是一排相同的通用图标；
-/// Flotilla 的文件夹照旧显示图标。缩略图晚到时，不能落到已经离开的层级上
+/// Flotilla 的文件夹照旧显示图标。缩略图晚到时，不能落到已经离开的层级上；
+/// 请求只为看得见附近的格保留，快速滚过上千项后，看得见的格不必排在滚过的格后面等
 @MainActor
 struct FolderGridThumbnailTests {
     /// 假的缩略图生成，由测试决定何时交出什么结果
     private let generator = ThumbnailGeneratorStub()
+
+    /// 滚动用的 100 个文件：加上“在访达中打开”共 7 列、15 行，面板显示 5 行
+    private let manyFiles = (0 ..< 100).map {
+        FileReference(
+            id: UUID(),
+            url: URL(filePath: "/Users/Shared/文件\($0).txt"),
+            bookmark: nil
+        )
+    }
 
     /// 访达里的文件夹
     private let finderFolder = FileReference(
@@ -131,6 +141,111 @@ struct FolderGridThumbnailTests {
         #expect(icon(at: 0, in: grid) === reportIcon)
         #expect(icon(at: 1, in: grid) === notesIcon)
     }
+
+    /// 请求还没完成的格滚出看得见附近：请求取消，QuickLook 不再为它排队；之后晚到的结果不换上
+    @Test
+    func scrollingAwayCancelsPendingRequests() async {
+        let (scrollView, grid) = makeScrolledGrid()
+
+        scrollView.layoutSubtreeIfNeeded()
+
+        let firstIcon = icon(at: 0, in: grid)
+
+        #expect(generator.pendingURLs == urls(inRows: 0 ... 5))
+
+        // 停在第 8 行：看得见附近是第 7–13 行，按格的先后请求
+        scroll(scrollView, toRow: 8)
+
+        #expect(Set(generator.cancelledURLs) == Set(urls(inRows: 0 ... 5)))
+        #expect(generator.cancelledURLs.count == urls(inRows: 0 ... 5).count)
+        #expect(generator.pendingURLs == urls(inRows: 7 ... 13))
+
+        generator.complete(manyFiles[0].url, with: thumbnail)
+        await settle()
+
+        #expect(icon(at: 0, in: grid) === firstIcon)
+    }
+
+    /// 还没换上缩略图的格滚回看得见附近：重新请求，结果落到这一格
+    @Test
+    func scrollingBackRequestsAgain() async {
+        let (scrollView, grid) = makeScrolledGrid()
+        let firstURL = manyFiles[0].url
+
+        scrollView.layoutSubtreeIfNeeded()
+        scroll(scrollView, toRow: 8)
+        scroll(scrollView, toRow: 0)
+
+        #expect(generator.pendingURLs == urls(inRows: 0 ... 5))
+        #expect(generator.requestedURLs.filter { $0 == firstURL }.count == 2)
+
+        // 被取消的第一次请求也收到结果：只有重新发出的请求落到这一格
+        generator.complete(firstURL, with: thumbnail)
+        await settle()
+
+        #expect(icon(at: 0, in: grid) === thumbnail)
+    }
+
+    /// 已经换上缩略图的格滚出再滚回：保持缩略图，不再请求
+    @Test
+    func thumbnailedCellsAreNotRequestedAgain() async {
+        let (scrollView, grid) = makeScrolledGrid()
+        let firstURL = manyFiles[0].url
+
+        scrollView.layoutSubtreeIfNeeded()
+
+        generator.complete(firstURL, with: thumbnail)
+        await settle()
+
+        scroll(scrollView, toRow: 8)
+        scroll(scrollView, toRow: 0)
+
+        #expect(generator.requestedURLs.filter { $0 == firstURL }.count == 1)
+        #expect(!generator.cancelledURLs.contains(firstURL))
+        #expect(!generator.pendingURLs.contains(firstURL))
+        #expect(icon(at: 0, in: grid) === thumbnail)
+    }
+
+    /// 快速滚到底：滚过的格的请求都已取消，还没完成的只剩看得见附近的格
+    @Test
+    func fastScrollKeepsOnlyNearbyRequests() {
+        let (scrollView, _) = makeScrolledGrid()
+
+        scrollView.layoutSubtreeIfNeeded()
+
+        // 每步滚过 3 行，直到最底部：最后停在第 10 行，看得见附近是第 9–14 行
+        for row in stride(from: 3, through: 15, by: 3) {
+            scroll(scrollView, toRow: row)
+        }
+
+        #expect(generator.pendingURLs == urls(inRows: 9 ... 14))
+    }
+
+    /// 预绘区域提前建的格先只建格，滚进看得见附近才请求
+    @Test
+    func preparedCellsRequestOnlyWhenNearVisible() {
+        let (scrollView, grid) = makeScrolledGrid()
+        let cell = FolderPanelMetrics.cellSize
+
+        scrollView.layoutSubtreeIfNeeded()
+
+        // 第 10、11 两行：建出第 9–12 行
+        grid.prepareContent(in: CGRect(
+            x: 0,
+            y: 10 * cell,
+            width: grid.bounds.width,
+            height: 2 * cell
+        ))
+
+        let builtCellCount = urls(inRows: 0 ... 5).count + urls(inRows: 9 ... 12).count
+
+        #expect(grid.subviews.count == builtCellCount)
+        #expect(generator.requestedURLs == urls(inRows: 0 ... 5))
+
+        scroll(scrollView, toRow: 8)
+
+        #expect(generator.pendingURLs == urls(inRows: 7 ... 13))
+    }
 }
 
 // MARK: - Private
@@ -150,9 +265,36 @@ extension FolderGridThumbnailTests {
         )
     }
 
-    /// 与面板相同的建法：只有访达里的文件夹的层级有缩略图加载器与“在访达中打开”；
-    /// 不在滚动视图里，排版后整个网格都算看得见，单元格全部建出
+    /// 不在滚动视图里的网格：排版后整个网格都算看得见，单元格全部建出
     private func makeGrid(for content: FolderPanelLevelContent) -> FolderGridView {
+        let grid = makeGridView(for: content)
+
+        grid.layoutSubtreeIfNeeded()
+
+        return grid
+    }
+
+    /// 与面板相同的摆法：100 个文件的访达里的文件夹，网格作为滚动视图的文档视图，滚动视图高度正好是显示的行数
+    private func makeScrolledGrid() -> (scrollView: NSScrollView, grid: FolderGridView) {
+        let grid = makeGridView(for: .finderFolder(
+            finderFolder,
+            items: manyFiles.map { .file($0) }
+        ))
+
+        let scrollView = NSScrollView(frame: CGRect(
+            x: 0,
+            y: 0,
+            width: grid.bounds.width,
+            height: CGFloat(FolderPanelMetrics.maximumVisibleRowCount) * FolderPanelMetrics.cellSize
+        ))
+
+        scrollView.documentView = grid
+
+        return (scrollView, grid)
+    }
+
+    /// 与面板相同的建法：只有访达里的文件夹的层级有缩略图加载器与“在访达中打开”；还没排版，一格也没建
+    private func makeGridView(for content: FolderPanelLevelContent) -> FolderGridView {
         let layout = FolderGridLayout(
             itemCount: content.cellCount,
             availableSize: CGSize(width: 2000, height: 2000)
@@ -166,17 +308,35 @@ extension FolderGridThumbnailTests {
             ? nil
             : { }
 
-        let grid = FolderGridView(
+        return FolderGridView(
             items: content.items,
             layout: layout,
             previewIconCount: 0,
             fileThumbnailLoader: fileThumbnailLoader,
             openInFinderHandler: openInFinderHandler
         ) { _ in }
+    }
 
-        grid.layoutSubtreeIfNeeded()
+    /// 让第 `row` 行（从 0 数）停在可见区域顶部，滚动视图允许的范围之外时停在最底部
+    private func scroll(_ scrollView: NSScrollView, toRow row: Int) {
+        let clipView = scrollView.contentView
 
-        return grid
+        let proposedBounds = CGRect(
+            origin: CGPoint(x: 0, y: CGFloat(row) * FolderPanelMetrics.cellSize),
+            size: clipView.bounds.size
+        )
+
+        clipView.scroll(to: clipView.constrainBoundsRect(proposedBounds).origin)
+        scrollView.reflectScrolledClipView(clipView)
+    }
+
+    /// 滚动用的文件里，落在这些行（从 0 数）的文件的 URL，按格的先后
+    private func urls(inRows rows: ClosedRange<Int>) -> [URL] {
+        let columnCount = FolderPanelMetrics.overflowColumnCount
+
+        return manyFiles.indices
+            .filter { rows.contains($0 / columnCount) }
+            .map { manyFiles[$0].url }
     }
 
     /// 把网格放进一个窗口

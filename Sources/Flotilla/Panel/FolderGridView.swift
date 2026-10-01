@@ -6,7 +6,8 @@ import AppKit
 /// 访达里的文件夹的层级在末尾另有一格“在访达中打开”，其中的文件换上内容缩略图
 ///
 /// 只为与可见区域相交的行（上下各多一行）建单元格，滚动时按需补建，建过的不删：
-/// 访达里的文件夹可能有上千项，一次建齐会让展开明显卡顿
+/// 访达里的文件夹可能有上千项，一次建齐会让展开明显卡顿。缩略图请求也只为这个范围里的格保留，
+/// 快速滚过上千项后，看得见的格不必排在滚过的格后面等 QuickLook
 @MainActor
 final class FolderGridView: NSView {
     /// 这一层的项，顺序即展示顺序
@@ -32,6 +33,14 @@ final class FolderGridView: NSView {
 
     /// 已建的子文件夹与它的单元格：系统外观变化时，按新外观重新渲染这些单元格的图标
     private var folderItemViews: [(folder: Folder, itemView: FolderGridItemView)] = []
+
+    /// 已建、还没换上缩略图的文件格，按格序号；只在有缩略图加载器时记，格在看得见附近时为它请求缩略图
+    private var cellsAwaitingThumbnails: [Int: FolderGridItemView] = [:]
+
+    /// 在看得见附近为文件格发出的缩略图请求，按格序号记请求编号：拿到缩略图时移除，格滚出看得见附近时取消并移除
+    ///
+    /// 生成不出缩略图的请求同样留到格滚出：留在看得见附近时，不在每一步滚动里重复请求
+    private var thumbnailRequestIDs: [Int: UUID] = [:]
 
     /// 自上而下排列，与 `FolderGridLayout` 的坐标系一致，滚动视图初始停在顶部
     override var isFlipped: Bool {
@@ -123,14 +132,16 @@ final class FolderGridView: NSView {
         fileThumbnailLoader?.cancelAll()
     }
 
-    /// 排版时为可见的行建单元格：第一次显示之前，滚动位置已经恢复，建的正是那里的行
+    /// 排版时为可见的行建单元格，并为其中的文件请求缩略图：第一次显示之前，滚动位置已经恢复，建的正是那里的行
     override func layout() {
         super.layout()
 
         buildCells(near: visibleRect)
+        updateThumbnailRequests()
     }
 
-    /// AppKit 提前准备可见区域以外的内容时（滚动时的预绘区域），一并建好那里的单元格
+    /// AppKit 提前准备可见区域以外的内容时（滚动时的预绘区域），一并建好那里的单元格；
+    /// 这些格先不请求缩略图，滚进看得见附近时才请求
     override func prepareContent(in rect: NSRect) {
         super.prepareContent(in: rect)
 
@@ -150,18 +161,16 @@ final class FolderGridView: NSView {
 // MARK: - Private
 
 extension FolderGridView {
-    /// 滚动视图的可见区域变了：在画出来之前补建新露出的行
+    /// 滚动视图的可见区域变了：在画出来之前补建新露出的行，缩略图请求跟着换到新的范围
     @objc
     private func clipViewBoundsDidChange(_: Notification) {
         buildCells(near: visibleRect)
+        updateThumbnailRequests()
     }
 
     /// 为与给定区域相交的行建单元格，上下各多一行；已建的跳过
     private func buildCells(near rect: CGRect) {
-        // 上下各多一行：慢慢滚动时，下一行在露出之前就已建好
-        let area = rect
-            .insetBy(dx: 0, dy: -FolderPanelMetrics.cellSize)
-            .intersection(bounds)
+        let area = nearbyArea(of: rect)
 
         guard !area.isEmpty else { return }
 
@@ -199,11 +208,54 @@ extension FolderGridView {
             folderItemViews.append((folder, itemView))
         }
 
-        // 访达里的文件夹的层级里，文件先显示图标，内容缩略图生成后换上；结果只落到发起请求的这一格
-        if case .file(let file) = item, let fileThumbnailLoader {
-            fileThumbnailLoader.loadThumbnail(of: file.url) { [weak itemView] in
-                itemView?.icon = $0
+        // 访达里的文件夹的层级里，文件先显示图标；缩略图由 `updateThumbnailRequests()` 在格处于看得见附近时请求
+        if case .file = item, fileThumbnailLoader != nil {
+            cellsAwaitingThumbnails[index] = itemView
+        }
+    }
+
+    /// 只为看得见附近（可见区域上下各多一行，与建格相同）的文件格保留缩略图请求
+    ///
+    /// QuickLook 按请求的先后生成：滚过的格的请求要取消，快速滚过上千项后，看得见的格才不必排在它们后面等上几秒
+    private func updateThumbnailRequests() {
+        guard let fileThumbnailLoader else { return }
+
+        let area = nearbyArea(of: visibleRect)
+
+        // 滚出这个范围的格：取消还没完成的请求；这些格还没换上缩略图，回来时再请求
+        for (index, id) in thumbnailRequestIDs where !cellFrames[index].intersects(area) {
+            fileThumbnailLoader.cancel(id)
+            thumbnailRequestIDs[index] = nil
+        }
+
+        // 在这个范围里、还没换上缩略图、也没在请求的格：按格的先后请求，QuickLook 先生成上面的格
+        let indices = cellsAwaitingThumbnails.keys
+            .filter {
+                thumbnailRequestIDs[$0] == nil
+                    && cellFrames[$0].intersects(area)
             }
+            .sorted()
+
+        for index in indices {
+            requestThumbnail(at: index, with: fileThumbnailLoader)
+        }
+    }
+
+    /// 为一个文件格请求缩略图；生成后换上，这一格不再请求
+    /// - Parameters:
+    ///   - index: 格序号
+    ///   - loader: 缩略图加载器
+    private func requestThumbnail(at index: Int, with loader: FileThumbnailLoader) {
+        guard case .file(let file) = items[index] else { return }
+
+        // 网格持有加载器，加载器持有回调：回调弱引用网格，不形成循环
+        thumbnailRequestIDs[index] = loader.loadThumbnail(of: file.url) { [weak self] thumbnail in
+            guard let self else { return }
+
+            thumbnailRequestIDs[index] = nil
+
+            // 结果只落到发起请求的这一格；换上之后不再等缩略图
+            cellsAwaitingThumbnails.removeValue(forKey: index)?.icon = thumbnail
         }
     }
 
@@ -254,6 +306,15 @@ extension FolderGridView {
 
         itemView.frame = frame
         addSubview(itemView)
+    }
+
+    /// 给定区域上下各多一行、限在网格之内：建格与保留缩略图请求都按这个范围
+    ///
+    /// 上下各多一行：慢慢滚动时，下一行在露出之前就已建好、已在请求缩略图
+    private func nearbyArea(of rect: CGRect) -> CGRect {
+        rect
+            .insetBy(dx: 0, dy: -FolderPanelMetrics.cellSize)
+            .intersection(bounds)
     }
 }
 

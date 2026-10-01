@@ -5,7 +5,7 @@ import QuickLookThumbnailing
 
 /// 为访达里的文件夹的层级里的文件请求 QuickLook 内容缩略图：原生叠放里，文件显示的是内容缩略图而不是通用图标
 ///
-/// 缩略图在主线程交给调用方；`cancelAll()` 取消还没完成的请求，之后到达的结果一律丢掉
+/// 缩略图在主线程交给调用方；`cancel(_:)` 取消一个还没完成的请求，`cancelAll()` 取消全部，之后到达的结果一律丢掉
 @MainActor
 final class FileThumbnailLoader {
     /// 生成一个文件的缩略图：结果在任意线程交给回调，生成不出时为 nil；返回取消这次请求的闭包
@@ -34,7 +34,8 @@ final class FileThumbnailLoader {
     /// - Parameters:
     ///   - url: 文件的 URL
     ///   - completion: 拿到缩略图之后执行；生成不出、请求被取消时不执行
-    func loadThumbnail(of url: URL, completion: @escaping (NSImage) -> Void) {
+    /// - Returns: 这次请求的编号，交给 `cancel(_:)` 取消它
+    func loadThumbnail(of url: URL, completion: @escaping (NSImage) -> Void) -> UUID {
         let id = UUID()
 
         // 结果可能在任意线程到达：回到主线程，再按请求是否还在决定用不用
@@ -45,6 +46,16 @@ final class FileThumbnailLoader {
         }
 
         pendingRequests[id] = (cancel, completion)
+
+        return id
+    }
+
+    /// 取消一个还没完成的请求：QuickLook 按先后生成，取消后不再占着队列；之后到达的结果丢掉
+    ///
+    /// 请求已完成或已取消时什么也不做
+    /// - Parameter id: `loadThumbnail(of:completion:)` 返回的编号
+    func cancel(_ id: UUID) {
+        pendingRequests.removeValue(forKey: id)?.cancel()
     }
 
     /// 取消全部还没完成的请求，不再占用 QuickLook；之后到达的结果丢掉
