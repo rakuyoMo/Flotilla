@@ -52,10 +52,13 @@
   - 这两种情况下原路径上一定没有东西：解析按路径优先
   - 拿到的 App 存在、不在废纸篓里：跟过去，URL 按 `normalizedURL(_:)` 规整，按新位置建书签，id 不变
   - 拿不到、已不存在或在废纸篓里：保持原样
+  - 书签记录的卷没有挂载：不找回，保持原样；卷挂回来照常按书签解析
+    - App 放在外接卷上、卷没挂载时，书签解析失败、原路径上也没有东西，但 App 仍在那个卷上
+    - 判断（`AppReference.isVolumeMounted(recordedIn:)`）：从书签里读出卷的 UUID（`URL.resourceValues(forKeys:fromBookmarkData:)`），在已挂载的卷（`FileManager.mountedVolumeURLs`）里找同一个 UUID；书签里读不到卷的 UUID 时按没挂载处理，见“平台事实”
   - 没有书签的旧数据：原路径上没有东西又有 bundle id 时，同样按 bundle id 找回
-- 实现：`AppReference.relocatedApp(applicationURL:)` 先按共用的 `relocated()` 跟随，再按上面三条取舍
+- 实现：`AppReference.relocatedApp(applicationURL:isVolumeMounted:)` 先按共用的 `relocated()` 跟随，再按上面三条取舍
   - 位置、书签与 bundle id 都不用改时为 nil，`FolderStore` 只在有变化时提交
-  - Launch Services 的查询是参数，默认走 `NSWorkspace`，测试里换成假实现；`FolderStore` 不传它
+  - Launch Services 的查询与卷是否挂载的判断是参数，默认走 `NSWorkspace` 与 `isVolumeMounted(recordedIn:)`，测试里换成假实现；`FolderStore` 不传它们
 - 调用时机与需求 19 相同；覆盖到哪些更新方式见“平台事实”
 
 ### 需求 23 显示隐藏文件
@@ -106,7 +109,7 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
 
 - `BookmarkedReference` 的扩展提供 `normalizedURL(_:)` 与 `relocated()`，`AppReference` 与 `FileReference` 共用，规则见 07
   - `replacingLocation(with:bookmark:)`：文件只换位置与书签；App 还按新位置重读 bundle id，读不到时沿用原来的
-  - App 在 `relocated()` 之上另有 `relocatedApp(applicationURL:)`，见需求 22
+  - App 在 `relocated()` 之上另有 `relocatedApp(applicationURL:isVolumeMounted:)`，见需求 22
 - `AppReference` 的书签与文件的完全相同：
   - `FolderItem(url:title:)` 新建 App 项时带上 `url.bookmarkData()`，建不起来为 nil
   - JSON 键 `bookmark`，nil 时不写；没有这个键的数据照常解码，书签为 nil
@@ -282,6 +285,14 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
   - 其它卷上不在废纸篓里的项，域传空时抛错（不支持）；不存在的路径同样抛错
   - 临时目录里自造的 `.Trash` 不算废纸篓
   - 其它卷用 `hdiutil` 建的 APFS 映像实测
+- 书签记录的卷没有挂载（`hdiutil` 建的映像挂在 `/Volumes` 下实测）：
+  - 按 `[.withoutUI, .withoutMounting]` 解析失败，错误是 `NSCocoaErrorDomain` 4（文件不存在），与卷挂着、文件已删除时相同，从错误分不出卷没挂载
+  - `URL.resourceValues(forKeys:fromBookmarkData:)` 照样读得出书签记录的卷：卷的 URL、UUID、名称；卷没挂载时，`mountedVolumeURLs` 里没有这个 UUID
+  - 卷挂回原位置：照常解析到原路径，书签不过期
+  - 书签按 UUID 认卷：同一个卷挂到别的位置，照样解析到新位置；同名的另一个卷挂在原位置时，原路径上没有东西就解析失败，有同名的项就按路径优先解析到它、书签过期
+  - APFS、HFS+、FAT32、exFAT 卷的书签都记着卷的 UUID；网络卷未实测
+  - 启动卷的系统卷与数据卷在 Foundation 里是 `/` 一个卷：临时目录、`/System/Applications` 里的项，书签记录的卷 URL 都是 `/`，UUID 都是数据卷的；`mountedVolumeURLs`（`options` 传空）里 `/` 的 UUID 也是它，不单独列出 `/System/Volumes/Data`
+  - 用仓库里的 `BookmarkedReference`、`AppReference` 走一遍：卷挂着、卸载、挂回原位置时 `relocatedApp` 都返回 nil；挂着时删掉卷上的 App，按 bundle id 跟到另一份
 - `Bundle(url:)` 按路径缓存：原地把 bundle 换成另一个 `CFBundleIdentifier` 后，读到的仍是旧值；`CFBundleCopyInfoDictionaryInDirectory` 读到新值
 - 资源属性：
   - 指向目录的符号链接 `isDirectory` 为假，按文件处理
@@ -419,6 +430,8 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
   - 更新后又被移动、旧版本在废纸篓：按 bundle id 找到新版本的新位置
   - Launch Services 给不出、给出的在废纸篓里或已不存在：保持原样，返回 nil
   - App 在原处：返回 nil，不问 Launch Services
+  - 卷没挂载（判断换成假实现；删掉 App 让书签解析失败）：Launch Services 给出别处同一个 bundle id 的 App 也保持原样，返回 nil；卷挂回来、原路径上又有这个 App 时，照常解析到原路径，不问 Launch Services
+  - 卷挂着、原路径上的 App 删掉：按 bundle id 找回；卷是否挂载用真的判断，临时目录所在的启动卷判为挂载着
   - bundle id：旧数据在 App 还在时补上；没有书签、原路径上没有东西的旧数据按 bundle id 找回；跟到新位置时重读，读不到时沿用旧值
   - 文件移进废纸篓仍跟过去
   - 分类：新建的 App 项带 bundle id，没有 `Info.plist` 时为 nil
