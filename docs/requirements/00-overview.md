@@ -95,7 +95,7 @@ Flotilla 是一个无 Dock 图标的常驻后台 App（`LSUIElement`），只有
 | `Panel/` | `FolderPanel` 及各视图 | 面板窗口、背景、网格、导航 | 03、08 |
 | `Panel/` | `FolderPanelLevelContent` | 面板里一个层级展示的内容：Flotilla 的文件夹，或访达里的文件夹 | 08 |
 | `Panel/` | `FinderFolderContents` | 访达里的文件夹在面板里展开时读出的内容，同一次展开里各项 id 不变 | 08 |
-| `Panel/` | `FileThumbnailLoader` | 访达里的文件夹的层级里，为文件请求 QuickLook 内容缩略图；网格离开窗口时取消还没完成的请求 | 08 |
+| `Panel/` | `FileThumbnailLoader` | 访达里的文件夹的层级里，为文件请求 QuickLook 内容缩略图；格滚出看得见附近时取消它的请求，网格离开窗口时全部取消 | 08 |
 | `Sources/FlotillaDockTile/` | stub 的可执行文件 | 打开 `flotilla://` URL 后退出；被拖放启动时带上被拖的 App 与文件 | 02、05、06 |
 | `Dock/` | `DockTileAdditionTracker` | 决定哪些根文件夹要添加 tile 的纯逻辑 | 05 |
 | `Dock/` | `DockTileRequest` | stub 通过 URL 发来的请求：展开面板，或加入拖到 tile 上的 App 与文件 | 05、06 |
