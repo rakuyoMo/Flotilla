@@ -81,6 +81,11 @@
   - 排序不变：隐藏的项与其它项混在一起，按显示名 `localizedStandardCompare` 排，开头的 `.` 也参与比较
   - 按下：照旧压暗，与半透明叠加
 - 是否隐藏在读目录时一并预取，不逐项再读；`FinderFolderContents.hiddenItemIDs` 记下本次展开里隐藏的项，网格据此把它们的单元格设成半透明
+- 图标与访达一致：名称以“.”开头、没有扩展名的文件与访达里的文件夹，`FileReference.icon` 按资源属性 `contentTypeKey` 的类型取（`NSWorkspace.icon(for:)`），取不到类型时照旧
+  - `icon(forFile:)` 把名称开头的“.”后面当成扩展名，`.a`、`.zip` 会是归档、压缩包的图标，`.bundle` 目录会是 bundle 的图标（实测见“平台事实”）；按类型取，前两个是 `public.data` 的空白文稿，后一个是文件夹
+  - 照旧用 `icon(forFile:)`：有扩展名的（`.甲.txt`、`.swiftlint.yml`）、名称不以“.”开头的、符号链接、文件包；符号链接这样才带替身箭头，文件包按类型取是带“?”的文稿
+  - 粘贴过自定义图标的这类文件与文件夹显示类型的图标，不显示自定义图标
+  - 面板、设置窗口的树、Dock 上 tile 的预览都用 `FileReference.icon`，三处一致，不随“显示隐藏文件”变化
 
 ## 数据模型
 
@@ -306,6 +311,17 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
   - 排序与按显示名 `localizedStandardCompare` 完全一致：隐藏的项与其它项混排，开头的 `.` 当普通字符参与比较
   - 访达按下即选中，没有单独的按下样子；隐藏的项选中后图标仍半透明
   - ⌘⇧. 不写 `com.apple.finder` 的 `AppleShowAllFiles`
+- 名称以“.”开头、没有扩展名的项的图标（探针在临时目录里造各种名称，逐一对照 `icon(forFile:)` 与按类型取的图标）：
+  - `URL.pathExtension` 与 `NSString.pathExtension` 都为空；资源属性的类型是 `public.data`，可执行的是 `public.unix-executable`，目录是 `public.folder`
+  - `NSWorkspace.icon(forFile:)` 却把开头的“.”后面当成扩展名：
+    - 文件：`.a`、`..a` 是归档图标，`.z`、`.zip` 是压缩包，`.json`、`.pdf`、`.png`、`.txt`、`.mp3`、`.gitignore` 是对应类型或认领这个扩展名的 App 给的图标，名为 `.app` 的文件是带“?”的文稿；可执行的 `.sh` 是 shell 脚本的图标，按类型取是可执行文件的图标
+    - 普通目录：`.rtfd`、`.pages`、`.key`、`.bundle`、`.framework`、`.pkg`、`.photoslibrary` 是对应文稿或 bundle 的图标；它们的 `isPackage` 为假，Launch Services 的种类是“文件夹”，QuickLook 的 `.icon` 表示也是文件夹；访达里的样子未在屏上核对
+    - 不是已知扩展名的（`.中`、`.env`、`.git`、`.config`）与按类型取的相同
+  - 资源属性 `effectiveIconKey` 与 `icon(forFile:)` 相同
+  - 符号链接：类型是 `public.symlink`，`icon(forFile:)` 是目标的图标加替身箭头，同样按名称当扩展名：名为 `.zip` 的链接是压缩包加箭头，指向 `.a` 的链接是归档加箭头
+  - 带 bundle 标志的目录：`isPackage` 为真，类型是 `com.apple.package`，按类型取是带“?”的文稿
+  - 粘贴过自定义图标：`icon(forFile:)` 与 `effectiveIconKey` 给出自定义图标，按类型取给出类型的图标；`customIconKey` 读出来是 nil
+  - 访达 ⌘⇧. 下 `.a`、`.z`、`.中` 都是带“?”的通用文稿；没有扩展名的普通文件（如 `n`）同样带“?”，按 `public.data` 取的是不带“?”的空白文稿
 - `contentsOfDirectory` 的 `.skipsHiddenFiles` 跳过以 `.` 开头的项，也跳过带 `hidden` 标志的项
 - 打开已不存在的项：`NSWorkspace.open` 用默认的 `OpenConfiguration`（`promptsUserIfNeeded` 为真）时，回调给出错误，同时 `CoreServicesUIAgent` 弹出“找不到该文件。”的提示框，有“好”与帮助按钮
   - 实测的是已删除的访达里的文件夹；已删除的文件走同一个打开方法、同一份设置，没有单独实测
@@ -441,6 +457,9 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
   - 网格（`FolderGridHiddenItemTests`）：隐藏的项半透明，普通的项不透明；按下隐藏的项照样压暗，半透明不变
   - 设置（`PreferencesTests`）：默认不显示；切换不发 `Preferences.didChangeNotification`
   - 设置窗口（`GeneralSettingsViewControllerTests`）：复选框反映当前的值，点击后写回；五种语言下窗口最窄时，各行控件不被压窄、不越出通用区
+  - 图标（`FileReferenceIconTests`，临时目录里造文件；图标按 32 pt、2 倍栅格化后逐字节比较）：
+    - `.a`、`.zip` 与按 `public.data` 取的相同；`.bundle` 目录与按文件夹类型取的相同
+    - 照旧按 `icon(forFile:)`：粘贴过自定义图标的 `.甲.txt` 与 `n` 显示自定义图标；名为 `.链接` 的符号链接；带 bundle 标志的 `.包`
 - 新键五种语言齐全：`LocalizationTests` 自动覆盖
 - 隐私授权框的用途说明（`PrivacyUsageDescriptionTests`）：
   - `Info.plist` 有上表六个键，值非空
