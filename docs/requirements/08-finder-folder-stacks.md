@@ -197,8 +197,12 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
   - 键与授权服务的对应取自 `/System/Library/PrivateFrameworks/TCC.framework/Support/tccd` 的字符串，授权框文案在同一框架的 `Localizable.loctable`
   - iCloud 云盘是文件提供方扩展（`com.apple.fileprovider-nonui`），授权框属于 `kTCCServiceFileProviderDomain`，对应 `NSFileProviderDomainUsageDescription`
     - 这个服务的授权框文案是 `“%@”想要访问受“%@”管理的文件。`，后一处是文件提供方的名称
-  - 授权框属于别的进程，用户点它的按下由全局鼠标监听收到；主线程这时被读取占住，按下排到读取结束后才处理
-  - 未在屏上触发验证
+  - 授权框由 `UserNotificationCenter` 显示，属于别的进程
+    - 发起读取的进程结束后，授权框仍留在屏上
+    - 用户点它的按下由全局鼠标监听收到；主线程这时被读取占住，按下排到读取结束后才处理
+  - 用途说明的显示在屏上实测过：用带同样 `Info.plist` 与 `InfoPlist.strings` 的临时 App 读“文稿”触发
+    - 授权框标题是 `“TCCProbe”想访问“文稿”文件夹中的文件。`，标题下是按系统语言取的那一句（系统语言为简体中文，显示 zh-Hans 那句）
+  - Flotilla 自己点“允许”“不允许”之后的展开与回退未在屏上验证
 - 事件时间：`NSEvent.timestamp` 与 `ProcessInfo.systemUptime` 是同一个时钟，都是开机以来不含睡眠的秒数（`CLOCK_UPTIME_RAW`）
   - 测量时开机以来睡眠过约 22 小时：`systemUptime` 与 `CLOCK_UPTIME_RAW` 相等，比含睡眠的 `CLOCK_MONOTONIC_RAW` 少约 78700 s
   - 全局鼠标监听被动收到的移动、按下、抬起：`timestamp` 比处理时的 `systemUptime` 早 1–6 ms；对应 `CGEvent.timestamp` 是同一时刻的纳秒数
@@ -266,4 +270,5 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
   - 最后一格“在访达中打开”：访达打开这一层，面板收起；图标的大小、颜色与按下的样子与原生叠放一致；按下后拖出面板再抬起也触发
   - 空文件夹只有“在访达中打开”一格；已删除的访达里的文件夹点击后系统弹出“找不到”的提示，同时记日志，面板收起
   - 上千项的访达里的文件夹点开不卡顿；快速滚动（含惯性）时不出现空白格
+- 隐私授权框：第一次读受保护的位置时，授权框里显示 Flotilla 的用途说明，语言跟随系统
 - 设置窗口：访达里的文件夹这一行在名称后显示灰色的位置；把窗口拉窄时先截断位置，在中间省略，开头的 `~/` 与最后一级目录都看得到
