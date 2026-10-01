@@ -33,8 +33,28 @@ extension FileReference {
     }
 
     /// 文件在访达中的图标
+    ///
+    /// 名称以“.”开头、没有扩展名的文件与访达里的文件夹按内容类型取：`icon(forFile:)` 把开头的“.”后面当成扩展名，
+    /// `.a`、`.zip` 会得到归档、压缩包的图标，与访达的通用文稿不同；`.bundle` 这样的目录同样会得到 bundle 的图标
     var icon: NSImage {
-        NSWorkspace.shared.icon(forFile: url.path(percentEncoded: false))
+        // 先看名称，其余的项不多读一次资源属性；符号链接按文件取才带替身箭头，文件包按类型取会是带“?”的文稿
+        guard
+            url.lastPathComponent.hasPrefix("."),
+            url.pathExtension.isEmpty,
+            let values = try? url.resourceValues(forKeys: [
+                .contentTypeKey,
+                .isRegularFileKey,
+            ]),
+            let contentType = values.contentType,
+            let isRegularFile = values.isRegularFile,
+            isRegularFile || isFinderFolder
+        else {
+            return NSWorkspace.shared.icon(forFile: url.path(percentEncoded: false))
+        }
+
+        #warning("TODO: 名称以“.”开头、没有扩展名的目录在访达里是文件夹图标，取自 Launch Services 的种类“文件夹”，未在屏上与访达核对")
+
+        return NSWorkspace.shared.icon(for: contentType)
     }
 }
 
