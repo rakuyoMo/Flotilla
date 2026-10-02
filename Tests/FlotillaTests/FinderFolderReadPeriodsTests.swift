@@ -6,7 +6,7 @@ import Testing
 // MARK: - FinderFolderReadPeriodsTests
 
 /// 读访达里的文件夹期间的鼠标按下：第一次读受保护的位置时，用户点隐私授权框的按下排到读取结束后才处理，
-/// 若当成点面板外，刚进入的层级会随即收起；读取之外的按下必须照旧收起面板、切换 tile
+/// 若当成点面板外，刚进入的层级会随即收起；读取之外的按下必须照常收起面板、切换 tile
 struct FinderFolderReadPeriodsTests {
     /// 等用户回答授权框的一次读取：100 s 开始，103.5 s 读完
     private static let promptedRead: ClosedRange<TimeInterval> = 100 ... 103.5
@@ -30,7 +30,7 @@ struct FinderFolderReadPeriodsTests {
         #expect(periods.contains(Self.promptedRead.upperBound))
     }
 
-    /// 读取结束之后、开始之前的按下不在读取期间：照旧交给状态机，点面板外收起、点 tile 切换
+    /// 读取结束之后、开始之前的按下不在读取期间：照常交给状态机，点面板外收起、点 tile 切换
     @Test
     func mouseDownOutsideReadStillCounts() {
         var periods = FinderFolderReadPeriods()
@@ -40,7 +40,7 @@ struct FinderFolderReadPeriodsTests {
         #expect(!periods.contains(99.9))
     }
 
-    /// 没有读过访达里的文件夹时，任何按下都照旧处理
+    /// 没有读过访达里的文件夹时，任何按下都照常处理
     @Test
     func noReadIgnoresNothing() {
         let periods = FinderFolderReadPeriods()

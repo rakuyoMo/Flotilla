@@ -50,7 +50,7 @@ enum FolderPanelLevelContent: Equatable {
         return finderFolder.url
     }
 
-    /// 网格里的文件是否显示内容缩略图：访达里的文件夹与原生叠放一致显示缩略图，Flotilla 的文件夹照旧显示图标
+    /// 网格里的文件是否显示内容缩略图：访达里的文件夹与原生叠放一致显示缩略图，Flotilla 的文件夹显示图标
     var showsFileThumbnails: Bool {
         switch self {
         case .folder:

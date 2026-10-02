@@ -81,8 +81,7 @@ final class DockPreferences {
 
     /// 构造一个 tile 条目，字段对照 Dock 自己写出的 App 条目；`book` 等其余字段由 Dock 启动后自行补全
     ///
-    /// `file-type = 41` 与本机 Dock 为用户添加的 App 写出的取值一致，Dock 重启后原样保留；
-    /// 条目缺少 `file-label` 时，Dock 会用 bundle 的文件名（即根文件夹 id）补上，因此名称必须写进条目
+    /// `file-type = 41` 与本机 Dock 为用户添加的 App 写出的取值一致，Dock 重启后原样保留
     /// - Parameters:
     ///   - tileURL: stub bundle 的文件 URL
     ///   - label: tile 的名称

@@ -141,7 +141,7 @@ final class DockTileBundleBuilderTests {
         #expect(file["LSItemContentTypes"] as? [String] == ["public.data", "com.apple.package"])
     }
 
-    /// 已被 Launch Services 记录的旧版 stub（没有声明文档类型）改写后重新注册：随即能接收 App 与文件
+    /// 已被 Launch Services 记录的 stub 改写 Info.plist 后重新注册：随即按改写后的文档类型判断，能接收 App 与文件
     ///
     /// 实测不重新注册时，Launch Services 一直按旧记录判断，App 拖不到 tile 上
     @Test
@@ -152,7 +152,7 @@ final class DockTileBundleBuilderTests {
         let stubURL = builder.bundleURL(for: folder)
         let chessURL = URL(filePath: "/System/Applications/Chess.app")
 
-        // 模拟旧版 stub：Info.plist 去掉文档类型后注册
+        // 让 Launch Services 先记下一份没有文档类型的 Info.plist
         var info = try readInfo(of: folder)
         info["CFBundleDocumentTypes"] = nil
 
