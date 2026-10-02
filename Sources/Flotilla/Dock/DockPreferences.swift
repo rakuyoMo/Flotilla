@@ -156,7 +156,6 @@ extension DockPreferences {
     ///   - rewrittenTileURLs: stub 刚被改写过的 tile，条目换新的 GUID
     ///   - staleDirectories: 要删除 tile 的 stub 目录
     /// - Returns: 是否改动了偏好
-    @discardableResult
     func apply(
         _ expectedTiles: [ExpectedDockTile],
         rewrittenTileURLs: Set<URL>,
@@ -207,7 +206,6 @@ extension DockPreferences {
     /// 只比对条目里记录的 URL，不访问磁盘：用户在访达里删掉了 stub bundle 时同样能删除
     /// - Parameter tileDirectory: 根文件夹的 stub 独占的目录
     /// - Returns: 是否确实删除了条目
-    @discardableResult
     func remove(tileDirectory: URL) throws -> Bool {
         var tiles = tiles
         guard let index = index(ofDirectory: tileDirectory, in: tiles) else { return false }
