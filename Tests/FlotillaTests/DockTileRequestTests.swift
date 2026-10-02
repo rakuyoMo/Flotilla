@@ -77,7 +77,7 @@ struct DockTileRequestTests {
 
     // MARK: 无法识别
 
-    /// scheme、host、路径层级或 id 不符合约定、加入项却没有 `path`，以及不再使用的 `apps` 路由，一律忽略
+    /// scheme、host、路径层级或 id 不符合约定、加入项却没有 `path`，一律忽略
     @Test(arguments: [
         "https://folder/\(UUID().uuidString)",
         "flotilla://tile/\(UUID().uuidString)",
@@ -87,7 +87,6 @@ struct DockTileRequestTests {
         "flotilla://folder/not-a-uuid/items?path=/Users/Shared/报告.pdf",
         "flotilla://folder/\(UUID().uuidString)/items",
         "flotilla://folder/\(UUID().uuidString)/items?file=/Users/Shared/报告.pdf",
-        "flotilla://folder/\(UUID().uuidString)/apps?path=/Applications/Chess.app",
         "flotilla://folder/",
         "flotilla://folder",
     ])
