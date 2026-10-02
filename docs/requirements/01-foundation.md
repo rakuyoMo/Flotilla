@@ -118,7 +118,7 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
 ```
 
 - `FolderItem.id` 返回所包含项的 id。
-- `AppReference` 提供 `displayName`（`FileManager.default.displayName(atPath:)`）与 `icon`（`NSWorkspace.shared.icon(forFile:)`）；书签与文件的相同，App 移动或改名后据此跟到新位置，见 [08](08-finder-folder-stacks.md)（需求 19、22）。
+- `AppReference` 提供 `displayName`（`FileManager.default.displayName(atPath:)`）与 `icon`（`NSWorkspace.shared.icon(forFile:)`）；书签与文件的相同，App 移动或改名后据此跟到新位置（需求 19）；bundle id 在 App 更新后书签找不到装好的那一份时用来找回（需求 22）；两者见 [08](08-finder-folder-stacks.md)。
 - 文件、网页两种情况（`FileReference`、`WebPageReference`）与为要加入的 URL 分类的 `FolderItem(url:title:)` 见 [06](06-files-and-web-pages.md)（需求 14）；访达里的文件夹与文件的书签见 [07](07-file-items-refinements.md)（需求 15、18）。
 - JSON 编码里 `FolderItem` 用显式类型标签区分各种情况，解码要兼容任意嵌套深度。
 
