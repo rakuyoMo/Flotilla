@@ -24,7 +24,7 @@
 
 ```swift
 /// 对一个文件的引用
-struct FileReference: Codable, Hashable, Identifiable {
+struct FileReference: BookmarkedReference, Codable, Hashable, Identifiable {
     let id: UUID
 
     /// 文件包、访达里的文件夹与卷是目录 URL，其余是文件 URL
@@ -91,7 +91,7 @@ extension FolderItem {
 
 ### `FolderStore`
 
-- `addApps(_:to:)` 改为 `addItems(_ items: [FolderItem], to folderID: UUID)`：
+- `addItems(_ items: [FolderItem], to folderID: UUID)`：
   - 把 App、文件与网页追加到文件夹末尾，一次提交，只发一次变更通知
   - 与该文件夹已有的项、以及本批已加入的项同类且 URL 相同时跳过
   - 子文件夹只由 `addSubfolder(named:to:)` 新建，传进来就忽略
@@ -137,7 +137,7 @@ extension FolderItem {
   - stub 不出现在访达的“打开方式”里，各类文件的默认打开 App 不变
   - 访达里的文件夹同样高亮并拉起 stub：声明了 `public.data` 或 `com.apple.package`，Dock 就对文件夹一并接收，只有声明具体类型时才按类型判断；它作为文件加入，见 07
   - 改写 Info.plist 并 `lsregister -f` 之后，不重启 Dock，下一次拖动就按新声明判断
-- Info.plist 变了，现有 stub 在下一次同步里按 02 的逐字节比对被改写（连同可执行文件）并重新登记。
+- stub 的 Info.plist 与期望不同时，下一次同步按 02 的逐字节比对改写它（连同可执行文件）并重新登记。
 
 ### 请求
 
@@ -157,7 +157,7 @@ extension FolderItem {
   ```
 
   - `path` 用 `URL(filePath:)` 还原：stub 送来的文件包、App 与文件夹路径以 `/` 结尾，还原成目录 URL；分类时还会再规整
-  - `apps` 路由不再识别；没有任何 `path` 时同样为 nil
+  - 没有任何 `path` 时为 nil
 - `AppDelegate.application(_:open:)`：`.addItems` 先确认 id 是根文件夹，再逐个经 `FolderItem(url:title:)` 分类后交给 `addItems`；已不存在的文件在分类时被略过。
 
 ### 网页
@@ -183,18 +183,8 @@ extension FolderItem {
   - 文件 URL 加入文件；一个能加入的都没有时不接收，见 07
   - 落在文件行或网页行上不接收
 - 文件夹图标的预览见 07
-- `DockTileRequest`：`items` 路由的解析，路径含空格、中文与 URL 的保留字符，文件包、App 路径以 `/` 结尾时还原成目录 URL；多个 `path` 保持顺序；`apps` 路由与没有 `path` 的 URL 为 nil
-- stub 的 Info.plist：含上述 File 一项，`LSHandlerRank` 为 `None`；旧版 stub 改写并重新登记后，能接收 App 与普通文件
-
-## 文档回写
-
-- 00：目标、需求清单第 14 条、术语里“文件夹”的定义、模块划分表（新增的两个类型，`FolderItem`、`DockTileRequest` 与 stub 的职责）、阶段列表
-- 01：数据模型、`FolderStore` 的 `addItems`、设置窗口的行与拖入、预览跳过的项
-- 02：stub 的 `CFBundleDocumentTypes`、拖放启动时的 URL、信号链路
-- 03：网格的项、点击文件与网页的行为、收起的触发
-- 05：stub 发出的 URL、`DockTileRequest`、`AppDelegate` 的处理、验收里拖文件的结果
-- `README.md`：开头一句，以及“管理文件夹”“Dock 上的文件夹”“展开与收起”三节
-- `AGENTS.md`：项目概述；需求文档范围改为 01–06
+- `DockTileRequest`：`items` 路由的解析，路径含空格、中文与 URL 的保留字符，文件包、App 路径以 `/` 结尾时还原成目录 URL；多个 `path` 保持顺序；没有 `path` 的 URL 为 nil
+- stub 的 Info.plist：含上述 File 一项，`LSHandlerRank` 为 `None`；已登记的 stub 改写 Info.plist 并重新登记后，能接收 App 与普通文件
 
 ## 验收
 

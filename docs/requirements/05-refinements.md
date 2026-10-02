@@ -1,6 +1,6 @@
 # 05 Dock 状态、拖放加入与本地化
 
-先读 [00 总览](00-overview.md) 与 01–04 四份文档，并以 04 阶段合入后的代码为基线。本阶段交付需求 10–13：tile 被拖出 Dock 后的状态显示与重新添加、把 App 拖到 tile 上加入文件夹、界面本地化，以及设置窗口里的文件夹图标改为固定图标。
+先读 [00 总览](00-overview.md) 与 01–04 四份文档，并以 04 阶段合入后的代码为基线。本阶段交付需求 10–13：tile 被拖出 Dock 后的状态显示与重新添加、把 App 拖到 tile 上加入文件夹、界面本地化，以及设置窗口里的文件夹图标用固定图标。
 
 ## tile 被拖出 Dock 后的状态与重新添加（需求 10）
 
@@ -98,15 +98,15 @@
 
 ### stub 的行为
 
-- stub 改为基于 `NSApplication` 运行，仍是 `LSUIElement` + `LSBackgroundOnly` 的后台 App，不激活任何 App：
+- stub 基于 `NSApplication` 运行，是 `LSUIElement` + `LSBackgroundOnly` 的后台 App，不激活任何 App：
   - 由点击 tile 启动：打开 `flotilla://folder/<id>`，与 02 一致
-  - 由拖放启动：AppKit 在 `applicationDidFinishLaunching` 之前经 `application(_:open:)` 送来被拖的 URL，可能分多次送到，全部收齐后在 `applicationDidFinishLaunching` 里打开 `flotilla://folder/<id>/items?path=<路径>&path=<路径>`：每个被拖的项一个 `path` 查询项，取值为它的 POSIX 路径，由 `URLComponents` 编码
+  - 由拖放启动：AppKit 在 `applicationDidFinishLaunching` 之前经 `application(_:open:)` 送来被拖的 URL，收齐后在 `applicationDidFinishLaunching` 里打开 `flotilla://folder/<id>/items?path=<路径>&path=<路径>`：每个被拖的项一个 `path` 查询项，取值为它的 POSIX 路径，由 `URLComponents` 编码
   - 其余不变：`activates = false`，等到回调（最多 5 秒）后退出；缺少 id 或打开失败时记日志并以非零状态退出
 - 同一次拖放的事件可能被系统重复送达（参考项目实测）；stub 每次启动只发一个 URL，重复到达的 URL 由 Flotilla 侧 `addItems` 的去重吸收。
 
 ### Flotilla 侧
 
-- 新类型 `Dock/DockTileRequest.swift`：stub 通过 URL 向 Flotilla 发出的请求，取代 `AppDelegate.folderID(from:)`
+- 新类型 `Dock/DockTileRequest.swift`：stub 通过 URL 向 Flotilla 发出的请求
 
   ```swift
   enum DockTileRequest: Equatable {
@@ -133,7 +133,7 @@
 - 资源：`Sources/Flotilla/Resources/<语言>.lproj/Localizable.strings`，语言目录为 `en`、`zh-Hans`、`zh-Hant`、`ja`、`ko`。
   - `Package.swift` 把 `Resources` 从编译中排除；`Scripts/bundle.sh` 把五个 `.lproj` 拷入 `Flotilla.app/Contents/Resources/`
   - `Info.plist` 增加 `CFBundleDevelopmentRegion = en`
-- 代码里所有用户可见的文字改为 `String(localized:comment:)`，键见下表；日志、`#warning` 与注释仍是中文，不本地化。
+- 代码里所有用户可见的文字用 `String(localized:comment:)`，键见下表；日志、`#warning` 与注释用中文，不本地化。
 - 五张表的键完全一致，缺一个都不行：进程只选一种语言，缺键时显示的是键名而不是英文。
 - 用词对照系统自带 App 在各语言下的同名功能（“设置…”“退出”“撤销”“拷貝”“取り消す”“오려두기”等）。
 
@@ -171,27 +171,16 @@
 
 ## 设置窗口的文件夹图标（需求 13）
 
-- 文件夹树里文件夹行的图标改为系统的通用文件夹图标（`NSWorkspace.shared.icon(for: .folder)`），根文件夹与子文件夹相同，不再用 `FolderIconRenderer` 渲染，也不随预览数量与系统外观变化。
-- `FolderTreeCellView` 不再持有文件夹与预览数量，也不再在 `viewDidChangeEffectiveAppearance` 里重新渲染；`FolderTreeViewController` 不再依赖 `Preferences`，也不再订阅 `Preferences.didChangeNotification`。
-- App 行仍用 `AppReference.icon`。
+- 文件夹树里文件夹行的图标是系统的通用文件夹图标（`NSWorkspace.shared.icon(for: .folder)`），根文件夹与子文件夹相同，不随预览数量与系统外观变化。
+- App 行用 `AppReference.icon`。
 - 需求 2 的预览图标与外观跟随只影响 Dock 上的 tile 与面板里的子文件夹。
 
 ## 单元测试
 
 - `DockTileAdditionTracker`：启动时缺少 tile 的根文件夹不添加；新出现的根文件夹添加；还没确认新 Dock 读到的 tile 不在 Dock 上时不算被拖出、下一次同步再加；新 Dock 读到之后、下一次同步之前被拖出的不再添加；新 Dock 只读到部分 tile 时只确认读到的；同步看到之后再消失不再添加；用户请求的添加；搁置期间不添加也不算被拖出，解除后添加；只有搁置过的才报告解除；搁置期间被删除的不添加；待添加的被删除或不再是根文件夹时不添加；被拖出的判定只包含启动时就缺 tile 的与确认加上之后又消失的，新出现的、待添加的与已要求添加的都不算
-- `DockTileRequest`：两种 URL 的解析，`path` 里的空格与中文，多个 `path` 保持顺序；scheme、host、层级、id 不符或没有 `path` 的 URL 一律为 nil（取代 `FolderURLParsingTests`）
+- `DockTileRequest`：两种 URL 的解析，`path` 里的空格与中文，多个 `path` 保持顺序；scheme、host、层级、id 不符或没有 `path` 的 URL 一律为 nil
 - stub 的 Info.plist 含上述 `CFBundleDocumentTypes`
 - 本地化：五张 `Localizable.strings` 都能解析、键集合完全相同、没有空值；代码里 `String(localized:` 引用的每个键都在表里，表里的每个键都被代码引用
-- 设置窗口树的文件夹图标不再随外观变化，对应的测试删除
-
-## 文档回写
-
-- 00：需求清单、模块划分表与阶段列表
-- 01：设置窗口文件夹行的图标；Info.plist 一节里“Flotilla 自己没有本地化资源”的说法
-- 02：stub 的 Info.plist 键与行为；同步器的对账规则、添加 tile 的条件与待添加的确认；信号链路加上拖放
-- 04：端到端验证第 10 步不再包含设置窗口的图标
-- `README.md`：把 App 拖到 tile 上、tile 拖出 Dock 后的状态与“添加到 Dock”、支持的语言
-- `AGENTS.md`：目录结构表加上 `Resources/`，需求文档范围改为 01–05
 
 ## 验收
 

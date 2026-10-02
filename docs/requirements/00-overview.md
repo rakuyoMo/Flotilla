@@ -15,7 +15,7 @@
 
 ## 需求清单
 
-编号沿用原始需求，后续文档用“需求 N”引用。
+后续文档用“需求 N”引用。
 
 1. 允许文件夹嵌套。
 2. Dock 上的文件夹图标要实时渲染出文件夹内前几项的图标：App、文件与网页都算，跳过子文件夹（见 07）。上限在 App 内写死为 4，用户可在 0–4 之间调整；0 表示只显示文件夹图标。
@@ -70,7 +70,7 @@ Flotilla 是一个无 Dock 图标的常驻后台 App（`LSUIElement`），只有
 
 ## 模块划分
 
-代码全部在 `Sources/Flotilla/` 下，按职责分子目录；每个文件一个类型。
+App 的代码在 `Sources/Flotilla/` 下，按职责分子目录；stub 的可执行文件在 `Sources/FlotillaDockTile/`；每个文件一个类型。
 
 下表是各阶段共同遵守的接口契约，类型名与职责不得私自更改；实现细节由各阶段文档规定。
 
@@ -88,7 +88,7 @@ Flotilla 是一个无 Dock 图标的常驻后台 App（`LSUIElement`），只有
 | `StatusBar/` | `StatusBarController` | 状态栏图标与菜单（需求 7） | 01 |
 | `Settings/` | `SettingsWindowController` 等 | 设置窗口 | 01 |
 | 根目录 | `AppDelegate` | 应用生命周期、主菜单、URL 事件分发 | 01 |
-| `Panel/` | `DockFolderPresenter` | 面板的展开、收起、切换；URL 事件的最终接收者 | 01 占位，03 实现 |
+| `Panel/` | `DockFolderPresenter` | 面板的展开、收起、切换；URL 事件的最终接收者 | 03 |
 | `Dock/` | `DockTileBundleBuilder` | 生成、更新、删除 stub bundle | 02 |
 | `Dock/` | `IconFileWriter` | 把 `NSImage` 写成 `.icns` | 02 |
 | `Dock/` | `DockPreferences` | 读写 `com.apple.dock`，增删 tile，重启 Dock | 02 |

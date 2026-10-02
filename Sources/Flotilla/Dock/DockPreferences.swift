@@ -81,8 +81,7 @@ final class DockPreferences {
 
     /// 构造一个 tile 条目，字段对照 Dock 自己写出的 App 条目；`book` 等其余字段由 Dock 启动后自行补全
     ///
-    /// `file-type = 41` 与本机 Dock 为用户添加的 App 写出的取值一致，Dock 重启后原样保留；
-    /// 条目缺少 `file-label` 时，Dock 会用 bundle 的文件名（即根文件夹 id）补上，因此名称必须写进条目
+    /// `file-type = 41` 与本机 Dock 为用户添加的 App 写出的取值一致，Dock 重启后原样保留
     /// - Parameters:
     ///   - tileURL: stub bundle 的文件 URL
     ///   - label: tile 的名称
@@ -156,7 +155,6 @@ extension DockPreferences {
     ///   - rewrittenTileURLs: stub 刚被改写过的 tile，条目换新的 GUID
     ///   - staleDirectories: 要删除 tile 的 stub 目录
     /// - Returns: 是否改动了偏好
-    @discardableResult
     func apply(
         _ expectedTiles: [ExpectedDockTile],
         rewrittenTileURLs: Set<URL>,
@@ -207,7 +205,6 @@ extension DockPreferences {
     /// 只比对条目里记录的 URL，不访问磁盘：用户在访达里删掉了 stub bundle 时同样能删除
     /// - Parameter tileDirectory: 根文件夹的 stub 独占的目录
     /// - Returns: 是否确实删除了条目
-    @discardableResult
     func remove(tileDirectory: URL) throws -> Bool {
         var tiles = tiles
         guard let index = index(ofDirectory: tileDirectory, in: tiles) else { return false }

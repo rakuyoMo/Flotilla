@@ -44,7 +44,7 @@ struct FolderPanelLevelContentTests {
         #expect(FolderPanelLevelContent.folder(empty).cellCount == 0)
     }
 
-    /// 只有访达里的文件夹的层级里，文件显示内容缩略图：与原生叠放一致；Flotilla 的文件夹照旧显示图标
+    /// 只有访达里的文件夹的层级里，文件显示内容缩略图：与原生叠放一致；Flotilla 的文件夹显示图标
     @Test
     func onlyFinderFolderShowsFileThumbnails() {
         let folder = Folder(id: UUID(), name: "工作", items: makeFiles(3))

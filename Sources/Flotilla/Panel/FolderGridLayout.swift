@@ -5,7 +5,7 @@ import CoreGraphics
 /// 网格的纯几何计算：列数、行数、每个单元格的位置、面板主体尺寸，以及是否需要滚动
 ///
 /// 面板主体自上而下是标题区与网格，根层级与子层级相同
-struct FolderGridLayout: Equatable {
+struct FolderGridLayout {
     /// 列数；空文件夹为 0
     let columnCount: Int
 

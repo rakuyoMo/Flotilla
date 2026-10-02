@@ -60,7 +60,7 @@ final class FolderTreeViewControllerTests {
     }
 
     /// 窗口缩到最窄时，每种语言的按钮都按完整标题的宽度排开，互不重叠，也不超出文件夹区：
-    /// 按钮行放不下时，按钮会被压窄、标题被截断
+    /// 按钮行放不下时，按钮保持完整宽度，把文件夹区撑宽，最右边的按钮越出最窄时的文件夹区
     @Test(arguments: LocalizationTests.languages)
     func buttonRowFitsMinimumWidth(language: String) throws {
         let table = try LocalizationTests.table(for: language)

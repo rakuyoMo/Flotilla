@@ -90,7 +90,7 @@ final class FolderItemClassificationTests {
         #expect(urls == [chess, chess])
     }
 
-    /// 访达里的文件夹是文件，按目录 URL 记录：点击时交给访达打开
+    /// 访达里的文件夹是文件，按目录 URL 记录：点击时在面板里展开它的内容
     @Test
     func finderFolderIsFile() {
         let item = FolderItem(url: URL(filePath: path(of: "资料")), title: nil)

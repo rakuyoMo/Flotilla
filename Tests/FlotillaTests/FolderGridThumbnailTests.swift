@@ -6,7 +6,7 @@ import Testing
 // MARK: - FolderGridThumbnailTests
 
 /// 访达里的文件夹的层级里，文件按原生叠放显示内容缩略图，一眼看得出是哪份文件，而不是一排相同的通用图标；
-/// Flotilla 的文件夹照旧显示图标。缩略图晚到时，不能落到已经离开的层级上；
+/// Flotilla 的文件夹显示图标。缩略图晚到时，不能落到已经离开的层级上；
 /// 请求只为看得见附近的格保留，快速滚过上千项后，看得见的格不必排在滚过的格后面等
 @MainActor
 struct FolderGridThumbnailTests {

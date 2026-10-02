@@ -25,9 +25,7 @@
 
 ### 激活策略
 
-需求 6 的参照物是陛下自己的 Hassan-macOS（`Components/AppPresentation/Sources/Internal/Operations/ActivationPolicyOperations.swift`）：有可见窗口时用 `.regular`，窗口全部关闭后回到 `.accessory`。
-
-Flotilla 照此办理：
+有可见窗口时用 `.regular`，窗口全部关闭后回到 `.accessory`（需求 6）：
 
 - 启动即 `.accessory`（`LSUIElement`），此时没有任何窗口
 - 显示设置窗口前切到 `.regular`，切换后延迟到下一个 run loop 再激活并把窗口带到最前：从 `.accessory` 切到 `.regular` 后系统需要时间准备 Dock 图标
@@ -89,15 +87,11 @@ Dock 与 ⌘Tab 里的 Flotilla 图标跟随“系统设置 › 外观 › 图�
 
 ### URL 事件
 
-- `AppDelegate.application(_:open:)` 接收 URL；只处理 `flotilla://folder/<uuid>`，其它一律忽略。
-- 解析出 id 后交给 `DockFolderPresenter`。
+- `AppDelegate.application(_:open:)` 接收 URL，由 `DockTileRequest` 解析（见 [05](05-refinements.md)、[06](06-files-and-web-pages.md)）：
+  - `flotilla://folder/<uuid>` 交给 `DockFolderPresenter.handleURLSignal(folderID:)`
+  - 把项拖到 tile 上的请求，确认 id 是根文件夹后经 `FolderStore.addItems` 加入
+  - 无法识别的 URL 一律忽略
 - 处理 URL 事件时不得激活 Flotilla。
-
-### `DockFolderPresenter` 占位
-
-`Sources/Flotilla/Panel/DockFolderPresenter.swift`：`@MainActor final class`，`static let shared`，`func toggle(folderID: UUID)`。
-
-本阶段方法体只打一条包含 id 的日志，并加 `#warning("TODO: 面板由 03 阶段实现")`。
 
 ## 数据模型（`Sources/Flotilla/Model/`）
 
@@ -115,15 +109,16 @@ enum FolderItem: Codable, Hashable, Identifiable {
     case webPage(WebPageReference)
 }
 
-struct AppReference: Codable, Hashable, Identifiable {
+struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
     let id: UUID
     let url: URL
     let bookmark: Data?
+    let bundleIdentifier: String?
 }
 ```
 
 - `FolderItem.id` 返回所包含项的 id。
-- `AppReference` 提供 `displayName`（`FileManager.default.displayName(atPath:)`）与 `icon`（`NSWorkspace.shared.icon(forFile:)`）；书签与文件的相同，App 移动或改名后据此跟到新位置，见 [08](08-finder-folder-stacks.md)（需求 19）。
+- `AppReference` 提供 `displayName`（`FileManager.default.displayName(atPath:)`）与 `icon`（`NSWorkspace.shared.icon(forFile:)`）；书签与文件的相同，App 移动或改名后据此跟到新位置（需求 19）；bundle id 在 App 更新后书签找不到装好的那一份时用来找回（需求 22）；两者见 [08](08-finder-folder-stacks.md)。
 - 文件、网页两种情况（`FileReference`、`WebPageReference`）与为要加入的 URL 分类的 `FolderItem(url:title:)` 见 [06](06-files-and-web-pages.md)（需求 14）；访达里的文件夹与文件的书签见 [07](07-file-items-refinements.md)（需求 15、18）。
 - JSON 编码里 `FolderItem` 用显式类型标签区分各种情况，解码要兼容任意嵌套深度。
 

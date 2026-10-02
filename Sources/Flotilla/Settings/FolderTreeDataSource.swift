@@ -147,7 +147,7 @@ extension FolderTreeDataSource: NSOutlineViewDataSource {
         return .copy
     }
 
-    /// 执行放下：树内拖动改为移动，从外部拖入的 App、文件与网页加入目标文件夹
+    /// 执行放下：树内拖动执行移动，从外部拖入的 App、文件与网页加入目标文件夹
     func outlineView(
         _: NSOutlineView,
         acceptDrop info: any NSDraggingInfo,

@@ -5,7 +5,7 @@ import CoreGraphics
 /// 面板在屏幕上的位置：面板主体、尾巴尖端与展开收起的缩放锚点，均为 AppKit 屏幕坐标
 ///
 /// 数值在底部 Dock 上实测；Dock 在左右两侧时按同样的数值沿 Dock 方向套用
-struct FolderPanelPlacement: Equatable {
+struct FolderPanelPlacement {
     #warning("TODO: 未能实测 左右两侧 Dock 的尾巴偏移与夹边距离（原生文件夹只能放在底部 Dock 的右侧区域测量）")
 
     /// 面板主体（不含尾巴）的 frame
