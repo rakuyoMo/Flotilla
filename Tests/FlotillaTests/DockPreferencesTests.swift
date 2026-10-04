@@ -471,7 +471,8 @@ extension DockPreferencesTests {
 // MARK: - Relaunched Dock
 
 extension DockPreferencesTests {
-    /// 补写完成时新 Dock 还没启动，或完成得早于它启动后读取偏好的下限：新 Dock 一定读到补写，不必再重启
+    /// 补写完成时新 Dock 还没启动，或完成得早于它启动后 `relaunchReadDelay`：
+    /// 新 Dock 一定读到补写，不必再重启
     @Test
     func rewriteBeforeRelaunchedDockReadsIsRead() {
         let launch = Date()
@@ -497,7 +498,8 @@ extension DockPreferencesTests {
         #expect(isReadWithinDelay)
     }
 
-    /// 补写完成得不早于新 Dock 启动后读取偏好的下限：新 Dock 可能已读到被写回的旧条目，要再重启一次
+    /// 补写完成得不早于新 Dock 启动后 `relaunchReadDelay`：
+    /// 新 Dock 可能已读到被写回的旧条目，要再重启一次
     @Test
     func rewriteAfterReadDelayIsNotRead() {
         let launch = Date()

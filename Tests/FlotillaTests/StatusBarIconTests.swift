@@ -82,7 +82,7 @@ extension StatusBarIconTests {
         return bitmap
     }
 
-    /// 所有不透明像素的包围盒，以像素为单位，y 轴自上而下
+    /// 所有画过的像素（不透明度大于 0）的包围盒，以像素为单位，y 轴自上而下
     private func inkBounds(of bitmap: NSBitmapImageRep) -> (
         minX: Int,
         maxX: Int,

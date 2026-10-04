@@ -101,7 +101,7 @@ final class FolderPanelNavigationTests {
         #expect(resolve([rootID, childID], in: [prunedRoot, otherRoot]) == nil)
     }
 
-    /// 根文件夹被删除或拖成子文件夹：无法解析
+    /// 根文件夹被删除或拖成子文件夹，或路径为空：无法解析
     @Test
     func missingRootResolvesToNil() {
         let otherRoot = Folder(id: UUID(), name: "别处", items: [.folder(root)])

@@ -7,7 +7,7 @@ import Testing
 
 /// 网格布局：列数规则决定面板的形状，必须与原生弹窗一致；可用尺寸决定何时收窄与滚动，单元格顺序决定 App 出现在哪里
 struct FolderGridLayoutTests {
-    /// 足够大的可用尺寸，不触发收窄与行数限制
+    /// 足够大的可用尺寸，不因屏幕宽高收窄列数或减少显示行数
     private let roomySize = CGSize(width: 10_000, height: 10_000)
 
     /// 单元格边长

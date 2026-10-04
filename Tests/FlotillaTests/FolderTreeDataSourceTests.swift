@@ -22,7 +22,7 @@ final class FolderTreeDataSourceTests {
     /// “工作”下的子文件夹“开发”
     private let development: Folder
 
-    /// “工作”下的 App
+    /// “工作”下 App 项的 id
     private let appID: UUID
 
     /// 被测数据源
