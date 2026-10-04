@@ -36,7 +36,7 @@ final class FolderTreeDataSource: NSObject {
         }
     }
 
-    /// 按 id 查找节点
+    /// 按 id 查找节点；找不到时为 nil
     func node(withID id: UUID) -> FolderTreeNode? {
         var pending = rootNodes
 

@@ -155,6 +155,7 @@ extension DockPreferences {
     ///   - rewrittenTileURLs: stub 刚被改写过的 tile，条目换新的 GUID
     ///   - staleDirectories: 要删除 tile 的 stub 目录
     /// - Returns: 是否改动了偏好
+    /// - Throws: 本次运行首次写入前备份 Dock 偏好失败时抛出，偏好不改动
     func apply(
         _ expectedTiles: [ExpectedDockTile],
         rewrittenTileURLs: Set<URL>,
@@ -191,6 +192,7 @@ extension DockPreferences {
     /// - Parameters:
     ///   - tileURL: stub bundle 的文件 URL
     ///   - label: tile 的名称
+    /// - Throws: 本次运行首次写入前备份 Dock 偏好失败时抛出，偏好不改动
     func add(tileURL: URL, label: String) throws {
         let guid = Self.makeGUID()
         let entry = Self.tileEntry(tileURL: tileURL, label: label, guid: guid)
@@ -205,6 +207,7 @@ extension DockPreferences {
     /// 只比对条目里记录的 URL，不访问磁盘：用户在访达里删掉了 stub bundle 时同样能删除
     /// - Parameter tileDirectory: 根文件夹的 stub 独占的目录
     /// - Returns: 是否确实删除了条目
+    /// - Throws: 本次运行首次写入前备份 Dock 偏好失败时抛出，偏好不改动
     func remove(tileDirectory: URL) throws -> Bool {
         var tiles = tiles
         guard let index = index(ofDirectory: tileDirectory, in: tiles) else { return false }
@@ -229,6 +232,7 @@ extension DockPreferences {
     ///   - label: tile 的名称
     ///   - isStubRewritten: stub 是否刚被改写
     /// - Returns: 是否确实改动了条目
+    /// - Throws: 本次运行首次写入前备份 Dock 偏好失败时抛出，偏好不改动
     @discardableResult
     func update(tileURL: URL, label: String, isStubRewritten: Bool) throws -> Bool {
         var tiles = tiles
@@ -408,7 +412,8 @@ extension DockPreferences {
         defaults.synchronize()
     }
 
-    /// 把整个偏好域导出到备份目录，并删掉超出保留份数的旧备份
+    /// 把整个偏好域导出到备份目录，并删掉超出保留份数的旧备份；
+    /// 建目录、导出或删除旧备份失败时抛出
     private func backUp() throws {
         let fileManager = FileManager.default
         try fileManager.createDirectory(at: backupDirectory, withIntermediateDirectories: true)
@@ -434,7 +439,7 @@ extension DockPreferences {
         try pruneBackups()
     }
 
-    /// 只保留最新的几份备份
+    /// 只保留最新的几份备份；列出备份目录或删除旧备份失败时抛出
     private func pruneBackups() throws {
         let fileManager = FileManager.default
 

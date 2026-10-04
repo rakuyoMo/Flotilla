@@ -11,6 +11,9 @@ enum IconFileWriter {
     /// - Parameters:
     ///   - image: 要写入的图像，按每档的目标像素尺寸重新栅格化
     ///   - url: 输出的 `.icns` 文件位置，已存在时覆盖
+    /// - Throws: 栅格化失败时抛出 `DockTileError.rasterizationFailed`；
+    ///   `iconutil` 失败时抛出 `DockTileError.commandFailed`；
+    ///   读写临时文件失败时抛出文件错误
     static func write(_ image: NSImage, to url: URL) throws {
         let fileManager = FileManager.default
 
@@ -45,7 +48,8 @@ enum IconFileWriter {
         )
     }
 
-    /// 把图像栅格化为边长 pixelSide 像素的 PNG
+    /// 把图像栅格化为边长 pixelSide 像素的 PNG；
+    /// 建不出位图或编码失败时抛出 `DockTileError.rasterizationFailed`
     private static func pngData(of image: NSImage, pixelSide: Int) throws -> Data {
         guard
             let bitmap = NSBitmapImageRep(

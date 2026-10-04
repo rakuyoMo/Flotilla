@@ -8,7 +8,7 @@ final class FolderTreeCellView: NSTableCellView {
     /// 行视图的复用标识
     static let reuseIdentifier = NSUserInterfaceItemIdentifier("FolderTreeCell")
 
-    /// 图标边长
+    /// 行首图标的边长（pt）
     private static let iconSize: CGFloat = 20
 
     /// 访达里的文件夹名称后的位置文字，与“不在 Dock 上”同样的灰色小字；其余各行隐藏

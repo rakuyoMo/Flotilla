@@ -81,6 +81,7 @@ extension DockTileBundleBuilder {
     ///   - folder: 根文件夹
     ///   - icon: 按需求 2 渲染好的文件夹图标
     /// - Returns: 是否改写了 stub
+    /// - Throws: 改名、渲染图标、写文件、签名、设自定义图标或向 Launch Services 注册失败时抛出
     @discardableResult
     func write(folder: Folder, icon: NSImage) throws -> Bool {
         let fileManager = FileManager.default
@@ -148,6 +149,7 @@ extension DockTileBundleBuilder {
     /// 删除根文件夹的 stub 连同它独占的目录；不存在时什么也不做
     ///
     /// 删除前先注销 stub 在 Launch Services 里的登记：登记是改写 stub 时加上的，bundle 删掉之后就注销不了了
+    /// - Throws: 删除目录失败时抛出；注销登记失败不抛
     func remove(folderID: UUID) throws {
         let fileManager = FileManager.default
         let folderDirectory = folderDirectory(for: folderID)
@@ -231,7 +233,8 @@ extension DockTileBundleBuilder {
 // MARK: - Private
 
 extension DockTileBundleBuilder {
-    /// 重新签名，把图标设为 bundle 的自定义图标，再向 Launch Services 注册
+    /// 重新签名，把图标设为 bundle 的自定义图标，再向 Launch Services 注册；
+    /// 任一步失败时抛出
     ///
     /// macOS 26 起，系统把 icns 形式的 App 图标装进灰色圆角底板，bundle 的自定义图标不受影响，Dock 上才能显示文件夹原本的形状
     private func seal(_ bundleURL: URL, iconURL: URL) throws {

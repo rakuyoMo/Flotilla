@@ -17,7 +17,7 @@ final class FolderPanelController {
         category: "FolderPanelController"
     )
 
-    /// 面板窗口
+    /// 面板窗口；`DockFolderPresenter` 据此认出落在面板里的鼠标按下
     let panel = FolderPanel()
 
     /// 请求收起面板：由 `DockFolderPresenter` 更新状态并收起；
@@ -45,7 +45,7 @@ final class FolderPanelController {
     /// 从根文件夹到当前层级的各层 id：根文件夹、子文件夹或访达里的文件夹
     private var path: [UUID] = []
 
-    /// 当前层级
+    /// 当前层级：正在显示、接收点击的那一层；面板收起后为 nil
     private var currentLevel: FolderPanelLevel? = nil
 
     /// 转场中正在淡出、缩走的层级，动画结束后移除
@@ -536,7 +536,7 @@ extension FolderPanelController {
         }
     }
 
-    /// 移除全部层级
+    /// 移除全部层级：当前层级与转场中的层级都从面板里拿掉，当前层级置为 nil
     private func removeAllLevels() {
         for level in departingLevels + [currentLevel].compactMap(\.self) {
             level.view.removeFromSuperview()
@@ -623,7 +623,7 @@ extension FolderPanelController {
         mouseMonitors = [globalMonitor, localMonitor].compactMap(\.self)
     }
 
-    /// 停止跟踪鼠标移动
+    /// 停止跟踪鼠标移动：移除展开时装上的两个监听
     private func stopTrackingMouse() {
         for monitor in mouseMonitors {
             NSEvent.removeMonitor(monitor)
@@ -878,7 +878,8 @@ extension FolderPanelController {
         )
     }
 
-    /// 构造一段基础动画
+    /// 构造一段 `CABasicAnimation`；
+    /// 结束后是否保持画面（`fillMode` 等）由调用方设置
     private static func animation(
         keyPath: String,
         from fromValue: Any,

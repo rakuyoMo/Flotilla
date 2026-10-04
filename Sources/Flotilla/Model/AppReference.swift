@@ -41,7 +41,7 @@ extension AppReference {
         FileManager.default.displayName(atPath: url.path(percentEncoded: false))
     }
 
-    /// App 的图标
+    /// App 在访达中的图标
     var icon: NSImage {
         NSWorkspace.shared.icon(forFile: url.path(percentEncoded: false))
     }

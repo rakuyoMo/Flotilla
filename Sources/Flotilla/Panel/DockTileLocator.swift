@@ -253,7 +253,9 @@ extension DockTileLocator {
         )
     }
 
-    /// 退化锚点：鼠标所在屏幕上，鼠标位置在估算的 Dock 区域上的投影，表示为宽高为 0 的 tile frame
+    /// 退化锚点：鼠标所在屏幕（不在任何屏幕上时取 `NSScreen.main` 或第一块屏）上，
+    /// 鼠标位置在估算的 Dock 区域上的投影，表示为宽高为 0 的 tile frame；
+    /// 没有任何屏幕时为 nil
     private func fallbackAnchor(edge: DockEdge) -> DockTileAnchor? {
         let mouseLocation = NSEvent.mouseLocation
         let screen = Self.screen(containing: mouseLocation)
@@ -276,7 +278,7 @@ extension DockTileLocator {
 // MARK: - Helpers
 
 extension DockTileLocator {
-    /// 包含该点的屏幕
+    /// 包含该点的屏幕；点不在任何屏幕上时为 nil
     private static func screen(containing point: CGPoint) -> NSScreen? {
         NSScreen.screens.first { $0.frame.contains(point) }
     }
@@ -330,7 +332,11 @@ extension DockTileLocator {
         return CGRect(origin: origin, size: size)
     }
 
-    /// 读取以 `AXValue` 包装的几何属性
+    /// 读取以 `AXValue` 包装的几何属性；
+    /// 读不到、不是 `AXValue` 或类型与 `type` 不符时为 nil
+    /// - Parameters:
+    ///   - type: 属性值的 `AXValueType`
+    ///   - initial: 承接结果的初值，类型须与 `type` 对应
     private static func value<Value: BitwiseCopyable>(
         of attributeName: String,
         in element: AXUIElement,

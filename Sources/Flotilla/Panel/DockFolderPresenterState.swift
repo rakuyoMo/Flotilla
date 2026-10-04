@@ -29,7 +29,8 @@ struct DockFolderPresenterState {
 // MARK: - Signals
 
 extension DockFolderPresenterState {
-    /// 鼠标按下（左键、右键、中键）
+    /// 鼠标按下（左键、右键、中键）：按在 Flotilla 的 tile 上时先记下，等抬起再判定；
+    /// 按在其它位置时，面板展开中就收起
     /// - Parameters:
     ///   - folderID: 快速路径识别出的 Flotilla tile；nil 表示按在面板以外的其它位置
     ///   - location: 按下的位置
@@ -88,7 +89,9 @@ extension DockFolderPresenterState {
         return toggle(folderID: press.folderID)
     }
 
-    /// stub 打开的 `flotilla://folder/<id>` 到达
+    /// stub 打开的 `flotilla://folder/<id>` 到达：
+    /// 属于快速路径已处理过的点击、或刚因点击 Dock 区域而收起的同一文件夹时忽略，
+    /// 否则切换该文件夹的展开状态
     mutating func receiveURL(
         folderID: UUID,
         time: TimeInterval

@@ -11,7 +11,7 @@ final class GeneralSettingsViewController: NSViewController {
         string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
     )
 
-    /// 用户设置
+    /// 用户设置：控件按它取初值，变化时写回
     private let preferences: Preferences
 
     /// 预览图标数的选择器，选项 0–4，第 n 项即数量 n
@@ -27,11 +27,11 @@ final class GeneralSettingsViewController: NSViewController {
         action: nil
     )
 
-    /// 辅助功能权限的授权状态
+    /// 显示辅助功能权限授权状态的文字
     private let accessibilityStatusLabel = NSTextField(labelWithString: "")
 
     /// 创建通用区
-    /// - Parameter preferences: 用户设置
+    /// - Parameter preferences: 控件读写的用户设置
     init(preferences: Preferences) {
         self.preferences = preferences
 
