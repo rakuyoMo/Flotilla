@@ -2,12 +2,12 @@ import AppKit
 
 // MARK: - FolderIconRenderer
 
-/// 把文件夹渲染成图标（需求 2）：磨砂的圆角方形底板上，按 2×2 网格放前几个 App、文件或网页的图标
+/// 把文件夹渲染成图标（需求 2）：磨砂的圆角方形底板上，按 2 × 2 网格放前几个 App、文件或网页的图标
 ///
 /// 底板的位置、大小与圆角和 macOS 26 起系统 App 图标的底板一致，放进 Dock 后与相邻的 App 图标对齐；
 /// 底板颜色随外观分深浅，取值见 `FolderIconAppearance`
 enum FolderIconRenderer {
-    /// 底板在画布四边各留的边距，以画布边长为 1；系统 App 图标的底板同样四边各留 100/1024
+    /// 底板在画布四边各留的边距，以画布边长为 1；系统 App 图标的底板同样四边各留 100 / 1024
     private static let plateInset: CGFloat = 100 / 1024
 
     /// 底板连续曲率圆角的半径与底板边长之比，按系统 App 图标的轮廓实测拟合
@@ -18,7 +18,7 @@ enum FolderIconRenderer {
 
     /// 预览单元格的边长，以画布边长为 1
     ///
-    /// App 图标自带四边各 100/1024 的透明边，单元格按可见底板定几何：
+    /// App 图标自带四边各 100 / 1024 的透明边，单元格按可见底板定几何：
     /// 每个预览的可见底板边长约 0.28、彼此间距约 0.064，四个合起来在画布上居中
     private static let previewCellSide: CGFloat = 0.35
 

@@ -5,7 +5,7 @@ import Testing
 
 // MARK: - PreferencesTests
 
-/// 预览图标数的默认值与夹取：Dock 图标的 2×2 网格放不下超出范围的值；
+/// 预览图标数的默认值与夹取：Dock 图标的 2 × 2 网格放不下超出范围的值；
 /// 显示隐藏文件的开关默认关，切换它不发变更通知
 @MainActor
 final class PreferencesTests {

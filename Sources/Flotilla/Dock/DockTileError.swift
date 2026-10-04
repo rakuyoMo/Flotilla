@@ -21,7 +21,7 @@ extension DockTileError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .rasterizationFailed(let pixelSide):
-            "无法把图标栅格化为 \(pixelSide)×\(pixelSide) 像素的 PNG"
+            "无法把图标栅格化为 \(pixelSide) × \(pixelSide) 像素的 PNG"
 
         case .commandFailed(let path, let status, let message):
             "\(path) 以状态 \(status) 退出：\(message)"
