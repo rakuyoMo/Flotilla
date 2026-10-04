@@ -29,7 +29,7 @@
     - bundle 文件名必须是文件夹名，tile 名称才不会被改掉
   - 每个根文件夹独占一个 `<id>` 目录，同名的根文件夹互不冲突
     - 文件夹名里的 `/` 在文件名里写成 `:`（Launch Services 显示时换回 `/`），名称为空时用 id 作文件名
-  - 文件夹改名时 stub 在自己的目录里改名（移动而不是重建）
+  - 文件夹重命名时 stub 在自己的目录里改名（移动而不是重建）
 - 结构：
   - `Contents/Info.plist`
   - `Contents/MacOS/FlotillaDockTile`（从 Flotilla.app 拷贝）
@@ -102,7 +102,7 @@
   - `relaunchedDockLaunchDate()`
   - `isReadByRelaunchedDock(writtenAt:dockLaunchedAt:)`
 - 每次写入后调用 `synchronize()`，等写入交给 cfprefsd 之后再返回：重启 Dock 之后的补写要据此判断是否赶在新 Dock 读取之前。
-- 匹配 tile 按标准化后 URL 的所在目录（即 stub 独占的 `<id>` 目录），不按名称：文件夹改名后 stub 的文件名变了，仍要找到原来的 tile。
+- 匹配 tile 按标准化后 URL 的所在目录（即 stub 独占的 `<id>` 目录），不按名称：文件夹重命名后 stub 的文件名变了，仍要找到原来的 tile。
 - 更新已有条目时原地替换，不删除再追加：Dock 里的排序是用户自己拖出来的，重启后必须保持。
   - stub 改名后 `_CFURLString` 换成新位置，并删掉 Dock 按旧位置生成的 `book`，由 Dock 重启后重新生成。
   - stub 改写过时换一个新的 `GUID`：实测（macOS 27）Dock 按 `GUID` 缓存 tile 图标，`GUID` 不变时重启后仍显示旧图标。
@@ -128,7 +128,7 @@
 ## 同步器（`Sources/Flotilla/Dock/DockTileSynchronizer.swift`）
 
 - `start()` 在 `applicationWillFinishLaunching` 里调用：被 stub 拉起时，URL 事件先于 `applicationDidFinishLaunching` 送达，面板与同步器要在此之前就绪
-  - 先做一次对账：每个根文件夹都有 stub，tile 按“添加 tile 的条件”添加；多余的 stub 与 tile 删除
+  - 先做一次同步：每个根文件夹都有 stub，tile 按“添加 tile 的条件”添加；多余的 stub 与 tile 删除
     - tile 按 stub 独占的 `<id>` 目录匹配，stub bundle 已被用户删掉时同样删除条目
     - 多余的 tile 也包括 Dock 偏好里指向 `DockTiles/` 下、目录已不存在的条目
   - 再订阅 `FolderStore.didChangeNotification` 与 `Preferences.didChangeNotification`，用 KVO 观察 `NSApp.effectiveAppearance`，并用 `DockPreferences.observeTiles(_:)` 观察 Dock 偏好里的 tile
@@ -140,10 +140,10 @@
   - 实测（macOS 27）：
     - 新 Dock 只在启动时读取偏好：旧 Dock 退出后立即被拉起，启动后约 70–85 ms 读取 `persistent-apps`
     - 被终止的 Dock 若带着未写的状态，会在终止时把启动时读到的条目写回，盖掉 Flotilla 在它运行期间写入的改动：刚接受过拖放、刚在 Dock 里拖动过 tile，或新增 tile 后启动还不到 4.1 秒、还没把补全字段的条目写回时
-    - 新增 tile 后重启的 Dock 在启动后 4.1–4.2 秒把补全字段的条目写回一次（多次实测）；删除、改名、只换 `GUID` 后重启的 Dock 没有观察到写回
+    - 新增 tile 后重启的 Dock 在启动后 4.1–4.2 秒把补全字段的条目写回一次（多次实测）；删除、重命名、只换 `GUID` 后重启的 Dock 没有观察到写回
   - 旧 Dock 退出后（`restartDock` 的回调）按本次同步的同一份期望再 `apply` 一次，不再算 stub 改写：终止时的写回丢掉的条目补回、回退的名称与位置改回、被盖掉的 `GUID` 换新
   - 有补写时，补写完成得早于新 Dock 启动后 `relaunchReadDelay`（`isReadByRelaunchedDock`）才算新 Dock 读到了；否则再重启一次 Dock，回到上一步。一次同步最多重启 3 次 Dock，超过就记日志放弃：偏好里已是期望状态，Dock 下一次重启时读到
-    - 实测（macOS 27）7 次终止写回（拖放 3 次、拖放同时加回 tile 2 次、新增 tile 后 4 秒内改名 2 次），补写都在第一次重启里完成，守卫通过，新 Dock 显示的名称与图标都是补写的
+    - 实测（macOS 27）7 次终止写回（拖放 3 次、拖放同时加回 tile 2 次、新增 tile 后 4 秒内重命名 2 次），补写都在第一次重启里完成，守卫通过，新 Dock 显示的名称与图标都是补写的
     - 再重启时被终止的新 Dock 只活了几十毫秒，实测（1 次）launchd 约 1 秒后才拉起下一个 Dock
   - 没有补写时不必判断：新 Dock 读到的要么是第一次写入的内容，要么是与期望一致的写回
   - 新 Dock 读到期望状态后才算同步结束：确认待添加的 tile（见下），删掉多余的 stub，发出 `didSynchronizeNotification`

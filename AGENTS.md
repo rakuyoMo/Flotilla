@@ -55,8 +55,8 @@ Tests/FlotillaTests/    单元测试（Swift Testing）
 Scripts/bundle.sh       打包脚本：组装 .app 并签名
 Scripts/release.sh      发版脚本：改版本号并开 release PR
 docs/requirements/      需求文档：00 为总览，01–08 为按实现顺序拆分的阶段
-.github/workflows/      GitHub Actions：`ci.yml` 检查与构建，`release.yml` 发布新版本
-.claude/skills/release/ Claude Code 的 `release` skill：用自然语言发布新版本
+.github/workflows/      GitHub Actions：ci.yml 检查与构建，release.yml 发布新版本
+.claude/skills/release/ Claude Code 的 release skill：用自然语言发布新版本
 ```
 
 ## 开发注意事项

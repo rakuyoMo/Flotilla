@@ -28,12 +28,12 @@
 - 点击访达里的文件夹：在同一个面板里进入它，与进入子文件夹相同
   - 新层级从被点击的图标里长出来，旧层级淡出；返回时缩回那个图标（转场见 03 的“嵌套导航”）
   - 标题是它在访达里的显示名；有返回按钮
-  - 网格是目录内容，最后追加一格“在访达中打开”
+  - 网格是它的内容，最后追加一格“在访达中打开”
 - 读不出内容（已删除、没有权限、隐私授权被拒）：不进入，按 `NSWorkspace.open` 交给访达、收起面板，并记日志
-- 读目录期间发生的鼠标按下，既不算点面板外，也不算点 tile：读取结束后处理到时忽略
-  - 读取在主线程同步进行，第一次读受保护的位置时要等用户回答隐私授权框；用户点授权框的按下排到读取结束后才处理，当成点面板外会让刚进入的层级随即收起
+- 读目录期间发生的鼠标按下，既不算面板以外的点击，也不算点 tile：读取结束后处理到时忽略
+  - 读取在主线程同步进行，第一次读受保护的位置时要等用户回答隐私授权框；用户点授权框的按下排到读取结束后才处理，当成面板以外的点击会让刚进入的层级随即收起
   - 进入、返回与文件夹树变化重建时的读取都算
-  - 读取之后的按下照常处理：点面板外收起、点 tile 切换
+  - 读取之后的按下照常处理：面板以外的点击收起面板、点 tile 切换
 - 不提供排序或显示方式的选择，不监听磁盘变化（00：“初版不给用户更多选择”）；是否显示隐藏文件是唯一的开关，见需求 23
 
 ### 需求 22 App 更新后不跟丢
@@ -81,10 +81,10 @@
   - 排序不变：隐藏的项与其它项混在一起，按显示名 `localizedStandardCompare` 排，开头的 `.` 也参与比较
   - 按下：照常压暗，与半透明叠加
 - 是否隐藏在读目录时一并预取，不逐项再读；`FinderFolderContents.hiddenItemIDs` 记下本次展开里隐藏的项，网格据此把它们的单元格设成半透明
-- 图标与访达一致：名称以“.”开头、没有扩展名的文件与访达里的文件夹，`FileReference.icon` 按资源属性 `contentTypeKey` 的类型取（`NSWorkspace.icon(for:)`），取不到类型时用 `icon(forFile:)`
-  - `icon(forFile:)` 把名称开头的“.”后面当成扩展名，`.a`、`.zip` 会是归档、压缩包的图标，`.bundle` 目录会是 bundle 的图标（实测见“平台事实”）；按类型取，前两个是 `public.data` 的空白文稿，后一个是文件夹
-  - 其余用 `icon(forFile:)`：有扩展名的（`.甲.txt`、`.swiftlint.yml`）、名称不以“.”开头的、符号链接、文件包；符号链接这样才带替身箭头，文件包按类型取是带“?”的文稿
-  - 粘贴过自定义图标的这类文件与文件夹显示类型的图标，不显示自定义图标
+- 图标与访达一致：名称以 `.` 开头、没有扩展名的文件与访达里的文件夹，`FileReference.icon` 按资源属性 `contentTypeKey` 的类型取（`NSWorkspace.icon(for:)`），取不到类型时用 `icon(forFile:)`
+  - `icon(forFile:)` 把名称开头的 `.` 后面当成扩展名，`.a`、`.zip` 会是归档、压缩包的图标，`.bundle` 目录会是 bundle 的图标（实测见“平台事实”）；按类型取，前两个是 `public.data` 的空白文稿，后一个是文件夹
+  - 其余用 `icon(forFile:)`：有扩展名的（`.甲.txt`、`.swiftlint.yml`）、名称不以 `.` 开头的、符号链接、文件包；符号链接这样才带替身箭头，文件包按类型取是带“?”的文稿
+  - 粘贴过自定义图标的这类文件与访达里的文件夹显示类型的图标，不显示自定义图标
   - 面板、设置窗口的树、Dock 上 tile 的预览都用 `FileReference.icon`，三处一致，不随“显示隐藏文件”变化
 
 ## 数据模型
@@ -184,7 +184,7 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
 - 范围：只在访达里的文件夹的层级，网格里的文件显示内容缩略图，与原生叠放一致
   - 由层级内容决定（`FolderPanelLevelContent.showsFileThumbnails`），面板据此把 `FileThumbnailLoader` 交给网格；没有它的网格里文件显示图标
   - Flotilla 的文件夹的层级、设置窗口、Dock 上 tile 的图标都不变，文件仍是 `FileReference.icon`
-  - App 与子目录显示图标；生成不出缩略图的（`.zip` 等没有缩略图扩展的类型、已删除、没有权限）保持图标
+  - App 与访达里的文件夹显示图标；生成不出缩略图的（`.zip` 等没有缩略图扩展的类型、已删除、没有权限）保持图标
   - 生成不出是常态，不当错误记日志
 - 何时换上：单元格建好时先显示图标；格在看得见附近时请求缩略图，生成后回到主线程换上，只落到发起请求的那一格
   - 看得见附近：可见区域上下各多一行，与“网格只建看得见的格”建格的范围相同
@@ -198,9 +198,9 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
   - 100 pt 的画布居中放进 101 pt 的图标画布，中心与图标相同
   - 圆角、亮边与投影都来自 QuickLook 的图标模式
   - 按下：与其它格一样把图乘以 0.475；投影是纯黑的，乘完不变
-- 原生实测（macOS 27、深色、tilesize 64）：
+- 原生实测（macOS 27、深色、`tilesize` 64）：
   - 有缩略图：`.txt`（空文件是一张白纸）、`.md`、`.rtf`、`.rtfd`、`.pdf`、`.png`、`.jpg`；指向 `.txt` 的符号链接显示目标的缩略图，没有替身角标
-  - 显示图标：`.zip` 是通用文稿图标，子目录是文件夹图标
+  - 显示图标：`.zip` 是通用文稿图标，访达里的文件夹是文件夹图标
   - 大小与位置：保持比例缩放进 88 × 88 pt 的框（长边 88 pt），中心在格内 (64, 56)，与图标中心相同
     - `.txt`、`.md` 66 × 88；`.rtf`、`.rtfd` 68.5 × 88；A4 的 `.pdf` 62.5 × 88；1600 × 1000 的 `.png` 88 × 55；700 × 1100 的 `.png` 56 × 88
   - 装饰：四角圆角，半径约 3.5 pt；图片内侧一圈 1 pt 的亮边，约等于白色 25% 叠在图片上，是缩略图自身的一部分；没有卷角
@@ -209,7 +209,7 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
   - 原生在进入的转场第一帧（约 33 ms）就已是缩略图；Flotilla 先显示图标，请求到结果的耗时见“平台事实”
 - 实测依据：QuickLook 按 100 pt 画布、2 倍、图标模式生成的缩略图叠在同样的灰底上，与原生的外接框（含与不含投影）、中心与投影剖面逐项相同；Flotilla 单元格离屏画出的结果也相同
   - 按 101 pt 画布生成时，页面长边是 89 pt
-  - 屏上对照：同一个目录在 Flotilla 面板与原生叠放里，按格子对齐、不平移逐像素比，13 个有缩略图的文件在灰、黑两种底上图标区最大差都是 2，外接框逐项相同；按下 `.txt`、`.png` 最大差也是 2
+  - 屏上对照：同一个访达里的文件夹在 Flotilla 面板与原生叠放里，按格子对齐、不平移逐像素比，13 个有缩略图的文件在灰、黑两种底上图标区最大差都是 2，外接框逐项相同；按下 `.txt`、`.png` 最大差也是 2
 
 ### 文件夹树变化
 
@@ -219,7 +219,7 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
 ### “在访达中打开”
 
 - 只有访达里的文件夹的层级有这一格，排在所有项之后；Flotilla 文件夹的层级仍按需求 4 不提供
-- 点击：`NSWorkspace.open` 打开这一层的目录，由访达打开，收起面板
+- 点击：`NSWorkspace.open` 打开这一层的访达里的文件夹，由访达打开，收起面板
 - 文字：新键 `panel.openInFinder`，照抄 Dock 自己的 `SHOW_IN_FINDER`（`/System/Library/CoreServices/Dock.app/Contents/Resources/<语言>.lproj/Localizable.strings`），zh-Hant 取 Dock 的 `zh_TW`；这是界面文字，照原生原样，不加中英文之间的空格
 
   | 键 | en | zh-Hans | zh-Hant | ja | ko |
@@ -228,7 +228,7 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
 
 - 图标：运行时读 Dock 的 `openinfinder.png`，读不到时退回系统符号 `arrowshape.turn.up.right.circle`
   - 这张图是 128 × 128 pt、透明底上的黑色圆圈与弯箭头，`Bundle(path:).image(forResource:)` 一并读到 1 倍与 2 倍图
-  - 没有底板；按 100 × 100 pt 画，中心与其它格的图标相同，圆圈外径 64 pt、线宽 2.3 pt（原生实测，macOS 27、tilesize 64）
+  - 没有底板；按 100 × 100 pt 画，中心与其它格的图标相同，圆圈外径 64 pt、线宽 2.3 pt（原生实测，macOS 27、`tilesize` 64）
   - 在 2 倍图的 256 px 上着色，不缩放；显示时由 Core Animation 线性插值缩到屏上的 200 px，与原生逐像素相差不超过 2 / 255
   - 深色：叠加（plus-lighter）到面板材质上，图标所在图层的 `compositingFilter` 取 `plusL`
     - 每个通道平时加 124 / 255，按下时加 50 / 255；图是这个灰度的 sRGB 灰
@@ -317,9 +317,9 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
   - 排序与按显示名 `localizedStandardCompare` 完全一致：隐藏的项与其它项混排，开头的 `.` 当普通字符参与比较
   - 访达按下即选中，没有单独的按下样子；隐藏的项选中后图标仍半透明
   - ⌘⇧. 不写 `com.apple.finder` 的 `AppleShowAllFiles`
-- 名称以“.”开头、没有扩展名的项的图标（探针在临时目录里造各种名称，逐一对照 `icon(forFile:)` 与按类型取的图标）：
+- 名称以 `.` 开头、没有扩展名的项的图标（探针在临时目录里造各种名称，逐一对照 `icon(forFile:)` 与按类型取的图标）：
   - `URL.pathExtension` 与 `NSString.pathExtension` 都为空；资源属性的类型是 `public.data`，可执行的是 `public.unix-executable`，目录是 `public.folder`
-  - `NSWorkspace.icon(forFile:)` 却把开头的“.”后面当成扩展名：
+  - `NSWorkspace.icon(forFile:)` 却把开头的 `.` 后面当成扩展名：
     - 文件：`.a`、`..a` 是归档图标，`.z`、`.zip` 是压缩包，`.json`、`.pdf`、`.png`、`.txt`、`.mp3`、`.gitignore` 是对应类型或认领这个扩展名的 App 给的图标，名为 `.app` 的文件是带“?”的文稿；可执行的 `.sh` 是 shell 脚本的图标，按类型取是可执行文件的图标
     - 普通目录：`.rtfd`、`.pages`、`.key`、`.bundle`、`.framework`、`.pkg`、`.photoslibrary` 是对应文稿或 bundle 的图标；它们的 `isPackage` 为假，Launch Services 的种类是“文件夹”，QuickLook 的 `.icon` 表示也是文件夹；访达 ⌘⇧. 下名为 `.bundle`、`.pkg`、`.rtfd`、`.app` 的普通目录都是文件夹图标
     - 不是已知扩展名的（`.中`、`.env`、`.git`、`.config`）与按类型取的相同
@@ -414,14 +414,14 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
 - 需求 20：
   - 目录内容（`FinderFolderContentsTests`）：默认跳过隐藏文件；按 `localizedStandardCompare` 排序；App、访达里的文件夹、文件包、普通文件、指向目录的符号链接各自的分类；同一次展开里 id 不变；目录已删除时抛错
     - 预取的结果与逐项单独读取一致：顺序按 `FileManager.displayName(atPath:)`（“Tool.app”排在“Tool 2.app”前）、URL 等于 `normalizedURL(_:)` 的结果、App 的判断相同
-  - 导航解析（`FolderPanelNavigationTests`）：Flotilla 文件夹 → 访达里的文件夹 → 其中的子目录逐层解析；那一项被删除、目录已删除、没有权限时为 nil；那一项的 URL 变了时按新 URL 读，更深的层级照常解析
+  - 导航解析（`FolderPanelNavigationTests`）：Flotilla 文件夹 → 访达里的文件夹 → 其中的访达里的文件夹逐层解析；那一项被删除、目录已删除、没有权限时为 nil；那一项的 URL 变了时按新 URL 读，更深的层级照常解析
   - 读取期间的按下（`FinderFolderReadPeriodsTests`）：读取期间（含开始与结束那一刻）的按下被忽略；读取之前、之后的按下照常处理；先后两次读取之后，第一次读取期间的按下仍被忽略
   - 格数（`FolderPanelLevelContentTests`）：访达里的文件夹为目录项数 + 1，空目录为 1；Flotilla 文件夹没有这一格；网格按格数摆出单元格
     - 只有访达里的文件夹的层级显示文件的内容缩略图
   - 文件的内容缩略图（`FolderGridThumbnailTests`，生成缩略图换成假实现，不经 QuickLook）：
     - 访达里的文件夹的层级：文件先显示图标，缩略图生成后换上；后请求的先到时，各自落在发起请求的那一格
     - Flotilla 的文件夹的层级：同一个文件不请求缩略图，保持图标
-    - 子目录与生成不出缩略图的文件保持图标；App 不请求缩略图
+    - 访达里的文件夹与生成不出缩略图的文件保持图标；App 不请求缩略图
     - 网格离开窗口时，还没完成的请求全部取消，之后晚到的结果不换上
     - 滚动（100 个文件，15 行显示 5 行）：
       - 请求还没完成的格滚出看得见附近：请求取消，之后晚到的结果不换上
@@ -479,13 +479,13 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
   - 退出 Flotilla、移动 App、再启动：tile 图标与面板都用上新位置
 - 访达里的文件夹：
   - 点击后在面板里展开，标题是它的名称，有返回按钮；内容按名称排序，默认不含隐藏文件
-  - 其中的 App 点击启动、文件点击打开，面板收起；其中的文件夹继续进入，返回时缩回被点的图标
+  - 其中的 App 点击启动、文件点击打开，面板收起；访达里的文件夹继续进入，返回时缩回被点的图标
   - 最后一格“在访达中打开”：访达打开这一层，面板收起；图标的大小、颜色与按下的样子与原生叠放一致；按下后拖出面板再抬起也触发
-  - 空文件夹只有“在访达中打开”一格；已删除的访达里的文件夹点击后系统弹出“找不到”的提示，同时记日志，面板收起
+  - 空的访达里的文件夹只有“在访达中打开”一格；已删除的访达里的文件夹点击后系统弹出“找不到”的提示，同时记日志，面板收起
   - 上千项的访达里的文件夹点开不卡顿；快速滚动（含惯性）时不出现空白格
   - 文件的内容缩略图：每个文件有没有缩略图与原生叠放一致；缩略图的大小、位置与原生相差不超过 1 pt，圆角、亮边与投影一致，按下压暗、投影不变
     - Flotilla 的文件夹里的同一个文件仍是图标
-    - 进入子目录再返回、收起再展开，缩略图照常换上；上千项的目录滚动途中缩略图陆续换上，没有落错格
+    - 进入其中的访达里的文件夹再返回、收起再展开，缩略图照常换上；上千项的访达里的文件夹滚动途中缩略图陆续换上，没有落错格
 - 隐私授权框：第一次读受保护的位置时，授权框里显示 Flotilla 的用途说明，语言跟随系统
 - 设置窗口：访达里的文件夹这一行在名称后显示灰色的位置；把窗口拉窄时先截断位置，在中间省略，开头的 `~/` 与最后一级目录都看得到
 - App 更新：
