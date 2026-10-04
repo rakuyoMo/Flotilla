@@ -30,7 +30,7 @@ struct FolderNavigationBackButtonTests {
         #expect(box.y == expectedY)
     }
 
-    /// chevron 范围：覆盖率超过 1/4 的像素在两种外观下都是 x 13…25、y 10…31，与原生深色、浅色的读数相同
+    /// chevron 范围：覆盖率超过 1 / 4 的像素在两种外观下都是 x 13…25、y 10…31，与原生深色、浅色的读数相同
     @Test(arguments: [NSAppearance.Name.darkAqua, .aqua])
     func chevronCoversMeasuredArea(appearance: NSAppearance.Name) throws {
         let bitmap = try render(in: appearance)

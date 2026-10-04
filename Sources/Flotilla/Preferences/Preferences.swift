@@ -5,7 +5,7 @@ import Foundation
 /// 用户设置：预览图标数（需求 2），访达里的文件夹在面板里展开时是否显示隐藏文件（需求 23）
 @MainActor
 final class Preferences {
-    /// 预览图标数的上限：文件夹图标正面的 2×2 网格最多容纳 4 个
+    /// 预览图标数的上限：文件夹图标正面的 2 × 2 网格最多容纳 4 个
     nonisolated static let maximumPreviewIconCount = 4
 
     /// 预览图标数变更后发出的通知，`object` 为发生变更的 `Preferences`；Dock 上 tile 的图标据此重画
