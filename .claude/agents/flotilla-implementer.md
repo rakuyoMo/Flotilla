@@ -56,7 +56,7 @@ color: blue
 - 不要向用户提问，用户不在场：按文档的最小解释做，把假设写进汇报。
 - 需要观察界面时可以 `screencapture -x <文件>` 截屏后用 Read 查看，本机允许本进程截屏；不要留下截图文件在仓库里。
 - 测试期间启动的 Flotilla 实例在结束前退出；测试用的文件夹、stub、Dock tile 全部清理；修改 Dock 偏好之前先备份。
-- 本机用户的 Dock、`~/Library/Application Support/Flotilla` 之外的任何用户数据都不得触碰。
+- 除 Dock 偏好里 Flotilla 自己的 tile 与 `~/Library/Application Support/Flotilla` 外，本机用户的任何数据都不得触碰。
 
 # 上下文预算
 
