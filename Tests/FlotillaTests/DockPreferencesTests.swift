@@ -343,6 +343,7 @@ final class DockPreferencesTests {
             withIntermediateDirectories: true
         )
 
+        // 先放 6 份更早的备份
         let oldNames = (1 ... 6).map { "com.apple.dock-2020010\($0)-000000.plist" }
 
         for name in oldNames {

@@ -243,7 +243,7 @@ final class DockTileBundleBuilderTests {
         #expect(unnamedFileName == "\(unnamed.id.uuidString).app")
     }
 
-    /// 预览数量变化让图标变化时，改写图标
+    /// 预览数量变化让图标变化时，改写图标：Dock 上 tile 显示的就是 stub 的图标
     @Test
     func iconChangeRewritesIcon() throws {
         let folder = makeFolder(name: "工作")

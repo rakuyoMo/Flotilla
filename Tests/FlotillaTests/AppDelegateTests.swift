@@ -9,7 +9,8 @@ import Testing
 /// 同一 bundle id 的实例列表里总有当前进程自己，它不能被当成“别的实例”，否则 Flotilla 永远起不来
 @MainActor
 struct AppDelegateTests {
-    /// 当前进程的进程号
+    /// 假定的当前进程号；
+    /// 测试参数里的 200 就是当前进程自己
     private let currentProcessIdentifier: pid_t = 200
 
     /// 只有当前进程在运行：不是重复启动

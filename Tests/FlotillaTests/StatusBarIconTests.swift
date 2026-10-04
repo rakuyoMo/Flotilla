@@ -7,7 +7,8 @@ import Testing
 
 /// 状态栏图标（需求 7）：由系统按菜单栏深浅着色、在状态栏按钮里居中，1x 屏幕上直线边缘不发虚
 struct StatusBarIconTests {
-    /// 必须是 template 图：否则深色菜单栏上仍画成黑色，看不见
+    /// 必须是 template 图：否则深色菜单栏上仍画成黑色，看不见；
+    /// 无障碍描述为“Flotilla”，旁白读得出这个状态栏图标
     @Test
     func imageIsTemplateWithAccessibilityDescription() {
         let image = StatusBarIcon.makeImage()
@@ -72,6 +73,7 @@ extension StatusBarIconTests {
             )
         )
 
+        // 位图的点尺寸设成图像尺寸，绘制时按像素数与点数之比换算倍率
         bitmap.size = image.size
 
         NSGraphicsContext.saveGraphicsState()

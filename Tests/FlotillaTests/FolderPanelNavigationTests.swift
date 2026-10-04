@@ -13,16 +13,16 @@ final class FolderPanelNavigationTests {
     private let directory = FileManager.default.temporaryDirectory
         .appending(path: "FlotillaTests-\(UUID().uuidString)")
 
-    /// 根文件夹的 id
+    /// 根文件夹“根”的 id：每条导航路径的第一段
     private let rootID = UUID()
 
-    /// 子文件夹的 id
+    /// 子文件夹“子”的 id：每次取 `child` 都按它重建，内容变了仍是同一层级
     private let childID = UUID()
 
     /// 最深一层的子文件夹
     private let grandchild = Folder(id: UUID(), name: "孙", items: [])
 
-    /// 一个 App 项
+    /// 根文件夹里与子文件夹并列的 App 项
     private let app = FolderItem.app(AppReference(
         id: UUID(),
         url: URL(filePath: "/System/Applications/Chess.app"),

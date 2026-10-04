@@ -10,7 +10,7 @@ import Testing
 /// 轮廓同时决定点击是否穿透，阴影留白与尾巴两侧不能挡住下面的 tile
 @MainActor
 struct FolderPanelBackgroundViewTests {
-    /// 主体区域
+    /// 面板主体在背景视图里的矩形：7 项（4 列 2 行）时的主体尺寸
     private let body = CGRect(x: 60, y: 68, width: 546, height: 300)
 
     /// 尖端到主体的距离

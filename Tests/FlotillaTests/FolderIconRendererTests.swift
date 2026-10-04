@@ -405,6 +405,7 @@ extension FolderIconRendererTests {
             )
         )
 
+        // 位图的点尺寸设成图像尺寸，绘制时按像素数与点数之比换算倍率
         bitmap.size = image.size
 
         NSGraphicsContext.saveGraphicsState()

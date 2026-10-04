@@ -78,6 +78,7 @@ struct FolderGridItemViewTests {
             (.aqua, "plusD", 255 - 127, 255 - 194),
         ]
 
+        // 深浅两种外观各读一次平时与按下时的中心灰度
         for (name, filter, normal, pressed) in cases {
             itemView.appearance = NSAppearance(named: name)
 

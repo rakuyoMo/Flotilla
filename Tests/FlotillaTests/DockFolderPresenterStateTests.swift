@@ -346,7 +346,7 @@ struct DockFolderPresenterStateTests {
 // MARK: - Helpers
 
 extension DockFolderPresenterStateTests {
-    /// 在 tile 上按下（快速路径已识别出该 tile）
+    /// 在 tile 上按下（快速路径已识别出该 tile），返回状态机给出的结论
     private func pressTile(
         _ folderID: UUID,
         at time: TimeInterval,

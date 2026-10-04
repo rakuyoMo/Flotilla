@@ -361,7 +361,7 @@ extension FolderStoreItemLocationTests {
         return try add(directory.appending(path: name), to: folderID)
     }
 
-    /// 把本地 URL 经分类后加入文件夹，返回加入的文件项
+    /// 把本地 URL 经分类后加入文件夹（默认是“工作”），返回加入的文件项
     private func add(_ url: URL, to folderID: UUID? = nil) throws -> FileReference {
         let item = try #require(FolderItem(url: url, title: nil))
         let file = try #require(Self.fileReference(of: item), "应当是文件")

@@ -9,7 +9,7 @@ import Testing
 /// Flotilla 的文件夹没有这一格（需求 4）
 @MainActor
 struct FolderPanelLevelContentTests {
-    /// 访达里的文件夹
+    /// 被展开的访达里的文件夹：内容由测试直接给出，不读磁盘
     private let finderFolder = FileReference(
         id: UUID(),
         url: URL(filePath: "/Users/Shared/", directoryHint: .isDirectory),
@@ -71,7 +71,8 @@ struct FolderPanelLevelContentTests {
         #expect(withoutCell.subviews.count == 2)
     }
 
-    /// 几个文件项
+    /// `count` 个文件项；
+    /// 路径不必存在，这里只数格数
     private func makeFiles(_ count: Int) -> [FolderItem] {
         (0 ..< count).map {
             .file(FileReference(

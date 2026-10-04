@@ -133,7 +133,7 @@ final class FolderStoreTests {
         #expect(store.folder(id: subfolder.id) == nil)
     }
 
-    /// 重命名任意层级的文件夹
+    /// 任意层级的文件夹都能按 id 重命名：设置窗口里每一层的文件夹名都能双击编辑
     @Test
     func renamesNestedFolder() throws {
         let store = FolderStore(fileURL: fileURL)
@@ -162,7 +162,7 @@ final class FolderStoreTests {
         #expect(try #require(store.folder(id: root.id)).items.isEmpty)
     }
 
-    /// 删除文件夹中的单个 App
+    /// 删除单个 App 只移除这一项，同一文件夹里的其它 App 保留
     @Test
     func removesApp() throws {
         let store = FolderStore(fileURL: fileURL)
@@ -192,7 +192,7 @@ final class FolderStoreTests {
         #expect(try appURLs(in: root.id, of: store) == [calendar, calculator, chess])
     }
 
-    /// 同一层级内向前移动
+    /// 同一层级内向前移动：目标下标在自身之前，移除自身不影响落点
     @Test
     func movesBackwardWithinSameFolder() throws {
         let store = FolderStore(fileURL: fileURL)
@@ -206,7 +206,7 @@ final class FolderStoreTests {
         #expect(try appURLs(in: root.id, of: store) == [calculator, chess, calendar])
     }
 
-    /// App 可以移到其它文件夹
+    /// App 可以移到其它文件夹：插在目标文件夹的给定下标处，并从原文件夹移除
     @Test
     func movesAppAcrossFolders() throws {
         let store = FolderStore(fileURL: fileURL)
@@ -360,6 +360,8 @@ final class FolderStoreTests {
 
             defer { NotificationCenter.default.removeObserver(observer) }
 
+            // 新建根文件夹、改成不同的名字、新建子文件夹各发一次；
+            // 改成同名、加入空列表、删除不存在的 id 都没有改动，不发
             let root = store.addRootFolder(named: "根")
             store.rename(folderID: root.id, to: "根")
             store.rename(folderID: root.id, to: "新根")
@@ -373,17 +375,17 @@ final class FolderStoreTests {
 // MARK: - Fixtures
 
 extension FolderStoreTests {
-    /// 测试用的 App URL
+    /// 系统自带的“国际象棋”的 URL
     private var chess: URL {
         URL(filePath: "/System/Applications/Chess.app/")
     }
 
-    /// 测试用的 App URL
+    /// 系统自带的“日历”的 URL
     private var calendar: URL {
         URL(filePath: "/System/Applications/Calendar.app/")
     }
 
-    /// 测试用的 App URL
+    /// 系统自带的“计算器”的 URL
     private var calculator: URL {
         URL(filePath: "/System/Applications/Calculator.app/")
     }
@@ -400,12 +402,13 @@ extension FolderStoreTests {
         }
     }
 
-    /// 新建一个文件项
+    /// 按路径新建一个文件项，id 随机
     private func file(_ path: String) -> FolderItem {
         .file(FileReference(id: UUID(), url: URL(filePath: path), bookmark: nil))
     }
 
-    /// 新建一个网页项
+    /// 按网址与标题新建一个网页项，id 随机；
+    /// 网址解析不出时抛错
     private func webPage(_ address: String, title: String?) throws -> FolderItem {
         let url = try #require(URL(string: address))
 

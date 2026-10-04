@@ -8,7 +8,8 @@ import Testing
 /// 定位的纯计算：AX 坐标以主屏左上角为原点、y 向下，AppKit 以主屏左下角为原点、y 向上，换算错了面板就会出现在屏幕另一头
 @MainActor
 struct DockTileLocatorTests {
-    /// 主屏高度
+    /// 假定的主屏高度：AX 与 AppKit 的 y 坐标以它为基准互换；
+    /// 各用例的期望值按 900 算
     private let primaryScreenHeight: CGFloat = 900
 
     /// 主屏底部的 tile：AX 的 y 是 tile 顶边到主屏顶边的距离，换算后是 tile 底边到主屏底边的距离

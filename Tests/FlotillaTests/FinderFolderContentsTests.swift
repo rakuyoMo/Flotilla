@@ -72,6 +72,7 @@ final class FinderFolderContentsTests {
     /// App bundle 是 App；访达里的文件夹、文件包、普通文件与指向目录的符号链接都是文件，只有访达里的文件夹能继续进入
     @Test
     func classifiesEachEntry() throws {
+        // 每种身份各布置一个：App、访达里的文件夹、文件包、普通文件、指向目录的符号链接
         for name in ["Tool.app", "资料", "笔记.rtfd"] {
             try FileManager.default.createDirectory(
                 at: directory.appending(path: name),
@@ -89,6 +90,7 @@ final class FinderFolderContentsTests {
         var contents = FinderFolderContents()
         let items = try contents.items(of: finderFolder(), includingHiddenFiles: false)
 
+        // 分别挑出 App 与能继续进入的访达里的文件夹
         let apps = items.compactMap { item -> String? in
             guard case .app(let app) = item else { return nil }
 
@@ -179,7 +181,7 @@ final class FinderFolderContentsTests {
         #expect(first != third)
     }
 
-    /// 目录已删除时读不出内容
+    /// 目录已删除时读不出内容：抛出错误，面板据此交给访达打开并收起
     @Test
     func deletedDirectoryThrows() throws {
         let folder = try finderFolder()
