@@ -75,7 +75,8 @@ struct DockTileBundleBuilder {
 // MARK: - Mutation
 
 extension DockTileBundleBuilder {
-    /// 生成或更新根文件夹的 stub；名称与图标都没有变化时不动任何文件
+    /// 生成或更新根文件夹的 stub；
+    /// 名称与图标都没有变化、stub 也不残缺时不动任何文件
     /// - Parameters:
     ///   - folder: 根文件夹
     ///   - icon: 按需求 2 渲染好的文件夹图标
@@ -127,7 +128,8 @@ extension DockTileBundleBuilder {
 
         guard isInfoChanged || isIconChanged || isIncomplete else { return false }
 
-        // 按 App bundle 的结构写入三个文件；可执行文件每次都从 Flotilla.app 重新拷贝，与当前版本保持一致
+        // 按 App bundle 的结构写入三个文件；
+        // 可执行文件在每次改写时都从 Flotilla.app 重新拷贝
         let subdirectories = [iconURL, stubExecutableURL].map { $0.deletingLastPathComponent() }
         for subdirectory in subdirectories {
             try fileManager.createDirectory(at: subdirectory, withIntermediateDirectories: true)
@@ -278,7 +280,8 @@ extension DockTileBundleBuilder {
 extension DockTileBundleBuilder {
     /// stub 的文件名（不含扩展名）
     ///
-    /// 路径里的 `/` 换成 `:`，Launch Services 显示时会换回 `/`；名称为空时用 id，避免生成以 `.` 开头的隐藏文件
+    /// 名称里的 `/` 换成 `:`，Launch Services 显示时会换回 `/`；
+    /// 名称为空时用 id，避免生成以 `.` 开头的隐藏文件
     private static func fileName(for folder: Folder) -> String {
         guard !folder.name.isEmpty else { return folder.id.uuidString }
 

@@ -303,7 +303,7 @@ extension DockTileLocator {
         attribute(kAXChildrenAttribute, of: element) as? [AXUIElement] ?? []
     }
 
-    /// 元素的 `AXURL`；Dock 的 App 与文件 tile 用它指向磁盘上的 bundle
+    /// 元素的 `AXURL`；Dock 的 App 与文件 tile 用它指向磁盘上的 App 或文件
     private static func url(of element: AXUIElement) -> URL? {
         attribute(kAXURLAttribute, of: element) as? URL
     }

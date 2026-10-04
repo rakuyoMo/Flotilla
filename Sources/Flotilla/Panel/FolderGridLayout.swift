@@ -6,13 +6,13 @@ import CoreGraphics
 ///
 /// 面板主体自上而下是标题区与网格，根层级与子层级相同
 struct FolderGridLayout {
-    /// 列数；空文件夹为 0
+    /// 列数；没有格时为 0
     let columnCount: Int
 
-    /// 全部项占用的行数；空文件夹为 0
+    /// 全部项占用的行数；没有格时为 0
     let rowCount: Int
 
-    /// 面板里显示的行数，其余行靠滚动查看；空文件夹按 1 行计
+    /// 面板里显示的行数，其余行靠滚动查看；没有格时按 1 行计
     let visibleRowCount: Int
 
     /// 每一项的单元格，顺序与项的顺序一致；坐标系原点在网格左上角、y 向下
@@ -21,7 +21,8 @@ struct FolderGridLayout {
     /// 网格内容的完整尺寸，即全部单元格的外接矩形
     let gridSize: CGSize
 
-    /// 面板主体（不含尾巴）的尺寸：标题区、显示的行与四周留白；空文件夹按 1 格计
+    /// 面板主体（不含尾巴）的尺寸：标题区、显示的行与四周留白；
+    /// 没有格时按 1 格计
     let bodySize: CGSize
 
     /// 全部项占用的行数多于显示的行数，网格需要滚动
@@ -29,7 +30,7 @@ struct FolderGridLayout {
 
     /// 计算网格布局
     /// - Parameters:
-    ///   - itemCount: 项数
+    ///   - itemCount: 格数：各项，访达里的文件夹另加末尾的“在访达中打开”
     ///   - availableSize: 面板主体可用的最大尺寸，见 `FolderPanelPlacement.availableBodySize`
     init(itemCount: Int, availableSize: CGSize) {
         let cell = FolderPanelMetrics.cellSize

@@ -23,10 +23,11 @@ final class FolderGridItemView: NSView {
         }
     }
 
-    /// 平常显示的图
+    /// 平常显示的图：由图标按样式生成
     private lazy var normalImage = makeImage(isPressed: false)
 
-    /// 按下时显示的图，第一次按下时生成
+    /// 按下时显示的图：第一次按下时生成；
+    /// 图标或外观变化时与平常的图一起重新生成
     private lazy var pressedImage = makeImage(isPressed: true)
 
     /// 点击后执行的动作

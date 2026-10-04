@@ -4,7 +4,7 @@ import UniformTypeIdentifiers
 // MARK: - FolderTreeViewController
 
 /// 设置窗口的文件夹区：展示完整的文件夹树，提供新建、添加 App、添加文件、添加到 Dock、删除、重命名与拖拽；
-/// tile 不在 Dock 上的根文件夹标出“不在 Dock 上”
+/// 被拖出 Dock 的根文件夹标出“不在 Dock 上”
 @MainActor
 final class FolderTreeViewController: NSViewController {
     /// 新建文件夹的默认名称
@@ -45,7 +45,7 @@ final class FolderTreeViewController: NSViewController {
         action: nil
     )
 
-    /// “添加到 Dock”按钮，只有选中 tile 不在 Dock 上的根文件夹时可用
+    /// “添加到 Dock”按钮，只有选中被拖出 Dock 的根文件夹时可用
     private let addToDockButton = NSButton(
         title: String(
             localized: "folders.addToDock",
@@ -170,7 +170,8 @@ final class FolderTreeViewController: NSViewController {
 // MARK: NSOutlineViewDelegate
 
 extension FolderTreeViewController: NSOutlineViewDelegate {
-    /// 每一行显示图标与名称
+    /// 每一行显示图标、名称、访达里的文件夹的位置，
+    /// 以及被拖出 Dock 的根文件夹的“不在 Dock 上”
     func outlineView(
         _ outlineView: NSOutlineView,
         viewFor _: NSTableColumn?,

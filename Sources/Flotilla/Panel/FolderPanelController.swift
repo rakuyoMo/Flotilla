@@ -20,7 +20,8 @@ final class FolderPanelController {
     /// 面板窗口
     let panel = FolderPanel()
 
-    /// 请求收起面板：按下 Esc、点击 App、文件或网页之后调用，由 `DockFolderPresenter` 更新状态并收起
+    /// 请求收起面板：由 `DockFolderPresenter` 更新状态并收起；
+    /// 按下 Esc，点击 App、文件、网页或“在访达中打开”，以及要进入或返回的那一层读不出来时调用
     var dismissRequestHandler: (() -> Void)? = nil
 
     /// 本次展开里各次读访达里的文件夹占住主线程的时段，`DockFolderPresenter` 据此忽略这期间的鼠标按下
@@ -135,7 +136,8 @@ extension FolderPanelController {
         scaleAnchor = placement.anchor
         install(level)
 
-        // 先装好动画再显示，第一帧就是收起的画面；只用 orderFrontRegardless，不激活 Flotilla（需求 6）
+        // 先装好动画再显示，第一帧就是收起的画面；
+        // 用 `orderFrontRegardless()` 显示、`makeKey()` 接收 Esc，都不激活 Flotilla（需求 6）
         animateExpansion()
         panel.orderFrontRegardless()
         panel.makeKey()
@@ -191,7 +193,8 @@ extension FolderPanelController {
 // MARK: - Navigation
 
 extension FolderPanelController {
-    /// 点击网格中的一项：App 直接启动、文件用默认 App 打开、网页用默认浏览器打开，随即收起面板（需求 9）；
+    /// 点击网格中的一项：
+    /// App 直接启动、文件用默认 App 打开、网页用默认浏览器打开，随即收起面板（需求 9、14）；
     /// 子文件夹与访达里的文件夹在同一个面板里进入
     private func select(_ item: FolderItem) {
         switch item {
@@ -710,10 +713,11 @@ extension FolderPanelController {
         }
     }
 
-    /// 进入子文件夹时新层级的出现：以被点击的子文件夹图标中心为锚点，按展开同样的缩放与淡入曲线出现
+    /// 进入下一层时新层级的出现：
+    /// 以被点击的图标中心为锚点，按展开同样的缩放与淡入曲线出现
     /// - Parameters:
     ///   - level: 新层级
-    ///   - iconCenter: 被点击的子文件夹图标中心，AppKit 屏幕坐标
+    ///   - iconCenter: 被点击的图标中心，AppKit 屏幕坐标
     private func animateEntrance(of level: FolderPanelLevel, from iconCenter: CGPoint) {
         guard let layer = level.view.layer else { return }
 
@@ -743,10 +747,11 @@ extension FolderPanelController {
         layer.add(opacity, forKey: "opacity")
     }
 
-    /// 返回上一层时当前层级的离开：按收起同样的方式缩向父层级中该子文件夹的图标中心并淡出，结束后移除
+    /// 返回上一层时当前层级的离开：
+    /// 按收起同样的方式缩向父层级中它的图标中心并淡出，结束后移除
     /// - Parameters:
     ///   - level: 离开的层级
-    ///   - iconCenter: 父层级中该子文件夹的图标中心，AppKit 屏幕坐标；找不到时只淡出
+    ///   - iconCenter: 父层级中它的图标中心，AppKit 屏幕坐标；找不到时只淡出
     private func animateReturn(of level: FolderPanelLevel, to iconCenter: CGPoint?) {
         guard let layer = level.view.layer else { return }
 
@@ -786,9 +791,10 @@ extension FolderPanelController {
         removeDepartingLevel(level, after: FolderPanelMetrics.collapseDuration)
     }
 
-    /// 进入子文件夹时旧层级原地淡出、不缩放，等新层级展开结束再移除
+    /// 进入下一层时旧层级原地淡出、不缩放，等新层级展开结束再移除
     ///
-    /// 新层级从旧层级里的子文件夹图标长出来，展开途中的画面落在图标与新层级之间，可能越出新层级的范围；
+    /// 新层级从旧层级里被点击的图标长出来，
+    /// 展开途中的画面落在图标与新层级之间，可能越出新层级的范围；
     /// 旧层级留到展开结束，窗口保持两者的并集，这部分画面才不被窗口边界裁掉
     private func fadeOut(_ level: FolderPanelLevel) {
         guard let layer = level.view.layer else { return }

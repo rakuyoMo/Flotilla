@@ -222,7 +222,8 @@ extension DockPreferences {
     /// 文件夹改名后 stub 随之改名，URL 变化时一并删掉 Dock 按旧位置生成的书签 `book`，由 Dock 重启后按新 URL 重新生成
     ///
     /// 实测（macOS 27）Dock 按条目的 `GUID` 缓存 tile 图标，GUID 不变时重启后仍显示旧图标；stub 改写过就换一个新的 GUID。
-    /// 条目的 GUID 不是本次运行写入的值时同样换新：那是 Dock 被终止时写回了旧条目，新图标还没被读取过
+    /// 本次运行写过 GUID 的条目，GUID 却不是写入的值时同样换新：
+    /// 那是 Dock 被终止时写回了旧条目，新图标还没被读取过
     /// - Parameters:
     ///   - tileURL: stub bundle 的当前位置
     ///   - label: tile 的名称

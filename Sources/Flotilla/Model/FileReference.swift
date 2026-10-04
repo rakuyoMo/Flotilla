@@ -63,7 +63,6 @@ extension FileReference {
     ///
     /// 面板里据此决定点击后在面板里展开它，还是交给默认 App 打开；设置窗口据此标出它所在的位置
     var isFinderFolder: Bool {
-        // 读不到属性（已删除）时不是
         guard
             let values = try? url.resourceValues(forKeys: [.isDirectoryKey, .isPackageKey]),
             let isDirectory = values.isDirectory,

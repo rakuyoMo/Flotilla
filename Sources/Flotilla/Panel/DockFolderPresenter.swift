@@ -80,7 +80,7 @@ final class DockFolderPresenter: NSObject {
 // MARK: - Event Handling
 
 extension DockFolderPresenter {
-    /// 收起面板：Esc、启动 App、打开文件或网页、屏幕参数变化、当前文件夹被删除
+    /// 收起面板：Esc、启动 App、打开文件或网页、屏幕参数变化、当前文件夹被删除等
     @objc
     private func dismiss() {
         apply(state.dismiss())
@@ -128,7 +128,8 @@ extension DockFolderPresenter {
         eventMonitors = [globalMonitor, localMonitor].compactMap(\.self)
     }
 
-    /// 发往其它 App 的鼠标事件：左键按下时尝试识别 Flotilla 的 tile，其余按下都是面板以外的点击
+    /// 发往其它 App 的鼠标事件：左键按下时尝试识别 Flotilla 的 tile，其余按下都是面板以外的点击；
+    /// 左键拖动与抬起交给状态判定拖动 tile 与长按
     private func handleGlobalMouseEvent(_ event: NSEvent) {
         let location = NSEvent.mouseLocation
         let time = Self.now

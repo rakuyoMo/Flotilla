@@ -24,7 +24,7 @@ final class FolderTreeCellView: NSTableCellView {
         )
     )
 
-    /// 是否显示“不在 Dock 上”；只有 tile 不在 Dock 上的根文件夹这一行显示
+    /// 是否显示“不在 Dock 上”；只有被拖出 Dock 的根文件夹这一行显示
     var showsNotOnDockLabel: Bool {
         get { !notOnDockLabel.isHidden }
         set { notOnDockLabel.isHidden = !newValue }
@@ -48,7 +48,8 @@ final class FolderTreeCellView: NSTableCellView {
         let nameField = NSTextField(labelWithString: "")
         nameField.lineBreakMode = .byTruncatingTail
 
-        // 名称占满状态文字以外的宽度，放不下时截断名称，状态文字保持完整
+        // 位置文字隐藏时名称占满状态文字以外的宽度；
+        // 放不下时截断名称，状态文字保持完整
         nameField.setContentHuggingPriority(.defaultLow, for: .horizontal)
         nameField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 

@@ -58,7 +58,8 @@ enum ContinuousCorner {
                 radius: radius
             )
 
-            // 每个角之后沿下一条边走到下一个角的起点；最后一个角回到起点
+            // 每个角之后沿下一条边走到下一个角的起点；
+            // 最后一个角之后由调用方闭合
             guard index < corners.count - 1 else { break }
 
             let next = corners[index + 1]

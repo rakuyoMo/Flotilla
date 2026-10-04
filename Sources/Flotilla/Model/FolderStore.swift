@@ -22,7 +22,7 @@ final class FolderStore {
         category: "FolderStore"
     )
 
-    /// 根文件夹，每个对应 Dock 上的一个 tile
+    /// 根文件夹，每个对应一个 Dock tile
     private(set) var rootFolders: [Folder]
 
     /// 持久化文件的位置

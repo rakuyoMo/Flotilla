@@ -75,7 +75,7 @@ final class FolderGridView: NSView {
         self.openInFinderHandler = openInFinderHandler
         self.selectionHandler = selectionHandler
 
-        // 各项之后，布局里还有一格时才放“在访达中打开”
+        // 有“在访达中打开”时，它占布局里各项之后的那一格
         let cellCount = openInFinderHandler == nil ? items.count : items.count + 1
         cellFrames = Array(layout.cellFrames.prefix(cellCount))
 
