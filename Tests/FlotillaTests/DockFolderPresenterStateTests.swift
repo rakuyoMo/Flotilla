@@ -64,7 +64,7 @@ struct DockFolderPresenterStateTests {
         #expect(state.mouseUp(time: Self.clickDuration) == .expand(folderA))
     }
 
-    /// 展开时从另一个 tile 按下拖动：视同点击其它位置，收起面板
+    /// 展开时从另一个 tile 按下拖动：视同面板以外的点击，收起面板
     @Test
     func draggingTileWhilePresentingCollapses() {
         var state = DockFolderPresenterState()
@@ -151,7 +151,7 @@ struct DockFolderPresenterStateTests {
         #expect(state.mouseUp(time: release) == .expand(folderA))
     }
 
-    /// 展开时长按同一 tile：视同点击其它位置而收起，随后到达的同一文件夹 URL 不会再展开
+    /// 展开时长按同一 tile：视同面板以外的点击而收起，随后到达的同一文件夹 URL 不会再展开
     @Test
     func longPressOnPresentedTileCollapses() {
         var state = DockFolderPresenterState()
@@ -355,7 +355,7 @@ extension DockFolderPresenterStateTests {
         state.mouseDown(onTile: folderID, at: tilePoint, isInDockArea: true, time: time)
     }
 
-    /// 通过快速路径完整点击一次 tile，在 time 抬起
+    /// 通过快速路径完整点击一次 tile，在 `time` 抬起
     private func clickTile(
         _ folderID: UUID,
         at time: TimeInterval,

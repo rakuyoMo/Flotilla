@@ -417,7 +417,7 @@ extension FolderStoreItemLocationTests {
         return try #require(Self.appReference(of: items[0]), "应当是 App")
     }
 
-    /// 执行 body，期间 `FolderStore` 恰好发出 expectedCount 次变更通知
+    /// 执行 `body`，期间 `FolderStore` 恰好发出 `expectedCount` 次变更通知
     private func expectNotifications(
         _ expectedCount: Int,
         during body: () throws -> Void

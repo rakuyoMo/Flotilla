@@ -274,7 +274,7 @@ final class DockPreferencesTests {
     }
 
     /// 只列出 stub 位于存放 stub 的目录下 `<id>` 子目录的 tile，stub 连同目录都不在磁盘上时照样列出；
-    /// 对账据此删掉残留的 tile，用户的 tile 与位置不符的条目一律不能列出
+    /// 同步时据此删掉残留的 tile，用户的 tile 与位置不符的条目一律不能列出
     @Test
     func folderIDsListsOnlyTilesInStubsDirectory() throws {
         let stubsDirectory = directory.appending(path: "Dock Tiles")
@@ -524,7 +524,8 @@ extension DockPreferencesTests {
 // MARK: - Private
 
 extension DockPreferencesTests {
-    /// 布置 [用户 tile, 本用例的 tile, 用户 tile]，并模拟 Dock 重启后为本用例的 tile 补全的字段
+    /// 布置三个条目：用户 tile、本用例的 tile、用户 tile，
+    /// 并模拟 Dock 重启后为本用例的 tile 补全的字段
     private func addOwnTileBetweenUserTiles() throws {
         defaults.set([calculatorTile], forKey: "persistent-apps")
 

@@ -5,13 +5,13 @@ import Testing
 
 // MARK: - FolderNavigationHeaderViewTests
 
-/// 标题区的标题按原生的位置摆放：与原生逐像素对照时，标题差半个点就能看出
+/// 标题区的标题按原生的位置摆放：与原生逐像素对照时，标题差 0.5 pt 就能看出
 @MainActor
 struct FolderNavigationHeaderViewTests {
     /// 标题中心与原生相同：原生标题框宽为文字宽向上取整再加 1 pt，左边取整到点
     ///
-    /// 期望值是原生屏上实测的标题框中心：框宽为奇数（“A”11、“验证标题”57）时比主体中心偏左 0.5 pt，
-    /// 为偶数（“Hello World”76、“Long Name Test”106）时正好居中
+    /// 期望值是原生屏上实测的标题框中心：框宽为奇数（“A” 11 pt、“验证标题” 57 pt）时比主体中心偏左 0.5 pt，
+    /// 为偶数（“Hello World” 76 pt、“Long Name Test” 106 pt）时正好居中
     @Test(
         arguments: [
             ("A", 162.0, 80.5),

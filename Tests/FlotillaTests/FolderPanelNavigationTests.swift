@@ -112,7 +112,7 @@ final class FolderPanelNavigationTests {
 
     // MARK: 访达里的文件夹
 
-    /// Flotilla 文件夹 → 访达里的文件夹 → 其中的子目录逐层解析，每一层读出的是那个目录的内容
+    /// Flotilla 文件夹 → 访达里的文件夹 → 其中的访达里的文件夹逐层解析，每一层读出的是那个目录的内容
     @Test
     func resolvesFinderFolderLevels() throws {
         let finderFolder = try finderFolderReference("资料")

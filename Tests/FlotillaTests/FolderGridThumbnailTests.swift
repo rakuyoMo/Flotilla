@@ -78,7 +78,8 @@ struct FolderGridThumbnailTests {
         #expect(icon(at: 0, in: grid) === reportIcon)
     }
 
-    /// 子目录与生成不出缩略图的文件保持图标；App 不请求缩略图
+    /// 访达里的文件夹与生成不出缩略图的文件保持图标；
+    /// App 不请求缩略图
     @Test
     func itemsWithoutThumbnailsKeepIcons() async {
         let subdirectory = makeFile("资料/")
@@ -252,7 +253,8 @@ struct FolderGridThumbnailTests {
 // MARK: - Private
 
 extension FolderGridThumbnailTests {
-    /// 访达里的文件夹里的一个文件；名称以 `/` 结尾时是子目录
+    /// 访达里的文件夹里的一个文件；
+    /// 名称以 `/` 结尾时是访达里的文件夹
     private func makeFile(_ name: String) -> FileReference {
         let isDirectory = name.hasSuffix("/")
 

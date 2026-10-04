@@ -282,7 +282,7 @@ final class AppReferenceRelocationTests {
 // MARK: - Bundles
 
 extension AppReferenceRelocationTests {
-    /// 在 url 处写出一个最小的 App bundle：`Contents/Info.plist` 里带着 bundle id
+    /// 在 `url` 处写出一个最小的 App bundle：`Contents/Info.plist` 里带着 bundle id
     /// - Parameters:
     ///   - url: bundle 的位置，已存在时只改写 `Info.plist`
     ///   - bundleIdentifier: 写进 `CFBundleIdentifier` 的值
@@ -339,7 +339,7 @@ extension AppReferenceRelocationTests {
         )
     }
 
-    /// 假的 Launch Services：问本用例的 bundle id 时给出临时目录里的 name，问别的给不出
+    /// 假的 Launch Services：问本用例的 bundle id 时给出临时目录里的 `name`，问别的给不出
     private func installedApp(at name: String) -> (String) -> URL? {
         let url = directoryURL(of: name)
 

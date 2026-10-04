@@ -133,7 +133,7 @@ struct FolderPanelBackgroundViewTests {
 // MARK: - Helpers
 
 extension FolderPanelBackgroundViewTests {
-    /// 从 start 朝 target 走 distance 后的点
+    /// 从 `start` 朝 `target` 走 `distance` 后的点
     private static func point(
         from start: CGPoint,
         towards target: CGPoint,

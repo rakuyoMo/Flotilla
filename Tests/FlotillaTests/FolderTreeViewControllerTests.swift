@@ -20,7 +20,7 @@ final class FolderTreeViewControllerTests {
     /// 本用例使用的数据源：根文件夹“工作”下有子文件夹“开发”与一个 App
     private let store: FolderStore
 
-    /// 建立“工作 / [开发, Chess]”的树
+    /// 建立根文件夹“工作”，其下依次是子文件夹“开发”与 Chess.app
     init() throws {
         store = FolderStore(fileURL: directory.appending(path: "folders.json"))
 
@@ -107,7 +107,7 @@ final class FolderTreeViewControllerTests {
 // MARK: - Private
 
 extension FolderTreeViewControllerTests {
-    /// 放文件夹区的离屏窗口，内容区宽 width
+    /// 放文件夹区的离屏窗口，内容区宽 `width`
     private func makeWindow(width: CGFloat) -> NSWindow {
         NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: width, height: 400),
