@@ -9,7 +9,11 @@
 - 行为：读取 `Bundle.main.infoDictionary["FlotillaFolderID"]`，在 `applicationDidFinishLaunching` 里拼出 URL，用 `NSWorkspace.shared.open(_:configuration:completionHandler:)` 打开，配置 `activates = false`
   - 由点击 tile 启动：`flotilla://folder/<id>`
   - 由把 App 或文件拖到 tile 上启动：AppKit 在 `applicationDidFinishLaunching` 之前经 `application(_:open:)` 送来被拖的项；收齐后打开 `flotilla://folder/<id>/items?path=<路径>&path=<路径>`，每个被拖的项一个 `path` 查询项，取值为它的 POSIX 路径，由 `URLComponents` 编码
-    - 实测（macOS 27，探针 stub）：回调顺序为 `applicationWillFinishLaunching` → `application(_:open:)` → `applicationDidFinishLaunching`，后两个在同一毫秒；一次拖放多个 App 时一次 `open` 送齐；`applicationDidFinishLaunching` 之后 1.5 秒内没有迟到的回调；由点击启动时没有 `open`，只有 `applicationShouldOpenUntitledFile`
+    - 实测（macOS 27，探针 stub）：
+      - 回调顺序为 `applicationWillFinishLaunching` → `application(_:open:)` → `applicationDidFinishLaunching`，后两个在同一毫秒
+      - 一次拖放多个 App 时一次 `open` 送齐
+      - `applicationDidFinishLaunching` 之后 1.5 秒内没有迟到的回调
+      - 由点击启动时没有 `open`，只有 `applicationShouldOpenUntitledFile`
     - 实测（macOS 27，探针 stub）：拖放以 `aevt/odoc` 事件送达，收到的都是文件 URL，文件包、App 与文件夹的以 `/` 结尾
   - 每次启动只发一个 URL；同一次拖放被系统重复送达时，由 Flotilla 侧 `FolderStore.addItems` 的去重吸收
   - 等到回调（最多 5 秒）后退出
@@ -56,7 +60,14 @@
   - 缺少自定义图标的 stub 视为残缺，重新生成
 - 设好自定义图标后执行 `lsregister -f <bundle>`（`/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister`），让 Launch Services 按改写后的 Info.plist 登记 stub 能打开的文档类型。
   - 实测（macOS 27，`LSCanURLAcceptURL`）：已被 Launch Services 记录过的 stub 改写 Info.plist 后不重新注册，仍按旧记录判断；重新注册后能接收 App，不接收其它文件
-- API：`bundleURL(for folder:)`、`folderDirectory(for folderID:)`（stub 独占的 `<id>` 目录）、`existingBundleURL(for folderID:)`、`folderID(forBundleURL:)`、`write(folder:icon:)`、`remove(folderID:)`（先 `lsregister -u` 注销，再连同 `<id>` 目录一起删除）、`existingFolderIDs()`。
+- API：
+  - `bundleURL(for folder:)`
+  - `folderDirectory(for folderID:)`（stub 独占的 `<id>` 目录）
+  - `existingBundleURL(for folderID:)`
+  - `folderID(forBundleURL:)`
+  - `write(folder:icon:)`
+  - `remove(folderID:)`（先 `lsregister -u` 注销，再连同 `<id>` 目录一起删除）
+  - `existingFolderIDs()`
 - 只在内容确有变化时重写文件（名称比对 plist，图标比对渲染结果）。
 
 ## `.icns` 写入（`Sources/Flotilla/Dock/IconFileWriter.swift`）
@@ -79,7 +90,17 @@
   - `tile-data.file-type`（对照实测取值）
   - `tile-type = file-tile`
   - 不写 `book`，由 Dock 自行生成
-- API：`contains(tileURL:)`、`folderIDs(ofTilesIn:)`（stub 位于给定目录下 `<id>` 子目录的 tile 所属的根文件夹 id）、`add(tileURL:label:)`、`remove(tileDirectory:)`、`update(tileURL:label:isStubRewritten:)`、`apply(_:rewrittenTileURLs:removingTilesIn:)`、`observeTiles(_:)`、`restartDock(terminationHandler:)`、`relaunchedDockLaunchDate()`、`isReadByRelaunchedDock(writtenAt:dockLaunchedAt:)`。
+- API：
+  - `contains(tileURL:)`
+  - `folderIDs(ofTilesIn:)`（stub 位于给定目录下 `<id>` 子目录的 tile 所属的根文件夹 id）
+  - `add(tileURL:label:)`
+  - `remove(tileDirectory:)`
+  - `update(tileURL:label:isStubRewritten:)`
+  - `apply(_:rewrittenTileURLs:removingTilesIn:)`
+  - `observeTiles(_:)`
+  - `restartDock(terminationHandler:)`
+  - `relaunchedDockLaunchDate()`
+  - `isReadByRelaunchedDock(writtenAt:dockLaunchedAt:)`
 - 每次写入后调用 `synchronize()`，等写入交给 cfprefsd 之后再返回：重启 Dock 之后的补写要据此判断是否赶在新 Dock 读取之前。
 - 匹配 tile 按标准化后 URL 的所在目录（即 stub 独占的 `<id>` 目录），不按名称：文件夹改名后 stub 的文件名变了，仍要找到原来的 tile。
 - 更新已有条目时原地替换，不删除再追加：Dock 里的排序是用户自己拖出来的，重启后必须保持。
@@ -94,7 +115,10 @@
   - 实测（macOS 27）以域名创建的 `UserDefaults(suiteName:)` 能收到其它进程写入的 KVO 通知，写入后随即送达；偏好文件要等 cfprefsd 落盘，Dock 自己的写入有时晚 5 秒以上才出现在 `com.apple.dock.plist` 里，监听文件赶不上
 - `restartDock(terminationHandler:)`：终止本用户的 Dock 进程，launchd 会自动拉起；被终止的 Dock 全部退出后在主线程调用 `terminationHandler`，没有在运行的 Dock 时立即调用。
   - Dock 进程按进程名在内核里找（`proc_listpids` + `proc_pidinfo` 的 `PROC_PIDTBSDINFO`），退出用 kqueue（`DispatchSource.makeProcessSource`，`.exit`）监听，终止之前就开始监听
-  - 不用 `NSRunningApplication`：核对不通过时要终止的是刚拉起的新 Dock，实测（macOS 27）它启动约 45 ms（37–66 ms，23 次）后才出现在 `NSRunningApplication` 里，`launchDate` 为空；`isTerminated` 的 KVO 也比 kqueue 的退出事件晚 1–16 ms（中位 3.7 ms）；NSWorkspace 不为 LSUIElement 的 Dock 发 `didTerminateApplicationNotification`
+  - 不用 `NSRunningApplication`：
+    - 核对不通过时要终止的是刚拉起的新 Dock，实测（macOS 27）它启动约 45 ms（37–66 ms，23 次）后才出现在 `NSRunningApplication` 里，`launchDate` 为空
+    - `isTerminated` 的 KVO 也比 kqueue 的退出事件晚 1–16 ms（中位 3.7 ms）
+    - NSWorkspace 不为 LSUIElement 的 Dock 发 `didTerminateApplicationNotification`
   - Dock 终止时若把旧条目写回，退出时已经落地（实测退出事件到达时读到的偏好已是写回之后的内容）
 - `relaunchedDockLaunchDate()`：最近一次重启后新拉起的 Dock 的内核启动时刻，排除被终止的进程与僵尸进程；新 Dock 还没启动时为 nil
   - 实测（macOS 27）：旧 Dock 的退出事件之后 0.4 ms 之内新进程就被创建（23 次）；它先以 xpcproxy 运行，约 7–10 ms 后才 exec 成 Dock（3 次），在此之前按进程名找不到它，它也还没开始执行 Dock 的代码
@@ -134,7 +158,10 @@
     - 确认加上之后 tile 不在 Dock 上，就是被用户拖出去的；tile 出现后立即拖出也一样，不加回
     - 待添加的根文件夹被删除或被拖成子文件夹时不再添加
   - 设置窗口里新建的根文件夹在输入名称期间搁置：不添加 tile，也不算被拖出；名称编辑结束后解除搁置并同步一次，tile 带着最终名称出现，Dock 只重启一次（见 05）
-- 查询与请求：`rootFolderIDsRemovedFromDock()` 给出被用户拖出 Dock 的根文件夹（tile 不在 Dock 上、下一次同步也不会添加；Dock 上现有的 tile 取 `DockPreferences.folderIDs(ofTilesIn:)` 对 stub 目录的结果）；`addTile(for:)` 把根文件夹记为待添加并安排一次同步；`holdTile(for:)`、`releaseTile(for:)` 搁置与解除搁置新建的根文件夹。
+- 查询与请求：
+  - `rootFolderIDsRemovedFromDock()` 给出被用户拖出 Dock 的根文件夹（tile 不在 Dock 上、下一次同步也不会添加；Dock 上现有的 tile 取 `DockPreferences.folderIDs(ofTilesIn:)` 对 stub 目录的结果）
+  - `addTile(for:)` 把根文件夹记为待添加并安排一次同步
+  - `holdTile(for:)`、`releaseTile(for:)` 搁置与解除搁置新建的根文件夹
 - 每次同步结束后发出 `DockTileSynchronizer.didSynchronizeNotification`（`object` 为同步器），设置窗口据此刷新 tile 的状态。
 - Dock 偏好里的 tile 变化时发出 `DockTileSynchronizer.dockTilesDidChangeNotification`（`object` 为同步器），不触发同步：用户把 tile 拖出 Dock 后，实测 Dock 约 4.1 秒才把删除写进偏好，设置窗口据此立即刷新状态。
 - 系统切换深浅外观：Flotilla 没有固定外观，渲染 stub 图标时读取的 `NSApp.effectiveAppearance` 随系统变化，触发一次同步；底板颜色变了，stub 被改写、tile 换新的 `GUID`，每次切换 Dock 重启一次（Dock 按 `GUID` 缓存 tile 图标，见上文）。
