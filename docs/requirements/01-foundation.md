@@ -242,7 +242,7 @@ enum FolderIconRenderer {
 ## 工程
 
 - `Package.swift` 新增 `.testTarget(name: "FlotillaTests", dependencies: ["Flotilla"])`
-- `AGENTS.md` 的目录结构表补上新目录与测试目录
+- `AGENTS.md` 的目录结构补上新目录与测试目录
 
 ## 单元测试（`Tests/FlotillaTests/`）
 

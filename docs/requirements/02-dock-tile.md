@@ -68,7 +68,7 @@
   - `write(folder:icon:)`
   - `remove(folderID:)`（先 `lsregister -u` 注销，再连同 `<id>` 目录一起删除）
   - `existingFolderIDs()`
-- 只在内容确有变化时重写文件（名称比对 plist，图标比对渲染结果）。
+- 只在内容确有变化时重写文件：Info.plist 与图标都与按当前文件夹新生成的结果逐字节比对。
 
 ## `.icns` 写入（`Sources/Flotilla/Dock/IconFileWriter.swift`）
 

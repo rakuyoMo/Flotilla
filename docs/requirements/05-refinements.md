@@ -96,7 +96,7 @@
   - 取自 [macos-dock-folders](https://github.com/wjvalue/macos-dock-folders)（MIT）：从访达把 App 拖到 Dock 上的 tile 时，tile 高亮为放置目标，松手后 Launch Services 以“打开文档”的方式启动 stub；`Alternate` 让 stub 不成为 App 的默认打开方式
   - 接收文件的另一项见 06（需求 14）
 - stub 改写后除 `codesign` 外再执行 `lsregister -f <bundle>`（`/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister`），Launch Services 才知道它接收的文档类型。
-- Dock 上的 tile 之间不能互相拖放：拖动 Dock 图标时整个过程由 Dock 接管，只能排序或拖出。来源只能是访达等其它 App 里的 `.app`。
+- Dock 上的 tile 之间不能互相拖放：拖动 Dock 图标时整个过程由 Dock 接管，只能排序或拖出。来源只能是访达等其它 App。
 
 ### stub 的行为
 
@@ -161,6 +161,8 @@
 | `folders.remove` | Delete | 删除 | 刪除 | 削除 | 삭제 |
 | `general.sectionTitle` | General | 通用 | 一般 | 一般 | 일반 |
 | `general.previewIconCount` | Icons shown in folder icon: | 文件夹图标内显示的图标数量： | 檔案夾圖像內顯示的圖像數量： | フォルダアイコンに表示するアイコンの数： | 폴더 아이콘에 표시할 아이콘 수: |
+| `general.finderFolders` | Finder folders: | 访达里的文件夹： | Finder 裡的檔案夾： | Finderのフォルダ： | Finder 폴더: |
+| `general.showHiddenFiles` | Show hidden files | 显示隐藏文件 | 顯示隱藏檔案 | 不可視ファイルを表示 | 숨김 파일 보기 |
 | `general.accessibility` | Accessibility permission: | 辅助功能权限： | 輔助使用權限： | アクセシビリティの権限： | 손쉬운 사용 권한: |
 | `general.accessibilityGranted` | Granted | 已授权 | 已授權 | 許可済み | 허용됨 |
 | `general.accessibilityNotGranted` | Not granted | 未授权 | 未授權 | 未許可 | 허용되지 않음 |
