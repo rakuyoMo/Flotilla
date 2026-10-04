@@ -11,10 +11,10 @@ final class SettingsWindowController: NSWindowController {
     /// 内容区的最小尺寸：宽度扣除左右边距后，五种语言的文件夹区按钮行都能完整显示，最宽的日文要 509 pt
     static let minimumContentSize = NSSize(width: 570, height: 480)
 
-    /// 文件夹区
+    /// 文件夹区，在窗口上部，随窗口高度伸缩
     private let folderTreeViewController: FolderTreeViewController
 
-    /// 通用区
+    /// 通用区，在文件夹区下方，以分隔线隔开
     private let generalSettingsViewController = GeneralSettingsViewController(
         preferences: .shared
     )
@@ -43,6 +43,7 @@ final class SettingsWindowController: NSWindowController {
 
         super.init(window: window)
 
+        // 内容视图在 `super.init` 之后建：`makeContentView()` 要用到已初始化的 self
         window.contentView = makeContentView()
         window.delegate = self
         window.center()
@@ -51,7 +52,7 @@ final class SettingsWindowController: NSWindowController {
     /// 设置窗口完全由代码构建，不支持从归档解码
     @available(*, unavailable)
     required init?(coder _: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        fatalError("不支持从归档解码")
     }
 
     /// 显示设置窗口并把它带到最前；这是唯一允许激活 Flotilla 的场景

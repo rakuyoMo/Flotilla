@@ -18,7 +18,7 @@ struct FinderFolderContents {
     /// 本次展开里读出的隐藏项的 id，面板把它们画成半透明；以每一项最近一次读到的属性为准
     private(set) var hiddenItemIDs: Set<UUID> = []
 
-    /// 读出访达里的文件夹里的各项
+    /// 读出访达里的文件夹里的各项，并按这次读到的属性更新 `hiddenItemIDs`
     /// - Parameters:
     ///   - finderFolder: 访达里的文件夹；它的 id 就是展开后那一层的 id
     ///   - includingHiddenFiles: 是否显示隐藏文件；显示时 `.DS_Store` 与 `.localized` 仍不显示

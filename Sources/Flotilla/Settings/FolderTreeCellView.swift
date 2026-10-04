@@ -8,7 +8,7 @@ final class FolderTreeCellView: NSTableCellView {
     /// 行视图的复用标识
     static let reuseIdentifier = NSUserInterfaceItemIdentifier("FolderTreeCell")
 
-    /// 图标边长
+    /// 行首图标的边长（pt）
     private static let iconSize: CGFloat = 20
 
     /// 访达里的文件夹名称后的位置文字，与“不在 Dock 上”同样的灰色小字；其余各行隐藏
@@ -24,7 +24,7 @@ final class FolderTreeCellView: NSTableCellView {
         )
     )
 
-    /// 是否显示“不在 Dock 上”；只有 tile 不在 Dock 上的根文件夹这一行显示
+    /// 是否显示“不在 Dock 上”；只有被拖出 Dock 的根文件夹这一行显示
     var showsNotOnDockLabel: Bool {
         get { !notOnDockLabel.isHidden }
         set { notOnDockLabel.isHidden = !newValue }
@@ -48,7 +48,8 @@ final class FolderTreeCellView: NSTableCellView {
         let nameField = NSTextField(labelWithString: "")
         nameField.lineBreakMode = .byTruncatingTail
 
-        // 名称占满状态文字以外的宽度，放不下时截断名称，状态文字保持完整
+        // 位置文字隐藏时名称占满状态文字以外的宽度；
+        // 放不下时截断名称，状态文字保持完整
         nameField.setContentHuggingPriority(.defaultLow, for: .horizontal)
         nameField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
@@ -98,7 +99,7 @@ final class FolderTreeCellView: NSTableCellView {
     /// 行视图完全由代码构建，不支持从归档解码
     @available(*, unavailable)
     required init?(coder _: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        fatalError("不支持从归档解码")
     }
 
     /// 用节点内容填充这一行

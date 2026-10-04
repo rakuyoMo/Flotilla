@@ -75,17 +75,20 @@ struct DockTileBundleBuilder {
 // MARK: - Mutation
 
 extension DockTileBundleBuilder {
-    /// 生成或更新根文件夹的 stub；名称与图标都没有变化时不动任何文件
+    /// 生成或更新根文件夹的 stub；
+    /// 名称与图标都没有变化、stub 也不残缺时不动任何文件
     /// - Parameters:
     ///   - folder: 根文件夹
     ///   - icon: 按需求 2 渲染好的文件夹图标
     /// - Returns: 是否改写了 stub
+    /// - Throws: 改名、渲染图标、写文件、签名、设自定义图标或向 Launch Services 注册失败时抛出
     @discardableResult
     func write(folder: Folder, icon: NSImage) throws -> Bool {
         let fileManager = FileManager.default
         let bundleURL = bundleURL(for: folder)
 
-        // 文件夹改名：原来的 stub 在自己的目录里改名，Dock 条目里的书签仍指向同一个文件
+        // 文件夹重命名：原来的 stub 在自己的目录里改名，
+        // Dock 条目里的书签仍指向同一个文件
         if
             let existingURL = existingBundleURL(for: folder.id),
             existingURL.lastPathComponent != bundleURL.lastPathComponent
@@ -127,7 +130,8 @@ extension DockTileBundleBuilder {
 
         guard isInfoChanged || isIconChanged || isIncomplete else { return false }
 
-        // 按 App bundle 的结构写入三个文件；可执行文件每次都从 Flotilla.app 重新拷贝，与当前版本保持一致
+        // 按 App bundle 的结构写入三个文件；
+        // 可执行文件在每次改写时都从 Flotilla.app 重新拷贝
         let subdirectories = [iconURL, stubExecutableURL].map { $0.deletingLastPathComponent() }
         for subdirectory in subdirectories {
             try fileManager.createDirectory(at: subdirectory, withIntermediateDirectories: true)
@@ -146,6 +150,7 @@ extension DockTileBundleBuilder {
     /// 删除根文件夹的 stub 连同它独占的目录；不存在时什么也不做
     ///
     /// 删除前先注销 stub 在 Launch Services 里的登记：登记是改写 stub 时加上的，bundle 删掉之后就注销不了了
+    /// - Throws: 删除目录失败时抛出；注销登记失败不抛
     func remove(folderID: UUID) throws {
         let fileManager = FileManager.default
         let folderDirectory = folderDirectory(for: folderID)
@@ -182,7 +187,8 @@ extension DockTileBundleBuilder {
 
     /// 根文件夹的 stub 独占的目录：`<directory>/<id>`
     ///
-    /// 目录名只取决于 id，不随文件夹改名变化；Dock 偏好按它匹配该根文件夹的 tile，stub 本身是否还在都不影响
+    /// 目录名只取决于 id，不随文件夹重命名变化；
+    /// Dock 偏好按它匹配该根文件夹的 tile，stub 本身是否还在都不影响
     func folderDirectory(for folderID: UUID) -> URL {
         directory.appending(path: folderID.uuidString, directoryHint: .isDirectory)
     }
@@ -229,7 +235,8 @@ extension DockTileBundleBuilder {
 // MARK: - Private
 
 extension DockTileBundleBuilder {
-    /// 重新签名，把图标设为 bundle 的自定义图标，再向 Launch Services 注册
+    /// 重新签名，把图标设为 bundle 的自定义图标，再向 Launch Services 注册；
+    /// 任一步失败时抛出
     ///
     /// macOS 26 起，系统把 icns 形式的 App 图标装进灰色圆角底板，bundle 的自定义图标不受影响，Dock 上才能显示文件夹原本的形状
     private func seal(_ bundleURL: URL, iconURL: URL) throws {
@@ -278,7 +285,8 @@ extension DockTileBundleBuilder {
 extension DockTileBundleBuilder {
     /// stub 的文件名（不含扩展名）
     ///
-    /// 路径里的 `/` 换成 `:`，Launch Services 显示时会换回 `/`；名称为空时用 id，避免生成以 `.` 开头的隐藏文件
+    /// 名称里的 `/` 换成 `:`，Launch Services 显示时会换回 `/`；
+    /// 名称为空时用 id，避免生成以 `.` 开头的隐藏文件
     private static func fileName(for folder: Folder) -> String {
         guard !folder.name.isEmpty else { return folder.id.uuidString }
 

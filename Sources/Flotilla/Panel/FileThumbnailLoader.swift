@@ -79,7 +79,8 @@ extension FileThumbnailLoader {
         // 已取消的请求不在表里：晚到的结果丢掉，不会落到已离开的层级上
         guard let request = pendingRequests.removeValue(forKey: id) else { return }
 
-        // 生成不出缩略图是常态（子目录、没有缩略图扩展的类型、已删除、没有权限），保持图标，不记日志
+        // 生成不出缩略图是常态（访达里的文件夹、没有缩略图扩展的类型、已删除、没有权限），
+        // 保持图标，不记日志
         guard let thumbnail else { return }
 
         request.completion(thumbnail)

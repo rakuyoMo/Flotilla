@@ -22,7 +22,7 @@ final class FolderStore {
         category: "FolderStore"
     )
 
-    /// 根文件夹，每个对应 Dock 上的一个 tile
+    /// 根文件夹，每个对应一个 Dock tile
     private(set) var rootFolders: [Folder]
 
     /// 持久化文件的位置
@@ -52,7 +52,7 @@ final class FolderStore {
 // MARK: - Query
 
 extension FolderStore {
-    /// 在任意层级中查找文件夹
+    /// 在任意层级中查找文件夹；找不到时为 nil
     func folder(id: UUID) -> Folder? {
         guard case .folder(let folder) = Self.findItem(id: id, in: rootItems) else {
             return nil
@@ -94,7 +94,7 @@ extension FolderStore {
 // MARK: - Mutation
 
 extension FolderStore {
-    /// 在根层级末尾新建文件夹
+    /// 在根层级末尾新建文件夹，返回新建的文件夹
     func addRootFolder(named name: String) -> Folder {
         let folder = Folder(id: UUID(), name: name, items: [])
         rootFolders.append(folder)
@@ -296,7 +296,7 @@ extension FolderStore {
 // MARK: - Tree Operations
 
 extension FolderStore {
-    /// 在 items 及其子孙中查找一项
+    /// 在 items 及其子孙中查找一项；找不到时为 nil
     private static func findItem(id: UUID, in items: [FolderItem]) -> FolderItem? {
         for item in items {
             if item.id == id {
@@ -352,7 +352,7 @@ extension FolderStore {
         return false
     }
 
-    /// 从 items 及其子孙中移除一项，返回被移除的项
+    /// 从 items 及其子孙中移除一项，返回被移除的项；找不到时为 nil
     private static func removeItem(id: UUID, from items: inout [FolderItem]) -> FolderItem? {
         if let index = items.firstIndex(where: { $0.id == id }) {
             return items.remove(at: index)

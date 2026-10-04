@@ -79,7 +79,8 @@ struct FolderPanelPlacement {
 
     /// 面板主体在该 tile 旁可用的最大尺寸，用来决定网格的列数上限与显示的行数
     ///
-    /// 沿 Dock 方向是屏幕可用区域减去两侧边距；垂直 Dock 方向是从尾巴末端到屏幕另一侧边距为止
+    /// 沿 Dock 方向是屏幕可用区域减去两侧边距；
+    /// 垂直 Dock 方向是从尾巴底边到屏幕另一侧边距为止
     static func availableBodySize(
         tileFrame: CGRect,
         edge: DockEdge,

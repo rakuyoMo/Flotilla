@@ -5,13 +5,13 @@ import AppKit
 /// 网格中的一个单元格：图标在上、名称在下；悬停没有任何变化，按下与抬起的表现见 `FolderGridItemStyle`
 @MainActor
 final class FolderGridItemView: NSView {
-    /// 图标
+    /// 显示图标的视图：大小按样式在 `layout()` 里定，以图标中心定位
     private let imageView = NSImageView()
 
-    /// 名称
+    /// 显示名称的文本框：只显示一行，过长时在中间省略
     private let titleField = FolderPanelLabel(labelWithString: "")
 
-    /// 样式
+    /// 单元格的样式：决定图标怎么画、按下时怎么变、在哪里抬起才触发
     private let style: FolderGridItemStyle
 
     /// 图标：各项原样显示，子文件夹的图标在系统外观变化时由网格换成对应外观的版本；
@@ -23,10 +23,11 @@ final class FolderGridItemView: NSView {
         }
     }
 
-    /// 平常显示的图
+    /// 平常显示的图：由图标按样式生成
     private lazy var normalImage = makeImage(isPressed: false)
 
-    /// 按下时显示的图，第一次按下时生成
+    /// 按下时显示的图：第一次按下时生成；
+    /// 图标或外观变化时与平常的图一起重新生成
     private lazy var pressedImage = makeImage(isPressed: true)
 
     /// 点击后执行的动作
@@ -51,9 +52,10 @@ final class FolderGridItemView: NSView {
 
     /// 创建单元格
     /// - Parameters:
-    ///   - title: 名称
+    ///   - title: 图标下方显示的名称
     ///   - icon: 图标；“在访达中打开”是透明底上的原图，只取形状
-    ///   - style: 样式，默认是各项的样式
+    ///   - style: 样式；只有访达里的文件夹的层级末尾那一格是“在访达中打开”，
+    ///     其余单元格都用默认的各项样式
     ///   - clickHandler: 按下并抬起后执行，在哪里抬起才算见 `FolderGridItemStyle`
     init(
         title: String,
@@ -95,7 +97,7 @@ final class FolderGridItemView: NSView {
     /// 单元格完全由代码构建，不支持从归档解码
     @available(*, unavailable)
     required init?(coder _: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        fatalError("不支持从归档解码")
     }
 
     /// 图标按中心定位；名称水平居中，按基线定位
@@ -154,7 +156,7 @@ final class FolderGridItemView: NSView {
         refreshImages()
     }
 
-    /// 按下：进入按下状态
+    /// 按下：图标换成按下时的图，等抬起才判定是否算一次点击
     override func mouseDown(with _: NSEvent) {
         isPressed = true
     }

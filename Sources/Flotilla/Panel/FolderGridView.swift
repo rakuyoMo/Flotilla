@@ -75,7 +75,7 @@ final class FolderGridView: NSView {
         self.openInFinderHandler = openInFinderHandler
         self.selectionHandler = selectionHandler
 
-        // 各项之后，布局里还有一格时才放“在访达中打开”
+        // 有“在访达中打开”时，它占布局里各项之后的那一格
         let cellCount = openInFinderHandler == nil ? items.count : items.count + 1
         cellFrames = Array(layout.cellFrames.prefix(cellCount))
 
@@ -85,7 +85,7 @@ final class FolderGridView: NSView {
     /// 网格完全由代码构建，不支持从归档解码
     @available(*, unavailable)
     required init?(coder _: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        fatalError("不支持从归档解码")
     }
 
     /// 某一项的图标中心，自身坐标系；没有这一项时为 nil
@@ -111,6 +111,7 @@ final class FolderGridView: NSView {
     override func viewDidMoveToSuperview() {
         super.viewDidMoveToSuperview()
 
+        // 父视图换了：先停掉对上一个 clip view 的监听
         NotificationCenter.default.removeObserver(
             self,
             name: NSView.boundsDidChangeNotification,

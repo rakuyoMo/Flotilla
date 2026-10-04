@@ -42,7 +42,7 @@ final class FolderNavigationHeaderView: NSView {
     /// 标题区完全由代码构建，不支持从归档解码
     @available(*, unavailable)
     required init?(coder _: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        fatalError("不支持从归档解码")
     }
 
     /// 返回按钮按实测位置摆放；标题按原生的取整方式水平居中、按基线定位，两侧让出返回按钮的位置

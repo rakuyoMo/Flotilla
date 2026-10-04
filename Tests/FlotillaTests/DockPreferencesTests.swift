@@ -274,7 +274,7 @@ final class DockPreferencesTests {
     }
 
     /// 只列出 stub 位于存放 stub 的目录下 `<id>` 子目录的 tile，stub 连同目录都不在磁盘上时照样列出；
-    /// 对账据此删掉残留的 tile，用户的 tile 与位置不符的条目一律不能列出
+    /// 同步时据此删掉残留的 tile，用户的 tile 与位置不符的条目一律不能列出
     @Test
     func folderIDsListsOnlyTilesInStubsDirectory() throws {
         let stubsDirectory = directory.appending(path: "Dock Tiles")
@@ -343,6 +343,7 @@ final class DockPreferencesTests {
             withIntermediateDirectories: true
         )
 
+        // 先放 6 份更早的备份
         let oldNames = (1 ... 6).map { "com.apple.dock-2020010\($0)-000000.plist" }
 
         for name in oldNames {
@@ -471,7 +472,8 @@ extension DockPreferencesTests {
 // MARK: - Relaunched Dock
 
 extension DockPreferencesTests {
-    /// 补写完成时新 Dock 还没启动，或完成得早于它启动后读取偏好的下限：新 Dock 一定读到补写，不必再重启
+    /// 补写完成时新 Dock 还没启动，或完成得早于它启动后 `relaunchReadDelay`：
+    /// 新 Dock 一定读到补写，不必再重启
     @Test
     func rewriteBeforeRelaunchedDockReadsIsRead() {
         let launch = Date()
@@ -497,7 +499,8 @@ extension DockPreferencesTests {
         #expect(isReadWithinDelay)
     }
 
-    /// 补写完成得不早于新 Dock 启动后读取偏好的下限：新 Dock 可能已读到被写回的旧条目，要再重启一次
+    /// 补写完成得不早于新 Dock 启动后 `relaunchReadDelay`：
+    /// 新 Dock 可能已读到被写回的旧条目，要再重启一次
     @Test
     func rewriteAfterReadDelayIsNotRead() {
         let launch = Date()
@@ -521,7 +524,8 @@ extension DockPreferencesTests {
 // MARK: - Private
 
 extension DockPreferencesTests {
-    /// 布置 [用户 tile, 本用例的 tile, 用户 tile]，并模拟 Dock 重启后为本用例的 tile 补全的字段
+    /// 布置三个条目：用户 tile、本用例的 tile、用户 tile，
+    /// 并模拟 Dock 重启后为本用例的 tile 补全的字段
     private func addOwnTileBetweenUserTiles() throws {
         defaults.set([calculatorTile], forKey: "persistent-apps")
 

@@ -87,8 +87,8 @@ App 的代码在 `Sources/Flotilla/` 下，按职责分子目录；stub 的可�
 | `Rendering/` | `FolderIconRenderer` | 把文件夹渲染成图标（需求 2、17） | 01、07 |
 | `StatusBar/` | `StatusBarController` | 状态栏图标与菜单（需求 7） | 01 |
 | `Settings/` | `SettingsWindowController` 等 | 设置窗口 | 01 |
-| 根目录 | `AppDelegate` | 应用生命周期、主菜单、URL 事件分发 | 01 |
-| `Panel/` | `DockFolderPresenter` | 面板的展开、收起、切换；URL 事件的最终接收者 | 03 |
+| 根目录 | `AppDelegate` | App 生命周期、主菜单、URL 事件分发 | 01 |
+| `Panel/` | `DockFolderPresenter` | 面板的展开、收起、切换；展开请求的最终接收者 | 03 |
 | `Dock/` | `DockTileBundleBuilder` | 生成、更新、删除 stub bundle | 02 |
 | `Dock/` | `IconFileWriter` | 把 `NSImage` 写成 `.icns` | 02 |
 | `Dock/` | `DockPreferences` | 读写 `com.apple.dock`，增删 tile，重启 Dock | 02 |

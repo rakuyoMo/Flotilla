@@ -13,7 +13,7 @@ final class FolderTreeDataSourceTests {
     private let directory = FileManager.default.temporaryDirectory
         .appending(path: "FlotillaTests-\(UUID().uuidString)")
 
-    /// 本用例使用的数据源
+    /// 本用例使用的 `FolderStore`
     private let store: FolderStore
 
     /// 根文件夹“工作”
@@ -22,13 +22,13 @@ final class FolderTreeDataSourceTests {
     /// “工作”下的子文件夹“开发”
     private let development: Folder
 
-    /// “工作”下的 App
+    /// “工作”下 App 项的 id
     private let appID: UUID
 
     /// 被测数据源
     private let dataSource: FolderTreeDataSource
 
-    /// 建立“工作 / [开发, Chess]”的树
+    /// 建立根文件夹“工作”，其下依次是子文件夹“开发”与 Chess.app
     init() throws {
         store = FolderStore(fileURL: directory.appending(path: "folders.json"))
 

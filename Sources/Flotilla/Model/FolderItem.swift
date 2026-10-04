@@ -4,16 +4,16 @@ import Foundation
 
 /// 文件夹内的一项：App、子文件夹、文件或网页
 enum FolderItem: Hashable, Identifiable {
-    /// 一个 App
+    /// 一个 App：内容类型符合 `.applicationBundle` 的 App bundle
     case app(AppReference)
 
-    /// 一个子文件夹
+    /// 一个子文件夹：Flotilla 管理的分组，可继续嵌套，不对应磁盘目录
     case folder(Folder)
 
     /// 一个文件：App 以外的一切，包括文件包、访达里的文件夹与卷
     case file(FileReference)
 
-    /// 一个网页
+    /// 一个网页：`http` 或 `https` 网址
     case webPage(WebPageReference)
 
     /// 所包含项的 id
@@ -59,7 +59,9 @@ extension FolderItem {
 // MARK: Codable
 
 extension FolderItem: Codable {
-    /// 先读类型标签，再把同一层级的其余字段交给对应类型解码；子文件夹会继续递归解码，因此支持任意嵌套深度
+    /// 先读类型标签，再把同一层级的其余字段交给对应类型解码；
+    /// 子文件夹会继续递归解码，因此支持任意嵌套深度；
+    /// 类型标签缺失或取值未知、字段解码失败时抛出解码错误
     init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: FolderItemCodingKey.self)
 

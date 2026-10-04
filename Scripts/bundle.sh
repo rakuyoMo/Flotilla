@@ -27,7 +27,7 @@ cp "$BIN_DIR/$APP_NAME" "$APP_PATH/Contents/MacOS/$APP_NAME"
 cp "$BIN_DIR/$TILE_NAME" "$APP_PATH/Contents/MacOS/$TILE_NAME"
 cp "Sources/$APP_NAME/Info.plist" "$APP_PATH/Contents/Info.plist"
 
-# 五种语言的界面文字
+# 五种语言的界面文字与隐私授权框里的用途说明
 cp -R "Sources/$APP_NAME/Resources/"*.lproj "$APP_PATH/Contents/Resources/"
 
 # App 图标：白天版与夜间版的母版各生成一份 icns；

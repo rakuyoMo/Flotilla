@@ -18,7 +18,7 @@
 - 同一个文件夹里，同类且 URL 相同的项只出现一次；网页只比网址，标题不同也算同一个网页。
 - 文件与网页和 App 一样只能放在文件夹里，不能放在根层级。
 - tile 与面板里子文件夹图标的预览（需求 2）按顺序取前几项，只跳过子文件夹，App、文件与网页都算，见 07。
-- 本阶段不新增本地化文字；“添加文件…”与预览数量的新文字见 07。
+- 本阶段不新增本地化文字；“添加文件…”与预览数量的文字见 07。
 
 ## 数据模型
 
@@ -51,7 +51,7 @@ enum FolderItem: Codable, Hashable, Identifiable {
 }
 ```
 
-- `FileReference`：`displayName` 为 `FileManager.default.displayName(atPath:)`，`icon` 为 `NSWorkspace.shared.icon(forFile:)`，与 `AppReference` 相同；名称以“.”开头、没有扩展名的文件与访达里的文件夹按内容类型取，见 08 的需求 23。
+- `FileReference`：`displayName` 为 `FileManager.default.displayName(atPath:)`，`icon` 为 `NSWorkspace.shared.icon(forFile:)`，与 `AppReference` 相同；名称以 `.` 开头、没有扩展名的文件与访达里的文件夹按内容类型取，见 08 的需求 23。
   - 访达里的文件夹的层级里，面板网格另给文件换上内容缩略图，见 08 的“文件的内容缩略图”
 - `WebPageReference`：
   - `displayName`：有标题用标题，没有时用 `url.absoluteString`

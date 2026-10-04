@@ -153,7 +153,7 @@ enum FolderPanelMetrics {
     /// 收起时淡出的时长（秒），早于缩放结束，收起约 0.15 秒时已看不见
     static let collapseFadeDuration: CFTimeInterval = 0.15
 
-    /// 进入子文件夹时旧层级原地淡出的时长（秒）
+    /// 进入下一层时旧层级原地淡出的时长（秒）
     static let enterFadeOutDuration: CFTimeInterval = 0.08
 
     /// 返回上一层时父层级原地淡入的时长（秒）

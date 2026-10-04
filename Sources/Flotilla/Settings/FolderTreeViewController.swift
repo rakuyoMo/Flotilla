@@ -3,14 +3,15 @@ import UniformTypeIdentifiers
 
 // MARK: - FolderTreeViewController
 
-/// 设置窗口的文件夹区：展示完整的文件夹树，提供新建、添加 App、添加文件、添加到 Dock、删除、重命名与拖拽；
-/// tile 不在 Dock 上的根文件夹标出“不在 Dock 上”
+/// 设置窗口的文件夹区：
+/// 展示完整的文件夹树，提供新建、添加 App、添加文件、添加到 Dock、删除、重命名与拖放；
+/// 被拖出 Dock 的根文件夹标出“不在 Dock 上”
 @MainActor
 final class FolderTreeViewController: NSViewController {
     /// 新建文件夹的默认名称
     private static let untitledFolderName = String(
         localized: "folders.untitledFolder",
-        comment: "新建文件夹的默认名称，新建后立即进入改名"
+        comment: "新建文件夹的默认名称，新建后立即进入重命名"
     )
 
     /// 文件夹树的唯一数据源
@@ -45,7 +46,7 @@ final class FolderTreeViewController: NSViewController {
         action: nil
     )
 
-    /// “添加到 Dock”按钮，只有选中 tile 不在 Dock 上的根文件夹时可用
+    /// “添加到 Dock”按钮，只有选中被拖出 Dock 的根文件夹时可用
     private let addToDockButton = NSButton(
         title: String(
             localized: "folders.addToDock",
@@ -101,7 +102,7 @@ final class FolderTreeViewController: NSViewController {
     /// 文件夹区完全由代码构建，不支持从归档解码
     @available(*, unavailable)
     required init?(coder _: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        fatalError("不支持从归档解码")
     }
 
     /// 搭建界面；文件夹树变化时重建，每次同步 Dock tile 之后与 Dock 偏好里的 tile 变化时刷新 tile 的状态
@@ -137,7 +138,8 @@ final class FolderTreeViewController: NSViewController {
 
     /// 重新读取被拖出 Dock 的根文件夹，原地更新各行的状态文字与按钮的可用状态
     ///
-    /// 不重建树：新建的根文件夹正在改名时，随后的同步会发出通知，重建会结束编辑并提交输入到一半的名称
+    /// 不重建树：新建的根文件夹正在重命名时，随后的同步会发出通知，
+    /// 重建会结束编辑并提交输入到一半的名称
     @objc
     func refreshDockStatus() {
         rootFolderIDsRemovedFromDock = dockTileSynchronizer?.rootFolderIDsRemovedFromDock() ?? []
@@ -170,7 +172,8 @@ final class FolderTreeViewController: NSViewController {
 // MARK: NSOutlineViewDelegate
 
 extension FolderTreeViewController: NSOutlineViewDelegate {
-    /// 每一行显示图标与名称
+    /// 每一行显示图标、名称、访达里的文件夹的位置，
+    /// 以及被拖出 Dock 的根文件夹的“不在 Dock 上”
     func outlineView(
         _ outlineView: NSOutlineView,
         viewFor _: NSTableColumn?,
@@ -387,6 +390,8 @@ extension FolderTreeViewController {
         scrollView.autohidesScrollers = true
         scrollView.borderType = .bezelBorder
 
+        // 底部按钮：新建与添加类靠左，删除靠右；
+        // Dock 集成不可用时隐藏“添加到 Dock”
         let newFolderButton = NSButton(
             title: String(
                 localized: "folders.newFolder",

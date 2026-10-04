@@ -11,7 +11,7 @@ final class GeneralSettingsViewController: NSViewController {
         string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
     )
 
-    /// 用户设置
+    /// 用户设置：控件按它取初值，变化时写回
     private let preferences: Preferences
 
     /// 预览图标数的选择器，选项 0–4，第 n 项即数量 n
@@ -27,11 +27,11 @@ final class GeneralSettingsViewController: NSViewController {
         action: nil
     )
 
-    /// 辅助功能权限的授权状态
+    /// 显示辅助功能权限授权状态的文字
     private let accessibilityStatusLabel = NSTextField(labelWithString: "")
 
     /// 创建通用区
-    /// - Parameter preferences: 用户设置
+    /// - Parameter preferences: 控件读写的用户设置
     init(preferences: Preferences) {
         self.preferences = preferences
 
@@ -41,11 +41,12 @@ final class GeneralSettingsViewController: NSViewController {
     /// 通用区完全由代码构建，不支持从归档解码
     @available(*, unavailable)
     required init?(coder _: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        fatalError("不支持从归档解码")
     }
 
     /// 区块标题与三行设置项自上而下排列
     override func loadView() {
+        // 控件按当前设置取初值，变化时写回
         let counts = 0 ... Preferences.maximumPreviewIconCount
         previewIconCountPopUp.addItems(withTitles: counts.map { String($0) })
         previewIconCountPopUp.selectItem(at: preferences.previewIconCount)
@@ -56,6 +57,7 @@ final class GeneralSettingsViewController: NSViewController {
         showsHiddenFilesCheckbox.target = self
         showsHiddenFilesCheckbox.action = #selector(showsHiddenFilesChanged)
 
+        // 辅助功能一行：授权状态与打开系统设置的按钮
         let openSettingsButton = NSButton(
             title: String(
                 localized: "general.openSystemSettings",
@@ -67,6 +69,7 @@ final class GeneralSettingsViewController: NSViewController {
 
         let accessibilityRow = NSStackView(views: [accessibilityStatusLabel, openSettingsButton])
 
+        // 左列的三个标签
         let previewIconCountLabel = NSTextField(
             labelWithString: String(
                 localized: "general.previewIconCount",
@@ -99,6 +102,7 @@ final class GeneralSettingsViewController: NSViewController {
         gridView.rowAlignment = .firstBaseline
         gridView.rowSpacing = 12
 
+        // 区块标题在上、网格在下
         let titleLabel = NSTextField(
             labelWithString: String(
                 localized: "general.sectionTitle",

@@ -7,7 +7,7 @@ import AppKit
 /// 两种外观的底板形状、边线宽度与预览网格完全相同，只有颜色不同；与外观无关的取值见 `FolderIconRenderer`。
 /// 灰度都在 generic gray gamma 2.2 色彩空间里取值。
 ///
-/// 深色取自 macos-dock-folders 的 `glass-dark` 样式，换算到这里的绘制结构：
+/// 深色取自 wjvalue/macos-dock-folders 的 `glass-dark` 样式，换算到这里的绘制结构：
 /// 它的渐变两端是同一灰度色彩空间里的 0.20、0.08，不透明度同为 0.96，
 /// 分别作为渐变两端的灰度与底板整体的不透明度；边线的白色、不透明度 0.16 照搬
 enum FolderIconAppearance {

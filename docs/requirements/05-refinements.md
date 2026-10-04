@@ -9,7 +9,7 @@
 - 用户可以像其它 App 一样把 Flotilla 的 tile 拖出 Dock；拖出后 Flotilla 不再自动把它加回。
 - `DockTileSynchronizer` 只在两种情况下向 Dock 添加 tile：
   1. 根文件夹是新出现的：上一次同步时它还不是根文件夹（新建的根文件夹、被拖成根文件夹的子文件夹）
-     - 启动时的对账把当时的全部根文件夹都视为已同步过：Flotilla 没运行时不会有新的根文件夹出现，此时缺少 tile 的根文件夹都是被用户拖出去的
+     - 启动时的同步把当时的全部根文件夹都视为已同步过：Flotilla 没运行时不会有新的根文件夹出现，此时缺少 tile 的根文件夹都是被用户拖出去的
   2. 用户在设置窗口点了“添加到 Dock”
 - 添加过 tile 的根文件夹先算作“待添加”，直到确认 tile 已经加上。添加 tile 后同步器重启 Dock，旧 Dock 退出后核对新 Dock 读到的偏好（见 02 的“Dock 重启后的核对”）：
   - 核对通过：新拉起的 Dock 读到了期望状态，此刻 Dock 偏好里有 tile 的根文件夹确认加上，不再待添加；此后新 Dock 自己的写回也保留这些条目
@@ -58,7 +58,7 @@
   }
   ```
 
-- 其余对账逻辑不变：stub 照常生成与更新（tile 不在 Dock 上的根文件夹也保留 stub，重新添加时直接引用）；已有 tile 的名称、位置与图标照常更新；多余的 tile 与 stub 照常删除。
+- 其余同步逻辑不变：stub 照常生成与更新（tile 不在 Dock 上的根文件夹也保留 stub，重新添加时直接引用）；已有 tile 的名称、位置与图标照常更新；多余的 tile 与 stub 照常删除。
 - 每次同步结束后发出 `DockTileSynchronizer.didSynchronizeNotification`（`object` 为同步器），设置窗口据此刷新状态。
 - Dock 偏好里的 tile 变化时发出 `DockTileSynchronizer.dockTilesDidChangeNotification`（`object` 为同步器），不触发同步：用户把 tile 拖出 Dock 后，实测 Dock 约 4.1 秒才把删除写进偏好，设置窗口据此立即刷新状态（观察方式见 02 的 `observeTiles(_:)`）。
 
@@ -78,7 +78,7 @@
 - 文件夹树每次重建或刷新状态时读取一次 `rootFolderIDsRemovedFromDock()`，行的状态与按钮的可用状态都用这一次读取的结果；点击“添加到 Dock”后立即刷新一次，状态文字随即消失。
 - `FolderStore.didChangeNotification` 时重建整棵树。
   - `DockTileSynchronizer.didSynchronizeNotification`、`DockTileSynchronizer.dockTilesDidChangeNotification` 与设置窗口成为 key window 时只原地刷新已显示各行的状态与按钮的可用状态，不重建
-    - 新建根文件夹后立即进入改名，随后的同步与 Dock 偏好里 tile 的变化都会发出通知；实测 view-based `NSOutlineView` 在编辑中 `reloadData` 会结束编辑，并把输入到一半的名称提交出去
+    - 新建根文件夹后立即进入重命名，随后的同步与 Dock 偏好里 tile 的变化都会发出通知；实测 view-based `NSOutlineView` 在编辑中 `reloadData` 会结束编辑，并把输入到一半的名称提交出去
   - 设置窗口成为 key window 时另按书签更新 App 与文件的位置，有变化才重建（见 07、08）
 - “新建文件夹”新建根文件夹时，先加入数据源再立即 `holdTile(for:)`（同步器收到变更通知后要等防抖间隔才同步，搁置赶得上）；名称编辑结束（`controlTextDidEndEditing`）时写回名称并 `releaseTile(for:)`
   - 按 Esc 取消编辑时名称保持原样，同样 `releaseTile(for:)`：实测 outline view 取消编辑时不发 `controlTextDidEndEditing`，在 `control(_:textView:doCommandBy:)` 收到 `cancelOperation(_:)` 时解除搁置，返回 false，取消编辑仍交给 outline view
@@ -96,7 +96,7 @@
   - 取自 [macos-dock-folders](https://github.com/wjvalue/macos-dock-folders)（MIT）：从访达把 App 拖到 Dock 上的 tile 时，tile 高亮为放置目标，松手后 Launch Services 以“打开文档”的方式启动 stub；`Alternate` 让 stub 不成为 App 的默认打开方式
   - 接收文件的另一项见 06（需求 14）
 - stub 改写后除 `codesign` 外再执行 `lsregister -f <bundle>`（`/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister`），Launch Services 才知道它接收的文档类型。
-- Dock 上的 tile 之间不能互相拖放：拖动 Dock 图标时整个过程由 Dock 接管，只能排序或拖出。来源只能是访达等其它 App 里的 `.app`。
+- Dock 上的 tile 之间不能互相拖放：拖动 Dock 图标时整个过程由 Dock 接管，只能排序或拖出。来源只能是访达等其它 App。
 
 ### stub 的行为
 
@@ -161,6 +161,8 @@
 | `folders.remove` | Delete | 删除 | 刪除 | 削除 | 삭제 |
 | `general.sectionTitle` | General | 通用 | 一般 | 一般 | 일반 |
 | `general.previewIconCount` | Icons shown in folder icon: | 文件夹图标内显示的图标数量： | 檔案夾圖像內顯示的圖像數量： | フォルダアイコンに表示するアイコンの数： | 폴더 아이콘에 표시할 아이콘 수: |
+| `general.finderFolders` | Finder folders: | 访达里的文件夹： | Finder 裡的檔案夾： | Finderのフォルダ： | Finder 폴더: |
+| `general.showHiddenFiles` | Show hidden files | 显示隐藏文件 | 顯示隱藏檔案 | 不可視ファイルを表示 | 숨김 파일 보기 |
 | `general.accessibility` | Accessibility permission: | 辅助功能权限： | 輔助使用權限： | アクセシビリティの権限： | 손쉬운 사용 권한: |
 | `general.accessibilityGranted` | Granted | 已授权 | 已授權 | 許可済み | 허용됨 |
 | `general.accessibilityNotGranted` | Not granted | 未授权 | 未授權 | 未許可 | 허용되지 않음 |

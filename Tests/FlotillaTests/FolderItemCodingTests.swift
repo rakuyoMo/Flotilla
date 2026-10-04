@@ -237,12 +237,13 @@ struct FolderItemCodingTests {
         )
     }
 
-    /// 引用一个文件
+    /// 按路径新建一个文件项，id 随机、带给定的书签
     private func makeFile(_ path: String, bookmark: Data?) -> FolderItem {
         .file(FileReference(id: UUID(), url: URL(filePath: path), bookmark: bookmark))
     }
 
-    /// 引用一个网页
+    /// 按网址与标题新建一个网页项，id 随机；
+    /// 网址解析不出时抛错
     private func makeWebPage(_ address: String, title: String?) throws -> FolderItem {
         let url = try #require(URL(string: address))
 

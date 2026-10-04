@@ -3,7 +3,8 @@ import Foundation
 
 // MARK: - DockFolderPresenterState
 
-/// 面板展开状态的纯逻辑：把快速路径的鼠标事件、URL 信号与外部点击归并成展开或收起
+/// 面板展开状态的纯逻辑：
+/// 把快速路径的鼠标事件、URL 信号与面板以外的点击归并成展开或收起
 ///
 /// 同一次点击 tile 会先后经过快速路径与 URL 两条路径，这里负责让它只生效一次
 struct DockFolderPresenterState {
@@ -29,7 +30,8 @@ struct DockFolderPresenterState {
 // MARK: - Signals
 
 extension DockFolderPresenterState {
-    /// 鼠标按下（左键、右键、中键）
+    /// 鼠标按下（左键、右键、中键）：按在 Flotilla 的 tile 上时先记下，等抬起再判定；
+    /// 按在其它位置时，面板展开中就收起
     /// - Parameters:
     ///   - folderID: 快速路径识别出的 Flotilla tile；nil 表示按在面板以外的其它位置
     ///   - location: 按下的位置
@@ -52,7 +54,8 @@ extension DockFolderPresenterState {
         return dismissForOutsideClick(isInDockArea: isInDockArea, time: time)
     }
 
-    /// 左键拖动：从 tile 上按下后移动超过阈值即视为拖动 tile，不再展开，并按点击其它位置收起
+    /// 左键拖动：
+    /// 从 tile 上按下后移动超过阈值即视为拖动 tile，不再展开，并按面板以外的点击收起
     mutating func mouseDragged(
         to location: CGPoint,
         time: TimeInterval
@@ -70,7 +73,8 @@ extension DockFolderPresenterState {
 
     /// 左键抬起：完成一次 tile 点击，切换该文件夹的展开状态
     ///
-    /// 按住超过 `longPressDuration` 时 Dock 已弹出 App 菜单，这次抬起不算点击，与拖动 tile 一样按点击其它位置收起
+    /// 按住超过 `longPressDuration` 时 Dock 已弹出 App 菜单，
+    /// 这次抬起不算点击，与拖动 tile 一样按面板以外的点击收起
     mutating func mouseUp(time: TimeInterval) -> DockFolderPresenterTransition {
         guard let press = pendingPress else { return .unchanged }
 
@@ -88,7 +92,9 @@ extension DockFolderPresenterState {
         return toggle(folderID: press.folderID)
     }
 
-    /// stub 打开的 `flotilla://folder/<id>` 到达
+    /// stub 打开的 `flotilla://folder/<id>` 到达：
+    /// 属于快速路径已处理过的点击、或刚因点击 Dock 区域而收起的同一文件夹时忽略，
+    /// 否则切换该文件夹的展开状态
     mutating func receiveURL(
         folderID: UUID,
         time: TimeInterval

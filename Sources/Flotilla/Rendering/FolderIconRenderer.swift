@@ -43,7 +43,7 @@ enum FolderIconRenderer {
     /// - Parameters:
     ///   - folder: 要渲染的文件夹
     ///   - previewIconCount: 叠加的图标数量上限，超出 `0...Preferences.maximumPreviewIconCount` 时夹取
-    ///   - pointSize: 输出图像的边长（点）
+    ///   - pointSize: 输出图像的边长（pt）
     ///   - appearance: 底板按哪种外观取色
     /// - Returns: 用绘制闭包构造的图像，与分辨率无关，调用方可按任意像素尺寸栅格化；
     ///   底板颜色在这里就已定下，不随绘制时的外观变化，外观变了要重新渲染

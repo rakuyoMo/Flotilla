@@ -7,7 +7,7 @@ enum DockTileError: Error {
     /// 无法把图标栅格化成指定像素边长的 PNG
     case rasterizationFailed(pixelSide: Int)
 
-    /// 外部命令以非零状态退出
+    /// 外部命令以非零状态退出：命令路径、退出状态与它写到标准错误的内容
     case commandFailed(path: String, status: Int32, message: String)
 
     /// 无法为 stub 设置自定义图标

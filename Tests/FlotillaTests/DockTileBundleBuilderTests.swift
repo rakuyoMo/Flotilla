@@ -220,7 +220,7 @@ final class DockTileBundleBuilderTests {
         #expect(info["CFBundleDisplayName"] as? String == "日常")
     }
 
-    /// 只改大小写的重命名同样生效：卷宗通常不区分大小写，新旧路径指向同一个文件
+    /// 只改大小写的重命名同样生效：卷通常不区分大小写，新旧路径指向同一个文件
     @Test
     func caseOnlyRenameMovesBundle() throws {
         var folder = makeFolder(name: "work")
@@ -243,7 +243,7 @@ final class DockTileBundleBuilderTests {
         #expect(unnamedFileName == "\(unnamed.id.uuidString).app")
     }
 
-    /// 预览数量变化让图标变化时，改写图标
+    /// 预览数量变化让图标变化时，改写图标：Dock 上 tile 显示的就是 stub 的图标
     @Test
     func iconChangeRewritesIcon() throws {
         let folder = makeFolder(name: "工作")
@@ -290,7 +290,7 @@ final class DockTileBundleBuilderTests {
         #expect(builder.existingBundleURL(for: first.id) == nil)
         #expect(!FileManager.default.fileExists(atPath: removedPath))
 
-        // 对账删掉 Dock 上残留的 tile 后，会对目录早已不存在的根文件夹再删一次 stub，不能报错
+        // 同步时删掉 Dock 上残留的 tile 后，会对目录早已不存在的根文件夹再删一次 stub，不能报错
         #expect(throws: Never.self) {
             try builder.remove(folderID: first.id)
         }

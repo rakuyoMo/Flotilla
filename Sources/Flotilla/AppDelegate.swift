@@ -3,10 +3,10 @@ import os
 
 // MARK: - AppDelegate
 
-/// 应用生命周期、主菜单与 URL 事件分发
+/// App 生命周期、主菜单与 URL 事件分发
 @MainActor
 final class AppDelegate: NSObject {
-    /// 应用生命周期与 URL 事件相关的日志
+    /// App 生命周期与 URL 事件相关的日志
     private nonisolated static let logger = Logger(
         subsystem: "com.rakuyo.flotilla",
         category: "AppDelegate"
@@ -15,10 +15,12 @@ final class AppDelegate: NSObject {
     /// 状态栏图标与菜单；启动完成后创建
     private var statusBarController: StatusBarController?
 
-    /// 让 Dock 上的 tile 与根文件夹保持一致；启动完成后创建
+    /// 让 Dock 上的 tile 与根文件夹保持一致；
+    /// 在 `applicationWillFinishLaunching` 里创建
     private var dockTileSynchronizer: DockTileSynchronizer?
 
-    /// 面板的展开、收起与切换；启动完成后创建
+    /// 面板的展开、收起与切换；
+    /// 在 `applicationWillFinishLaunching` 里创建
     private var dockFolderPresenter: DockFolderPresenter?
 
     /// 让 Dock 与 ⌘Tab 里的 App 图标跟随系统的“图标与小组件样式”

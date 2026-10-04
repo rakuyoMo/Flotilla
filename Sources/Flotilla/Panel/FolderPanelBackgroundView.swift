@@ -5,7 +5,7 @@ import QuartzCore
 
 /// 面板的一个层级：圆角矩形加指向 tile 的尾巴合成一条轮廓，自下而上依次是阴影、材质与内容、边缘线
 ///
-/// 每个层级的背景、标题区与网格是一个整体，进入、返回子文件夹时整体缩放与淡入淡出；
+/// 每个层级的背景、标题区与网格是一个整体，进入下一层、返回上一层时整体缩放与淡入淡出；
 /// 视图四周比轮廓多出 `shadowMargin`，留给阴影
 @MainActor
 final class FolderPanelBackgroundView: NSView {
@@ -63,6 +63,7 @@ final class FolderPanelBackgroundView: NSView {
         buildEdges(in: bounds)
         buildMaterial(bodyRect: bodyRect, in: bounds)
 
+        // 自下而上叠放：阴影、材质与内容、边缘线
         addSubview(shadowView)
         addSubview(materialView)
         addSubview(edgeView)
@@ -71,7 +72,7 @@ final class FolderPanelBackgroundView: NSView {
     /// 背景完全由代码构建，不支持从归档解码
     @available(*, unavailable)
     required init?(coder _: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        fatalError("不支持从归档解码")
     }
 
     /// 面板轮廓：主体是连续曲率的圆角矩形，面向 Dock 的边上长出尾巴，合成一条闭合路径

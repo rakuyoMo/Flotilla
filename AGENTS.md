@@ -55,8 +55,9 @@ Tests/FlotillaTests/    单元测试（Swift Testing）
 Scripts/bundle.sh       打包脚本：组装 .app 并签名
 Scripts/release.sh      发版脚本：改版本号并开 release PR
 docs/requirements/      需求文档：00 为总览，01–08 为按实现顺序拆分的阶段
-.github/workflows/      GitHub Actions：`ci.yml` 检查与构建，`release.yml` 发布新版本
-.claude/skills/release/ Claude Code 的 `release` skill：用自然语言发布新版本
+.github/workflows/      GitHub Actions：ci.yml 检查与构建，release.yml 发布新版本
+.claude/skills/release/ Claude Code 的 release skill：用自然语言发布新版本
+.claude/agents/         Claude Code 的 flotilla-implementer 代理：按阶段需求文档实现功能
 ```
 
 ## 开发注意事项
@@ -112,6 +113,10 @@ docs/requirements/      需求文档：00 为总览，01–08 为按实现顺序
 - 日志、代码注释、文档使用中文
 - 中文与英文之间、中文与数字之间留一个空格
 - 使用中文弯引号（`“”`），不使用直引号（`""`）
+- 照抄系统原生文案的界面文字保持原样，不按本节的空格规则改动
+- `// MARK:` 的分节名：
+  - 顶层的 `// MARK: -` 用英文：类型名由格式化工具生成，`Private`、`Helpers` 等与之一致
+  - 类型体内的用中文
 
 ### 注释
 
@@ -171,7 +176,7 @@ docs/requirements/      需求文档：00 为总览，01–08 为按实现顺序
 ## 工作纪律
 
 - **以验证为目标。** 先定义成功标准，循环到验证通过为止，而不是把步骤走完就算完成
-- **冲突要摆出来，不要折中。** 两种写法互相矛盾时，选一种（更新的、验证更充分的），说明理由，并标出另一种待清理；不要混用
+- **冲突要摆出来，不要折中。** 两种写法互相矛盾时，选一种（更新的、验证更充分的），在回复里说明理由并指出另一种待清理；不要混用
 - **测试验证意图。** 测试要表达“为什么这个行为重要”；业务逻辑改了还不会失败的测试是错的
 - **失败要大声说。** 有步骤被静默跳过，就不能说“完成”；有测试被跳过，就不能说“测试通过”；默认把不确定说出来，而不是藏起来
 

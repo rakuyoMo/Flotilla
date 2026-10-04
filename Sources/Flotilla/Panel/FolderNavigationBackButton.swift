@@ -36,7 +36,7 @@ final class FolderNavigationBackButton: NSView {
     /// 按钮完全由代码构建，不支持从归档解码
     @available(*, unavailable)
     required init?(coder _: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        fatalError("不支持从归档解码")
     }
 
     /// 按当前外观画底色与 chevron
@@ -62,7 +62,7 @@ final class FolderNavigationBackButton: NSView {
         true
     }
 
-    /// 按下：进入按下状态
+    /// 按下：底色换成按下时的颜色，等抬起才判定是否算一次点击
     override func mouseDown(with _: NSEvent) {
         isPressed = true
     }

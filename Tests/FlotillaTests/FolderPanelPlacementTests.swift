@@ -10,16 +10,16 @@ struct FolderPanelPlacementTests {
     /// 面板主体的尺寸（7 项：4 列 2 行）
     private let bodySize = CGSize(width: 546, height: 300)
 
-    /// 底部 Dock：1470 × 956 的屏幕，菜单栏高 33，Dock 自动隐藏
+    /// 底部 Dock：1470 × 956 pt 的屏幕，菜单栏高 33 pt，Dock 自动隐藏
     private let bottomVisibleFrame = CGRect(x: 0, y: 4, width: 1470, height: 919)
 
-    /// 左侧 Dock：Dock 宽 94
+    /// 左侧 Dock：Dock 宽 94 pt
     private let leftVisibleFrame = CGRect(x: 94, y: 0, width: 1376, height: 923)
 
-    /// 右侧 Dock：Dock 宽 94
+    /// 右侧 Dock：Dock 宽 94 pt
     private let rightVisibleFrame = CGRect(x: 0, y: 0, width: 1376, height: 923)
 
-    /// 底部 Dock 上的 tile：68 × 84，顶边距屏幕底边 89 pt（AX 实测）
+    /// 底部 Dock 上的 tile：68 × 84 pt，顶边距屏幕底边 89 pt（AX 实测）
     private let bottomTile = CGRect(x: 400, y: 5, width: 68, height: 84)
 
     /// 尾巴尖端到面板主体的距离

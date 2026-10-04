@@ -5,9 +5,10 @@ import Testing
 
 // MARK: - StatusBarIconTests
 
-/// 状态栏图标（需求 7）：由系统按菜单栏深浅着色、在状态栏按钮里居中，1x 屏幕上直线边缘不发虚
+/// 状态栏图标（需求 7）：由系统按菜单栏深浅着色、在状态栏按钮里居中，1 倍屏上直线边缘不发虚
 struct StatusBarIconTests {
-    /// 必须是 template 图：否则深色菜单栏上仍画成黑色，看不见
+    /// 必须是 template 图：否则深色菜单栏上仍画成黑色，看不见；
+    /// 无障碍描述为“Flotilla”，旁白读得出这个状态栏图标
     @Test
     func imageIsTemplateWithAccessibilityDescription() {
         let image = StatusBarIcon.makeImage()
@@ -30,7 +31,7 @@ struct StatusBarIconTests {
         #expect(ink.maxX == 29)
     }
 
-    /// 1x 下桅杆占满 x = 6 这一列、甲板占满 y = 13 这一行、船底占满 y = 15 这一行，旁边的像素全透明
+    /// 1 倍下桅杆占满 x = 6 这一列、甲板占满 y = 13 这一行、船底占满 y = 15 这一行，旁边的像素全透明
     @Test
     func straightEdgesAlignToPixelsAt1x() throws {
         let bitmap = try rasterize(StatusBarIcon.makeImage(), scale: 1)
@@ -55,7 +56,7 @@ struct StatusBarIconTests {
 // MARK: - Private
 
 extension StatusBarIconTests {
-    /// 按 scale 倍像素栅格化图像
+    /// 按 `scale` 倍像素栅格化图像
     private func rasterize(_ image: NSImage, scale: Int) throws -> NSBitmapImageRep {
         let bitmap = try #require(
             NSBitmapImageRep(
@@ -72,6 +73,7 @@ extension StatusBarIconTests {
             )
         )
 
+        // 位图的点尺寸设成图像尺寸，绘制时按像素数与点数之比换算倍率
         bitmap.size = image.size
 
         NSGraphicsContext.saveGraphicsState()
@@ -82,7 +84,7 @@ extension StatusBarIconTests {
         return bitmap
     }
 
-    /// 所有不透明像素的包围盒，以像素为单位，y 轴自上而下
+    /// 所有画过的像素（不透明度大于 0）的包围盒，以像素为单位，y 轴自上而下
     private func inkBounds(of bitmap: NSBitmapImageRep) -> (
         minX: Int,
         maxX: Int,

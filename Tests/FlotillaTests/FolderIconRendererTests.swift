@@ -5,7 +5,8 @@ import Testing
 
 // MARK: - FolderIconRendererTests
 
-/// 文件夹图标渲染（需求 2）：底板的形状、预览网格的几何、不同预览数量下的输出，以及深浅两种外观的底板
+/// 文件夹图标渲染（需求 2、17）：底板的形状、预览网格的几何、不同预览数量与不同种类的项下的输出，
+/// 以及深浅两种外观的底板
 ///
 /// 放在主线程串行执行：并发栅格化同一个 App 图标时，偶尔会画出不同的像素
 @MainActor
@@ -331,7 +332,7 @@ extension FolderIconRendererTests {
         return .webPage(WebPageReference(id: UUID(), url: url, title: nil))
     }
 
-    /// 构造包含前 appCount 个系统 App 的文件夹
+    /// 构造包含前 `appCount` 个系统 App 的文件夹
     private func makeFolder(appCount: Int) -> Folder {
         Folder(
             id: UUID(),
@@ -357,7 +358,7 @@ extension FolderIconRendererTests {
             && abs(lhs.height - rhs.height) < tolerance
     }
 
-    /// 以 64 点渲染文件夹图标，再按 2 倍像素栅格化，返回像素数据用于比较
+    /// 以 64 pt 渲染文件夹图标，再按 2 倍像素栅格化，返回像素数据用于比较
     private func renderedPixels(
         of folder: Folder,
         previewIconCount: Int,
@@ -375,7 +376,7 @@ extension FolderIconRendererTests {
         return try #require(bitmap.tiffRepresentation)
     }
 
-    /// 只有底板的文件夹图标，以 1024 点渲染、按 1024 像素栅格化
+    /// 只有底板的文件夹图标，以 1024 pt 渲染、按 1024 像素栅格化
     private func rasterizedPlate(appearance: FolderIconAppearance) throws -> NSBitmapImageRep {
         let image = FolderIconRenderer.render(
             folder: makeFolder(appCount: 0),
@@ -387,7 +388,7 @@ extension FolderIconRendererTests {
         return try rasterize(image, pixelSide: 1024)
     }
 
-    /// 把图像栅格化为边长 pixelSide 像素的位图
+    /// 把图像栅格化为边长 `pixelSide` 像素的位图
     private func rasterize(_ image: NSImage, pixelSide: Int) throws -> NSBitmapImageRep {
         let bitmap = try #require(
             NSBitmapImageRep(
@@ -404,6 +405,7 @@ extension FolderIconRendererTests {
             )
         )
 
+        // 位图的点尺寸设成图像尺寸，绘制时按像素数与点数之比换算倍率
         bitmap.size = image.size
 
         NSGraphicsContext.saveGraphicsState()

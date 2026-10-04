@@ -81,7 +81,8 @@ final class DockPreferences {
 
     /// 构造一个 tile 条目，字段对照 Dock 自己写出的 App 条目；`book` 等其余字段由 Dock 启动后自行补全
     ///
-    /// `file-type = 41` 与本机 Dock 为用户添加的 App 写出的取值一致，Dock 重启后原样保留
+    /// 实测（macOS 27）`file-type = 41` 与 Dock 为用户添加的 App 写出的取值一致，
+    /// Dock 重启后原样保留
     /// - Parameters:
     ///   - tileURL: stub bundle 的文件 URL
     ///   - label: tile 的名称
@@ -155,6 +156,7 @@ extension DockPreferences {
     ///   - rewrittenTileURLs: stub 刚被改写过的 tile，条目换新的 GUID
     ///   - staleDirectories: 要删除 tile 的 stub 目录
     /// - Returns: 是否改动了偏好
+    /// - Throws: 本次运行首次写入前备份 Dock 偏好失败时抛出，偏好不改动
     func apply(
         _ expectedTiles: [ExpectedDockTile],
         rewrittenTileURLs: Set<URL>,
@@ -191,6 +193,7 @@ extension DockPreferences {
     /// - Parameters:
     ///   - tileURL: stub bundle 的文件 URL
     ///   - label: tile 的名称
+    /// - Throws: 本次运行首次写入前备份 Dock 偏好失败时抛出，偏好不改动
     func add(tileURL: URL, label: String) throws {
         let guid = Self.makeGUID()
         let entry = Self.tileEntry(tileURL: tileURL, label: label, guid: guid)
@@ -205,6 +208,7 @@ extension DockPreferences {
     /// 只比对条目里记录的 URL，不访问磁盘：用户在访达里删掉了 stub bundle 时同样能删除
     /// - Parameter tileDirectory: 根文件夹的 stub 独占的目录
     /// - Returns: 是否确实删除了条目
+    /// - Throws: 本次运行首次写入前备份 Dock 偏好失败时抛出，偏好不改动
     func remove(tileDirectory: URL) throws -> Bool {
         var tiles = tiles
         guard let index = index(ofDirectory: tileDirectory, in: tiles) else { return false }
@@ -217,17 +221,21 @@ extension DockPreferences {
         return true
     }
 
-    /// 让 tile 指向 stub 的当前位置、显示文件夹的当前名称；条目原地替换，Dock 里用户拖出来的顺序保持不变
+    /// 让 tile 指向 stub 的当前位置、显示文件夹的当前名称；
+    /// 条目原地替换，Dock 里用户拖动排好的顺序保持不变
     ///
-    /// 文件夹改名后 stub 随之改名，URL 变化时一并删掉 Dock 按旧位置生成的书签 `book`，由 Dock 重启后按新 URL 重新生成
+    /// 文件夹重命名后 stub 随之改名，URL 变化时一并删掉 Dock 按旧位置生成的书签 `book`，
+    /// 由 Dock 重启后按新 URL 重新生成
     ///
     /// 实测（macOS 27）Dock 按条目的 `GUID` 缓存 tile 图标，GUID 不变时重启后仍显示旧图标；stub 改写过就换一个新的 GUID。
-    /// 条目的 GUID 不是本次运行写入的值时同样换新：那是 Dock 被终止时写回了旧条目，新图标还没被读取过
+    /// 本次运行写过 GUID 的条目，GUID 却不是写入的值时同样换新：
+    /// 那是 Dock 被终止时写回了旧条目，新图标还没被读取过
     /// - Parameters:
     ///   - tileURL: stub bundle 的当前位置
     ///   - label: tile 的名称
     ///   - isStubRewritten: stub 是否刚被改写
     /// - Returns: 是否确实改动了条目
+    /// - Throws: 本次运行首次写入前备份 Dock 偏好失败时抛出，偏好不改动
     @discardableResult
     func update(tileURL: URL, label: String, isStubRewritten: Bool) throws -> Bool {
         var tiles = tiles
@@ -407,11 +415,13 @@ extension DockPreferences {
         defaults.synchronize()
     }
 
-    /// 把整个偏好域导出到备份目录，并删掉超出保留份数的旧备份
+    /// 把整个偏好域导出到备份目录，并删掉超出保留份数的旧备份；
+    /// 建目录、导出或删除旧备份失败时抛出
     private func backUp() throws {
         let fileManager = FileManager.default
         try fileManager.createDirectory(at: backupDirectory, withIntermediateDirectories: true)
 
+        // 文件名带上精确到秒的时间戳，导出整个偏好域
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "yyyyMMdd-HHmmss"
@@ -433,7 +443,7 @@ extension DockPreferences {
         try pruneBackups()
     }
 
-    /// 只保留最新的几份备份
+    /// 只保留最新的几份备份；列出备份目录或删除旧备份失败时抛出
     private func pruneBackups() throws {
         let fileManager = FileManager.default
 
@@ -453,7 +463,8 @@ extension DockPreferences {
 
     /// 在条目中查找 stub 位于该目录的 tile，不按名称匹配
     ///
-    /// 每个根文件夹的 stub 独占一个目录，文件夹改名时 stub 在目录里改名，按目录匹配才能找到改名前的 tile
+    /// 每个根文件夹的 stub 独占一个目录，文件夹重命名时 stub 在目录里改名，
+    /// 按目录匹配才能找到改名前的 tile
     /// - Parameters:
     ///   - directory: 根文件夹的 stub 独占的目录
     ///   - tiles: 区域内的条目
@@ -516,6 +527,7 @@ extension DockPreferences {
     /// 按进程名找：launchd 拉起的新进程先以 xpcproxy 运行，实测（macOS 27）约 7–10 ms 后才 exec 成 Dock；
     /// 在此之前找不到它，它也还没开始执行 Dock 的代码，读不到偏好
     private static func dockProcesses() -> [(pid: pid_t, launchDate: Date)] {
+        // 先列出本用户的全部进程号，再逐个按进程名筛出 Dock
         let capacity = 4096
         var pids = [pid_t](repeating: 0, count: capacity)
 

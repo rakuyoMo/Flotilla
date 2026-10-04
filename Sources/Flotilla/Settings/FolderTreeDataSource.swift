@@ -36,7 +36,7 @@ final class FolderTreeDataSource: NSObject {
         }
     }
 
-    /// 按 id 查找节点
+    /// 按 id 查找节点；找不到时为 nil
     func node(withID id: UUID) -> FolderTreeNode? {
         var pending = rootNodes
 
@@ -156,6 +156,7 @@ extension FolderTreeDataSource: NSOutlineViewDataSource {
     ) -> Bool {
         let proposedParent = item as? FolderTreeNode
 
+        // 树内拖动：按移动规则换算落点后移动
         if let itemID = Self.draggedItemID(in: info.draggingPasteboard) {
             let destination = moveDestination(
                 for: itemID,
@@ -170,6 +171,7 @@ extension FolderTreeDataSource: NSOutlineViewDataSource {
             return true
         }
 
+        // 从外部拖入：能加入的项追加到目标文件夹末尾
         let items = Self.droppedItems(in: info.draggingPasteboard)
         guard let folder = proposedParent?.folder, !items.isEmpty else { return false }
 

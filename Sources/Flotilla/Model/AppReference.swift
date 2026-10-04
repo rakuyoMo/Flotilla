@@ -41,7 +41,7 @@ extension AppReference {
         FileManager.default.displayName(atPath: url.path(percentEncoded: false))
     }
 
-    /// App 的图标
+    /// App 在访达中的图标
     var icon: NSImage {
         NSWorkspace.shared.icon(forFile: url.path(percentEncoded: false))
     }
@@ -89,7 +89,8 @@ extension AppReference {
         },
         isVolumeMounted: (Data) -> Bool = AppReference.isVolumeMounted(recordedIn:)
     ) -> AppReference? {
-        // 先与文件一样按书签跟随；跟到废纸篓里的不算，位置与书签都保持原样
+        // 先与文件一样按书签跟随；
+        // 跟到废纸篓里的不采用，接着按原路径与 bundle id 判断
         if let followed = relocated(), !Self.isInTrash(followed.url) {
             return followed
         }
