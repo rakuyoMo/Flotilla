@@ -46,6 +46,7 @@ final class GeneralSettingsViewController: NSViewController {
 
     /// 区块标题与三行设置项自上而下排列
     override func loadView() {
+        // 控件按当前设置取初值，变化时写回
         let counts = 0 ... Preferences.maximumPreviewIconCount
         previewIconCountPopUp.addItems(withTitles: counts.map { String($0) })
         previewIconCountPopUp.selectItem(at: preferences.previewIconCount)
@@ -56,6 +57,7 @@ final class GeneralSettingsViewController: NSViewController {
         showsHiddenFilesCheckbox.target = self
         showsHiddenFilesCheckbox.action = #selector(showsHiddenFilesChanged)
 
+        // 辅助功能一行：授权状态与打开系统设置的按钮
         let openSettingsButton = NSButton(
             title: String(
                 localized: "general.openSystemSettings",
@@ -67,6 +69,7 @@ final class GeneralSettingsViewController: NSViewController {
 
         let accessibilityRow = NSStackView(views: [accessibilityStatusLabel, openSettingsButton])
 
+        // 左列的三个标签
         let previewIconCountLabel = NSTextField(
             labelWithString: String(
                 localized: "general.previewIconCount",
@@ -99,6 +102,7 @@ final class GeneralSettingsViewController: NSViewController {
         gridView.rowAlignment = .firstBaseline
         gridView.rowSpacing = 12
 
+        // 区块标题在上、网格在下
         let titleLabel = NSTextField(
             labelWithString: String(
                 localized: "general.sectionTitle",

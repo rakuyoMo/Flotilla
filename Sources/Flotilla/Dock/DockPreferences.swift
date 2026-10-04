@@ -418,6 +418,7 @@ extension DockPreferences {
         let fileManager = FileManager.default
         try fileManager.createDirectory(at: backupDirectory, withIntermediateDirectories: true)
 
+        // 文件名带上精确到秒的时间戳，导出整个偏好域
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "yyyyMMdd-HHmmss"
@@ -522,6 +523,7 @@ extension DockPreferences {
     /// 按进程名找：launchd 拉起的新进程先以 xpcproxy 运行，实测（macOS 27）约 7–10 ms 后才 exec 成 Dock；
     /// 在此之前找不到它，它也还没开始执行 Dock 的代码，读不到偏好
     private static func dockProcesses() -> [(pid: pid_t, launchDate: Date)] {
+        // 先列出本用户的全部进程号，再逐个按进程名筛出 Dock
         let capacity = 4096
         var pids = [pid_t](repeating: 0, count: capacity)
 

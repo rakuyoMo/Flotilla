@@ -388,6 +388,8 @@ extension FolderTreeViewController {
         scrollView.autohidesScrollers = true
         scrollView.borderType = .bezelBorder
 
+        // 底部按钮：新建与添加类靠左，删除靠右；
+        // Dock 集成不可用时隐藏“添加到 Dock”
         let newFolderButton = NSButton(
             title: String(
                 localized: "folders.newFolder",

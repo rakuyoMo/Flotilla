@@ -43,6 +43,7 @@ final class SettingsWindowController: NSWindowController {
 
         super.init(window: window)
 
+        // 内容视图在 `super.init` 之后建：`makeContentView()` 要用到已初始化的 self
         window.contentView = makeContentView()
         window.delegate = self
         window.center()

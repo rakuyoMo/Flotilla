@@ -111,6 +111,7 @@ final class FolderGridView: NSView {
     override func viewDidMoveToSuperview() {
         super.viewDidMoveToSuperview()
 
+        // 父视图换了：先停掉对上一个 clip view 的监听
         NotificationCenter.default.removeObserver(
             self,
             name: NSView.boundsDidChangeNotification,

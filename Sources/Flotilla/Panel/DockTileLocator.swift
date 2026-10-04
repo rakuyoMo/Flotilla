@@ -95,6 +95,7 @@ extension DockTileLocator {
             primaryScreenHeight: primaryScreenHeight
         )
 
+        // 取 Dock 的 AX 树里该点下的元素，按它的 `AXURL` 认出是哪个根文件夹的 stub
         var element: AXUIElement? = nil
         let error = AXUIElementCopyElementAtPosition(
             dockElement,

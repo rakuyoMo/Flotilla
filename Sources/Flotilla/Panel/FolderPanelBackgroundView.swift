@@ -63,6 +63,7 @@ final class FolderPanelBackgroundView: NSView {
         buildEdges(in: bounds)
         buildMaterial(bodyRect: bodyRect, in: bounds)
 
+        // 自下而上叠放：阴影、材质与内容、边缘线
         addSubview(shadowView)
         addSubview(materialView)
         addSubview(edgeView)
