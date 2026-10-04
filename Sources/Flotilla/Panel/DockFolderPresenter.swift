@@ -6,7 +6,8 @@ import os
 /// 面板的展开、收起与切换，是 `flotilla://folder/<id>` URL 事件的最终接收者
 ///
 /// 点击 tile 有两条路径：有辅助功能权限时，全局鼠标监听配合 AX 命中测试直接识别（快速路径）；
-/// 无论有无权限，stub 都会打开 URL（URL 路径）。两路信号与外部点击都交给 `DockFolderPresenterState` 归并
+/// 无论有无权限，stub 都会打开 URL（URL 路径）。
+/// 两路信号与面板以外的点击都交给 `DockFolderPresenterState` 归并
 @MainActor
 final class DockFolderPresenter: NSObject {
     /// 面板相关的日志
@@ -136,7 +137,8 @@ extension DockFolderPresenter {
 
         switch event.type {
         case .leftMouseDown, .rightMouseDown, .otherMouseDown:
-            // 读访达里的文件夹期间的按下（例如点系统隐私授权框）排到读取结束后才处理到，既不算点面板外，也不算点 tile
+            // 读访达里的文件夹期间的按下（例如点系统隐私授权框）排到读取结束后才处理到，
+            // 既不算面板以外的点击，也不算点击 tile
             guard !panelController.readPeriods.contains(event.timestamp) else { return }
 
             // 按住 Control 或 Command 的左键点击由 Dock 弹出菜单或在访达中显示，不启动 stub，不算点击 tile
@@ -165,11 +167,11 @@ extension DockFolderPresenter {
         }
     }
 
-    /// 发往 Flotilla 自己窗口的按下：面板以外的都按外部点击处理
+    /// 发往 Flotilla 自己窗口的按下：不在面板里的都按面板以外的点击处理
     private func handleLocalMouseDown(_ event: NSEvent) {
         guard event.window !== panelController.panel else { return }
 
-        // 读访达里的文件夹期间的按下排到读取结束后才处理到，不算点面板外
+        // 读访达里的文件夹期间的按下排到读取结束后才处理到，不算面板以外的点击
         guard !panelController.readPeriods.contains(event.timestamp) else { return }
 
         apply(state.mouseDown(

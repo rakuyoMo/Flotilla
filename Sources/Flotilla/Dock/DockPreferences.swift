@@ -81,7 +81,8 @@ final class DockPreferences {
 
     /// 构造一个 tile 条目，字段对照 Dock 自己写出的 App 条目；`book` 等其余字段由 Dock 启动后自行补全
     ///
-    /// `file-type = 41` 与本机 Dock 为用户添加的 App 写出的取值一致，Dock 重启后原样保留
+    /// 实测（macOS 27）`file-type = 41` 与 Dock 为用户添加的 App 写出的取值一致，
+    /// Dock 重启后原样保留
     /// - Parameters:
     ///   - tileURL: stub bundle 的文件 URL
     ///   - label: tile 的名称
@@ -220,9 +221,11 @@ extension DockPreferences {
         return true
     }
 
-    /// 让 tile 指向 stub 的当前位置、显示文件夹的当前名称；条目原地替换，Dock 里用户拖出来的顺序保持不变
+    /// 让 tile 指向 stub 的当前位置、显示文件夹的当前名称；
+    /// 条目原地替换，Dock 里用户拖动排好的顺序保持不变
     ///
-    /// 文件夹改名后 stub 随之改名，URL 变化时一并删掉 Dock 按旧位置生成的书签 `book`，由 Dock 重启后按新 URL 重新生成
+    /// 文件夹重命名后 stub 随之改名，URL 变化时一并删掉 Dock 按旧位置生成的书签 `book`，
+    /// 由 Dock 重启后按新 URL 重新生成
     ///
     /// 实测（macOS 27）Dock 按条目的 `GUID` 缓存 tile 图标，GUID 不变时重启后仍显示旧图标；stub 改写过就换一个新的 GUID。
     /// 本次运行写过 GUID 的条目，GUID 却不是写入的值时同样换新：
@@ -460,7 +463,8 @@ extension DockPreferences {
 
     /// 在条目中查找 stub 位于该目录的 tile，不按名称匹配
     ///
-    /// 每个根文件夹的 stub 独占一个目录，文件夹改名时 stub 在目录里改名，按目录匹配才能找到改名前的 tile
+    /// 每个根文件夹的 stub 独占一个目录，文件夹重命名时 stub 在目录里改名，
+    /// 按目录匹配才能找到改名前的 tile
     /// - Parameters:
     ///   - directory: 根文件夹的 stub 独占的目录
     ///   - tiles: 区域内的条目

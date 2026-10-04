@@ -5,7 +5,8 @@ import Foundation
 /// 读访达里的文件夹时，主线程被同步读取占住的各个时段
 ///
 /// 第一次读受保护的位置时系统弹出隐私授权框，读取等到用户回答；这期间的鼠标按下（例如点授权框的按钮）
-/// 排到读取结束后才处理，要按事件自己的发生时间认出它们，不当成点面板外或点 tile
+/// 排到读取结束后才处理，要按事件自己的发生时间认出它们，
+/// 不当成面板以外的点击或点击 tile
 struct FinderFolderReadPeriods {
     /// 记下的各个时段，按读取的先后排列；时间都是系统启动以来的秒数，与 `NSEvent.timestamp` 同一个时钟
     private var periods: [ClosedRange<TimeInterval>] = []

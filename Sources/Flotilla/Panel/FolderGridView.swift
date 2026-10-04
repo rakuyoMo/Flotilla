@@ -85,7 +85,7 @@ final class FolderGridView: NSView {
     /// 网格完全由代码构建，不支持从归档解码
     @available(*, unavailable)
     required init?(coder _: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        fatalError("不支持从归档解码")
     }
 
     /// 某一项的图标中心，自身坐标系；没有这一项时为 nil

@@ -72,7 +72,7 @@ final class FolderPanelBackgroundView: NSView {
     /// 背景完全由代码构建，不支持从归档解码
     @available(*, unavailable)
     required init?(coder _: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        fatalError("不支持从归档解码")
     }
 
     /// 面板轮廓：主体是连续曲率的圆角矩形，面向 Dock 的边上长出尾巴，合成一条闭合路径

@@ -36,7 +36,7 @@ final class FolderNavigationBackButton: NSView {
     /// 按钮完全由代码构建，不支持从归档解码
     @available(*, unavailable)
     required init?(coder _: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        fatalError("不支持从归档解码")
     }
 
     /// 按当前外观画底色与 chevron

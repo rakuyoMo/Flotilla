@@ -52,7 +52,7 @@ final class SettingsWindowController: NSWindowController {
     /// 设置窗口完全由代码构建，不支持从归档解码
     @available(*, unavailable)
     required init?(coder _: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        fatalError("不支持从归档解码")
     }
 
     /// 显示设置窗口并把它带到最前；这是唯一允许激活 Flotilla 的场景

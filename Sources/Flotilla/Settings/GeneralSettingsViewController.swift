@@ -41,7 +41,7 @@ final class GeneralSettingsViewController: NSViewController {
     /// 通用区完全由代码构建，不支持从归档解码
     @available(*, unavailable)
     required init?(coder _: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        fatalError("不支持从归档解码")
     }
 
     /// 区块标题与三行设置项自上而下排列

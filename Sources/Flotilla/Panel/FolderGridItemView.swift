@@ -97,7 +97,7 @@ final class FolderGridItemView: NSView {
     /// 单元格完全由代码构建，不支持从归档解码
     @available(*, unavailable)
     required init?(coder _: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        fatalError("不支持从归档解码")
     }
 
     /// 图标按中心定位；名称水平居中，按基线定位

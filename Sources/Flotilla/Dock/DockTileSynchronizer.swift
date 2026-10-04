@@ -18,10 +18,11 @@ final class DockTileSynchronizer: NSObject {
         "DockTileSynchronizer.dockTilesDidChange"
     )
 
-    /// stub 图标的渲染边长（点），与 iconset 的最大一档一致
+    /// stub 图标的渲染边长（pt），与 iconset 的最大一档一致
     private static let iconPointSize: CGFloat = 512
 
-    /// 合并连续变更的防抖间隔：拖拽、连续添加时只在最后一次变更之后同步一次，避免反复重启 Dock
+    /// 合并连续变更的防抖间隔：
+    /// 拖动、连续添加时只在最后一次变更之后同步一次，避免反复重启 Dock
     private static let debounceInterval = Duration.milliseconds(500)
 
     /// 一次同步最多重启 Dock 的次数：补写赶不上新 Dock 读取偏好时再重启一次，超过就放弃
@@ -77,7 +78,7 @@ final class DockTileSynchronizer: NSObject {
         )
     }
 
-    /// 先对账一次，再订阅文件夹树、设置、系统外观与 Dock 偏好的变更
+    /// 先同步一次，再订阅文件夹树、设置、系统外观与 Dock 偏好的变更
     func start() {
         synchronize()
 
@@ -98,7 +99,7 @@ final class DockTileSynchronizer: NSObject {
         // 观察渲染 stub 图标时读取的同一个值：App 没有固定外观，这个值跟随系统的深浅；
         // 它在主线程上变化，观察回调也在主线程。
         // 深浅切换后底板颜色变了，同步时 stub 被改写、tile 换新的 GUID，Dock 因此重启一次：
-        // Dock 按 GUID 缓存 tile 图标，不重启不会换图（见 02 文档）
+        // Dock 按 GUID 缓存 tile 图标，不重启不会换图
         appearanceObservation = NSApp.observe(\.effectiveAppearance) { [weak self] _, _ in
             MainActor.assumeIsolated {
                 self?.scheduleSynchronization()
@@ -132,7 +133,8 @@ final class DockTileSynchronizer: NSObject {
         scheduleSynchronization()
     }
 
-    /// 新建的根文件夹开始输入名称：名称定下来之前不添加 tile，免得 tile 先以默认名出现、改名后 Dock 再重启一次
+    /// 新建的根文件夹开始输入名称：
+    /// 名称定下来之前不添加 tile，免得 tile 先以默认名出现、重命名后 Dock 再重启一次
     func holdTile(for folderID: UUID) {
         additionTracker.hold(folderID: folderID)
     }
@@ -160,8 +162,9 @@ extension DockTileSynchronizer {
         }
     }
 
-    /// 按当前的根文件夹对账：更新 stub，把 tile 的期望状态写进 Dock 偏好；偏好有改动时重启 Dock，
-    /// 等新 Dock 读到期望状态后才算同步结束；结束时清理多余的 stub 并发出 `didSynchronizeNotification`
+    /// 按当前的根文件夹同步：更新 stub，把 tile 的期望状态写进 Dock 偏好；
+    /// 偏好有改动时重启 Dock，等新 Dock 读到期望状态后才算同步结束；
+    /// 结束时清理多余的 stub 并发出 `didSynchronizeNotification`
     private func synchronize() {
         let rootFolders = store.rootFolders
 
@@ -198,7 +201,8 @@ extension DockTileSynchronizer {
                 restartCount: 1
             )
         } catch {
-            // 偏好没有写入，多余的 tile 可能还在 Dock 上：保留它们的 stub，下次对账再删
+            // 偏好没有写入，多余的 tile 可能还在 Dock 上：
+            // 保留它们的 stub，下次同步再删
             Self.logger.error("写入 Dock 偏好失败：\(error.localizedDescription, privacy: .public)")
 
             NotificationCenter.default.post(name: Self.didSynchronizeNotification, object: self)

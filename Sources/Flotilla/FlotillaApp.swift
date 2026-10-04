@@ -2,10 +2,10 @@ import AppKit
 
 // MARK: - FlotillaApp
 
-/// Flotilla 应用入口
+/// Flotilla 的入口
 @main
 enum FlotillaApp {
-    /// 创建应用、挂上 `AppDelegate` 并启动 AppKit 主循环
+    /// 创建 `NSApplication`、挂上 `AppDelegate` 并启动 AppKit 主循环
     @MainActor
     static func main() {
         let application = NSApplication.shared

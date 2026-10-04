@@ -3,10 +3,10 @@ import os
 
 // MARK: - AppDelegate
 
-/// 应用生命周期、主菜单与 URL 事件分发
+/// App 生命周期、主菜单与 URL 事件分发
 @MainActor
 final class AppDelegate: NSObject {
-    /// 应用生命周期与 URL 事件相关的日志
+    /// App 生命周期与 URL 事件相关的日志
     private nonisolated static let logger = Logger(
         subsystem: "com.rakuyo.flotilla",
         category: "AppDelegate"

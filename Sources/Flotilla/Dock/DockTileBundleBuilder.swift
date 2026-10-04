@@ -87,7 +87,8 @@ extension DockTileBundleBuilder {
         let fileManager = FileManager.default
         let bundleURL = bundleURL(for: folder)
 
-        // 文件夹改名：原来的 stub 在自己的目录里改名，Dock 条目里的书签仍指向同一个文件
+        // 文件夹重命名：原来的 stub 在自己的目录里改名，
+        // Dock 条目里的书签仍指向同一个文件
         if
             let existingURL = existingBundleURL(for: folder.id),
             existingURL.lastPathComponent != bundleURL.lastPathComponent
@@ -186,7 +187,8 @@ extension DockTileBundleBuilder {
 
     /// 根文件夹的 stub 独占的目录：`<directory>/<id>`
     ///
-    /// 目录名只取决于 id，不随文件夹改名变化；Dock 偏好按它匹配该根文件夹的 tile，stub 本身是否还在都不影响
+    /// 目录名只取决于 id，不随文件夹重命名变化；
+    /// Dock 偏好按它匹配该根文件夹的 tile，stub 本身是否还在都不影响
     func folderDirectory(for folderID: UUID) -> URL {
         directory.appending(path: folderID.uuidString, directoryHint: .isDirectory)
     }

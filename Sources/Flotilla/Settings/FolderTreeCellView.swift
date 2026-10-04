@@ -99,7 +99,7 @@ final class FolderTreeCellView: NSTableCellView {
     /// 行视图完全由代码构建，不支持从归档解码
     @available(*, unavailable)
     required init?(coder _: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        fatalError("不支持从归档解码")
     }
 
     /// 用节点内容填充这一行

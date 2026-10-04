@@ -68,7 +68,7 @@ enum IconFileWriter {
             throw DockTileError.rasterizationFailed(pixelSide: pixelSide)
         }
 
-        // 点尺寸等于像素尺寸，绘制时 1 点对应 1 像素
+        // 点尺寸等于像素尺寸，绘制时 1 pt 对应 1 像素
         let canvas = NSRect(x: 0, y: 0, width: pixelSide, height: pixelSide)
         bitmap.size = canvas.size
 
