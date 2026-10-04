@@ -384,7 +384,7 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
     - 到底之后等的是 QuickLook 生成这一屏新文件，与首屏相当
     - 一行一行滚到底（同一时段、同一方式），每一步同步补建加请求、取消：中位 9.9–12.3 ms、p90 15.7–17.8 ms（两次）
 
-  - 屏上实测（release 构建，面板 5 行、7 列；屏上的时刻从 60 帧/秒的录屏逐帧读，请求与生成的时刻取自 QuickLook 缩略图服务的统一日志）：
+  - 屏上实测（release 构建，面板 5 行、7 列；屏上的时刻从 60 帧 / 秒的录屏逐帧读，请求与生成的时刻取自 QuickLook 缩略图服务的统一日志）：
     - 第一次进入一个目录，文件都从没生成过缩略图：
       - 请求在松开后几十毫秒内全部发出，之后的时间都在 QuickLook 生成；屏上换上比 QuickLook 交出结果晚 10–60 ms
       - 从转场开始到首屏全部换上，随文件数与 QuickLook 当时的负载，在约 50 ms 到 0.62 s 之间
