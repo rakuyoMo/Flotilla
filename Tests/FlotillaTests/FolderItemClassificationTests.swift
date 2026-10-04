@@ -194,7 +194,9 @@ final class FolderItemClassificationTests {
             case .app(let viewerApp) = viewer,
             case .app(let toolApp) = tool
         else {
-            Issue.record("App bundle 应当是 App：\(String(describing: viewer))、\(String(describing: tool))")
+            Issue.record(
+                "App bundle 应当是 App：\(String(describing: viewer))、\(String(describing: tool))"
+            )
             return
         }
 

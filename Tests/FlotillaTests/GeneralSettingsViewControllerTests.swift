@@ -70,7 +70,10 @@ final class GeneralSettingsViewControllerTests {
             if let button = control as? NSButton {
                 button.title = try #require(table[button.title], "表里没有 \(button.title)")
             } else {
-                control.stringValue = try #require(table[control.stringValue], "表里没有 \(control.stringValue)")
+                control.stringValue = try #require(
+                    table[control.stringValue],
+                    "表里没有 \(control.stringValue)"
+                )
             }
         }
 

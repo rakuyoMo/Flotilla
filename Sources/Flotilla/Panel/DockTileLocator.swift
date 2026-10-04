@@ -70,7 +70,9 @@ extension DockTileLocator {
             return DockTileAnchor(tileFrame: tileFrame, edge: edge, screen: screen)
         }
 
-        Self.logger.notice("未能通过辅助功能定位 tile，改用鼠标位置：\(folderID.uuidString, privacy: .public)")
+        Self.logger.notice(
+            "未能通过辅助功能定位 tile，改用鼠标位置：\(folderID.uuidString, privacy: .public)"
+        )
 
         return fallbackAnchor(edge: edge)
     }

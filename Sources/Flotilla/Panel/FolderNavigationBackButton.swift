@@ -44,7 +44,8 @@ final class FolderNavigationBackButton: NSView {
         let appearance = FolderPanelAppearance(effectiveAppearance)
         let insets = appearance.backButtonBezelInsets
 
-        // 底色可见部分：深色贴 frame 顶边、最下面 1 pt 不画，浅色再向内缩、下方留出投影的位置；按钮不是 flipped，底边内缩加在 minY 上
+        // 底色可见部分：深色贴 frame 顶边、最下面 1 pt 不画，浅色再向内缩、下方留出投影的位置；
+        // 按钮不是 flipped，底边内缩加在 minY 上
         let bezel = CGRect(
             x: bounds.minX + insets.left,
             y: bounds.minY + insets.bottom,

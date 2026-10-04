@@ -72,6 +72,7 @@ struct FolderGridLayout {
             width: CGFloat(columnCount) * cell,
             height: CGFloat(rowCount) * cell
         )
+
         needsScrolling = rowCount > visibleRowCount
 
         bodySize = CGSize(

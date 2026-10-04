@@ -167,7 +167,10 @@ struct DockTileAdditionTrackerTests {
         )
 
         tracker.release(folderID: newID)
-        let releasedIDs = tracker.folderIDsToAdd(rootFolderIDs: rootIDs, onDockFolderIDs: [existingID])
+        let releasedIDs = tracker.folderIDsToAdd(
+            rootFolderIDs: rootIDs,
+            onDockFolderIDs: [existingID]
+        )
 
         #expect(heldIDs.isEmpty)
         #expect(heldRemovedIDs.isEmpty)
@@ -273,7 +276,10 @@ struct DockTileAdditionTrackerTests {
         var tracker = DockTileAdditionTracker(rootFolderIDs: [])
 
         _ = tracker.folderIDsToAdd(rootFolderIDs: [newID], onDockFolderIDs: [])
-        let pendingRemovedIDs = tracker.removedFolderIDs(rootFolderIDs: [newID], onDockFolderIDs: [])
+        let pendingRemovedIDs = tracker.removedFolderIDs(
+            rootFolderIDs: [newID],
+            onDockFolderIDs: []
+        )
 
         _ = tracker.folderIDsToAdd(rootFolderIDs: [newID], onDockFolderIDs: [newID])
         let draggedOutIDs = tracker.removedFolderIDs(rootFolderIDs: [newID], onDockFolderIDs: [])
