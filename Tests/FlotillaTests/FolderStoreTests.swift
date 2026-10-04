@@ -423,6 +423,7 @@ extension FolderStoreTests {
 
         return folder.items.compactMap {
             guard case .app(let app) = $0 else { return nil }
+
             return app.url
         }
     }

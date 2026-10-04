@@ -100,7 +100,11 @@ struct FolderItemCodingTests {
         let json = Data(
             #"""
             [
-                {"type": "file", "id": "\#(fileID.uuidString)", "url": "file:///Users/Shared/report.pdf"}
+              {
+                "type": "file",
+                "id": "\#(fileID.uuidString)",
+                "url": "file:///Users/Shared/report.pdf"
+              }
             ]
             """#.utf8
         )
@@ -183,8 +187,17 @@ struct FolderItemCodingTests {
         let json = Data(
             #"""
             [
-                {"type": "app", "id": "\#(appID.uuidString)", "url": "file:///System/Applications/Chess.app/"},
-                {"type": "folder", "id": "\#(folderID.uuidString)", "name": "子文件夹", "items": []}
+              {
+                "type": "app",
+                "id": "\#(appID.uuidString)",
+                "url": "file:///System/Applications/Chess.app/"
+              },
+              {
+                "type": "folder",
+                "id": "\#(folderID.uuidString)",
+                "name": "子文件夹",
+                "items": []
+              }
             ]
             """#.utf8
         )

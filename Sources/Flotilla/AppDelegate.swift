@@ -154,6 +154,7 @@ extension AppDelegate {
                 comment: "主菜单里“编辑”菜单的标题"
             )
         )
+
         editMenu.items = [
             NSMenuItem(
                 title: String(
@@ -164,7 +165,9 @@ extension AppDelegate {
                 keyEquivalent: "z"
             ),
             redoItem,
+
             .separator(),
+
             NSMenuItem(
                 title: String(
                     localized: "mainMenu.cut",
@@ -189,6 +192,7 @@ extension AppDelegate {
                 action: #selector(NSText.paste(_:)),
                 keyEquivalent: "v"
             ),
+
             NSMenuItem(
                 title: String(
                     localized: "mainMenu.selectAll",

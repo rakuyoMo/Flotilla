@@ -121,7 +121,13 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
 - bundle id 的 JSON 键 `bundleIdentifier`，nil 时不写；没有这个键的数据照常解码，bundle id 为 nil
 
   ```json
-  { "type": "app", "id": "…", "url": "file:///Applications/Safari.app/", "bookmark": "Ym9va…", "bundleIdentifier": "com.apple.Safari" }
+  {
+    "type": "app",
+    "id": "…",
+    "url": "file:///Applications/Safari.app/",
+    "bookmark": "Ym9va…",
+    "bundleIdentifier": "com.apple.Safari"
+  }
   ```
 
 - `FolderStore.updateItemLocations(in:)` 按书签更新 App 项与文件项：App 项用 `relocatedApp()`，文件项用 `relocated()`；`FolderTreeViewController.updateItemLocations()` 同理

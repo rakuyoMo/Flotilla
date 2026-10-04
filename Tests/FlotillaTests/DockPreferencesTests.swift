@@ -374,6 +374,7 @@ extension DockPreferencesTests {
             path: "Dock Tiles/\(UUID().uuidString)",
             directoryHint: .isDirectory
         )
+
         try preferences.add(tileURL: staleDirectory.appending(path: "旧.app"), label: "旧")
 
         let launchTiles = storedTiles()
@@ -392,6 +393,7 @@ extension DockPreferencesTests {
             rewrittenTileURLs: [renamed],
             removingTilesIn: [staleDirectory]
         )
+
         let writtenGUID = try #require(storedTiles()[1]["GUID"] as? Int)
 
         // 模拟被终止的 Dock 写回启动时读到的全部条目
@@ -415,7 +417,13 @@ extension DockPreferencesTests {
         #expect(restoredGUID != writtenGUID)
         #expect(try plistData(tiles[0]) == plistData(calculatorTile))
 
-        #expect(try !preferences.apply(expectedTiles, rewrittenTileURLs: [], removingTilesIn: [staleDirectory]))
+        #expect(
+            try !preferences.apply(
+                expectedTiles,
+                rewrittenTileURLs: [],
+                removingTilesIn: [staleDirectory]
+            )
+        )
     }
 
     /// Dock 没有写回时再应用同一份期望不改动偏好：重启 Dock 后的核对不会凭空补写、再重启一次
@@ -430,6 +438,7 @@ extension DockPreferencesTests {
             rewrittenTileURLs: [tileURL],
             removingTilesIn: []
         )
+
         let written = try plistData(storedTiles()[1])
 
         let isRewritten = try preferences.apply(
@@ -472,10 +481,12 @@ extension DockPreferencesTests {
             writtenAt: launch,
             dockLaunchedAt: nil
         )
+
         let isReadBeforeLaunch = DockPreferences.isReadByRelaunchedDock(
             writtenAt: launch.addingTimeInterval(-0.01),
             dockLaunchedAt: launch
         )
+
         let isReadWithinDelay = DockPreferences.isReadByRelaunchedDock(
             writtenAt: launch.addingTimeInterval(readDelay / 2),
             dockLaunchedAt: launch
@@ -496,6 +507,7 @@ extension DockPreferencesTests {
             writtenAt: launch.addingTimeInterval(readDelay),
             dockLaunchedAt: launch
         )
+
         let isReadLater = DockPreferences.isReadByRelaunchedDock(
             writtenAt: launch.addingTimeInterval(readDelay + 1),
             dockLaunchedAt: launch

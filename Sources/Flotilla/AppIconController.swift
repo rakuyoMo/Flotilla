@@ -161,7 +161,13 @@ extension AppIconController {
         // 取 icns 里最大的一张来处理：Dock 放大时也要清晰
         var rect = CGRect(x: 0, y: 0, width: 1024, height: 1024)
 
-        guard let source = nightIcon.cgImage(forProposedRect: &rect, context: nil, hints: nil) else {
+        guard
+            let source = nightIcon.cgImage(
+                forProposedRect: &rect,
+                context: nil,
+                hints: nil
+            )
+        else {
             logger.error("夜间版图标转不成位图，交还默认图标")
             return nil
         }

@@ -83,7 +83,12 @@ extension StatusBarIconTests {
     }
 
     /// 所有不透明像素的包围盒，以像素为单位，y 轴自上而下
-    private func inkBounds(of bitmap: NSBitmapImageRep) -> (minX: Int, maxX: Int, minY: Int, maxY: Int) {
+    private func inkBounds(of bitmap: NSBitmapImageRep) -> (
+        minX: Int,
+        maxX: Int,
+        minY: Int,
+        maxY: Int
+    ) {
         var bounds = (minX: Int.max, maxX: Int.min, minY: Int.max, maxY: Int.min)
 
         for y in 0 ..< bitmap.pixelsHigh {

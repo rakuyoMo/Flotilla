@@ -76,8 +76,10 @@
 - 文件夹树里，tile 不在 Dock 上的根文件夹这一行，在名称右侧显示状态文字“不在 Dock 上”：次要文字颜色（`secondaryLabelColor`）、小号系统字体；在 Dock 上的根文件夹、子文件夹与 App 都不显示。
 - 底部按钮行新增“添加到 Dock”，排在“添加文件…”（见 07）之后；只有选中的是 tile 不在 Dock 上的根文件夹时可用，点击后调用 `addTile(for:)`。
 - 文件夹树每次重建或刷新状态时读取一次 `rootFolderIDsRemovedFromDock()`，行的状态与按钮的可用状态都用这一次读取的结果；点击“添加到 Dock”后立即刷新一次，状态文字随即消失。
-- `FolderStore.didChangeNotification` 时重建整棵树；`DockTileSynchronizer.didSynchronizeNotification`、`DockTileSynchronizer.dockTilesDidChangeNotification` 与设置窗口成为 key window 时只原地刷新已显示各行的状态与按钮的可用状态，不重建；设置窗口成为 key window 时另按书签更新 App 与文件的位置，有变化才重建（见 07、08）。
-  - 新建根文件夹后立即进入改名，随后的同步与 Dock 偏好里 tile 的变化都会发出通知；实测 view-based `NSOutlineView` 在编辑中 `reloadData` 会结束编辑，并把输入到一半的名称提交出去
+- `FolderStore.didChangeNotification` 时重建整棵树。
+  - `DockTileSynchronizer.didSynchronizeNotification`、`DockTileSynchronizer.dockTilesDidChangeNotification` 与设置窗口成为 key window 时只原地刷新已显示各行的状态与按钮的可用状态，不重建
+    - 新建根文件夹后立即进入改名，随后的同步与 Dock 偏好里 tile 的变化都会发出通知；实测 view-based `NSOutlineView` 在编辑中 `reloadData` 会结束编辑，并把输入到一半的名称提交出去
+  - 设置窗口成为 key window 时另按书签更新 App 与文件的位置，有变化才重建（见 07、08）
 - “新建文件夹”新建根文件夹时，先加入数据源再立即 `holdTile(for:)`（同步器收到变更通知后要等防抖间隔才同步，搁置赶得上）；名称编辑结束（`controlTextDidEndEditing`）时写回名称并 `releaseTile(for:)`
   - 按 Esc 取消编辑时名称保持原样，同样 `releaseTile(for:)`：实测 outline view 取消编辑时不发 `controlTextDidEndEditing`，在 `control(_:textView:doCommandBy:)` 收到 `cancelOperation(_:)` 时解除搁置，返回 false，取消编辑仍交给 outline view
 - `SettingsWindowController` 与 `FolderTreeViewController` 通过构造函数拿到同步器，由 `AppDelegate` 传入。Dock 集成不可用（没有 stub 可执行文件，或读不到 Dock 偏好）时同步器为 nil：不显示状态，“添加到 Dock”隐藏。
@@ -177,7 +179,19 @@
 
 ## 单元测试
 
-- `DockTileAdditionTracker`：启动时缺少 tile 的根文件夹不添加；新出现的根文件夹添加；还没确认新 Dock 读到的 tile 不在 Dock 上时不算被拖出、下一次同步再加；新 Dock 读到之后、下一次同步之前被拖出的不再添加；新 Dock 只读到部分 tile 时只确认读到的；同步看到之后再消失不再添加；用户请求的添加；搁置期间不添加也不算被拖出，解除后添加；只有搁置过的才报告解除；搁置期间被删除的不添加；待添加的被删除或不再是根文件夹时不添加；被拖出的判定只包含启动时就缺 tile 的与确认加上之后又消失的，新出现的、待添加的与已要求添加的都不算
+- `DockTileAdditionTracker`：
+  - 启动时缺少 tile 的根文件夹不添加
+  - 新出现的根文件夹添加
+  - 还没确认新 Dock 读到的 tile 不在 Dock 上时不算被拖出、下一次同步再加
+  - 新 Dock 读到之后、下一次同步之前被拖出的不再添加
+  - 新 Dock 只读到部分 tile 时只确认读到的
+  - 同步看到之后再消失不再添加
+  - 用户请求的添加
+  - 搁置期间不添加也不算被拖出，解除后添加
+  - 只有搁置过的才报告解除
+  - 搁置期间被删除的不添加
+  - 待添加的被删除或不再是根文件夹时不添加
+  - 被拖出的判定只包含启动时就缺 tile 的与确认加上之后又消失的，新出现的、待添加的与已要求添加的都不算
 - `DockTileRequest`：两种 URL 的解析，`path` 里的空格与中文，多个 `path` 保持顺序；scheme、host、层级、id 不符或没有 `path` 的 URL 一律为 nil
 - stub 的 Info.plist 含上述 `CFBundleDocumentTypes`
 - 本地化：五张 `Localizable.strings` 都能解析、键集合完全相同、没有空值；代码里 `String(localized:` 引用的每个键都在表里，表里的每个键都被代码引用

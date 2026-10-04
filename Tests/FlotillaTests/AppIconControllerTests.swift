@@ -15,7 +15,11 @@ struct AppIconControllerTests {
     ///
     /// “始终”与“深色”子变体不看外观；“自动”子变体只在深色外观（含高对比度、vibrant 变体）下换；
     /// 默认样式（键不存在）与透明、色调的浅色子变体在任何外观下都不换
-    private nonisolated static let cases: [(iconTheme: String?, appearance: NSAppearance.Name, variant: AppIconVariant?)] = [
+    private nonisolated static let cases: [(
+        iconTheme: String?,
+        appearance: NSAppearance.Name,
+        variant: AppIconVariant?
+    )] = [
         (nil, .darkAqua, nil),
         (nil, .aqua, nil),
 

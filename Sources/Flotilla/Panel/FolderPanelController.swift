@@ -291,7 +291,9 @@ extension FolderPanelController {
         ) { _, error in
             guard let error else { return }
 
-            Self.logger.error("启动 \(name, privacy: .public) 失败：\(error.localizedDescription, privacy: .public)")
+            Self.logger.error(
+                "启动 \(name, privacy: .public) 失败：\(error.localizedDescription, privacy: .public)"
+            )
         }
 
         dismissRequestHandler?()
@@ -310,7 +312,9 @@ extension FolderPanelController {
         ) { _, error in
             guard let error else { return }
 
-            Self.logger.error("打开 \(name, privacy: .public) 失败：\(error.localizedDescription, privacy: .public)")
+            Self.logger.error(
+                "打开 \(name, privacy: .public) 失败：\(error.localizedDescription, privacy: .public)"
+            )
         }
 
         dismissRequestHandler?()

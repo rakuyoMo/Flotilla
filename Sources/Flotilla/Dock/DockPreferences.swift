@@ -426,7 +426,9 @@ extension DockPreferences {
         )
         try data.write(to: backupURL, options: .atomic)
 
-        Self.logger.notice("已备份 Dock 偏好到 \(backupURL.path(percentEncoded: false), privacy: .public)")
+        Self.logger.notice(
+            "已备份 Dock 偏好到 \(backupURL.path(percentEncoded: false), privacy: .public)"
+        )
 
         try pruneBackups()
     }

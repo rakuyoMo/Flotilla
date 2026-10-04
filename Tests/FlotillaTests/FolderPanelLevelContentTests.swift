@@ -49,7 +49,10 @@ struct FolderPanelLevelContentTests {
     func onlyFinderFolderShowsFileThumbnails() {
         let folder = Folder(id: UUID(), name: "工作", items: makeFiles(3))
 
-        let finderFolderContent = FolderPanelLevelContent.finderFolder(finderFolder, items: makeFiles(3))
+        let finderFolderContent = FolderPanelLevelContent.finderFolder(
+            finderFolder,
+            items: makeFiles(3)
+        )
         let folderContent = FolderPanelLevelContent.folder(folder)
 
         #expect(finderFolderContent.showsFileThumbnails)
