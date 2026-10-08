@@ -80,7 +80,7 @@ Dock 与 ⌘Tab 里的 Flotilla 图标跟随“系统设置 › 外观 › 图�
 
 用代码构建最小主菜单：
 
-- App 菜单：“退出 Flotilla”（⌘Q）
+- App 菜单：“退出归帆”（⌘Q）
 - “编辑”菜单：撤销、重做、剪切、复制、粘贴、全选
 
 设置窗口里的文本框依赖“编辑”菜单才能响应快捷键。
@@ -204,16 +204,16 @@ enum FolderIconRenderer {
 需求 7。
 
 - `StatusBarController`：方形的 `NSStatusItem`（`squareLength`），图标取自 `StatusBarIcon`
-- `StatusBarIcon`：按矢量绘制 App 图标里那艘方帆船的剪影，template 模式，无障碍描述“Flotilla”
+- `StatusBarIcon`：按矢量绘制 App 图标里那艘方帆船的剪影，template 模式，无障碍描述为当前语言下的 App 名（简繁中文为“归帆”“歸帆”，其它语言为“Flotilla”）
   - 部件：桅杆、桅顶向右飘的三角旗、三面上下叠放的横帆（帆桁左高右低、越往下越宽，相邻两面之间留斜缝）、船尾高起而船首上翘的船身、船首斜桅
   - 画布 16 × 16 pt，船从桅顶到船底占满画布高度、左右居中，放进 22 pt 见方的状态栏按钮后四周各留 3 pt
   - 桅杆、甲板、船尾与船底落在整点上，1 倍屏幕上这些边缘不发虚
-- 菜单：“设置…”（⌘,）、分隔线、“退出 Flotilla”（⌘Q）
+- 菜单：“设置…”（⌘,）、分隔线、“退出归帆”（⌘Q）
 - “设置…”打开设置窗口并把它带到最前（这是唯一允许激活 Flotilla 的场景）
 
 ## 设置窗口（`Sources/Flotilla/Settings/`）
 
-一个窗口，标题“Flotilla 设置”，关闭即隐藏，不退出 App。界面全部用代码构建（Auto Layout）。
+一个窗口，标题“归帆设置”，关闭即隐藏，不退出 App。界面全部用代码构建（Auto Layout）。
 
 ### 文件夹区
 
@@ -249,7 +249,7 @@ enum FolderIconRenderer {
 - 模型：嵌套结构 JSON 编解码往返一致
 - `FolderStore`：增删改查、移动（含禁止移入子孙）、持久化到临时目录后重新加载一致、损坏文件的处理
 - `Preferences`：默认值与夹取
-- `StatusBarIcon`：是 template 图、无障碍描述为“Flotilla”；在 16 pt 画布里上下占满、左右居中；1 倍下桅杆、甲板与船底落在整像素上
+- `StatusBarIcon`：是 template 图、无障碍描述为各语言下的 App 名；在 16 pt 画布里上下占满、左右居中；1 倍下桅杆、甲板与船底落在整像素上
 - `FolderIconRenderer`：0–4 个预览都能渲染、`previewIconCount` 超过 App 数量时不崩溃、输出尺寸正确，以上在深浅两种外观下都成立；两种外观的底板透明区域逐像素相同；深色底板比中灰暗、浅色比中灰亮，都是上亮下暗；深色边线亮于底板内部、浅色边线暗于内部
 - `FolderIconAppearance`：高对比度、vibrant 等变体归入对应的深色或浅色；面板网格里的文件夹图标在视图外观切换后换成对应外观的版本
 - `AppIconController`：深色、透明、色调三种样式的“深色”子变体（深色样式为“始终”）不看外观，换成夜间版、去色的夜间版、着色的夜间版；“自动”子变体只在深色外观（含高对比度、vibrant 变体）下同样换；默认样式与透明、色调的“浅色”子变体在任何外观下都不设运行时图标

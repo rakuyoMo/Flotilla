@@ -120,7 +120,7 @@ extension AppDelegate {
             NSMenuItem(
                 title: String(
                     localized: "mainMenu.quit",
-                    comment: "App 菜单的“退出 Flotilla”"
+                    comment: "App 菜单的“退出归帆”"
                 ),
                 action: #selector(NSApplication.terminate(_:)),
                 keyEquivalent: "q"

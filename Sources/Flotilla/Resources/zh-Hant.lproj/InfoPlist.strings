@@ -1,7 +1,11 @@
+/* App 名：访达与 Dock 显示 CFBundleDisplayName，App 菜单显示 CFBundleName */
+"CFBundleDisplayName" = "歸帆";
+"CFBundleName" = "歸帆";
+
 /* 隐私授权框里的用途说明 */
-"NSDesktopFolderUsageDescription" = "Flotilla 需要讀取 Finder 裡檔案夾的內容，才能在 Dock 上的面板裡展開它們。";
-"NSDocumentsFolderUsageDescription" = "Flotilla 需要讀取 Finder 裡檔案夾的內容，才能在 Dock 上的面板裡展開它們。";
-"NSDownloadsFolderUsageDescription" = "Flotilla 需要讀取 Finder 裡檔案夾的內容，才能在 Dock 上的面板裡展開它們。";
-"NSFileProviderDomainUsageDescription" = "Flotilla 需要讀取 Finder 裡檔案夾的內容，才能在 Dock 上的面板裡展開它們。";
-"NSNetworkVolumesUsageDescription" = "Flotilla 需要讀取 Finder 裡檔案夾的內容，才能在 Dock 上的面板裡展開它們。";
-"NSRemovableVolumesUsageDescription" = "Flotilla 需要讀取 Finder 裡檔案夾的內容，才能在 Dock 上的面板裡展開它們。";
+"NSDesktopFolderUsageDescription" = "歸帆需要讀取 Finder 裡檔案夾的內容，才能在 Dock 上的面板裡展開它們。";
+"NSDocumentsFolderUsageDescription" = "歸帆需要讀取 Finder 裡檔案夾的內容，才能在 Dock 上的面板裡展開它們。";
+"NSDownloadsFolderUsageDescription" = "歸帆需要讀取 Finder 裡檔案夾的內容，才能在 Dock 上的面板裡展開它們。";
+"NSFileProviderDomainUsageDescription" = "歸帆需要讀取 Finder 裡檔案夾的內容，才能在 Dock 上的面板裡展開它們。";
+"NSNetworkVolumesUsageDescription" = "歸帆需要讀取 Finder 裡檔案夾的內容，才能在 Dock 上的面板裡展開它們。";
+"NSRemovableVolumesUsageDescription" = "歸帆需要讀取 Finder 裡檔案夾的內容，才能在 Dock 上的面板裡展開它們。";

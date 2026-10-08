@@ -273,8 +273,8 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
   | 语言 | 文案 |
   |---|---|
   | en | Flotilla needs to read the contents of Finder folders to expand them in its panel on the Dock. |
-  | zh-Hans | Flotilla 需要读取访达里文件夹的内容，才能在 Dock 上的面板里展开它们。 |
-  | zh-Hant | Flotilla 需要讀取 Finder 裡檔案夾的內容，才能在 Dock 上的面板裡展開它們。 |
+  | zh-Hans | 归帆需要读取访达里文件夹的内容，才能在 Dock 上的面板里展开它们。 |
+  | zh-Hant | 歸帆需要讀取 Finder 裡檔案夾的內容，才能在 Dock 上的面板裡展開它們。 |
   | ja | FinderのフォルダをDockのパネルで展開するには、Flotillaがフォルダの内容を読み込む必要があります。 |
   | ko | Finder 폴더를 Dock의 패널에서 펼치려면 Flotilla가 폴더의 내용을 읽어야 합니다. |
 
@@ -469,7 +469,7 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
 - 新键五种语言齐全：`LocalizationTests` 自动覆盖
 - 隐私授权框的用途说明（`PrivacyUsageDescriptionTests`）：
   - `Info.plist` 有上表六个键，值非空
-  - 五张 `InfoPlist.strings` 都能解析、没有空值，键集合与 `Info.plist` 里的用途说明键相同
+  - 五张 `InfoPlist.strings` 都能解析、没有空值，覆盖 `Info.plist` 里的全部用途说明键；除用途说明外只有 App 名的键
 
 ## 验收
 

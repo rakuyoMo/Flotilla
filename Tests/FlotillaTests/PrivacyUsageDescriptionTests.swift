@@ -28,7 +28,8 @@ struct PrivacyUsageDescriptionTests {
         #expect(undescribedKeys.isEmpty, "Info.plist 缺少或为空的说明：\(undescribedKeys.sorted())")
     }
 
-    /// 每种语言的 `InfoPlist.strings` 都能解析、没有空值，键集合与 Info.plist 里的用途说明键相同
+    /// 每种语言的 `InfoPlist.strings` 都能解析、没有空值，覆盖 Info.plist 里的全部用途说明键；
+    /// 除用途说明外只有 App 名的键，拼错的键会作为多出的键报出来
     @Test(arguments: LocalizationTests.languages)
     func localizesEveryUsageDescription(language: String) throws {
         let table = try LocalizationTests.table("InfoPlist", for: language)
@@ -41,8 +42,11 @@ struct PrivacyUsageDescriptionTests {
         let keys = Set(table.keys)
 
         let missingKeys = infoPlistKeys.subtracting(keys)
-        let extraKeys = keys.subtracting(infoPlistKeys)
         let emptyKeys = table.filter(\.value.isEmpty).keys
+
+        let extraKeys = keys
+            .subtracting(infoPlistKeys)
+            .subtracting(LocalizedAppNameTests.nameKeys)
 
         #expect(missingKeys.isEmpty, "\(language) 缺少的键：\(missingKeys.sorted())")
         #expect(extraKeys.isEmpty, "\(language) 多出的键：\(extraKeys.sorted())")
@@ -50,11 +54,11 @@ struct PrivacyUsageDescriptionTests {
     }
 }
 
-// MARK: - Private
+// MARK: - Info.plist
 
 extension PrivacyUsageDescriptionTests {
     /// 读取并解析 App 的 `Info.plist`：XML 格式的属性列表，顶层为字典
-    private static func infoPlist() throws -> [String: Any] {
+    static func infoPlist() throws -> [String: Any] {
         let url = LocalizationTests.sourcesURL.appending(path: "Info.plist")
         let data = try Data(contentsOf: url)
 

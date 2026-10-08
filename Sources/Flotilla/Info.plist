@@ -6,6 +6,8 @@
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>Flotilla</string>
 	<key>CFBundleExecutable</key>
 	<string>Flotilla</string>
 	<key>CFBundleIconFile</key>
@@ -33,6 +35,8 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>1.0.0</string>
+	<key>LSHasLocalizedDisplayName</key>
+	<true/>
 	<key>LSMinimumSystemVersion</key>
 	<string>15.0</string>
 	<key>LSUIElement</key>

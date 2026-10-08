@@ -141,7 +141,7 @@
 
 | 键 | en | zh-Hans | zh-Hant | ja | ko |
 |---|---|---|---|---|---|
-| `mainMenu.quit` | Quit Flotilla | 退出 Flotilla | 結束 Flotilla | Flotillaを終了 | Flotilla 종료 |
+| `mainMenu.quit` | Quit Flotilla | 退出归帆 | 結束歸帆 | Flotillaを終了 | Flotilla 종료 |
 | `mainMenu.edit` | Edit | 编辑 | 編輯 | 編集 | 편집 |
 | `mainMenu.undo` | Undo | 撤销 | 還原 | 取り消す | 실행 취소 |
 | `mainMenu.redo` | Redo | 重做 | 重做 | やり直す | 실행 복귀 |
@@ -150,7 +150,7 @@
 | `mainMenu.paste` | Paste | 粘贴 | 貼上 | ペースト | 붙이기 |
 | `mainMenu.selectAll` | Select All | 全选 | 全選 | すべてを選択 | 전체 선택 |
 | `statusBar.settings` | Settings… | 设置… | 設定… | 設定… | 설정… |
-| `settings.windowTitle` | Flotilla Settings | Flotilla 设置 | Flotilla 設定 | Flotillaの設定 | Flotilla 설정 |
+| `settings.windowTitle` | Flotilla Settings | 归帆设置 | 歸帆設定 | Flotillaの設定 | Flotilla 설정 |
 | `folders.sectionTitle` | Folders | 文件夹 | 檔案夾 | フォルダ | 폴더 |
 | `folders.newFolder` | New Folder | 新建文件夹 | 新增檔案夾 | 新規フォルダ | 새로운 폴더 |
 | `folders.untitledFolder` | Untitled Folder | 未命名文件夹 | 未命名檔案夾 | 名称未設定フォルダ | 제목 없는 폴더 |
@@ -170,7 +170,7 @@
 | `panel.back` | Back | 返回 | 返回 | 戻る | 뒤로 |
 | `panel.openInFinder` | Open in Finder | 在访达中打开 | 在Finder裡打開 | Finderで開く | Finder에서 열기 |
 
-- `panel.back` 是面板返回按钮的辅助功能标签；状态栏图标的辅助功能描述“Flotilla”是 App 名，不本地化。
+- `panel.back` 是面板返回按钮的辅助功能标签；状态栏图标的辅助功能描述是 App 名，简繁中文为“归帆”“歸帆”，其它语言为“Flotilla”。
 - `panel.openInFinder` 照抄 Dock 自己的 `SHOW_IN_FINDER`，照原生原样不加中英文之间的空格（见 08）。
 
 ## 设置窗口的文件夹图标（需求 13）
