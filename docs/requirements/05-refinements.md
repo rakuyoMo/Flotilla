@@ -150,7 +150,7 @@
 | `mainMenu.paste` | Paste | 粘贴 | 貼上 | ペースト | 붙이기 |
 | `mainMenu.selectAll` | Select All | 全选 | 全選 | すべてを選択 | 전체 선택 |
 | `statusBar.settings` | Settings… | 设置… | 設定… | 設定… | 설정… |
-| `settings.windowTitle` | Flotilla Settings | 归帆设置 | 歸帆設定 | 帰帆の設定 | Flotilla 설정 |
+| `settings.windowTitle` | Settings | 设置 | 設定 | 設定 | 설정 |
 | `folders.sectionTitle` | Folders | 文件夹 | 檔案夾 | フォルダ | 폴더 |
 | `folders.newFolder` | New Folder | 新建文件夹 | 新增檔案夾 | 新規フォルダ | 새로운 폴더 |
 | `folders.untitledFolder` | Untitled Folder | 未命名文件夹 | 未命名檔案夾 | 名称未設定フォルダ | 제목 없는 폴더 |
@@ -159,7 +159,10 @@
 | `folders.addFiles` | Add Files… | 添加文件… | 加入檔案… | ファイルを追加… | 파일 추가… |
 | `folders.addWebPage` | Add Web Page… | 添加网页… | 加入網頁… | Webページを追加… | 웹 페이지 추가… |
 | `folders.webPageAlert.message` | Add Web Page | 添加网页 | 加入網頁 | Webページを追加 | 웹 페이지 추가 |
-| `folders.webPageAlert.informative` | Enter the address of the web page. | 输入网页的网址。 | 輸入網頁的網址。 | WebページのURLを入力してください。 | 웹 페이지의 주소를 입력하십시오. |
+| `folders.webPageAlert.informative` | Enter the address of the web page. The title is optional. | 输入网页的网址，标题可留空。 | 輸入網頁的網址，標題可留空。 | WebページのURLを入力してください。タイトルは省略できます。 | 웹 페이지의 주소를 입력하십시오. 제목은 비워 둘 수 있습니다. |
+| `folders.webPageAlert.addressPlaceholder` | Address | 网址 | 網址 | URL | 주소 |
+| `folders.webPageAlert.titlePlaceholder` | Title (Optional) | 标题（可选） | 標題（可選） | タイトル（オプション） | 제목(선택 사항) |
+| `folders.webPageAlert.fetchingTitle` | Fetching Title… | 正在获取标题… | 正在取得標題… | タイトルを取得中… | 제목 가져오는 중… |
 | `folders.webPageAlert.add` | Add | 添加 | 加入 | 追加 | 추가 |
 | `folders.webPageAlert.cancel` | Cancel | 取消 | 取消 | キャンセル | 취소 |
 | `folders.addToDock` | Add to Dock | 添加到 Dock | 加入 Dock | Dockに追加 | Dock에 추가 |

@@ -39,7 +39,7 @@ struct WebPageReference: Codable, Hashable, Identifiable {
     let id: UUID
     let url: URL
 
-    /// 浏览器没给标题、给的是空白，或经 “添加网页…” 输入网址加入时为 nil
+    /// 浏览器给出的，或 “添加网页…” 里填写、自动获取到的标题（见 09）；都没有时为 nil
     let title: String?
 }
 
