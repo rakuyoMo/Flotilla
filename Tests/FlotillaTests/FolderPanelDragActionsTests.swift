@@ -5,7 +5,8 @@ import Testing
 
 // MARK: - FolderPanelDragActionsTests
 
-/// 面板只让 Flotilla 的文件夹的层级拖动：网格交出的目标格要换算成数据源的下标，保存下来的顺序才与松开前看到的相同
+/// 面板只让 Flotilla 的文件夹的层级拖动：网格交出的目标格要换算成数据源的下标，保存下来的顺序才与松开前看到的相同；
+/// 拖出面板删除的只是文件夹里的这一项，磁盘上的文件不动
 @MainActor
 final class FolderPanelDragActionsTests {
     /// 本用例独占的临时目录
@@ -62,6 +63,41 @@ final class FolderPanelDragActionsTests {
         }
     }
 
+    /// 删除回调删掉的是文件夹里的这一项：子文件夹连同其中的内容一起删除，其它项不变，磁盘上的文件仍在
+    @Test
+    func removeHandlerRemovesOnlyThatItem() throws {
+        let store = FolderStore(fileURL: directory.appending(path: "folders.json"))
+        let root = store.addRootFolder(named: "根")
+        let child = try #require(store.addSubfolder(named: "子", to: root.id))
+        let fileURL = directory.appending(path: "说明.txt")
+        let filePath = fileURL.path(percentEncoded: false)
+
+        try FileManager.default.createDirectory(
+            at: directory,
+            withIntermediateDirectories: true
+        )
+
+        try Data("说明".utf8).write(to: fileURL)
+
+        let fileItem = try #require(FolderItem(url: fileURL, title: nil))
+
+        store.addItems([fileItem], to: root.id)
+        store.addItems(try webPages(count: 1), to: child.id)
+
+        let folder = try #require(store.folder(id: root.id))
+        let actions = try dragActions(for: folder, in: store)
+        let file = try #require(folder.items.last)
+
+        actions.removeHandler(.folder(child))
+
+        #expect(store.folder(id: child.id) == nil)
+        #expect(try itemIDs(in: root.id, of: store) == [file.id])
+
+        actions.removeHandler(file)
+
+        #expect(try itemIDs(in: root.id, of: store).isEmpty)
+        #expect(FileManager.default.fileExists(atPath: filePath))
+    }
 }
 
 // MARK: - Private

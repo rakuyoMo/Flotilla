@@ -2,7 +2,7 @@ import QuartzCore
 
 // MARK: - FolderGridDragAnimation
 
-/// 拖动时的位置动画：其余各格让位，与拖动图像落进目标格共用
+/// 拖动时的位置动画：其余各格让位、补位，与拖动图像落进目标格共用
 ///
 /// 原生 Dock 文件夹不能拖动排序，没有可对照的行为，时长与曲线沿用展开动画
 @MainActor

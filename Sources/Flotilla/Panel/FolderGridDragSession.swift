@@ -2,7 +2,7 @@ import AppKit
 
 // MARK: - FolderGridDragSession
 
-/// 网格里的一次拖动：从开始拖动到落定，或到作废为止
+/// 网格里的一次拖动：从开始拖动到落定，或到删除、作废为止
 @MainActor
 struct FolderGridDragSession {
     /// 拖动的项原来的下标
@@ -23,6 +23,6 @@ struct FolderGridDragSession {
     /// 当前各项所在的格
     var arrangement: FolderGridDragArrangement
 
-    /// 是否已经松开、拖动图像正落进目标格：这期间网格不响应新的按下
+    /// 是否已在轮廓之内松开、拖动图像正落进目标格：这期间网格不响应新的按下
     var isLanding = false
 }

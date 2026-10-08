@@ -126,7 +126,7 @@ final class FolderPanelController {
     /// 网格交出的目标格是移动之后的下标，按建这一层时的各项换算成 `FolderStore.move(itemID:to:at:)` 的下标
     /// - Parameters:
     ///   - content: 这一层展示的内容
-    ///   - store: 保存新的顺序的数据源
+    ///   - store: 保存新的顺序、删除这一项的数据源
     ///   - containsScreenPoint: 屏幕上的点是否在当前层级的轮廓之内
     static func dragActions(
         for content: FolderPanelLevelContent,
@@ -147,6 +147,10 @@ final class FolderPanelController {
                     to: folder.id,
                     at: FolderGridDragArrangement.moveIndex(from: sourceIndex, to: targetIndex)
                 )
+            },
+            removeHandler: {
+                // 删的只是文件夹里的这一项，不动磁盘上的 App 与文件；子文件夹连同其中的内容一起删除，不弹确认
+                store.remove(itemID: $0.id)
             }
         )
     }

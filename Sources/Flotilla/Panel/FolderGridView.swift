@@ -9,7 +9,7 @@ import AppKit
 /// 访达里的文件夹可能有上千项，一次建齐会让展开明显卡顿。缩略图请求也只为这个范围里的格保留，
 /// 快速滚过上千项后，看得见的格不必排在滚过的格后面等 QuickLook
 ///
-/// 文件夹的层级里各项可以拖动：其余各格让位，松开后保存新的顺序
+/// 文件夹的层级里各项可以拖动：其余各格让位或补位，在轮廓之内松开保存新的顺序，在轮廓之外松开删除这一项
 @MainActor
 final class FolderGridView: NSView {
     /// 这一层的项，顺序即展示顺序
@@ -254,7 +254,7 @@ extension FolderGridView {
         return true
     }
 
-    /// 拖动中：图像跟随鼠标，各格按鼠标的位置让位；
+    /// 拖动中：图像跟随鼠标，各格按鼠标的位置让位或补位；
     /// 鼠标在轮廓之内、在网格可见区域的上方或下方时，网格随之滚动
     func continueDrag(with event: NSEvent) {
         guard isDragging else { return }
@@ -265,7 +265,7 @@ extension FolderGridView {
         updateDrag()
     }
 
-    /// 松开：落进目标格，落定之后保存新的顺序
+    /// 松开：在轮廓之内落进目标格，落定之后保存新的顺序；在轮廓之外，图像立即消失，这一项从文件夹里删除
     func endDrag(with event: NSEvent) {
         guard isDragging else { return }
 
@@ -274,7 +274,12 @@ extension FolderGridView {
 
         guard let session = dragSession else { return }
 
-        land(session, at: session.arrangement.targetIndex)
+        guard let targetIndex = session.arrangement.targetIndex else {
+            remove(session)
+            return
+        }
+
+        land(session, at: targetIndex)
     }
 
     /// 作废进行中的拖动：面板开始收起时由面板调用，网格离开窗口（层级被重建、面板隐藏）时自己调用
@@ -470,12 +475,13 @@ extension FolderGridView {
         addSubview(itemView)
     }
 
-    /// 按鼠标最近的位置更新拖动：图像跟随鼠标，其余各项为目标格让位
+    /// 按鼠标最近的位置更新拖动：图像跟随鼠标；鼠标在轮廓之内时其余各项为目标格让位，在轮廓之外时依次补位
     private func updateDrag() {
         guard
             isDragging,
             let session = dragSession,
-            let window
+            let window,
+            let dragActions
         else {
             return
         }
@@ -487,12 +493,15 @@ extension FolderGridView {
             y: mouse.y + session.iconOffset.dy
         ))
 
-        let targetIndex = FolderGridDragArrangement.targetIndex(
-            at: convert(session.location, from: nil),
-            visibleRect: visibleRect,
-            itemCount: items.count,
-            columnCount: columnCount
-        )
+        // 轮廓之外没有目标格，拖动的项不占格，即删除之后的样子
+        let targetIndex: Int? = dragActions.containsScreenPoint(mouse)
+            ? FolderGridDragArrangement.targetIndex(
+                at: convert(session.location, from: nil),
+                visibleRect: visibleRect,
+                itemCount: items.count,
+                columnCount: columnCount
+            )
+            : nil
 
         let arrangement = FolderGridDragArrangement(
             itemCount: items.count,
@@ -513,12 +522,11 @@ extension FolderGridView {
         guard
             let session = dragSession,
             session.isLanding,
+            let targetIndex = session.arrangement.targetIndex,
             let window
         else {
             return
         }
-
-        let targetIndex = session.arrangement.targetIndex
 
         session.image.moveLandingPoint(to: screenPoint(ofIconInCell: targetIndex, in: window))
     }
@@ -526,7 +534,12 @@ extension FolderGridView {
     /// 各格移到排列给出的格：其余各项从当前画面移过去，带动画；拖动的项看不见，直接放到目标格
     private func arrange(_ arrangement: FolderGridDragArrangement, draggedIndex: Int) {
         for (index, cellIndex) in arrangement.cellIndices.enumerated() {
-            guard let itemView = itemViews[index] else { continue }
+            guard
+                let itemView = itemViews[index],
+                let cellIndex
+            else {
+                continue
+            }
 
             if index == draggedIndex {
                 itemView.frame = cellFrames[cellIndex]
@@ -580,7 +593,17 @@ extension FolderGridView {
         _ = autoscroll(with: event)
     }
 
-    /// 松开：拖动图像落进目标格的图标位置，落定之后这一格显示出来，目标格变了才保存新的顺序
+    /// 在轮廓之外松开：图像立即消失，这一项从文件夹里删除
+    ///
+    /// 删除引起文件夹树变化，面板随即按剩下的项重建网格、重算尺寸
+    private func remove(_ session: FolderGridDragSession) {
+        dragSession = nil
+        session.image.close()
+
+        dragActions?.removeHandler(items[session.itemIndex])
+    }
+
+    /// 在轮廓之内松开：拖动图像落进目标格的图标位置，落定之后这一格显示出来，目标格变了才保存新的顺序
     ///
     /// 保存在落定之后：保存引起的重建与落定后的画面一致，不跳
     private func land(_ session: FolderGridDragSession, at targetIndex: Int) {

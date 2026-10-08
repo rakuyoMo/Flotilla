@@ -6,7 +6,7 @@ import Testing
 // MARK: - FolderGridDragTests
 
 /// 面板里拖动文件夹的项：移动不超过 5 pt 仍是点击，超过即开始拖动、不再算点击；
-/// 拖到别的格上其余各格让位；松开落定后保存新的顺序；
+/// 拖到别的格上其余各格让位，拖出轮廓其余各格补位；在轮廓之内松开落定后保存新的顺序，在轮廓之外松开删除这一项；
 /// 拖动途中层级被重建或面板收起时作废，数据不变，落定途中的保存照常进行；落定途中网格滚动时落点跟着目标格
 ///
 /// 窗口从不上屏：事件直接交给单元格，拖动图像只在面板显示时才排进屏幕
@@ -25,6 +25,9 @@ final class FolderGridDragTests {
 
     /// 保存回调收到的项与目标格
     private var moves: [(itemID: UUID, targetIndex: Int)] = []
+
+    /// 删除回调收到的项
+    private var removals: [UUID] = []
 
     /// 点击过的项
     private var selections: [UUID] = []
@@ -112,7 +115,7 @@ final class FolderGridDragTests {
         #expect(selections == [items[0].id])
     }
 
-    // MARK: 让位
+    // MARK: 让位与补位
 
     /// 拖到另一格上：其余各项按 “拖动的项放到目标格” 之后的顺序让位，空位在目标格
     @Test
@@ -124,9 +127,36 @@ final class FolderGridDragTests {
         #expect(try cellIndices(in: grid) == [0, 4, 1, 2, 3, 5])
     }
 
+    /// 拖到轮廓之外：其余各项按原来的顺序补上空位，最后一格空出来
+    @Test
+    func otherCellsCloseUpOutsideOutline() throws {
+        let (_, grid) = makeGrid()
+
+        try drag(item: 1, to: outsidePoint, in: grid)
+
+        var indices = try cellIndices(in: grid)
+        indices.remove(at: 1)
+
+        #expect(indices == [0, 1, 2, 3, 4])
+    }
+
     // MARK: 松开
 
-    /// 在另一格松开：拖动图像落进目标格，落定期间网格不响应按下；
+    /// 在轮廓之外松开：删除回调只调一次，拿到的是拖动的项；不保存，拖动图像消失
+    @Test
+    func releaseOutsideRemovesItem() throws {
+        let (_, grid) = makeGrid()
+        let itemView = try drag(item: 1, to: outsidePoint, in: grid)
+
+        try send(.leftMouseUp, to: itemView, at: outsidePoint)
+
+        #expect(removals == [items[1].id])
+        #expect(moves.isEmpty)
+        #expect(selections.isEmpty)
+        #expect(grid.dragImage == nil)
+    }
+
+    /// 在轮廓之内另一格松开：拖动图像落进目标格，落定期间网格不响应按下；
     /// 落定之后这一格显示出来，保存回调拿到拖动的项与目标格
     @Test
     func releaseOnAnotherCellSavesAfterLanding() async throws {
@@ -164,6 +194,7 @@ final class FolderGridDragTests {
 
         #expect(grid.dragImage == nil)
         #expect(moves.isEmpty)
+        #expect(removals.isEmpty)
         #expect(selections.isEmpty)
         #expect(!itemView.isContentHidden)
     }
@@ -185,6 +216,7 @@ final class FolderGridDragTests {
         try send(.leftMouseUp, to: itemView, at: outsidePoint)
 
         #expect(moves.isEmpty)
+        #expect(removals.isEmpty)
         #expect(selections.isEmpty)
     }
 
@@ -205,6 +237,7 @@ final class FolderGridDragTests {
 
         #expect(grid.dragImage == nil)
         #expect(moves.isEmpty)
+        #expect(removals.isEmpty)
         #expect(selections.isEmpty)
     }
 
@@ -291,7 +324,8 @@ extension FolderGridDragTests {
 
         let dragActions = FolderGridDragActions(
             containsScreenPoint: { outline.contains($0) },
-            moveHandler: { [weak self] in self?.moves.append(($0.id, $1)) }
+            moveHandler: { [weak self] in self?.moves.append(($0.id, $1)) },
+            removeHandler: { [weak self] in self?.removals.append($0.id) }
         )
 
         let grid = FolderGridView(

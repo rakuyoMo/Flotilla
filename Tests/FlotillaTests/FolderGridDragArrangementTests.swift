@@ -7,7 +7,7 @@ import Testing
 // MARK: - FolderGridDragArrangementTests
 
 /// 拖动时的目标格与各项的格决定了松开前看到的顺序：保存下来的顺序必须与之相同，
-/// 鼠标离开网格的可见区域时也要有确定的目标
+/// 鼠标离开网格的可见区域时也要有确定的目标，拖出面板时剩下的项要按原来的顺序补位
 @MainActor
 final class FolderGridDragArrangementTests {
     /// 本用例独占的临时目录
@@ -124,6 +124,19 @@ final class FolderGridDragArrangementTests {
         #expect(arrangement.cellIndices == [0, 2, 3, 4, 1, 5])
     }
 
+    /// 轮廓之外：拖动的项不占格，其余各项依次补位，最后一格空出来
+    @Test
+    func itemsCloseUpOutsideOutline() {
+        let arrangement = FolderGridDragArrangement(
+            itemCount: 6,
+            draggedIndex: 1,
+            targetIndex: nil
+        )
+
+        #expect(arrangement.cellIndices == [0, nil, 1, 2, 3, 4])
+        #expect(arrangement.targetIndex == nil)
+    }
+
     // MARK: 交给 `FolderStore` 的下标
 
     /// 向前、向后与原地松开：按换算出的下标移动之后，文件夹里的顺序与松开前网格显示的顺序相同
@@ -189,8 +202,11 @@ extension FolderGridDragArrangementTests {
         in arrangement: FolderGridDragArrangement
     ) -> [UUID] {
         zip(items, arrangement.cellIndices)
-            .sorted { $0.1 < $1.1 }
-            .map(\.0.id)
+            .compactMap { item, cellIndex in
+                cellIndex.map { (cellIndex: $0, id: item.id) }
+            }
+            .sorted { $0.cellIndex < $1.cellIndex }
+            .map(\.id)
     }
 
     /// 网址各不相同的网页：同一文件夹里按网址去重，网址相同的不会都加进去

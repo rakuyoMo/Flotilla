@@ -4,32 +4,35 @@ import CoreGraphics
 
 /// 拖动网格里的一项时各项所在的格：纯计算，与 `FolderGridLayout` 一样不依赖视图
 ///
-/// 拖动的项占目标格，其余各项按 “拖动的项放到目标格” 之后的顺序让位。
+/// 鼠标在当前层级的轮廓之内时，拖动的项占目标格，其余各项按 “拖动的项放到目标格” 之后的顺序让位；
+/// 在轮廓之外时，拖动的项不占格，其余各项按原来的顺序补上空位，即删除之后的样子。
 /// 格按行优先从左上角排列，坐标系原点在网格左上角、y 向下
 struct FolderGridDragArrangement: Equatable {
-    /// 拖动的项放下后所在的格，即移动之后的下标
-    let targetIndex: Int
+    /// 拖动的项放下后所在的格，即移动之后的下标；鼠标在轮廓之外时为 nil
+    let targetIndex: Int?
 
-    /// 各项所在的格，按项原来的顺序
-    let cellIndices: [Int]
+    /// 各项所在的格，按项原来的顺序；鼠标在轮廓之外时拖动的项不占格，为 nil
+    let cellIndices: [Int?]
 
     /// 按目标格排出各项所在的格
     /// - Parameters:
     ///   - itemCount: 项数
     ///   - draggedIndex: 拖动的项原来的下标
-    ///   - targetIndex: 目标格
+    ///   - targetIndex: 目标格；鼠标在轮廓之外时为 nil
     init(
         itemCount: Int,
         draggedIndex: Int,
-        targetIndex: Int
+        targetIndex: Int?
     ) {
         self.targetIndex = targetIndex
 
-        cellIndices = (0 ..< itemCount).map { (index: Int) -> Int in
+        cellIndices = (0 ..< itemCount).map { (index: Int) -> Int? in
             guard index != draggedIndex else { return targetIndex }
 
             // 去掉拖动的项之后，其余各项依次排列的位置：拖动的项之后的各项前移一格
             let position = index < draggedIndex ? index : index - 1
+
+            guard let targetIndex else { return position }
 
             // 目标格及其后的各项后移一格，空出目标格
             return position < targetIndex ? position : position + 1
