@@ -237,6 +237,15 @@ README-ZH.md            README.md 的简体中文版，与它同步修改
 
 也可以对 Claude Code 说 “发布 X.Y.Z”，由 [`release` skill](.claude/skills/release/SKILL.md) 走完开 PR、等 CI、合并、等发布的全过程。
 
+## 分支命名
+
+- 只用两种前缀，后接 `rakuyo/<简述>`：
+  - `fix/`：修缺陷
+  - `feature/`：其它改动，包括新功能、文档、排版整改等
+- `<简述>` 用小写英文单词，以连字符连接，如 `feature/rakuyo/chinese-name-readme`
+- 前缀不随提交类型变化：提交类型是 `feat`、`docs`、`style` 等时，分支前缀仍是 `feature/`
+- 发版分支 `release/X.Y.Z` 不在此列，由 `mise run release` 生成，见 “发布流程”
+
 ## commit message
 
 - 格式为 `<type>: <简述>`，代码标识用反引号，默认不带正文
