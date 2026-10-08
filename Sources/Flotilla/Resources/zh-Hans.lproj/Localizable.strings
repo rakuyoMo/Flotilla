@@ -15,7 +15,7 @@
 "statusBar.iconDescription" = "归帆";
 
 /* 设置窗口 */
-"settings.windowTitle" = "归帆设置";
+"settings.windowTitle" = "设置";
 
 /* 设置窗口的文件夹区 */
 "folders.sectionTitle" = "文件夹";

@@ -15,7 +15,7 @@
 "statusBar.iconDescription" = "帰帆";
 
 /* 设置窗口 */
-"settings.windowTitle" = "帰帆の設定";
+"settings.windowTitle" = "設定";
 
 /* 设置窗口的文件夹区 */
 "folders.sectionTitle" = "フォルダ";

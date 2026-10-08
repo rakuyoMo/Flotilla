@@ -15,7 +15,7 @@
 "statusBar.iconDescription" = "Flotilla";
 
 /* 设置窗口 */
-"settings.windowTitle" = "Flotilla Settings";
+"settings.windowTitle" = "Settings";
 
 /* 设置窗口的文件夹区 */
 "folders.sectionTitle" = "Folders";
