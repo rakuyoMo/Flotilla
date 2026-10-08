@@ -62,19 +62,29 @@
 
 ### 自动获取标题
 
-`Settings/WebPageTitleFetcher` 用系统的 LinkPresentation（`LPMetadataProvider`）获取网页的标题：`shouldFetchSubresources = false`，`timeout` 10 s。跳转、编码与 HTML 实体都由它处理，Flotilla 不解析 HTML。
+`Settings/WebPageTitleFetcher` 用系统的 LinkPresentation（`LPMetadataProvider`）获取网页的标题：`shouldFetchSubresources = false`。跳转、编码与 HTML 实体都由它处理，Flotilla 不解析 HTML。
 
 - 为什么关掉附带资源：默认连带下载图标、预览图等附带资源，实测 2.8–6.6 s；关掉之后 0.5–3.4 s，标题照样取到（见 “平台事实”）
+- `http://` 网址同样取得到：Info.plist 的 `NSAppTransportSecurity` 里只设 `NSAllowsArbitraryLoadsInWebContent`，只为网页内容放开明文 HTTP；没有它时 ATS 挡下 `http://` 网址（见 “平台事实”）
 - 何时获取：
   - 网址框的内容变成可用的网址，并且停顿 0.3 s 不再变，就为这个网址开始获取，取的是补好 scheme 之后的网址
   - 网址再变：取消正在进行的那一次，重新计时；不可用的网址不获取
+- 时限：一次获取最多等 10 s
+  - 从开始获取算起，0.3 s 的停顿不算在内；点 “添加” 之后获取继续，时限仍从开始获取时算起，不重新计时
+  - 到时还没有结果：取消这一次，当作取不到
+  - 到时之后才到的结果一律丢掉：包括取消之后才到的完成回调，也包括到时之后才取到的标题
+  - 时限由 `AddWebPageAlert` 掐断，不设 LinkPresentation 的 `timeout`：它不是硬上限（见 “平台事实”）
 - 标题框任何时候都能输入，获取期间也一样
 - 取到的标题去掉首尾空白，空串当作没取到
 - 怎样填：
   - 取到时标题框空着才填进去；用户自己输入的内容绝不覆盖
   - 网址变了：标题框里仍是自动填进去、用户没改过的旧标题就清空，等新网址的结果；用户自己输入的保留
-  - 取不到（失败、超时、网页没有标题）：什么都不填，不提示错误
-  - 不是 HTML 的网址（PDF、图片等）：LinkPresentation 给出去掉扩展名的文件名，照样填入（见 “平台事实”）
+  - 取不到（失败、到时、网页没有标题、标题只是文件名）：什么都不填，不提示错误
+- 不是网页的网址（PDF、图片等）：LinkPresentation 拿网址里的文件名充当标题（见 “平台事实”），当作取不到
+  - `WebPageTitleFetcher.isFileName(_:of:)` 判断：标题与跳转之后的网址（`LPLinkMetadata.url`）最后一段去掉扩展名完全相同，就是文件名
+  - LinkPresentation 不公开内容类型，只能拿标题与网址比；在后台队列的完成回调里判断完，只把标题字符串带回主线程
+  - 大小写敏感，与 LinkPresentation 给出的一致：`/about` 的网页标题 “About” 保留
+  - 网页自己的标题恰好与文件名相同时（`/Report.html` 的 “Report”）分辨不出，同样不填
 - 转圈与占位文字：
   - 正在获取、且标题框空着时，标题框内右端显示小号转圈（`NSProgressIndicator`，spinning，small，16 × 16 pt，距标题框的右边与上下各 4 pt），占位文字换成 “正在获取标题…”
   - 转圈盖在标题框上面，不占标题框的位置
@@ -83,9 +93,9 @@
   - 标题框有内容：带着它加入，取消正在进行的获取
   - 标题框空着：先不带标题加入；正在进行的那一次继续，不重新发起；还在等停顿的不再等，立刻开始；取到后补到刚加入的那一项上
 - 点 “取消” 或按 Esc：取消正在进行的获取，作废正在等的停顿，什么都不加入
-- 被取消的那一次晚到的结果丢掉：LinkPresentation 取消之后仍会调用完成回调（见 “平台事实”），每次获取带编号，只认最新的一次
+- 被取消或已到时的那一次晚到的结果丢掉：LinkPresentation 取消之后仍会调用完成回调（见 “平台事实”），每次获取带编号，只认最新的一次
 - 提示框关掉之后，获取的完成回调持有 `AddWebPageAlert`，直到结果到达；它把标题与那一项的 id 交给 `beginSheetModal` 的 `titleHandler`。`FolderTreeViewController` 不直接碰 LinkPresentation
-- `AddWebPageAlert.init(fetchTitle:waitForPause:)` 接收取标题与等停顿的方法：App 里用 `WebPageTitleFetcher` 与 0.3 s 的 `Task.sleep`，单元测试传入假实现，不联网、不真的等待
+- `AddWebPageAlert.init(fetchTitle:waitForPause:waitForTimeLimit:)` 接收取标题、等停顿与等时限的方法：App 里用 `WebPageTitleFetcher`，停顿与时限分别是 0.3 s 与 10 s 的 `Task.sleep`；单元测试传入假实现，不联网、不真的等待
 
 ### 补标题
 
@@ -145,7 +155,7 @@
   - 标题、说明、按钮与两个占位文字用的是上表的键（测试进程读不到译文，读到的是键名）
   - 网址框在上、标题框在下，`layout()` 之后都与说明文字左右对齐；网址框是窗口的 `initialFirstResponder`
   - 以 sheet 弹出后网址框是第一响应者，Tab 到标题框，Shift-Tab 回来
-- 自动获取标题（`AddWebPageAlertTests`，`AddWebPageAlertStub` 代替取标题与等停顿，由测试决定停顿何时结束、何时交出什么标题）：
+- 自动获取标题（`AddWebPageAlertTests`，`AddWebPageAlertStub` 代替取标题、等停顿与等时限，由测试决定停顿何时结束、哪一次获取到时、何时交出什么标题）：
   - 不可用的网址、停顿之前都不获取；停顿之内网址又变了就重新计时，只为最后的网址获取一次，取的是补好 scheme 的网址
   - 获取期间网址变了：前一次被取消，停顿之后为新网址重新获取
   - 取到时标题框空着就填，首尾空白去掉；取不到或只有空白时保持空着
@@ -157,6 +167,15 @@
   - 标题框空着、还在等停顿：立刻开始获取，停顿结束时不重复获取
   - 标题框空着、取不到：网页照样加入，显示名是网址，什么都不补
   - “取消”：获取被取消，正在等的停顿作废，什么都不加入，之后取到的标题不补
+- 时限（`AddWebPageAlertTests`）：
+  - 获取进行中到时：这一次被取消，转圈隐藏、占位文字恢复；之后再交出这个网址的标题，标题框也不填
+  - 不带标题加入之后到时：这一次被取消，这一项保持显示网址，之后才到的标题不补
+  - 换了网址之后，旧网址那一次到时：新的获取不被取消，转圈还在，取到的标题照样填入
+  - 已经取完之后到时：不再取消，填好的标题保留
+- `WebPageTitleFetcherTests`：
+  - Info.plist 的 `NSAppTransportSecurity` 只有 `NSAllowsArbitraryLoadsInWebContent` 一个键，值为真
+  - 认得出文件名：`dummy.pdf`、`favicon.ico`、`picture.png`、`plain.txt`、没有扩展名的 `noext`、以 `/` 结尾的 `dir/`、`dummy.v2.pdf`（“dummy.v2”）、百分号编码的 `my%20file.pdf` 与中文文件名、带查询参数或片段的 `dummy.pdf`
+  - 网页自己的标题保留：普通网页、首页（有无末尾斜杠），以及只是大小写与文件名不同的 “About”（`/about`）、“Dummy”（`/dummy.pdf`）
 - 补标题：
   - `FolderStoreTests`：标题为 nil 的网页补上，位置与 id 不变，只发一次通知，重新加载后仍在；已有标题的网页、不是网页的项、找不到的项都不变，也不发通知
   - `FolderTreeViewControllerTests`（离屏窗口里用 `editColumn` 造出编辑文件夹名的状态）：没在编辑时立刻补；编辑中先不补，编辑没被打断、输入到一半的名称没有提交，点别处结束编辑后名称与标题都写进去；按 Esc 取消编辑后补上，名称保持原样
@@ -193,7 +212,10 @@
   - 标题框留空、转圈期间就点 “添加”：网页先以网址出现，取到后这一行换成标题，面板里同样
   - 键入网址后立刻（不到 0.3 s）点 “添加”：同上，取到后补上
   - 标题框留空点 “添加” 之后，马上新建文件夹或双击文件夹名开始改名：输入到一半的名称不被打断；按回车、点别处或按 Esc 结束编辑之后，标题才补上
-  - 取不到标题的网址（不存在的域名、`http://` 网址）：网页照样加入，显示网址，不提示错误
+  - 取不到标题的网址（不存在的域名）：网页照样加入，显示网址，不提示错误
+  - `http://example.com`：同样取得到标题 “Example Domain”
+  - PDF、图片的网址（如 `https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf`）：转圈消失，标题框不填；留空加入的那一项保持显示网址
+  - 迟迟没有响应的网址：转圈最多 10 s 就消失，标题框不填，之后也不会突然填上；留空加入的那一项保持显示网址
   - 补上标题时 Dock 不重启
 - 设置窗口的标题：五种语言下依次为 Settings、设置、設定、設定、설정
 - 退出重开 Flotilla 后数据仍在
@@ -228,10 +250,27 @@
   - 用 `URLSession` 读到 `</title>` 为止的耗时与它相近（0.5–2.2 s），但编码与 HTML 实体要自己处理，默认的 User-Agent 下豆瓣返回手机版的标题
   - B 站首页取到的是 “验证码_哔哩哔哩”：被当成了机器人
   - 不存在的域名约 4.3 s 后失败（`LPError.metadataFetchFailed`）
-  - `http://` 网址：带 Info.plist、没有 `NSAppTransportSecurity` 的进程（与 Flotilla 相同）0.26 s 就失败（`metadataFetchFailed`），ATS 挡下了明文 HTTP；没有 Info.plist 的命令行进程能取到
-  - `timeout` 不是硬上限：命令行进程设了 10 s 取 `http://httpforever.com`，47.85 s 后才以 `metadataFetchTimedOut` 结束
-  - `cancel()` 之后完成回调不会立即到达：0.1 s 时取消，回调 1.0–2.6 s 后才带着 `metadataFetchCancelled` 到达，约是本来取完的时候
-  - 不是 HTML 的网址以去掉扩展名的文件名作标题：`…/dummy.pdf` 得到 “dummy”，`…/favicon.ico` 得到 “favicon”
+  - `http://` 网址（可执行文件放进带 Info.plist 的 bundle 里直接运行）：
+    - 没有 `NSAppTransportSecurity`：0.19–0.32 s 就失败（`metadataFetchFailed`），ATS 挡下了明文 HTTP；没有 Info.plist 的命令行进程能取到
+    - 只设 `NSAllowsArbitraryLoadsInWebContent`：取得到，`http://example.com` 0.75–1.00 s 得到 “Example Domain”，`http://httpforever.com` 3.72 s；`http://neverssl.com` 一次 4.12 s 取到 “Connecting ...”，一次 10.89 s 后失败
+    - 只设 `NSAllowsArbitraryLoads`：同样取得到，`http://example.com` 0.65 s
+    - `https://example.com` 三种写法都在 0.99–1.24 s 取到
+  - `timeout` 不是硬上限，默认 30 s：
+    - 本地服务 60 s 后才响应时，不取消的话，不论设 5 s、10 s 还是默认，完成回调都在约 60.4 s 响应到达时才带着 `metadataFetchTimedOut` 到达
+    - 命令行进程设了 10 s 取 `http://httpforever.com`，47.85 s 后才以 `metadataFetchTimedOut` 结束
+  - `cancel()` 之后完成回调不会立即到达：
+    - 0.1 s 时取消，回调 1.0–2.6 s 后才带着 `metadataFetchCancelled` 到达，约是本来取完的时候
+    - 加载卡住时，早于 `timeout` 取消，回调在 `timeout` 到点时带着 `metadataFetchTimedOut` 到达：默认时 5 s、10 s 取消都在 30.01 s 到达，设 10 s 时 5 s、9 s 取消都在 10.01 s 到达
+    - 不早于 `timeout` 取消，回调等到响应到达：设 10 s 时 10 s、12 s 取消都在 60.54 s 到达
+  - 不是网页的网址以网址最后一段去掉扩展名作标题（本地服务与公开网址实测）：
+    - PDF、PNG、ICO、纯文本都是：`…/dummy.pdf` 得到 “dummy”，`…/picture.png` 得到 “picture”，`…/favicon.ico` 得到 “favicon”，`…/plain.txt` 得到 “plain”
+    - 用的是跳转之后的网址：`/redirect.pdf` 跳到 `/target-name.pdf` 得到 “target-name”；这时 `LPLinkMetadata.url` 是跳转之后的网址，`originalURL` 是原来的
+    - 不看 `Content-Disposition`：响应另给了文件名 `other-name.pdf`，标题仍是网址里的 “disposition”
+    - 路径没有扩展名、内容是 PDF：整段 “noext”；路径以 `/` 结尾：去掉斜杠的 “dir”
+    - 只去掉最后一个扩展名：`dummy.v2.pdf` 得到 “dummy.v2”
+    - 百分号编码的文件名给出解码之后的：`my%20file.pdf` 得到 “my file”，`%E4%B8%AD%E6%96%87.pdf` 得到 “中文”
+    - 查询参数与片段不算：`dummy.pdf?download=1`、`dummy.pdf#page=2` 都得到 “dummy”
+  - 没有 `<title>` 的网页标题为 nil，不拿文件名充当；`<title>` 恰好与文件名相同的网页（`/Report.html` 的 “Report”）与不是网页的网址给出的标题一样
 - `URL(string:)`：
   - 路径里的空格与中文被百分号编码，不会解析失败：`hello world` 解析成没有 scheme、没有主机名的 `hello%20world`；`https://apple.com/中文` 的路径成为 `%E4%B8%AD%E6%96%87`
   - 主机名里有空格、末尾带换行时解析失败：`https://a b.com`、`https://apple.com\n` 都为 nil

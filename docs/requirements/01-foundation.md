@@ -12,6 +12,7 @@
   - `CFBundleURLTypes`：注册 scheme `flotilla`，`CFBundleURLName = com.rakuyo.flotilla.url`
   - `CFBundleAllowMixedLocalizations = true`：让 App 显示名等来自其它 bundle 的文字按系统语言本地化，不受 Flotilla 自身支持的语言限制
   - `CFBundleDevelopmentRegion = en`：系统语言不在 Flotilla 支持的语言之内时，界面文字回落到英文
+  - `NSAppTransportSecurity` 里只有 `NSAllowsArbitraryLoadsInWebContent = true`：只为网页内容放开明文 HTTP，让 “添加网页…” 自动获取 `http://` 网页的标题（见 09）
 - 启动时调用 `NSWorkspace.shared.setDefaultApplication(at: Bundle.main.bundleURL, toOpenURLsWithScheme: "flotilla")`，让当前这份 App 成为 scheme 的处理者。
   - 原因：重新打包后 bundle 内容变了，Launch Services 的旧注册可能失效。
 

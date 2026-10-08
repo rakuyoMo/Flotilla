@@ -69,6 +69,7 @@ Flotilla 是一个无 Dock 图标的常驻后台 App（`LSUIElement`），只有
   - 未获得辅助功能权限时，退化为以收到点击信号时的鼠标位置为锚点。
 - **面板本身**：不激活 Flotilla 的悬浮面板（`NSPanel`，nonactivating），窗口层级高于 Dock；外观、几何、动效对照原生逐项还原。
 - **联网**：只在 “添加网页…” 获取网页标题时联网，访问的是用户输入的网址（系统的 LinkPresentation，见 09）。
+  - Info.plist 只为网页内容放开明文 HTTP（`NSAllowsArbitraryLoadsInWebContent`），让 `http://` 网页也取得到标题。
 
 ## 模块划分
 
