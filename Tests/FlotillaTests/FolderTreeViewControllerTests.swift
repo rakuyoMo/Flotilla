@@ -50,7 +50,7 @@ final class FolderTreeViewControllerTests {
         window.contentView = controller.view
         controller.view.layoutSubtreeIfNeeded()
 
-        let outlineView = try outlineView(of: controller)
+        let outlineView = try folderTreeView(of: controller)
         let scrollView = try #require(outlineView.enclosingScrollView)
 
         outlineView.expandItem(outlineView.item(atRow: 0))
@@ -164,7 +164,7 @@ final class FolderTreeViewControllerTests {
 
         #expect(!addPopUp.isEnabled)
 
-        try outlineView(of: controller).selectRowIndexes([0], byExtendingSelection: false)
+        try folderTreeView(of: controller).selectRowIndexes([0], byExtendingSelection: false)
 
         #expect(addPopUp.isEnabled)
     }
@@ -283,7 +283,7 @@ extension FolderTreeViewControllerTests {
         window.contentView = controller.view
 
         let addedIDs = try addWebPageFileAndFinderFolder()
-        let outlineView = try outlineView(of: controller)
+        let outlineView = try folderTreeView(of: controller)
 
         outlineView.expandItem(outlineView.item(atRow: 0))
         controller.view.layoutSubtreeIfNeeded()
@@ -291,12 +291,19 @@ extension FolderTreeViewControllerTests {
         let work = try #require(store.rootFolders.first)
         let showInFinder = ["folders.showInFinder", "—", "folders.remove"]
 
+        let webPageMenu = [
+            "folders.openInDefaultBrowser",
+            "folders.editWebPage",
+            "—",
+            "folders.remove",
+        ]
+
         // 行依次是 工作、开发、Chess、网页、文件、访达里的文件夹
         let expectations: [(row: Int, itemID: UUID, titles: [String])] = [
             (0, work.id, ["folders.remove"]),
             (1, work.items[0].id, ["folders.remove"]),
             (2, work.items[1].id, showInFinder),
-            (3, addedIDs[0], ["folders.openInDefaultBrowser", "folders.editWebPage", "—", "folders.remove"]),
+            (3, addedIDs[0], webPageMenu),
             (4, addedIDs[1], showInFinder),
             (5, addedIDs[2], showInFinder),
         ]
@@ -325,7 +332,7 @@ extension FolderTreeViewControllerTests {
         window.contentView = controller.view
         controller.view.layoutSubtreeIfNeeded()
 
-        let outlineView = try outlineView(of: controller)
+        let outlineView = try folderTreeView(of: controller)
 
         #expect(try !contextMenu(of: outlineView, clickingRow: 0).items.isEmpty)
 
@@ -350,7 +357,7 @@ extension FolderTreeViewControllerTests {
 
         window.contentView = controller.view
 
-        let outlineView = try outlineView(of: controller)
+        let outlineView = try folderTreeView(of: controller)
 
         outlineView.expandItem(outlineView.item(atRow: 0))
         controller.view.layoutSubtreeIfNeeded()
@@ -371,7 +378,10 @@ extension FolderTreeViewControllerTests {
 
             #expect(Self.titles(of: menu) == titles, "第 \(row) 行的菜单不对")
             #expect(menu.items.map(\.action) == titles.map(Self.action(forTitle:)))
-            #expect(menu.items.first?.isEnabled == canAddToDock, "第 \(row) 行的 “添加到 Dock” 可用状态不对")
+            #expect(
+                menu.items.first?.isEnabled == canAddToDock,
+                "第 \(row) 行的 “添加到 Dock” 可用状态不对"
+            )
             #expect(try #require(menu.items.last).isEnabled)
         }
     }
@@ -384,7 +394,7 @@ extension FolderTreeViewControllerTests {
 
         window.contentView = controller.view
 
-        let outlineView = try outlineView(of: controller)
+        let outlineView = try folderTreeView(of: controller)
 
         outlineView.expandItem(outlineView.item(atRow: 0))
         controller.view.layoutSubtreeIfNeeded()
@@ -415,7 +425,7 @@ extension FolderTreeViewControllerTests {
 
         window.contentView = controller.view
 
-        let outlineView = try outlineView(of: controller)
+        let outlineView = try folderTreeView(of: controller)
 
         outlineView.expandItem(outlineView.item(atRow: 0))
         controller.view.layoutSubtreeIfNeeded()
@@ -461,7 +471,10 @@ extension FolderTreeViewControllerTests {
         #expect(labels(in: sheet).contains("folders.webPageAlert.editMessage"))
 
         // 测试进程读不到译文，按钮标题就是键名：编辑时第一个按钮是 “保存”，没有 “添加”
-        #expect(buttonTitles(in: sheet) == ["folders.webPageAlert.cancel", "folders.webPageAlert.save"])
+        #expect(buttonTitles(in: sheet) == [
+            "folders.webPageAlert.cancel",
+            "folders.webPageAlert.save",
+        ])
 
         fields[0].stringValue = "python.org"
         fields[1].stringValue = "Python"
@@ -517,7 +530,7 @@ extension FolderTreeViewControllerTests {
     }
 
     /// 文件夹区里的文件夹树
-    private func outlineView(of controller: FolderTreeViewController) throws -> NSOutlineView {
+    private func folderTreeView(of controller: FolderTreeViewController) throws -> NSOutlineView {
         let scrollView = try #require(
             controller.view.subviews.compactMap { $0 as? NSScrollView }.first
         )
@@ -562,7 +575,7 @@ extension FolderTreeViewControllerTests {
 
     /// 开始编辑第一行 “工作” 的名称，返回正在编辑它的字段编辑器
     private func beginEditingWorkName(in controller: FolderTreeViewController) throws -> NSTextView {
-        let outlineView = try outlineView(of: controller)
+        let outlineView = try folderTreeView(of: controller)
 
         outlineView.editColumn(0, row: 0, with: nil, select: true)
 
@@ -658,9 +671,8 @@ extension FolderTreeViewControllerTests {
             )
         )
 
-        let defaults = try #require(
-            UserDefaults(suiteName: directory.appending(path: "defaults").path(percentEncoded: false))
-        )
+        let defaultsDomain = directory.appending(path: "defaults").path(percentEncoded: false)
+        let defaults = try #require(UserDefaults(suiteName: defaultsDomain))
 
         return DockTileSynchronizer(
             store: store,
@@ -680,7 +692,7 @@ extension FolderTreeViewControllerTests {
 
         _ = try addWebPageFileAndFinderFolder()
 
-        let outlineView = try outlineView(of: controller)
+        let outlineView = try folderTreeView(of: controller)
 
         outlineView.expandItem(outlineView.item(atRow: 0))
         controller.view.layoutSubtreeIfNeeded()
@@ -690,7 +702,7 @@ extension FolderTreeViewControllerTests {
 
     /// 右键点网页那一行（第 3 行），点 “编辑…”，返回弹出的提示框的窗口
     private func beginEditingWebPage(in controller: FolderTreeViewController) throws -> NSWindow {
-        let menu = try contextMenu(of: outlineView(of: controller), clickingRow: 3)
+        let menu = try contextMenu(of: folderTreeView(of: controller), clickingRow: 3)
         let editIndex = menu.indexOfItem(withTitle: "folders.editWebPage")
 
         try #require(editIndex >= 0)

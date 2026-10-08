@@ -678,10 +678,13 @@ extension WebPageAlertTests {
 
         try clickFirstButton(of: editAlert)
 
-        #expect(
-            try onlyConfirmedWebPage()
-                == WebPageReference(id: original.id, url: try url("https://apple.com"), title: "Apple")
+        let expected = WebPageReference(
+            id: original.id,
+            url: try url("https://apple.com"),
+            title: "Apple"
         )
+
+        #expect(try onlyConfirmedWebPage() == expected)
     }
 
     /// 弹出时不获取，网址改了、停顿之后才获取；原来的标题算用户的内容：换网址时不清空，取到的标题也不覆盖

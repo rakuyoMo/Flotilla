@@ -533,7 +533,9 @@ extension FolderStoreTests {
 
         store.updateWebPage(untitled)
 
-        #expect(try items(in: root.id, of: FolderStore(fileURL: fileURL)) == [.webPage(untitled)])
+        let reloadedItems = try items(in: root.id, of: FolderStore(fileURL: fileURL))
+
+        #expect(reloadedItems == [.webPage(untitled)])
     }
 
     /// 找不到的项、不是网页的项、网址与标题都没变：都不变，也不发通知
