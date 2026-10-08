@@ -15,7 +15,7 @@ jobs:
   release:
     name: 发布新版本
 
-    # `startsWith` 不区分大小写，标题的完整格式由“校验版本号”一步严格检查
+    # `startsWith` 不区分大小写，标题的完整格式由 “校验版本号” 一步严格检查
     if: >-
       github.event.pull_request.merged == true
       && startsWith(github.event.pull_request.title, 'release:')

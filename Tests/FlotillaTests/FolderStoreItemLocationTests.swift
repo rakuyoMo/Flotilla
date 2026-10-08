@@ -16,10 +16,10 @@ final class FolderStoreItemLocationTests {
     /// 本用例使用的数据源
     private let store: FolderStore
 
-    /// 根文件夹“工作”
+    /// 根文件夹 “工作”
     private let work: Folder
 
-    /// 建好临时目录与只有一个根文件夹“工作”的数据源
+    /// 建好临时目录与只有一个根文件夹 “工作” 的数据源
     init() throws {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
 
@@ -354,14 +354,14 @@ extension FolderStoreItemLocationTests {
     /// 在临时目录里新建文件，经分类后加入文件夹，返回加入的文件项
     /// - Parameters:
     ///   - name: 文件名
-    ///   - folderID: 目标文件夹，默认是“工作”
+    ///   - folderID: 目标文件夹，默认是 “工作”
     private func addFile(named name: String, to folderID: UUID? = nil) throws -> FileReference {
         try Data(name.utf8).write(to: directory.appending(path: name))
 
         return try add(directory.appending(path: name), to: folderID)
     }
 
-    /// 把本地 URL 经分类后加入文件夹（默认是“工作”），返回加入的文件项
+    /// 把本地 URL 经分类后加入文件夹（默认是 “工作”），返回加入的文件项
     private func add(_ url: URL, to folderID: UUID? = nil) throws -> FileReference {
         let item = try #require(FolderItem(url: url, title: nil))
         let file = try #require(Self.fileReference(of: item), "应当是文件")
@@ -371,7 +371,7 @@ extension FolderStoreItemLocationTests {
         return file
     }
 
-    /// 在临时目录里新建一个 `.app` 目录，经分类后作为 App 加入“工作”，返回加入的 App 项
+    /// 在临时目录里新建一个 `.app` 目录，经分类后作为 App 加入 “工作”，返回加入的 App 项
     private func addApp(named name: String) throws -> AppReference {
         try createDirectory(name)
 

@@ -15,7 +15,7 @@ final class FolderGridItemView: NSView {
     private let style: FolderGridItemStyle
 
     /// 图标：各项原样显示，子文件夹的图标在系统外观变化时由网格换成对应外观的版本；
-    /// “在访达中打开”只取原图的形状，按外观着色后显示
+    /// “在访达中打开” 只取原图的形状，按外观着色后显示
     var icon: NSImage {
         didSet {
             // 平常与按下时的图都跟着换，正在按下时也立即显示新的
@@ -33,7 +33,7 @@ final class FolderGridItemView: NSView {
     /// 点击后执行的动作
     private let clickHandler: () -> Void
 
-    /// 是否处于按下状态：各项拖出单元格即恢复、拖回来再次按下，“在访达中打开”保持到抬起
+    /// 是否处于按下状态：各项拖出单元格即恢复、拖回来再次按下，“在访达中打开” 保持到抬起
     private var isPressed = false {
         didSet {
             imageView.image = isPressed ? pressedImage : normalImage
@@ -53,8 +53,8 @@ final class FolderGridItemView: NSView {
     /// 创建单元格
     /// - Parameters:
     ///   - title: 图标下方显示的名称
-    ///   - icon: 图标；“在访达中打开”是透明底上的原图，只取形状
-    ///   - style: 样式；只有访达里的文件夹的层级末尾那一格是“在访达中打开”，
+    ///   - icon: 图标；“在访达中打开” 是透明底上的原图，只取形状
+    ///   - style: 样式；只有访达里的文件夹的层级末尾那一格是 “在访达中打开”，
     ///     其余单元格都用默认的各项样式
     ///   - clickHandler: 按下并抬起后执行，在哪里抬起才算见 `FolderGridItemStyle`
     init(
@@ -71,7 +71,7 @@ final class FolderGridItemView: NSView {
 
         imageView.imageScaling = .scaleProportionallyUpOrDown
 
-        // “在访达中打开”的图标自成一层，按外观的合成方式与下面的面板材质合成
+        // “在访达中打开” 的图标自成一层，按外观的合成方式与下面的面板材质合成
         if style == .openInFinder {
             #warning("TODO: 未能实测 macOS 15 behind-window 的 popover 材质上叠加是否生效（本机 macOS 27 用的是玻璃）")
 
@@ -104,7 +104,7 @@ final class FolderGridItemView: NSView {
     override func layout() {
         super.layout()
 
-        // “在访达中打开”的原图比其它图标画得小一些
+        // “在访达中打开” 的原图比其它图标画得小一些
         let iconSize =
             switch style {
             case .item:
@@ -146,7 +146,7 @@ final class FolderGridItemView: NSView {
         true
     }
 
-    /// 系统外观变化时，“在访达中打开”换成对应外观的颜色与合成方式；各项的图标由网格负责
+    /// 系统外观变化时，“在访达中打开” 换成对应外观的颜色与合成方式；各项的图标由网格负责
     override func viewDidChangeEffectiveAppearance() {
         super.viewDidChangeEffectiveAppearance()
 
@@ -161,14 +161,14 @@ final class FolderGridItemView: NSView {
         isPressed = true
     }
 
-    /// 拖动：各项只在鼠标仍位于单元格内时保持按下状态；“在访达中打开”一直保持到抬起
+    /// 拖动：各项只在鼠标仍位于单元格内时保持按下状态；“在访达中打开” 一直保持到抬起
     override func mouseDragged(with event: NSEvent) {
         guard style == .item else { return }
 
         isPressed = contains(event)
     }
 
-    /// 抬起：各项在单元格内抬起才算一次点击；“在访达中打开”拖出单元格、拖出面板再抬起也算
+    /// 抬起：各项在单元格内抬起才算一次点击；“在访达中打开” 拖出单元格、拖出面板再抬起也算
     override func mouseUp(with event: NSEvent) {
         isPressed = false
 
@@ -191,7 +191,7 @@ extension FolderGridItemView {
         bounds.contains(convert(event.locationInWindow, from: nil))
     }
 
-    /// 平常或按下时显示的图：各项平常就是图标、按下时压暗；“在访达中打开”按外观着色
+    /// 平常或按下时显示的图：各项平常就是图标、按下时压暗；“在访达中打开” 按外观着色
     private func makeImage(isPressed: Bool) -> NSImage {
         switch style {
         case .item:

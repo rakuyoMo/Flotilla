@@ -112,7 +112,7 @@ extension FileThumbnailLoader {
             representationTypes: .thumbnail
         )
 
-        // 图标模式：内容画成带圆角、1 pt 亮边与纯黑投影的页面或图片，即访达图标视图的“显示图标预览”。
+        // 图标模式：内容画成带圆角、1 pt 亮边与纯黑投影的页面或图片，即访达图标视图的 “显示图标预览”。
         // 投影纯黑，按下时单元格把图乘以 0.475，投影保持不变，与原生相同
         request.iconMode = true
 

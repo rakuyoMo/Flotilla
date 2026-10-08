@@ -92,7 +92,7 @@ enum FolderPanelMetrics {
     /// 访达里的文件夹显示隐藏文件时，隐藏的项图标与名称的不透明度，与访达的 ⌘⇧. 相同
     static let hiddenItemOpacity: CGFloat = 0.5
 
-    /// “在访达中打开”图标的边长：Dock 的 128 pt 原图按这个边长画，中心与其它格的图标相同，圆圈外径 64 pt、线宽 2.3 pt
+    /// “在访达中打开” 图标的边长：Dock 的 128 pt 原图按这个边长画，中心与其它格的图标相同，圆圈外径 64 pt、线宽 2.3 pt
     static let openInFinderIconSize: CGFloat = 100
 
     /// 最多显示的行数，超出时网格滚动

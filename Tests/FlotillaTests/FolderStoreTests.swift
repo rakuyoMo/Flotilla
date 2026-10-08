@@ -375,17 +375,17 @@ final class FolderStoreTests {
 // MARK: - Fixtures
 
 extension FolderStoreTests {
-    /// 系统自带的“国际象棋”的 URL
+    /// 系统自带的 “国际象棋” 的 URL
     private var chess: URL {
         URL(filePath: "/System/Applications/Chess.app/")
     }
 
-    /// 系统自带的“日历”的 URL
+    /// 系统自带的 “日历” 的 URL
     private var calendar: URL {
         URL(filePath: "/System/Applications/Calendar.app/")
     }
 
-    /// 系统自带的“计算器”的 URL
+    /// 系统自带的 “计算器” 的 URL
     private var calculator: URL {
         URL(filePath: "/System/Applications/Calculator.app/")
     }

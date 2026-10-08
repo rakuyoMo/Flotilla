@@ -30,7 +30,7 @@ struct FolderGridLayout {
 
     /// 计算网格布局
     /// - Parameters:
-    ///   - itemCount: 格数：各项，访达里的文件夹另加末尾的“在访达中打开”
+    ///   - itemCount: 格数：各项，访达里的文件夹另加末尾的 “在访达中打开”
     ///   - availableSize: 面板主体可用的最大尺寸，见 `FolderPanelPlacement.availableBodySize`
     init(itemCount: Int, availableSize: CGSize) {
         let cell = FolderPanelMetrics.cellSize

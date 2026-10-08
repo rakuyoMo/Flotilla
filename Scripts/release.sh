@@ -36,7 +36,7 @@ remote_has_ref() {
   [[ "$status" -eq 0 ]]
 }
 
-# 推送或开 PR 失败时收回发布分支，失败后重试不会被“分支已存在”拦住
+# 推送或开 PR 失败时收回发布分支，失败后重试不会被 “分支已存在” 拦住
 discard_release_branch() {
   git switch main
 
@@ -155,5 +155,5 @@ echo "已创建 PR：$pr_url"
 
 git switch main
 
-# 发布分支已推送到远端，本地副本没有用处，留着会让重发同一版本时被“本地已有分支”拦住
+# 发布分支已推送到远端，本地副本没有用处，留着会让重发同一版本时被 “本地已有分支” 拦住
 git branch --delete "$BRANCH"

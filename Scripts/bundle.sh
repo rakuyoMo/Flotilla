@@ -31,7 +31,7 @@ cp "Sources/$APP_NAME/Info.plist" "$APP_PATH/Contents/Info.plist"
 cp -R "Sources/$APP_NAME/Resources/"*.lproj "$APP_PATH/Contents/Resources/"
 
 # App 图标：白天版与夜间版的母版各生成一份 icns；
-# 白天版是 Info.plist 的 `CFBundleIconFile` 指向的默认图标，夜间版由 App 运行时按“图标与小组件样式”取用
+# 白天版是 Info.plist 的 `CFBundleIconFile` 指向的默认图标，夜间版由 App 运行时按 “图标与小组件样式” 取用
 
 # 中间的 iconset 放在临时目录，脚本退出时删除
 ICONSET_ROOT="$(mktemp -d)"

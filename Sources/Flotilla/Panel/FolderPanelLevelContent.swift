@@ -7,7 +7,7 @@ enum FolderPanelLevelContent: Equatable {
     /// Flotilla 的文件夹：网格是它的各项
     case folder(Folder)
 
-    /// 访达里的文件夹：网格是其中的各项，末尾另有一格“在访达中打开”
+    /// 访达里的文件夹：网格是其中的各项，末尾另有一格 “在访达中打开”
     case finderFolder(FileReference, items: [FolderItem])
 
     /// 这一层的 id：文件夹的 id，或访达里的文件夹这一项的 id；返回时按它在父层级里找到缩回的图标
@@ -43,7 +43,7 @@ enum FolderPanelLevelContent: Equatable {
         }
     }
 
-    /// “在访达中打开”打开的文件夹；
+    /// “在访达中打开” 打开的文件夹；
     /// Flotilla 的文件夹没有这一格（需求 4），为 nil
     var finderFolderURL: URL? {
         guard case .finderFolder(let finderFolder, _) = self else { return nil }
@@ -62,7 +62,7 @@ enum FolderPanelLevelContent: Equatable {
         }
     }
 
-    /// 网格的格数：访达里的文件夹多出末尾的“在访达中打开”，空的也有这一格
+    /// 网格的格数：访达里的文件夹多出末尾的 “在访达中打开”，空的也有这一格
     var cellCount: Int {
         finderFolderURL == nil ? items.count : items.count + 1
     }

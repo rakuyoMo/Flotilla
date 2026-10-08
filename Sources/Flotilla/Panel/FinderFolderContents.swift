@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - FinderFolderContents
 
-/// 面板里展开访达里的文件夹时读出的内容：按设置跳过或显示隐藏文件，按访达“名称”的顺序排列，App bundle 为 App，其余为文件
+/// 面板里展开访达里的文件夹时读出的内容：按设置跳过或显示隐藏文件，按访达 “名称” 的顺序排列，App bundle 为 App，其余为文件
 ///
 /// 各项只存在于这一次展开里，不进 `FolderStore`、不建书签。同一个层级里同名的项在一次展开里 id 不变：
 /// 返回时父层级是重新读出来的，要按 id 找到缩回的图标、恢复滚动位置
@@ -55,7 +55,7 @@ struct FinderFolderContents {
             return (url: url, name: name ?? url.lastPathComponent)
         }
 
-        // `localizedStandardCompare` 让 `a2` 排在 `a10` 前面，与访达“名称”的顺序一致；
+        // `localizedStandardCompare` 让 `a2` 排在 `a10` 前面，与访达 “名称” 的顺序一致；
         // 隐藏的项与其它项混在一起按显示名排，开头的 `.` 也参与比较，与访达显示隐藏文件时相同
         let sortedURLs = namedURLs
             .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }

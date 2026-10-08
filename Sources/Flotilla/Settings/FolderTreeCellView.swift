@@ -11,12 +11,12 @@ final class FolderTreeCellView: NSTableCellView {
     /// 行首图标的边长（pt）
     private static let iconSize: CGFloat = 20
 
-    /// 访达里的文件夹名称后的位置文字，与“不在 Dock 上”同样的灰色小字；其余各行隐藏
+    /// 访达里的文件夹名称后的位置文字，与 “不在 Dock 上” 同样的灰色小字；其余各行隐藏
     ///
     /// 设置窗口里访达里的文件夹与 Flotilla 的文件夹图标相同，靠它区分
     private let locationLabel = NSTextField(labelWithString: "")
 
-    /// 名称右侧的状态文字“不在 Dock 上”，默认隐藏
+    /// 名称右侧的状态文字 “不在 Dock 上”，默认隐藏
     private let notOnDockLabel = NSTextField(
         labelWithString: String(
             localized: "folders.notOnDock",
@@ -24,7 +24,7 @@ final class FolderTreeCellView: NSTableCellView {
         )
     )
 
-    /// 是否显示“不在 Dock 上”；只有被拖出 Dock 的根文件夹这一行显示
+    /// 是否显示 “不在 Dock 上”；只有被拖出 Dock 的根文件夹这一行显示
     var showsNotOnDockLabel: Bool {
         get { !notOnDockLabel.isHidden }
         set { notOnDockLabel.isHidden = !newValue }

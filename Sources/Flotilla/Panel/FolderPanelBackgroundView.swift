@@ -77,7 +77,7 @@ final class FolderPanelBackgroundView: NSView {
 
     /// 面板轮廓：主体是连续曲率的圆角矩形，面向 Dock 的边上长出尾巴，合成一条闭合路径
     ///
-    /// 在“尾巴朝下”的标准坐标系里构造，再旋转到 Dock 所在的方向；
+    /// 在 “尾巴朝下” 的标准坐标系里构造，再旋转到 Dock 所在的方向；
     /// 尾巴底边的中点取尖端在这条边上的投影，并夹在两端圆角之间，尖端偏出时尾巴变斜，尖端仍对准 tile；
     /// tile 离屏幕边缘近到尾巴斜到极限时，尖端停在极限处
     /// - Parameters:
@@ -268,7 +268,7 @@ extension FolderPanelBackgroundView {
 // MARK: - Helpers
 
 extension FolderPanelBackgroundView {
-    /// 从“尾巴朝下”的标准坐标系到 bodyRect 所在坐标系的变换
+    /// 从 “尾巴朝下” 的标准坐标系到 bodyRect 所在坐标系的变换
     ///
     /// 标准坐标系里主体占据 `[0, length] × [0, depth]`，面向 Dock 的边在 y = 0，尾巴朝 y 负方向
     private static func canonicalTransform(

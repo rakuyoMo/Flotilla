@@ -13,10 +13,10 @@ final class FolderPanelNavigationTests {
     private let directory = FileManager.default.temporaryDirectory
         .appending(path: "FlotillaTests-\(UUID().uuidString)")
 
-    /// 根文件夹“根”的 id：每条导航路径的第一段
+    /// 根文件夹 “根” 的 id：每条导航路径的第一段
     private let rootID = UUID()
 
-    /// 子文件夹“子”的 id：每次取 `child` 都按它重建，内容变了仍是同一层级
+    /// 子文件夹 “子” 的 id：每次取 `child` 都按它重建，内容变了仍是同一层级
     private let childID = UUID()
 
     /// 最深一层的子文件夹
@@ -43,7 +43,7 @@ final class FolderPanelNavigationTests {
         Folder(id: rootID, name: "根", items: [app, .folder(child)])
     }
 
-    /// 建好临时目录：访达里的文件夹“资料”，其中有子目录“2024”与文件“说明.txt”，“2024”里有“报告.txt”
+    /// 建好临时目录：访达里的文件夹 “资料”，其中有子目录 “2024” 与文件 “说明.txt”，“2024” 里有 “报告.txt”
     init() throws {
         try FileManager.default.createDirectory(
             at: directory.appending(path: "资料/2024"),

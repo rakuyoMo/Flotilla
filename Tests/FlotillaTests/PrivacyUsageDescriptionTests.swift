@@ -3,7 +3,7 @@ import Testing
 
 // MARK: - PrivacyUsageDescriptionTests
 
-/// 隐私授权框里的用途说明：第一次读取“文稿”“桌面”等受保护位置时系统弹出授权框，
+/// 隐私授权框里的用途说明：第一次读取 “文稿” “桌面” 等受保护位置时系统弹出授权框，
 /// 每个会弹授权框的位置都要在 Info.plist 里写明 Flotilla 为什么要访问，五种语言都要有译文
 struct PrivacyUsageDescriptionTests {
     /// 会弹授权框的位置对应的用途说明键：桌面、文稿、下载、iCloud 云盘（文件提供方）、网络卷、外接卷

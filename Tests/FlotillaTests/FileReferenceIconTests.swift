@@ -6,8 +6,8 @@ import UniformTypeIdentifiers
 
 // MARK: - FileReferenceIconTests
 
-/// 文件的图标与访达一致：`icon(forFile:)` 把名称开头的“.”后面当成扩展名，`.a` 画成归档、`.zip` 画成压缩包；
-/// 名称以“.”开头、没有扩展名的文件与文件夹按内容类型取，其余的项按文件取，自定义图标与替身箭头才显示得出
+/// 文件的图标与访达一致：`icon(forFile:)` 把名称开头的 “.” 后面当成扩展名，`.a` 画成归档、`.zip` 画成压缩包；
+/// 名称以 “.” 开头、没有扩展名的文件与文件夹按内容类型取，其余的项按文件取，自定义图标与替身箭头才显示得出
 ///
 /// 放在主线程串行执行：并发栅格化同一个图标时，偶尔会画出不同的像素
 @MainActor
@@ -36,7 +36,7 @@ final class FileReferenceIconTests {
         #expect(try pixels(of: icon(of: url)) == expected)
     }
 
-    /// 名称以“.”开头、没有扩展名的目录是普通文件夹：图标与按文件夹类型取的相同，不是 bundle 的图标
+    /// 名称以 “.” 开头、没有扩展名的目录是普通文件夹：图标与按文件夹类型取的相同，不是 bundle 的图标
     @Test
     func dotNamedFolderUsesFolderIcon() throws {
         let url = directory.appending(path: ".bundle", directoryHint: .isDirectory)
@@ -47,7 +47,7 @@ final class FileReferenceIconTests {
         #expect(try pixels(of: icon(of: url)) == expected)
     }
 
-    /// 有扩展名的隐藏文件、名称不以“.”开头的文件按文件取：粘贴过的自定义图标照样显示
+    /// 有扩展名的隐藏文件、名称不以 “.” 开头的文件按文件取：粘贴过的自定义图标照样显示
     @Test(arguments: [".甲.txt", "n"])
     func otherFilesKeepCustomIcon(name: String) throws {
         let url = try writeFile(name)
@@ -58,7 +58,7 @@ final class FileReferenceIconTests {
         #expect(try pixels(of: icon(of: url)) == expected)
     }
 
-    /// 名称以“.”开头的符号链接按文件取：图标是目标的图标加替身箭头
+    /// 名称以 “.” 开头的符号链接按文件取：图标是目标的图标加替身箭头
     @Test
     func symbolicLinkKeepsAliasBadge() throws {
         let target = try writeFile("n")
@@ -70,7 +70,7 @@ final class FileReferenceIconTests {
         #expect(try pixels(of: icon(of: link)) == expected)
     }
 
-    /// 名称以“.”开头、没有扩展名的文件包按文件取：按类型取会是带“?”的文稿
+    /// 名称以 “.” 开头、没有扩展名的文件包按文件取：按类型取会是带 “?” 的文稿
     @Test
     func dotNamedPackageKeepsFileIcon() throws {
         let url = directory.appending(path: ".包", directoryHint: .isDirectory)

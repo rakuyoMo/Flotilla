@@ -106,7 +106,7 @@ enum FolderPanelAppearance {
 
     /// 返回按钮底色外一圈 1 像素暗线的不透明度；深色没有这圈线
     ///
-    /// 浅色原生读数按“黑色叠在材质上”折算，灰、黑两种底色一致：上 0.16、左右 0.18
+    /// 浅色原生读数按 “黑色叠在材质上” 折算，灰、黑两种底色一致：上 0.16、左右 0.18
     var backButtonBorderOpacity: CGFloat {
         switch self {
         case .dark:
@@ -159,7 +159,7 @@ enum FolderPanelAppearance {
         }
     }
 
-    /// “在访达中打开”的图标与面板材质的合成方式，取 Core Animation 的合成滤镜名
+    /// “在访达中打开” 的图标与面板材质的合成方式，取 Core Animation 的合成滤镜名
     ///
     /// 黑、灰、白、红四种底色上，原生图标处每个通道都与材质相差同样的量：
     /// 深色是叠加（plus-lighter），比材质高；浅色是叠暗（plus-darker），比材质低
@@ -181,7 +181,7 @@ enum FolderPanelAppearance {
             : .light
     }
 
-    /// “在访达中打开”图标的颜色，按 `openInFinderCompositingFilter` 与材质合成
+    /// “在访达中打开” 图标的颜色，按 `openInFinderCompositingFilter` 与材质合成
     ///
     /// 叠加时加上的量就是颜色本身；叠暗时减去的量是 1 减去颜色。取 sRGB 灰：屏上读数与 sRGB 的数值一致
     ///

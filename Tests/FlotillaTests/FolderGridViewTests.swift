@@ -9,7 +9,7 @@ import Testing
 /// 同时滚动到哪里都不能露出空白格，缩回动画也要在目标格还没建时找得到它
 @MainActor
 struct FolderGridViewTests {
-    /// 100 项加“在访达中打开”：7 列、15 行，面板显示 5 行
+    /// 100 项加 “在访达中打开”：7 列、15 行，面板显示 5 行
     private let items: [FolderItem] = (0 ..< 100).map {
         .file(FileReference(
             id: UUID(),
@@ -101,7 +101,7 @@ struct FolderGridViewTests {
         #expect(itemView.convert(itemView.iconCenter, to: grid) == center)
     }
 
-    /// “在访达中打开”排在最后一格，那一行露出时才建
+    /// “在访达中打开” 排在最后一格，那一行露出时才建
     @Test
     func openInFinderCellIsBuiltWhenItsRowAppears() {
         let (scrollView, grid) = makeScrolledGrid()

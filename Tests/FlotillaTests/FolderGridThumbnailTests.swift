@@ -13,7 +13,7 @@ struct FolderGridThumbnailTests {
     /// 假的缩略图生成，由测试决定何时交出什么结果
     private let generator = ThumbnailGeneratorStub()
 
-    /// 滚动用的 100 个文件：加上“在访达中打开”共 7 列、15 行，面板显示 5 行
+    /// 滚动用的 100 个文件：加上 “在访达中打开” 共 7 列、15 行，面板显示 5 行
     private let manyFiles = (0 ..< 100).map {
         FileReference(
             id: UUID(),
@@ -296,7 +296,7 @@ extension FolderGridThumbnailTests {
         return (scrollView, grid)
     }
 
-    /// 与面板相同的建法：只有访达里的文件夹的层级有缩略图加载器与“在访达中打开”；还没排版，一格也没建
+    /// 与面板相同的建法：只有访达里的文件夹的层级有缩略图加载器与 “在访达中打开”；还没排版，一格也没建
     private func makeGridView(for content: FolderPanelLevelContent) -> FolderGridView {
         let layout = FolderGridLayout(
             itemCount: content.cellCount,
@@ -358,7 +358,7 @@ extension FolderGridThumbnailTests {
         return window
     }
 
-    /// 第 `index` 格（从 0 数）当前显示的图标；各项排在前面，“在访达中打开”在最后
+    /// 第 `index` 格（从 0 数）当前显示的图标；各项排在前面，“在访达中打开” 在最后
     ///
     /// 每次都从网格里取：网格要一直活到测试结束，缩略图加载器归它所有
     private func icon(at index: Int, in grid: FolderGridView) -> NSImage? {

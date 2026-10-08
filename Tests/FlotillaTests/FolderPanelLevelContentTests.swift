@@ -5,7 +5,7 @@ import Testing
 
 // MARK: - FolderPanelLevelContentTests
 
-/// 网格的格数决定面板尺寸：访达里的文件夹末尾另有“在访达中打开”，与原生叠放一致；
+/// 网格的格数决定面板尺寸：访达里的文件夹末尾另有 “在访达中打开”，与原生叠放一致；
 /// Flotilla 的文件夹没有这一格（需求 4）
 @MainActor
 struct FolderPanelLevelContentTests {
@@ -25,7 +25,7 @@ struct FolderPanelLevelContentTests {
         #expect(content.finderFolderURL == finderFolder.url)
     }
 
-    /// 空的访达里的文件夹只有“在访达中打开”一格
+    /// 空的访达里的文件夹只有 “在访达中打开” 一格
     @Test
     func emptyFinderFolderHasOneCell() {
         let content = FolderPanelLevelContent.finderFolder(finderFolder, items: [])

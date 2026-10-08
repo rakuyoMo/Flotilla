@@ -3,7 +3,7 @@ import Testing
 
 // MARK: - LocalizedAppNameTests
 
-/// App 名的本地化：访达、Dock、App 菜单等处，简繁中文环境下显示中文名“归帆”“歸帆”，日文环境下显示日文名“帰帆”，其它语言显示“Flotilla”
+/// App 名的本地化：访达、Dock、App 菜单等处，简繁中文环境下显示中文名 “归帆” “歸帆”，日文环境下显示日文名 “帰帆”，其它语言显示 “Flotilla”
 struct LocalizedAppNameTests {
     /// 每种语言下的 App 名：简繁中文用中文名，日文用日文名，其它语言沿用英文名
     static let appNames = [

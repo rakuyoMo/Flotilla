@@ -23,7 +23,7 @@ final class AppDelegate: NSObject {
     /// 在 `applicationWillFinishLaunching` 里创建
     private var dockFolderPresenter: DockFolderPresenter?
 
-    /// 让 Dock 与 ⌘Tab 里的 App 图标跟随系统的“图标与小组件样式”
+    /// 让 Dock 与 ⌘Tab 里的 App 图标跟随系统的 “图标与小组件样式”
     private let appIconController = AppIconController()
 
     /// 同一 bundle id 下、当前进程以外的一个运行实例；没有就返回 nil
@@ -58,7 +58,7 @@ extension AppDelegate: NSApplicationDelegate {
         startDockIntegration()
     }
 
-    /// 搭好主菜单与状态栏，按“图标与小组件样式”设好 App 图标，把当前这份 App 注册为 `flotilla` scheme 的处理者
+    /// 搭好主菜单与状态栏，按 “图标与小组件样式” 设好 App 图标，把当前这份 App 注册为 `flotilla` scheme 的处理者
     func applicationDidFinishLaunching(_: Notification) {
         NSApp.mainMenu = makeMainMenu()
 
@@ -113,14 +113,14 @@ extension AppDelegate: NSApplicationDelegate {
 // MARK: - Private
 
 extension AppDelegate {
-    /// 构建最小主菜单：App 菜单只有“退出”；“编辑”菜单让设置窗口里的文本框响应标准快捷键
+    /// 构建最小主菜单：App 菜单只有 “退出”；“编辑” 菜单让设置窗口里的文本框响应标准快捷键
     private func makeMainMenu() -> NSMenu {
         let appMenu = NSMenu()
         appMenu.items = [
             NSMenuItem(
                 title: String(
                     localized: "mainMenu.quit",
-                    comment: "App 菜单的“退出归帆”"
+                    comment: "App 菜单的 “退出归帆”"
                 ),
                 action: #selector(NSApplication.terminate(_:)),
                 keyEquivalent: "q"
@@ -138,12 +138,12 @@ extension AppDelegate {
         return mainMenu
     }
 
-    /// “编辑”菜单：撤销、重做、剪切、复制、粘贴、全选，动作沿响应链交给当前的文本框
+    /// “编辑” 菜单：撤销、重做、剪切、复制、粘贴、全选，动作沿响应链交给当前的文本框
     private func makeEditMenu() -> NSMenu {
         let redoItem = NSMenuItem(
             title: String(
                 localized: "mainMenu.redo",
-                comment: "“编辑”菜单的“重做”"
+                comment: "“编辑” 菜单的 “重做”"
             ),
             action: Selector(("redo:")),
             keyEquivalent: "z"
@@ -153,7 +153,7 @@ extension AppDelegate {
         let editMenu = NSMenu(
             title: String(
                 localized: "mainMenu.edit",
-                comment: "主菜单里“编辑”菜单的标题"
+                comment: "主菜单里 “编辑” 菜单的标题"
             )
         )
 
@@ -161,7 +161,7 @@ extension AppDelegate {
             NSMenuItem(
                 title: String(
                     localized: "mainMenu.undo",
-                    comment: "“编辑”菜单的“撤销”"
+                    comment: "“编辑” 菜单的 “撤销”"
                 ),
                 action: Selector(("undo:")),
                 keyEquivalent: "z"
@@ -173,7 +173,7 @@ extension AppDelegate {
             NSMenuItem(
                 title: String(
                     localized: "mainMenu.cut",
-                    comment: "“编辑”菜单的“剪切”"
+                    comment: "“编辑” 菜单的 “剪切”"
                 ),
                 action: #selector(NSText.cut(_:)),
                 keyEquivalent: "x"
@@ -181,7 +181,7 @@ extension AppDelegate {
             NSMenuItem(
                 title: String(
                     localized: "mainMenu.copy",
-                    comment: "“编辑”菜单的“复制”"
+                    comment: "“编辑” 菜单的 “复制”"
                 ),
                 action: #selector(NSText.copy(_:)),
                 keyEquivalent: "c"
@@ -189,7 +189,7 @@ extension AppDelegate {
             NSMenuItem(
                 title: String(
                     localized: "mainMenu.paste",
-                    comment: "“编辑”菜单的“粘贴”"
+                    comment: "“编辑” 菜单的 “粘贴”"
                 ),
                 action: #selector(NSText.paste(_:)),
                 keyEquivalent: "v"
@@ -198,7 +198,7 @@ extension AppDelegate {
             NSMenuItem(
                 title: String(
                     localized: "mainMenu.selectAll",
-                    comment: "“编辑”菜单的“全选”"
+                    comment: "“编辑” 菜单的 “全选”"
                 ),
                 action: #selector(NSText.selectAll(_:)),
                 keyEquivalent: "a"

@@ -16,19 +16,19 @@ final class FolderTreeDataSourceTests {
     /// 本用例使用的 `FolderStore`
     private let store: FolderStore
 
-    /// 根文件夹“工作”
+    /// 根文件夹 “工作”
     private let work: Folder
 
-    /// “工作”下的子文件夹“开发”
+    /// “工作” 下的子文件夹 “开发”
     private let development: Folder
 
-    /// “工作”下 App 项的 id
+    /// “工作” 下 App 项的 id
     private let appID: UUID
 
     /// 被测数据源
     private let dataSource: FolderTreeDataSource
 
-    /// 建立根文件夹“工作”，其下依次是子文件夹“开发”与 Chess.app
+    /// 建立根文件夹 “工作”，其下依次是子文件夹 “开发” 与 Chess.app
     init() throws {
         store = FolderStore(fileURL: directory.appending(path: "folders.json"))
 

@@ -6,7 +6,7 @@ import Testing
 // MARK: - AppDelegateTests
 
 /// 单实例保护：两个 Flotilla 会同时改写 Dock 偏好，启动时发现别的实例就必须退出；
-/// 同一 bundle id 的实例列表里总有当前进程自己，它不能被当成“别的实例”，否则 Flotilla 永远起不来
+/// 同一 bundle id 的实例列表里总有当前进程自己，它不能被当成 “别的实例”，否则 Flotilla 永远起不来
 @MainActor
 struct AppDelegateTests {
     /// 假定的当前进程号；

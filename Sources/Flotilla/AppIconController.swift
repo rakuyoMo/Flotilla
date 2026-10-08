@@ -3,7 +3,7 @@ import os
 
 // MARK: - AppIconController
 
-/// Flotilla 自身的 App 图标：Dock 与 ⌘Tab 里的图标跟随系统设置“外观 › 图标与小组件样式”
+/// Flotilla 自身的 App 图标：Dock 与 ⌘Tab 里的图标跟随系统设置 “外观 › 图标与小组件样式”
 ///
 /// 访达等处只认包里的默认图标（白天版）：没有 Assets.car，换成夜间版只能在运行时作用于 Dock 与 ⌘Tab。
 /// Dock 只对包里的默认图标做透明、色调处理，运行时设置的图标一律原样显示（macOS 27 实测），
@@ -13,10 +13,10 @@ final class AppIconController: NSObject {
     /// 夜间版图标在包里的资源名
     private static let darkIconName = "AppIconDark"
 
-    /// “图标与小组件样式”在全局偏好里的键；选“默认”时键不存在
+    /// “图标与小组件样式” 在全局偏好里的键；选 “默认” 时键不存在
     private static let iconThemeKey = "AppleIconAppearanceTheme"
 
-    /// “图标与小组件样式”变化时 `NSWorkspace` 的通知中心发出的通知；名称不在公开头文件里，macOS 27 实测
+    /// “图标与小组件样式” 变化时 `NSWorkspace` 的通知中心发出的通知；名称不在公开头文件里，macOS 27 实测
     private static let iconAppearanceDidChangeNotification = Notification.Name(
         "NSWorkspaceIconAppearanceConfigurationDidChangeNotification"
     )
@@ -27,7 +27,7 @@ final class AppIconController: NSObject {
         category: "AppIconController"
     )
 
-    /// 对“图标与小组件样式”变化的观察
+    /// 对 “图标与小组件样式” 变化的观察
     private var iconStyleObservation: (any NSObjectProtocol)?
 
     /// 对 App 外观的观察：App 没有固定外观，这个值跟随系统的深浅
@@ -38,10 +38,10 @@ final class AppIconController: NSObject {
     /// 深色、透明、色调三种样式各有深色、自动两个子变体要换成夜间版：取值以 `Dark` 结尾的始终换，
     /// 以 `Automatic` 结尾的跟随系统深浅外观，只在深色外观下换；透明、色调的浅色子变体（`Light` 结尾）交给系统处理白天版
     ///
-    /// 没有“图标与小组件样式”的系统（macOS 15 起、26 之前）上 `iconTheme` 总是 nil，同样用默认图标，与系统里其它 App 一致
+    /// 没有 “图标与小组件样式” 的系统（macOS 15 起、26 之前）上 `iconTheme` 总是 nil，同样用默认图标，与系统里其它 App 一致
     /// - Parameters:
-    ///   - iconTheme: 全局偏好 `AppleIconAppearanceTheme` 的值，“默认”样式时为 nil
-    ///   - appearance: App 的 `effectiveAppearance`，只在“自动”子变体下起作用；高对比度等变体归入对应的深色或浅色
+    ///   - iconTheme: 全局偏好 `AppleIconAppearanceTheme` 的值，“默认” 样式时为 nil
+    ///   - appearance: App 的 `effectiveAppearance`，只在 “自动” 子变体下起作用；高对比度等变体归入对应的深色或浅色
     static func variant(
         forIconTheme iconTheme: String?,
         appearance: NSAppearance
@@ -96,7 +96,7 @@ final class AppIconController: NSObject {
             }
         }
 
-        // 各样式的“自动”子变体跟随系统深浅；外观在主线程上变化，观察回调也在主线程
+        // 各样式的 “自动” 子变体跟随系统深浅；外观在主线程上变化，观察回调也在主线程
         appearanceObservation = NSApp.observe(\.effectiveAppearance) { [weak self] _, _ in
             MainActor.assumeIsolated {
                 self?.updateIcon()
@@ -180,11 +180,11 @@ extension AppIconController {
         return NSImage(cgImage: processed, size: nightIcon.size)
     }
 
-    /// “图标与小组件样式”当前的色调颜色；选“自动”时是系统解析出的颜色
+    /// “图标与小组件样式” 当前的色调颜色；选 “自动” 时是系统解析出的颜色
     ///
-    /// 全局偏好只存颜色名，“自动”时连名字都没有，解析后的颜色要从 `NSWorkspace` 的私有配置对象取：
+    /// 全局偏好只存颜色名，“自动” 时连名字都没有，解析后的颜色要从 `NSWorkspace` 的私有配置对象取：
     /// `currentIconAppearanceConfiguration` 返回 SkyLight 的 `SLSIconAppearanceConfiguration`，
-    /// 其 `resolvedIconTintColor` 是 `NSColor`（macOS 27 实测，“自动”时为 `systemBlueColor`）；取不到时为 nil
+    /// 其 `resolvedIconTintColor` 是 `NSColor`（macOS 27 实测，“自动” 时为 `systemBlueColor`）；取不到时为 nil
     private static func iconTintColor() -> NSColor? {
         let configurationSelector = NSSelectorFromString("currentIconAppearanceConfiguration")
         let tintColorKey = "resolvedIconTintColor"
@@ -198,7 +198,7 @@ extension AppIconController {
             configuration.responds(to: NSSelectorFromString(tintColorKey)),
             let tintColor = configuration.value(forKey: tintColorKey) as? NSColor
         else {
-            logger.error("取不到“图标与小组件样式”的色调颜色，交还默认图标")
+            logger.error("取不到 “图标与小组件样式” 的色调颜色，交还默认图标")
             return nil
         }
 
