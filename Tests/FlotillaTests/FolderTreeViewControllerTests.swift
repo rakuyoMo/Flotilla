@@ -5,7 +5,7 @@ import Testing
 
 // MARK: - FolderTreeViewControllerTests
 
-/// 设置窗口的文件夹区：树的宽度必须始终与滚动区一致，行尾的“不在 Dock 上”才不会被右缘裁掉；
+/// 设置窗口的文件夹区：树的宽度必须始终与滚动区一致，行尾的 “不在 Dock 上” 才不会被右缘裁掉；
 /// 窗口缩到最窄时，底部按钮行在每种语言下都完整显示
 @MainActor
 final class FolderTreeViewControllerTests {
@@ -17,10 +17,10 @@ final class FolderTreeViewControllerTests {
     private let directory = FileManager.default.temporaryDirectory
         .appending(path: "FlotillaTests-\(UUID().uuidString)")
 
-    /// 本用例使用的数据源：根文件夹“工作”下有子文件夹“开发”与一个 App
+    /// 本用例使用的数据源：根文件夹 “工作” 下有子文件夹 “开发” 与一个 App
     private let store: FolderStore
 
-    /// 建立根文件夹“工作”，其下依次是子文件夹“开发”与 Chess.app
+    /// 建立根文件夹 “工作”，其下依次是子文件夹 “开发” 与 Chess.app
     init() throws {
         store = FolderStore(fileURL: directory.appending(path: "folders.json"))
 
@@ -72,7 +72,7 @@ final class FolderTreeViewControllerTests {
         let buttons = buttonRow.views.compactMap { $0 as? NSButton }
 
         // 测试进程读不到 `.lproj` 里的译文，按钮标题就是键名，按键名换成这种语言的文字；
-        // “添加到 Dock”在没有同步器时隐藏，这里也显示出来
+        // “添加到 Dock” 在没有同步器时隐藏，这里也显示出来
         for button in buttons {
             button.title = try #require(table[button.title], "表里没有 \(button.title)")
             button.isHidden = false

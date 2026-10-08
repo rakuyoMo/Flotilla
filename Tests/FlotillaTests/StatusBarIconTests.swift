@@ -5,16 +5,23 @@ import Testing
 
 // MARK: - StatusBarIconTests
 
-/// 状态栏图标（需求 7）：由系统按菜单栏深浅着色、在状态栏按钮里居中，1 倍屏上直线边缘不发虚
+/// 状态栏图标（需求 7）：由系统按菜单栏深浅着色、在状态栏按钮里居中，1 倍屏上直线边缘不发虚，旁白读出当前语言下的 App 名
 struct StatusBarIconTests {
-    /// 必须是 template 图：否则深色菜单栏上仍画成黑色，看不见；
-    /// 无障碍描述为“Flotilla”，旁白读得出这个状态栏图标
+    /// 必须是 template 图：否则深色菜单栏上仍画成黑色，看不见
     @Test
-    func imageIsTemplateWithAccessibilityDescription() {
-        let image = StatusBarIcon.makeImage()
+    func imageIsTemplate() {
+        #expect(StatusBarIcon.makeImage().isTemplate)
+    }
 
-        #expect(image.isTemplate)
-        #expect(image.accessibilityDescription == "Flotilla")
+    /// 无障碍描述是这种语言下的 App 名：旁白读出的名字与访达、Dock 里显示的一致
+    @Test(arguments: LocalizationTests.languages)
+    func accessibilityDescriptionIsAppName(language: String) throws {
+        let key = try #require(StatusBarIcon.makeImage().accessibilityDescription)
+
+        // 测试进程读不到 `.lproj` 里的译文，无障碍描述就是键名，按键名查这种语言的文字
+        let description = try LocalizationTests.table(for: language)[key]
+
+        #expect(description == LocalizedAppNameTests.appNames[language])
     }
 
     /// 画布 16 pt 见方，船从画布顶端画到底端，左右各空 1 pt：放进 22 pt 的按钮后上下左右都居中

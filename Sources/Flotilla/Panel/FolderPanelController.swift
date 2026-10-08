@@ -21,7 +21,7 @@ final class FolderPanelController {
     let panel = FolderPanel()
 
     /// 请求收起面板：由 `DockFolderPresenter` 更新状态并收起；
-    /// 按下 Esc，点击 App、文件、网页或“在访达中打开”，以及要进入或返回的那一层读不出来时调用
+    /// 按下 Esc，点击 App、文件、网页或 “在访达中打开”，以及要进入或返回的那一层读不出来时调用
     var dismissRequestHandler: (() -> Void)? = nil
 
     /// 本次展开里各次读访达里的文件夹占住主线程的时段，`DockFolderPresenter` 据此忽略这期间的鼠标按下
@@ -307,7 +307,7 @@ extension FolderPanelController {
     ///   - url: 文件 URL 或网址
     ///   - name: 显示名，只用于日志
     private func open(_ url: URL, named name: String) {
-        // 打开失败时系统按 `OpenConfiguration` 的默认设置提示用户，例如文件已不在时弹出“找不到”；
+        // 打开失败时系统按 `OpenConfiguration` 的默认设置提示用户，例如文件已不在时弹出 “找不到”；
         // 这里另记日志，面板照常收起
         NSWorkspace.shared.open(
             url,
@@ -335,7 +335,7 @@ extension FolderPanelController {
     ) -> (level: FolderPanelLevel, placement: FolderPanelPlacement) {
         let visibleFrame = anchor.screen.visibleFrame
 
-        // 网格的列数与显示行数受 tile 旁可用的空间限制；访达里的文件夹多出“在访达中打开”一格
+        // 网格的列数与显示行数受 tile 旁可用的空间限制；访达里的文件夹多出 “在访达中打开” 一格
         let layout = FolderGridLayout(
             itemCount: content.cellCount,
             availableSize: FolderPanelPlacement.availableBodySize(
@@ -372,7 +372,7 @@ extension FolderPanelController {
 
         view.bodyView.addSubview(makeHeader(title: content.title, bodySize: layout.bodySize))
 
-        // 空的 Flotilla 文件夹只有标题区，格内为空；空的访达里的文件夹仍有“在访达中打开”一格
+        // 空的 Flotilla 文件夹只有标题区，格内为空；空的访达里的文件夹仍有 “在访达中打开” 一格
         let scrollView = content.cellCount == 0
             ? nil
             : makeScrollView(
@@ -446,7 +446,7 @@ extension FolderPanelController {
         scrollView.verticalScrollElasticity = layout.needsScrolling ? .automatic : .none
         scrollView.horizontalScrollElasticity = .none
 
-        // “在访达中打开”由访达打开这一层的目录，随即收起面板
+        // “在访达中打开” 由访达打开这一层的目录，随即收起面板
         let openInFinderHandler: (() -> Void)? = content.finderFolderURL.map { url in
             { [weak self] in self?.open(url, named: content.title) }
         }
@@ -560,7 +560,7 @@ extension FolderPanelController {
     private func readItems(of finderFolder: FileReference) throws -> [FolderItem] {
         let start = ProcessInfo.processInfo.systemUptime
 
-        // 读取成功、失败都记下：授权框被拒时，点“不允许”的按下同样排在读取之后才处理
+        // 读取成功、失败都记下：授权框被拒时，点 “不允许” 的按下同样排在读取之后才处理
         defer {
             readPeriods.record(start ... ProcessInfo.processInfo.systemUptime)
         }

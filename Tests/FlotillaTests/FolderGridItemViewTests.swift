@@ -5,8 +5,8 @@ import Testing
 
 // MARK: - FolderGridItemViewTests
 
-/// 单元格的按下与抬起，以及“在访达中打开”的画法，都按原生叠放实测：
-/// 各项拖出单元格就取消；“在访达中打开”按下后保持到抬起、在哪里抬起都触发，图标叠加到面板材质上
+/// 单元格的按下与抬起，以及 “在访达中打开” 的画法，都按原生叠放实测：
+/// 各项拖出单元格就取消；“在访达中打开” 按下后保持到抬起、在哪里抬起都触发，图标叠加到面板材质上
 @MainActor
 struct FolderGridItemViewTests {
     /// 单元格内的一点，窗口坐标
@@ -66,7 +66,7 @@ struct FolderGridItemViewTests {
         #expect(try displayedImage(of: itemView) === normalImage)
     }
 
-    /// “在访达中打开”的图标：深色以 plus-lighter 合成，平时每个通道加 124、按下加 50；
+    /// “在访达中打开” 的图标：深色以 plus-lighter 合成，平时每个通道加 124、按下加 50；
     /// 浅色以 plus-darker 合成，平时减 127、按下减 194
     @Test
     func openInFinderIconBlendsWithMaterial() throws {
@@ -97,7 +97,7 @@ struct FolderGridItemViewTests {
         }
     }
 
-    /// “在访达中打开”的图标按 100 pt 摆放，中心与其它格的图标相同：原生圆圈外径 64 pt
+    /// “在访达中打开” 的图标按 100 pt 摆放，中心与其它格的图标相同：原生圆圈外径 64 pt
     @Test
     func openInFinderIconIsSmallerAndCentered() throws {
         let (window, itemView) = makeItemView(style: .openInFinder) { }

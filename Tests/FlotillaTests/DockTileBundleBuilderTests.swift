@@ -111,7 +111,7 @@ final class DockTileBundleBuilderTests {
 
     /// Info.plist 声明 stub 能打开 App 与文件：从访达把它们拖到 tile 上时，Dock 才把 tile 当作放置目标；
     /// App 一项排位为 `Alternate`，stub 不会成为 App 的默认打开方式；文件一项排位为 `None`，
-    /// `Alternate` 会让 stub 出现在访达的“打开方式”里
+    /// `Alternate` 会让 stub 出现在访达的 “打开方式” 里
     @Test
     func infoDeclaresApplicationAndFileDocumentTypes() throws {
         let folder = makeFolder(name: "工作")

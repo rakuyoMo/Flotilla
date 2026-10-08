@@ -133,7 +133,7 @@ struct FolderGridLayoutTests {
         #expect(layout.needsScrolling)
     }
 
-    /// 空文件夹按 1 格的尺寸显示，与原生只有一格“在访达中打开”时相同，格内为空
+    /// 空文件夹按 1 格的尺寸显示，与原生只有一格 “在访达中打开” 时相同，格内为空
     @Test
     func emptyFolderHasOneEmptyCell() {
         let layout = FolderGridLayout(itemCount: 0, availableSize: roomySize)

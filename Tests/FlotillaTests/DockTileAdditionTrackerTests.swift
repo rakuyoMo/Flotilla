@@ -244,7 +244,7 @@ struct DockTileAdditionTrackerTests {
 
     // MARK: 被拖出 Dock 的判定
 
-    /// 启动时就缺少 tile 的根文件夹算被拖出：设置窗口要显示“不在 Dock 上”
+    /// 启动时就缺少 tile 的根文件夹算被拖出：设置窗口要显示 “不在 Dock 上”
     @Test
     func missingTileAtLaunchIsRemoved() {
         let tracker = DockTileAdditionTracker(rootFolderIDs: [existingID])
@@ -288,7 +288,7 @@ struct DockTileAdditionTrackerTests {
         #expect(draggedOutIDs == [newID])
     }
 
-    /// 用户要求添加之后立即不再算被拖出：点了“添加到 Dock”状态文字随即消失
+    /// 用户要求添加之后立即不再算被拖出：点了 “添加到 Dock” 状态文字随即消失
     @Test
     func requestedFolderIsNotRemoved() {
         var tracker = DockTileAdditionTracker(rootFolderIDs: [existingID])

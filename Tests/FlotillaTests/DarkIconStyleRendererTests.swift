@@ -5,7 +5,7 @@ import Testing
 
 // MARK: - DarkIconStyleRendererTests
 
-/// “透明 · 深色”“色调 · 深色”的图标处理：去色后不带色彩，着色后只带色调颜色，明暗顺序与透明度不变；
+/// “透明 · 深色” “色调 · 深色” 的图标处理：去色后不带色彩，着色后只带色调颜色，明暗顺序与透明度不变；
 /// 夜间版处理后仍比白天版暗，Dock 上才是与系统图标一致的深底
 struct DarkIconStyleRendererTests {
     /// 要处理的两种变体：透明、色调的深色子变体

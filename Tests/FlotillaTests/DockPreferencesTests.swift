@@ -30,7 +30,7 @@ final class DockPreferencesTests {
     /// 本用例的 stub 位置，路径里带空格，检验 URL 编码与标准化
     private let tileURL: URL
 
-    /// 用户自己的“计算器” tile，带有 Dock 补全的字段
+    /// 用户自己的 “计算器” tile，带有 Dock 补全的字段
     private let calculatorTile: [String: Any] = [
         "GUID": 685_773_939,
         "tile-data": [

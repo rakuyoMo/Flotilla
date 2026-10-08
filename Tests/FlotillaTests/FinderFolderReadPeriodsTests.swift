@@ -11,7 +11,7 @@ struct FinderFolderReadPeriodsTests {
     /// 等用户回答授权框的一次读取：第 100 秒开始，第 103.5 秒读完
     private static let promptedRead: ClosedRange<TimeInterval> = 100 ... 103.5
 
-    /// 读取期间点授权框“允许”的按下：被忽略
+    /// 读取期间点授权框 “允许” 的按下：被忽略
     @Test
     func mouseDownDuringReadIsIgnored() {
         var periods = FinderFolderReadPeriods()

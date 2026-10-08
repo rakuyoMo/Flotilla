@@ -3,7 +3,7 @@ import AppKit
 // MARK: - FolderGridView
 
 /// 一个层级的网格：按 `FolderGridLayout` 摆放每一项的单元格，作为滚动视图的文档视图；
-/// 访达里的文件夹的层级在末尾另有一格“在访达中打开”，其中的文件换上内容缩略图
+/// 访达里的文件夹的层级在末尾另有一格 “在访达中打开”，其中的文件换上内容缩略图
 ///
 /// 只为与可见区域相交的行（上下各多一行）建单元格，滚动时按需补建，建过的不删：
 /// 访达里的文件夹可能有上千项，一次建齐会让展开明显卡顿。缩略图请求也只为这个范围里的格保留，
@@ -13,7 +13,7 @@ final class FolderGridView: NSView {
     /// 这一层的项，顺序即展示顺序
     private let items: [FolderItem]
 
-    /// 每一格的 frame：各项依次在前，“在访达中打开”在最后
+    /// 每一格的 frame：各项依次在前，“在访达中打开” 在最后
     private let cellFrames: [CGRect]
 
     /// 子文件夹图标里叠加的预览图标数量
@@ -25,7 +25,7 @@ final class FolderGridView: NSView {
     /// 为文件请求内容缩略图；只有访达里的文件夹的层级有，为 nil 时文件显示图标
     private let fileThumbnailLoader: FileThumbnailLoader?
 
-    /// 点击“在访达中打开”后执行；为 nil 时没有这一格
+    /// 点击 “在访达中打开” 后执行；为 nil 时没有这一格
     private let openInFinderHandler: (() -> Void)?
 
     /// 点击某一项后执行
@@ -57,7 +57,7 @@ final class FolderGridView: NSView {
     ///   - previewIconCount: 子文件夹图标里叠加的预览图标数量
     ///   - hiddenItemIDs: 隐藏的项的 id，这些项半透明
     ///   - fileThumbnailLoader: 为文件请求内容缩略图；只有访达里的文件夹的层级传入，为 nil 时文件显示图标
-    ///   - openInFinderHandler: 点击“在访达中打开”后执行；为 nil 时没有这一格
+    ///   - openInFinderHandler: 点击 “在访达中打开” 后执行；为 nil 时没有这一格
     ///   - selectionHandler: 点击某一项后执行
     init(
         items: [FolderItem],
@@ -75,7 +75,7 @@ final class FolderGridView: NSView {
         self.openInFinderHandler = openInFinderHandler
         self.selectionHandler = selectionHandler
 
-        // 有“在访达中打开”时，它占布局里各项之后的那一格
+        // 有 “在访达中打开” 时，它占布局里各项之后的那一格
         let cellCount = openInFinderHandler == nil ? items.count : items.count + 1
         cellFrames = Array(layout.cellFrames.prefix(cellCount))
 
@@ -190,7 +190,7 @@ extension FolderGridView {
         }
     }
 
-    /// 建一格：各项的单元格，或排在最后的“在访达中打开”
+    /// 建一格：各项的单元格，或排在最后的 “在访达中打开”
     private func buildCell(at index: Int) {
         builtCellIndices.insert(index)
 
@@ -298,7 +298,7 @@ extension FolderGridView {
         )
     }
 
-    /// 加上“在访达中打开”的单元格；没有这一格时什么也不做
+    /// 加上 “在访达中打开” 的单元格；没有这一格时什么也不做
     /// - Parameter frame: 单元格的 frame
     private func addOpenInFinderItem(frame: CGRect) {
         guard let openInFinderHandler else { return }
@@ -333,10 +333,10 @@ extension FolderGridView {
 // MARK: - Helpers
 
 extension FolderGridView {
-    /// “在访达中打开”的原图，只加载一次
+    /// “在访达中打开” 的原图，只加载一次
     private static let openInFinderSourceIcon = makeOpenInFinderSourceIcon()
 
-    /// 读取 Dock 自己给“在访达中打开”用的 `openinfinder.png`（透明底上的黑色箭头，含 2 倍图）；
+    /// 读取 Dock 自己给 “在访达中打开” 用的 `openinfinder.png`（透明底上的黑色箭头，含 2 倍图）；
     /// 读不到时退回同样造型的系统符号
     private static func makeOpenInFinderSourceIcon() -> NSImage {
         let dock = Bundle(path: "/System/Library/CoreServices/Dock.app")

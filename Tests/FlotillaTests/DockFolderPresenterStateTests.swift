@@ -7,7 +7,7 @@ import Testing
 // MARK: - DockFolderPresenterStateTests
 
 /// 展开状态的迁移：同一次点击 tile 会先后经过快速路径与 URL 两条路径，必须只生效一次，
-/// 否则再次点击会变成“先收起再展开”；按下后拖动 tile、按住 tile 弹出 Dock 菜单也不能误展开
+/// 否则再次点击会变成 “先收起再展开”；按下后拖动 tile、按住 tile 弹出 Dock 菜单也不能误展开
 struct DockFolderPresenterStateTests {
     /// 一次普通点击从按下到抬起的时长
     private static let clickDuration: TimeInterval = 0.1

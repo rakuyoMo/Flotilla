@@ -1,5 +1,5 @@
 /* 主菜单 */
-"mainMenu.quit" = "退出 Flotilla";
+"mainMenu.quit" = "退出归帆";
 "mainMenu.edit" = "编辑";
 "mainMenu.undo" = "撤销";
 "mainMenu.redo" = "重做";
@@ -11,8 +11,11 @@
 /* 状态栏菜单 */
 "statusBar.settings" = "设置…";
 
+/* 状态栏图标的无障碍描述：旁白读出的 App 名 */
+"statusBar.iconDescription" = "归帆";
+
 /* 设置窗口 */
-"settings.windowTitle" = "Flotilla 设置";
+"settings.windowTitle" = "归帆设置";
 
 /* 设置窗口的文件夹区 */
 "folders.sectionTitle" = "文件夹";

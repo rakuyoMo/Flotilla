@@ -2,7 +2,7 @@ import AppKit
 
 // MARK: - DarkIconStyleRenderer
 
-/// 按系统对 App 图标的“透明 · 深色”“色调 · 深色”处理，给一张图标重新上色
+/// 按系统对 App 图标的 “透明 · 深色” “色调 · 深色” 处理，给一张图标重新上色
 ///
 /// 两种处理都只看像素的 Rec. 709 亮度（在 sRGB 编码值上计算），输出是亮度的线性函数，透明度不变；
 /// 系数按 macOS 27 的 Dock 对包内图标的处理效果拟合
@@ -16,7 +16,7 @@ enum DarkIconStyleRenderer {
     /// 色调 · 深色：亮度为 0 时各通道的值，与色调颜色无关
     private static let tintedOffset = 0.08
 
-    /// 色调 · 深色：各通道随“亮度 × 色调颜色的对应通道”增长的斜率
+    /// 色调 · 深色：各通道随 “亮度 × 色调颜色的对应通道” 增长的斜率
     private static let tintedSlope = 0.92
 
     /// 去色：灰度 = 0.075 + 0.79 × 亮度

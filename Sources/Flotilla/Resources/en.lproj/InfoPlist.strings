@@ -1,3 +1,7 @@
+/* App 名：访达与 Dock 显示 CFBundleDisplayName，App 菜单显示 CFBundleName */
+"CFBundleDisplayName" = "Flotilla";
+"CFBundleName" = "Flotilla";
+
 /* 隐私授权框里的用途说明 */
 "NSDesktopFolderUsageDescription" = "Flotilla needs to read the contents of Finder folders to expand them in its panel on the Dock.";
 "NSDocumentsFolderUsageDescription" = "Flotilla needs to read the contents of Finder folders to expand them in its panel on the Dock.";

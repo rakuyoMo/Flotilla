@@ -5,7 +5,7 @@ import UniformTypeIdentifiers
 
 /// 设置窗口的文件夹区：
 /// 展示完整的文件夹树，提供新建、添加 App、添加文件、添加到 Dock、删除、重命名与拖放；
-/// 被拖出 Dock 的根文件夹标出“不在 Dock 上”
+/// 被拖出 Dock 的根文件夹标出 “不在 Dock 上”
 @MainActor
 final class FolderTreeViewController: NSViewController {
     /// 新建文件夹的默认名称
@@ -17,7 +17,7 @@ final class FolderTreeViewController: NSViewController {
     /// 文件夹树的唯一数据源
     private let store: FolderStore
 
-    /// Dock tile 同步器；Dock 集成不可用时为 nil，此时不显示 tile 的状态，也没有“添加到 Dock”
+    /// Dock tile 同步器；Dock 集成不可用时为 nil，此时不显示 tile 的状态，也没有 “添加到 Dock”
     private let dockTileSynchronizer: DockTileSynchronizer?
 
     /// outline view 的数据源，持有全部行节点
@@ -26,7 +26,7 @@ final class FolderTreeViewController: NSViewController {
     /// 展示文件夹树
     private let outlineView = NSOutlineView()
 
-    /// “添加 App…”按钮，无选中项时禁用
+    /// “添加 App…” 按钮，无选中项时禁用
     private let addAppsButton = NSButton(
         title: String(
             localized: "folders.addApps",
@@ -36,7 +36,7 @@ final class FolderTreeViewController: NSViewController {
         action: nil
     )
 
-    /// “添加文件…”按钮，无选中项时禁用
+    /// “添加文件…” 按钮，无选中项时禁用
     private let addFilesButton = NSButton(
         title: String(
             localized: "folders.addFiles",
@@ -46,7 +46,7 @@ final class FolderTreeViewController: NSViewController {
         action: nil
     )
 
-    /// “添加到 Dock”按钮，只有选中被拖出 Dock 的根文件夹时可用
+    /// “添加到 Dock” 按钮，只有选中被拖出 Dock 的根文件夹时可用
     private let addToDockButton = NSButton(
         title: String(
             localized: "folders.addToDock",
@@ -56,7 +56,7 @@ final class FolderTreeViewController: NSViewController {
         action: nil
     )
 
-    /// “删除”按钮，无选中项时禁用
+    /// “删除” 按钮，无选中项时禁用
     private let removeButton = NSButton(
         title: String(
             localized: "folders.remove",
@@ -173,7 +173,7 @@ final class FolderTreeViewController: NSViewController {
 
 extension FolderTreeViewController: NSOutlineViewDelegate {
     /// 每一行显示图标、名称、访达里的文件夹的位置，
-    /// 以及被拖出 Dock 的根文件夹的“不在 Dock 上”
+    /// 以及被拖出 Dock 的根文件夹的 “不在 Dock 上”
     func outlineView(
         _ outlineView: NSOutlineView,
         viewFor _: NSTableColumn?,
@@ -355,7 +355,7 @@ extension FolderTreeViewController {
         outlineView.outlineTableColumn = column
         outlineView.columnAutoresizingStyle = .uniformColumnAutoresizingStyle
 
-        // 展开子层级时不加宽大纲列：加宽后树比滚动区宽，行尾的“不在 Dock 上”会被右缘裁掉
+        // 展开子层级时不加宽大纲列：加宽后树比滚动区宽，行尾的 “不在 Dock 上” 会被右缘裁掉
         outlineView.autoresizesOutlineColumn = false
 
         outlineView.headerView = nil
@@ -391,7 +391,7 @@ extension FolderTreeViewController {
         scrollView.borderType = .bezelBorder
 
         // 底部按钮：新建与添加类靠左，删除靠右；
-        // Dock 集成不可用时隐藏“添加到 Dock”
+        // Dock 集成不可用时隐藏 “添加到 Dock”
         let newFolderButton = NSButton(
             title: String(
                 localized: "folders.newFolder",
@@ -436,7 +436,7 @@ extension FolderTreeViewController {
         return stackView
     }
 
-    /// 根据选中项更新“添加 App…”“添加文件…”“添加到 Dock”与“删除”的可用状态
+    /// 根据选中项更新 “添加 App…” “添加文件…” “添加到 Dock” 与 “删除” 的可用状态
     private func updateButtons() {
         let hasSelection = selectedNode != nil
         addAppsButton.isEnabled = hasSelection

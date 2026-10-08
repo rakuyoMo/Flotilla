@@ -46,13 +46,13 @@
   - `FlotillaFolderID = <id>`
   - `CFBundleDocumentTypes`，两项：
     - App：`CFBundleTypeName = Application`、`CFBundleTypeRole = Viewer`、`LSHandlerRank = Alternate`、`LSItemContentTypes = [com.apple.application, com.apple.application-bundle]`
-      - 取自 [macos-dock-folders](https://github.com/wjvalue/macos-dock-folders)（MIT）：从访达把 App 拖到 tile 上时，tile 高亮为放置目标，松手后 Launch Services 以“打开文档”的方式启动 stub；`Alternate` 让 stub 不成为 App 的默认打开方式
+      - 取自 [macos-dock-folders](https://github.com/wjvalue/macos-dock-folders)（MIT）：从访达把 App 拖到 tile 上时，tile 高亮为放置目标，松手后 Launch Services 以 “打开文档” 的方式启动 stub；`Alternate` 让 stub 不成为 App 的默认打开方式
       - 实测（macOS 27，带 `LSBackgroundOnly` 的探针 stub）：拖 App 悬停时 Dock 把 tile 压暗（亮度 229 → 104），松手后以 `odoc` 事件拉起 stub，不会把 App 加成新 tile；访达的图标视图与列表视图结果一致
     - 文件（需求 14，见 06）：`CFBundleTypeName = File`、`CFBundleTypeRole = Viewer`、`LSHandlerRank = None`、`LSItemContentTypes = [public.data, com.apple.package]`
-      - `LSHandlerRank` 必须是 `None`：实测（macOS 27）`Alternate` 会让 stub 出现在访达的“打开方式”里
-      - 实测（macOS 27）：从访达拖 `.txt`、`.pdf`、`.rtfd`、`.webloc` 与未知扩展名的文件，tile 压暗为放置目标，松手后以 `odoc` 拉起 stub；stub 不出现在“打开方式”里，各类文件的默认打开 App 不变
+      - `LSHandlerRank` 必须是 `None`：实测（macOS 27）`Alternate` 会让 stub 出现在访达的 “打开方式” 里
+      - 实测（macOS 27）：从访达拖 `.txt`、`.pdf`、`.rtfd`、`.webloc` 与未知扩展名的文件，tile 压暗为放置目标，松手后以 `odoc` 拉起 stub；stub 不出现在 “打开方式” 里，各类文件的默认打开 App 不变
       - 实测（macOS 27）：声明了 `public.data` 或 `com.apple.package`，Dock 对访达里的文件夹也高亮并拉起 stub，它作为文件加入（见 07）
-    - Dock 只在 stub 提供服务（`NSServices`）时接收网址的拖放，那会在“系统设置 › 键盘 › 键盘快捷键 › 服务”里给每个根文件夹加一项
+    - Dock 只在 stub 提供服务（`NSServices`）时接收网址的拖放，那会在 “系统设置 › 键盘 › 键盘快捷键 › 服务” 里给每个根文件夹加一项
     - Dock 上的 tile 之间不能互相拖放：拖动 Dock 图标时整个过程由 Dock 接管，只能排序或拖出
 - 每次生成或更新后执行 `/usr/bin/codesign --force --sign - <bundle>`。
 - 签名后再用 `NSWorkspace.setIcon(_:forFile:)` 把 `Icon.icns` 设为 bundle 的自定义图标：macOS 26 起，系统把 icns 形式的 App 图标装进灰色圆角底板（macOS 27 实测如此），自定义图标不受影响。
@@ -106,7 +106,7 @@
 - 更新已有条目时原地替换，不删除再追加：Dock 里的排序是用户自己拖出来的，重启后必须保持。
   - stub 改名后 `_CFURLString` 换成新位置，并删掉 Dock 按旧位置生成的 `book`，由 Dock 重启后重新生成。
   - stub 改写过时换一个新的 `GUID`：实测（macOS 27）Dock 按 `GUID` 缓存 tile 图标，`GUID` 不变时重启后仍显示旧图标。
-  - 条目的 `GUID` 不是本次运行写入的值时同样换新：实测（macOS 27）Dock 被终止时若带着未写的状态（例如松手约 2 秒内刚接受过一次拖放），会在终止时把启动时读到的旧条目写回，盖掉刚换上的 `GUID`，重启后的 Dock 仍显示旧图标；旧 Dock 退出后的核对据此再换一个新的 `GUID`（见“Dock 重启后的核对”）。
+  - 条目的 `GUID` 不是本次运行写入的值时同样换新：实测（macOS 27）Dock 被终止时若带着未写的状态（例如松手约 2 秒内刚接受过一次拖放），会在终止时把启动时读到的旧条目写回，盖掉刚换上的 `GUID`，重启后的 Dock 仍显示旧图标；旧 Dock 退出后的核对据此再换一个新的 `GUID`（见 “Dock 重启后的核对”）。
 - `apply(_:rewrittenTileURLs:removingTilesIn:)`：让 Flotilla 的 tile 与一份期望状态一致，返回是否改动了偏好；同步时的第一次写入与旧 Dock 退出后的核对共用这一步
   - 期望状态是每个根文件夹一个 `ExpectedDockTile`：stub 的位置、tile 的名称、tile 不在 Dock 上时能否添加
   - 已在 Dock 上的按 `update` 原地更新，`rewrittenTileURLs` 里的 stub 刚被改写，换新的 `GUID`；不在 Dock 上且能添加的按 `add` 追加；`removingTilesIn` 给出的 stub 目录按 `remove` 删除
@@ -128,7 +128,7 @@
 ## 同步器（`Sources/Flotilla/Dock/DockTileSynchronizer.swift`）
 
 - `start()` 在 `applicationWillFinishLaunching` 里调用：被 stub 拉起时，URL 事件先于 `applicationDidFinishLaunching` 送达，面板与同步器要在此之前就绪
-  - 先做一次同步：每个根文件夹都有 stub，tile 按“添加 tile 的条件”添加；多余的 stub 与 tile 删除
+  - 先做一次同步：每个根文件夹都有 stub，tile 按 “添加 tile 的条件” 添加；多余的 stub 与 tile 删除
     - tile 按 stub 独占的 `<id>` 目录匹配，stub bundle 已被用户删掉时同样删除条目
     - 多余的 tile 也包括 Dock 偏好里指向 `DockTiles/` 下、目录已不存在的条目
   - 再订阅 `FolderStore.didChangeNotification` 与 `Preferences.didChangeNotification`，用 KVO 观察 `NSApp.effectiveAppearance`，并用 `DockPreferences.observeTiles(_:)` 观察 Dock 偏好里的 tile
@@ -151,7 +151,7 @@
 - 根文件夹被删除、或被拖成子文件夹：删掉 tile 与 stub；子文件夹被拖成根文件夹：新建 tile 与 stub。
 - 添加 tile 的条件（需求 10，纯逻辑在 `DockTileAdditionTracker`）：
   - 用户可以像其它 App 一样把 tile 拖出 Dock，拖出后不再自动加回；tile 不在 Dock 上的根文件夹照常生成与更新 stub，只是不动 Dock 偏好，重新添加时直接引用
-  - 只在两种情况下向 Dock 添加 tile：根文件夹是新出现的（上一次同步时还不是根文件夹），或用户在设置窗口点了“添加到 Dock”
+  - 只在两种情况下向 Dock 添加 tile：根文件夹是新出现的（上一次同步时还不是根文件夹），或用户在设置窗口点了 “添加到 Dock”
     - 同步器创建时的根文件夹都视为已同步过：Flotilla 没运行时不会有新的根文件夹出现，此时缺少 tile 的根文件夹都是被用户拖出去的
   - 添加过 tile 的根文件夹先待添加，直到确认 tile 已经加上：核对通过时新 Dock 读到的偏好里有它，或某次同步看到 tile 在 Dock 上
     - 核对放弃时仍待添加，之后的同步再加

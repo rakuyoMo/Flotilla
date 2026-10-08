@@ -5,7 +5,7 @@ import Testing
 
 // MARK: - FinderFolderContentsTests
 
-/// 访达里的文件夹在面板里展开时读出的内容：顺序与访达“名称”一致，隐藏文件按设置跳过或标为隐藏，
+/// 访达里的文件夹在面板里展开时读出的内容：顺序与访达 “名称” 一致，隐藏文件按设置跳过或标为隐藏，
 /// 每一项的身份决定点击后是启动、继续进入还是打开；同一次展开里 id 不变，返回时才找得到缩回的图标
 final class FinderFolderContentsTests {
     /// 本用例独占的临时目录，作为被展开的访达里的文件夹
@@ -111,8 +111,8 @@ final class FinderFolderContentsTests {
     /// 读目录时一次取齐的属性与逐项单独读取的结果一致：顺序按 `FileManager.displayName(atPath:)`，
     /// URL 按 `normalizedURL(_:)` 规整，App 的判断相同
     ///
-    /// “Tool.app”与“Tool 2.app”按文件名排序与按显示名（“Tool”“Tool 2”）排序正好相反；
-    /// 隐藏了扩展名的文件、名称里的“:”（访达里显示为“/”）的显示名也都不同于文件名
+    /// “Tool.app” 与 “Tool 2.app” 按文件名排序与按显示名（“Tool” “Tool 2”）排序正好相反；
+    /// 隐藏了扩展名的文件、名称里的 “:”（访达里显示为 “/”）的显示名也都不同于文件名
     @Test
     func matchesPerEntryLookups() throws {
         for name in ["Tool.app", "Tool 2.app", "资料", "笔记.rtfd"] {

@@ -9,7 +9,7 @@ import AppKit
 /// SF Symbols 的 `sailboat` 是三角帆小艇，与 App 图标的方帆船不像，因此在这里自己画
 enum StatusBarIcon {
     /// 生成状态栏图标
-    /// - Returns: template 图，由系统按菜单栏的深浅着色；无障碍描述为“Flotilla”
+    /// - Returns: template 图，由系统按菜单栏的深浅着色；无障碍描述为当前语言下的 App 名
     static func makeImage() -> NSImage {
         let image = NSImage(
             size: NSSize(width: 16, height: 16),
@@ -27,7 +27,10 @@ enum StatusBarIcon {
         }
 
         image.isTemplate = true
-        image.accessibilityDescription = "Flotilla"
+        image.accessibilityDescription = String(
+            localized: "statusBar.iconDescription",
+            comment: "状态栏图标的无障碍描述，旁白读出的 App 名"
+        )
 
         return image
     }

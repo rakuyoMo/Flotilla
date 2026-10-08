@@ -11,6 +11,9 @@
 /* 状态栏菜单 */
 "statusBar.settings" = "설정…";
 
+/* 状态栏图标的无障碍描述：旁白读出的 App 名 */
+"statusBar.iconDescription" = "Flotilla";
+
 /* 设置窗口 */
 "settings.windowTitle" = "Flotilla 설정";
 
