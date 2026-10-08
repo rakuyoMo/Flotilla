@@ -28,7 +28,7 @@
 
 ### 需求 16 “添加文件…”
 
-- 是 “添加…” 菜单的一项，排在 “添加 App…” 之后（见 09）；按钮行从左到右为：新建文件夹 · 添加… · 添加到 Dock ⋯⋯ 删除
+- 是 “添加…” 菜单的一项，排在 “添加 App…” 之后（见 09）；按钮行从左到右为：新建文件夹 · 添加…（见 10）
 - 可用条件与 “添加 App…” 相同：有选中项时可用，加入选中项所属的文件夹
 - `NSOpenPanel` 以 sheet 弹出：
   - `canChooseFiles`、`canChooseDirectories`、`allowsMultipleSelection` 都为真
@@ -131,7 +131,7 @@ extension BookmarkedReference {
 - 窗口尺寸由 `SettingsWindowController` 的常量给出：
   - `contentInset = 20`：内容区四边的边距，文件夹区宽 = 内容宽 − 40
   - `minimumContentSize = 570 × 480`，默认内容宽 620、高 600
-- 按钮行宽的实测见 09
+- 按钮行宽的实测见 10
 - 按钮行放不下时按钮不会被压窄，而是把窗口内容撑宽：按钮的压缩阻力 750 高于窗口保持尺寸的优先级 500
 
 ## 本地化

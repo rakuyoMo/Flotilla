@@ -74,15 +74,15 @@
 ### 设置窗口
 
 - 文件夹树里，tile 不在 Dock 上的根文件夹这一行，在名称右侧显示状态文字 “不在 Dock 上”：次要文字颜色（`secondaryLabelColor`）、小号系统字体；在 Dock 上的根文件夹、子文件夹与 App 都不显示。
-- 底部按钮行新增 “添加到 Dock”，排在 “添加…”（见 09）之后；只有选中的是 tile 不在 Dock 上的根文件夹时可用，点击后调用 `addTile(for:)`。
-- 文件夹树每次重建或刷新状态时读取一次 `rootFolderIDsRemovedFromDock()`，行的状态与按钮的可用状态都用这一次读取的结果；点击 “添加到 Dock” 后立即刷新一次，状态文字随即消失。
+- “添加到 Dock” 是文件夹行右键菜单里的一项（见 10）；只有右键点到的是 tile 不在 Dock 上的根文件夹时可用，点击后调用 `addTile(for:)`。
+- 文件夹树每次重建或刷新状态时读取一次 `rootFolderIDsRemovedFromDock()`，行的状态与 “添加到 Dock” 的可用状态都用这一次读取的结果；点击 “添加到 Dock” 后立即刷新一次，状态文字随即消失。
 - `FolderStore.didChangeNotification` 时重建整棵树。
-  - `DockTileSynchronizer.didSynchronizeNotification`、`DockTileSynchronizer.dockTilesDidChangeNotification` 与设置窗口成为 key window 时只原地刷新已显示各行的状态与按钮的可用状态，不重建
+  - `DockTileSynchronizer.didSynchronizeNotification`、`DockTileSynchronizer.dockTilesDidChangeNotification` 与设置窗口成为 key window 时只原地刷新已显示各行的状态，不重建
     - 新建根文件夹后立即进入重命名，随后的同步与 Dock 偏好里 tile 的变化都会发出通知；实测 view-based `NSOutlineView` 在编辑中 `reloadData` 会结束编辑，并把输入到一半的名称提交出去
   - 设置窗口成为 key window 时另按书签更新 App 与文件的位置，有变化才重建（见 07、08）
 - “新建文件夹” 新建根文件夹时，先加入数据源再立即 `holdTile(for:)`（同步器收到变更通知后要等防抖间隔才同步，搁置赶得上）；名称编辑结束（`controlTextDidEndEditing`）时写回名称并 `releaseTile(for:)`
   - 按 Esc 取消编辑时名称保持原样，同样 `releaseTile(for:)`：实测 outline view 取消编辑时不发 `controlTextDidEndEditing`，在 `control(_:textView:doCommandBy:)` 收到 `cancelOperation(_:)` 时解除搁置，返回 false，取消编辑仍交给 outline view
-- `SettingsWindowController` 与 `FolderTreeViewController` 通过构造函数拿到同步器，由 `AppDelegate` 传入。Dock 集成不可用（没有 stub 可执行文件，或读不到 Dock 偏好）时同步器为 nil：不显示状态，“添加到 Dock” 隐藏。
+- `SettingsWindowController` 与 `FolderTreeViewController` 通过构造函数拿到同步器，由 `AppDelegate` 传入。Dock 集成不可用（没有 stub 可执行文件，或读不到 Dock 偏好）时同步器为 nil：不显示状态，右键菜单里没有 “添加到 Dock”（见 10）。
 
 ## 把 App 拖到 tile 上加入文件夹（需求 11）
 
@@ -211,7 +211,7 @@
 
 - `mise run swift:lint`、`swift test`、`mise run bundle` 全部通过；`build/Flotilla.app/Contents/Resources/` 下有五个 `.lproj`
 - 真实 Dock 上：
-  - 把 tile 拖出 Dock 后，Flotilla 不加回；设置窗口里该根文件夹显示 “不在 Dock 上”，选中后 “添加到 Dock” 可用，点击后 tile 回到 Dock、状态消失
+  - 把 tile 拖出 Dock 后，Flotilla 不加回；设置窗口里该根文件夹显示 “不在 Dock 上”，右键点它时菜单里的 “添加到 Dock” 可用（见 10），点击后 tile 回到 Dock、状态消失
   - 新建根文件夹仍自动出现在 Dock 上；重启 Flotilla 后被拖出的 tile 仍不加回
   - 从访达把一个或多个 App 拖到 tile 上：tile 高亮，松手后 App 出现在该文件夹里；前台 App 保持前台；拖文件与访达里的文件夹的结果见 06、07
   - 系统语言或 Flotilla 的单独语言设置切到五种语言之一时，菜单、设置窗口与面板返回按钮的辅助功能标签都换成对应语言；其它语言显示英文
