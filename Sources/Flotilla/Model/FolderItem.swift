@@ -44,7 +44,7 @@ extension FolderItem {
     /// 同一个 App 或文件不因 URL 写法不同而得到不同的 URL，加入时才能去重
     /// - Parameters:
     ///   - url: 文件 URL 或网址
-    ///   - title: 浏览器给出的网页标题，只用于网页；首尾空白会被去掉，空串视为没有
+    ///   - title: 网页的标题，只用于网页：浏览器给出的，或 “添加网页…” 里填写的；首尾空白会被去掉，空串视为没有
     init?(url: URL, title: String?) {
         let item = url.isFileURL
             ? Self.localItem(at: url)
@@ -138,7 +138,7 @@ extension FolderItem {
             return nil
         }
 
-        // 浏览器给的标题可能带首尾空白，也可能是空串
+        // 浏览器给的与用户填写的标题都可能带首尾空白，也可能是空串
         let trimmedTitle = title?.trimmingCharacters(in: .whitespacesAndNewlines)
         let pageTitle = trimmedTitle.flatMap { $0.isEmpty ? nil : $0 }
 

@@ -26,7 +26,10 @@
 "folders.addFiles" = "ファイルを追加…";
 "folders.addWebPage" = "Webページを追加…";
 "folders.webPageAlert.message" = "Webページを追加";
-"folders.webPageAlert.informative" = "WebページのURLを入力してください。";
+"folders.webPageAlert.informative" = "WebページのURLを入力してください。タイトルは省略できます。";
+"folders.webPageAlert.addressPlaceholder" = "URL";
+"folders.webPageAlert.titlePlaceholder" = "タイトル（オプション）";
+"folders.webPageAlert.fetchingTitle" = "タイトルを取得中…";
 "folders.webPageAlert.add" = "追加";
 "folders.webPageAlert.cancel" = "キャンセル";
 "folders.addToDock" = "Dockに追加";

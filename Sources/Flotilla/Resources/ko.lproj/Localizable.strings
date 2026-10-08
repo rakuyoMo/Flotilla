@@ -26,7 +26,10 @@
 "folders.addFiles" = "파일 추가…";
 "folders.addWebPage" = "웹 페이지 추가…";
 "folders.webPageAlert.message" = "웹 페이지 추가";
-"folders.webPageAlert.informative" = "웹 페이지의 주소를 입력하십시오.";
+"folders.webPageAlert.informative" = "웹 페이지의 주소를 입력하십시오. 제목은 비워 둘 수 있습니다.";
+"folders.webPageAlert.addressPlaceholder" = "주소";
+"folders.webPageAlert.titlePlaceholder" = "제목(선택 사항)";
+"folders.webPageAlert.fetchingTitle" = "제목 가져오는 중…";
 "folders.webPageAlert.add" = "추가";
 "folders.webPageAlert.cancel" = "취소";
 "folders.addToDock" = "Dock에 추가";

@@ -372,6 +372,75 @@ final class FolderStoreTests {
     }
 }
 
+// MARK: - Title Filling
+
+extension FolderStoreTests {
+    /// 不带标题加入的网页取到标题后补上：位置与 id 不变，只发一次变更通知，重新加载后仍在
+    @Test
+    func fillsTitleOfUntitledWebPage() async throws {
+        let store = FolderStore(fileURL: fileURL)
+        let root = store.addRootFolder(named: "根")
+        let example = try webPage("https://example.com/", title: nil)
+
+        store.addItems([example] + apps(chess), to: root.id)
+
+        await confirmation(expectedCount: 1) { changed in
+            let observer = NotificationCenter.default.addObserver(
+                forName: FolderStore.didChangeNotification,
+                object: store,
+                queue: nil
+            ) { _ in
+                changed()
+            }
+
+            defer { NotificationCenter.default.removeObserver(observer) }
+
+            store.fillTitle("Example Domain", ofWebPageWithID: example.id)
+        }
+
+        let reloadedItems = try items(in: root.id, of: FolderStore(fileURL: fileURL))
+        let url = try #require(URL(string: "https://example.com/"))
+
+        #expect(reloadedItems.count == 2)
+
+        #expect(
+            reloadedItems.first
+                == .webPage(WebPageReference(id: example.id, url: url, title: "Example Domain"))
+        )
+    }
+
+    /// 已有标题的网页、不是网页的项、找不到的项（例如去重时没有真正加入）：都不变，也不发通知
+    @Test
+    func fillTitleLeavesOtherItemsUntouched() async throws {
+        let store = FolderStore(fileURL: fileURL)
+        let root = store.addRootFolder(named: "根")
+        let example = try webPage("https://example.com/", title: "原来的标题")
+        let chessItems = apps(chess)
+
+        store.addItems([example] + chessItems, to: root.id)
+
+        let before = store.rootFolders
+
+        await confirmation(expectedCount: 0) { changed in
+            let observer = NotificationCenter.default.addObserver(
+                forName: FolderStore.didChangeNotification,
+                object: store,
+                queue: nil
+            ) { _ in
+                changed()
+            }
+
+            defer { NotificationCenter.default.removeObserver(observer) }
+
+            store.fillTitle("新标题", ofWebPageWithID: example.id)
+            store.fillTitle("新标题", ofWebPageWithID: chessItems[0].id)
+            store.fillTitle("新标题", ofWebPageWithID: UUID())
+        }
+
+        #expect(store.rootFolders == before)
+    }
+}
+
 // MARK: - Fixtures
 
 extension FolderStoreTests {

@@ -363,6 +363,27 @@ final class DockTileBundleBuilderTests {
     }
 }
 
+// MARK: - Web Page Title
+
+extension DockTileBundleBuilderTests {
+    /// 网页补上标题不改写 stub：标题不在 Info.plist 里，也不改变图标；不改写，Dock 就不必为它重启
+    @Test
+    func webPageTitleDoesNotRewriteStub() throws {
+        let url = try #require(URL(string: "https://example.com/"))
+        let webPageID = UUID()
+        var folder = makeFolder(name: "工作")
+
+        folder.items.append(.webPage(WebPageReference(id: webPageID, url: url, title: nil)))
+        try builder.write(folder: folder, icon: makeIcon(for: folder))
+
+        folder.items[folder.items.count - 1] = .webPage(
+            WebPageReference(id: webPageID, url: url, title: "Example Domain")
+        )
+
+        #expect(try !builder.write(folder: folder, icon: makeIcon(for: folder)))
+    }
+}
+
 // MARK: - Private
 
 extension DockTileBundleBuilderTests {

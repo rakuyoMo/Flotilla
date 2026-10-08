@@ -26,7 +26,10 @@
 "folders.addFiles" = "Add Files…";
 "folders.addWebPage" = "Add Web Page…";
 "folders.webPageAlert.message" = "Add Web Page";
-"folders.webPageAlert.informative" = "Enter the address of the web page.";
+"folders.webPageAlert.informative" = "Enter the address of the web page. The title is optional.";
+"folders.webPageAlert.addressPlaceholder" = "Address";
+"folders.webPageAlert.titlePlaceholder" = "Title (Optional)";
+"folders.webPageAlert.fetchingTitle" = "Fetching Title…";
 "folders.webPageAlert.add" = "Add";
 "folders.webPageAlert.cancel" = "Cancel";
 "folders.addToDock" = "Add to Dock";

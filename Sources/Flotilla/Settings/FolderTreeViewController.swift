@@ -52,6 +52,9 @@ final class FolderTreeViewController: NSViewController {
     /// 最近一次读取到的、被拖出 Dock 的根文件夹；行的状态与按钮的可用状态都按它判断
     private var rootFolderIDsRemovedFromDock: Set<UUID> = []
 
+    /// 正在编辑文件夹名时取到的网页标题，按网页项的 id 记下，编辑结束时补上
+    private var pendingWebPageTitles: [UUID: String] = [:]
+
     /// 当前选中行的节点
     private var selectedNode: FolderTreeNode? {
         outlineView.item(atRow: outlineView.selectedRow) as? FolderTreeNode
@@ -150,6 +153,21 @@ final class FolderTreeViewController: NSViewController {
 
         store.updateItemLocations()
     }
+
+    /// 给不带标题加入的网页补上取到的标题
+    ///
+    /// 正在编辑文件夹名时先记下，编辑结束再补：补上标题会重建树，重建会结束编辑并提交输入到一半的名称
+    /// - Parameters:
+    ///   - title: 取到的标题，已去掉首尾空白
+    ///   - webPageID: 网页项的 id
+    func fillTitle(_ title: String, ofWebPageWithID webPageID: UUID) {
+        guard !isEditingFolderName else {
+            pendingWebPageTitles[webPageID] = title
+            return
+        }
+
+        store.fillTitle(title, ofWebPageWithID: webPageID)
+    }
 }
 
 // MARK: NSOutlineViewDelegate
@@ -185,7 +203,8 @@ extension FolderTreeViewController: NSOutlineViewDelegate {
 // MARK: NSTextFieldDelegate
 
 extension FolderTreeViewController: NSTextFieldDelegate {
-    /// 结束编辑文件夹名时写回数据源；新建的根文件夹名称就此定下，解除搁置，tile 带着这个名称出现
+    /// 结束编辑文件夹名时写回数据源；新建的根文件夹名称就此定下，解除搁置，tile 带着这个名称出现。
+    /// 编辑期间取到的网页标题随后补上
     func controlTextDidEndEditing(_ notification: Notification) {
         guard let textField = notification.object as? NSTextField else { return }
 
@@ -196,9 +215,12 @@ extension FolderTreeViewController: NSTextFieldDelegate {
 
         store.rename(folderID: folder.id, to: textField.stringValue)
         dockTileSynchronizer?.releaseTile(for: folder.id)
+
+        fillPendingWebPageTitles()
     }
 
-    /// 按 Esc 取消编辑时名称保持原样，同样算名称定下来了：解除搁置，tile 带着原名出现
+    /// 按 Esc 取消编辑时名称保持原样，同样算名称定下来了：解除搁置，tile 带着原名出现；
+    /// 编辑期间取到的网页标题等编辑结束后补上
     ///
     /// 实测 outline view 取消编辑时不发 `controlTextDidEndEditing`，只能在这里得知
     func control(
@@ -213,6 +235,18 @@ extension FolderTreeViewController: NSTextFieldDelegate {
 
         if let folder = node?.folder {
             dockTileSynchronizer?.releaseTile(for: folder.id)
+        }
+
+        // outline view 在这之后才结束编辑，补标题要等到那时
+        Task { [weak self] in
+            guard
+                let self,
+                !isEditingFolderName
+            else {
+                return
+            }
+
+            fillPendingWebPageTitles()
         }
 
         // 取消编辑本身仍交给 outline view 处理
@@ -270,9 +304,10 @@ extension FolderTreeViewController {
         addItems(chosenIn: panel)
     }
 
-    /// 输入网址，把网页加入弹出时选中项所属的文件夹
+    /// 输入网址与可选的标题，把网页加入弹出时选中项所属的文件夹；
+    /// 不带标题加入的网页，取到标题后补上
     ///
-    /// 弹出期间这个文件夹被删掉时，`addItems` 找不到它，什么都不做
+    /// 弹出期间这个文件夹被删掉时，`addItems` 找不到它，什么都不做；之后取到的标题同样找不到这一项
     @objc
     private func addWebPage() {
         guard
@@ -282,9 +317,15 @@ extension FolderTreeViewController {
             return
         }
 
-        AddWebPageAlert().beginSheetModal(for: window) { [weak self] in
-            self?.store.addItems([$0], to: folderID)
-        }
+        AddWebPageAlert().beginSheetModal(
+            for: window,
+            completionHandler: { [weak self] in
+                self?.store.addItems([$0], to: folderID)
+            },
+            titleHandler: { [weak self] in
+                self?.fillTitle($0, ofWebPageWithID: $1)
+            }
+        )
     }
 
     /// 把选中的根文件夹重新添加到 Dock；记为待添加后它就不再算被拖出，状态随即刷新
@@ -536,6 +577,16 @@ extension FolderTreeViewController {
         outlineView.selectRowIndexes([row], byExtendingSelection: false)
         outlineView.scrollRowToVisible(row)
         outlineView.editColumn(0, row: row, with: nil, select: true)
+    }
+
+    /// 补上编辑文件夹名期间记下的网页标题
+    private func fillPendingWebPageTitles() {
+        let titles = pendingWebPageTitles
+        pendingWebPageTitles = [:]
+
+        for (webPageID, title) in titles {
+            store.fillTitle(title, ofWebPageWithID: webPageID)
+        }
     }
 
     /// 收集当前展开的文件夹 id；收起的文件夹不再深入

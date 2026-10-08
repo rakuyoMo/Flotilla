@@ -3,7 +3,7 @@ import UniformTypeIdentifiers
 
 // MARK: - WebPageReference
 
-/// 对一个网页的引用：`http` 或 `https` 网址，连同加入时浏览器给出的网页标题
+/// 对一个网页的引用：`http` 或 `https` 网址，连同网页的标题
 struct WebPageReference: Codable, Hashable, Identifiable {
     /// 这一项的唯一标识；同一个网页放进不同文件夹时各有各的 id
     let id: UUID
@@ -11,7 +11,7 @@ struct WebPageReference: Codable, Hashable, Identifiable {
     /// 网页的网址
     let url: URL
 
-    /// 加入时浏览器给出的网页标题；浏览器没给标题、给的是空白，或经 “添加网页…” 输入网址加入时为 nil
+    /// 网页的标题：从浏览器拖入时浏览器给出的，或 “添加网页…” 里填写、自动获取到的；都没有时为 nil
     let title: String?
 }
 
