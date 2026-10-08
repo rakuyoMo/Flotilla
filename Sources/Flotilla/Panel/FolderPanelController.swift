@@ -120,6 +120,36 @@ final class FolderPanelController {
 
         return content
     }
+
+    /// 一个层级交给网格的拖动判定与动作：只有 Flotilla 的文件夹的层级有，访达里的文件夹的层级为 nil
+    ///
+    /// 网格交出的目标格是移动之后的下标，按建这一层时的各项换算成 `FolderStore.move(itemID:to:at:)` 的下标
+    /// - Parameters:
+    ///   - content: 这一层展示的内容
+    ///   - store: 保存新的顺序的数据源
+    ///   - containsScreenPoint: 屏幕上的点是否在当前层级的轮廓之内
+    static func dragActions(
+        for content: FolderPanelLevelContent,
+        in store: FolderStore,
+        containsScreenPoint: @escaping @MainActor (CGPoint) -> Bool
+    ) -> FolderGridDragActions? {
+        guard case .folder(let folder) = content else { return nil }
+
+        return FolderGridDragActions(
+            containsScreenPoint: containsScreenPoint,
+            moveHandler: { item, targetIndex in
+                let sourceIndex = folder.items.firstIndex { $0.id == item.id }
+
+                guard let sourceIndex else { return }
+
+                store.move(
+                    itemID: item.id,
+                    to: folder.id,
+                    at: FolderGridDragArrangement.moveIndex(from: sourceIndex, to: targetIndex)
+                )
+            }
+        )
+    }
 }
 
 // MARK: - Presenting
@@ -149,6 +179,9 @@ extension FolderPanelController {
     /// 按收起动画收起面板；打断进行中的展开时从当前画面开始收起
     func collapse() {
         guard panel.isVisible, let layer = containerView.layer else { return }
+
+        // 进行中的拖动立即作废，拖动图像不等收起动画结束就消失
+        currentLevel?.gridView?.cancelDrag()
 
         animationGeneration += 1
         let generation = animationGeneration
@@ -456,6 +489,11 @@ extension FolderPanelController {
             ? FileThumbnailLoader(scale: scale)
             : nil
 
+        // 文件夹的层级里各项可以拖动：鼠标是否在轮廓之内按当前层级判定
+        let dragActions = Self.dragActions(for: content, in: store) { [weak self] in
+            self?.currentLevel?.contains(screenPoint: $0) ?? false
+        }
+
         // 隐藏的项只来自访达里的文件夹：本次展开读出的隐藏项按 id 交给网格，Flotilla 的文件夹里各项的 id 不在其中
         scrollView.documentView = FolderGridView(
             items: content.items,
@@ -463,7 +501,8 @@ extension FolderPanelController {
             previewIconCount: preferences.previewIconCount,
             hiddenItemIDs: finderFolderContents.hiddenItemIDs,
             fileThumbnailLoader: fileThumbnailLoader,
-            openInFinderHandler: openInFinderHandler
+            openInFinderHandler: openInFinderHandler,
+            dragActions: dragActions
         ) { [weak self] in
             self?.select($0)
         }
