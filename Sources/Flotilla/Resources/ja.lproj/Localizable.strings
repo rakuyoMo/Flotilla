@@ -15,14 +15,23 @@
 "statusBar.iconDescription" = "帰帆";
 
 /* 设置窗口 */
-"settings.windowTitle" = "帰帆の設定";
+"settings.windowTitle" = "設定";
 
 /* 设置窗口的文件夹区 */
 "folders.sectionTitle" = "フォルダ";
 "folders.newFolder" = "新規フォルダ";
 "folders.untitledFolder" = "名称未設定フォルダ";
+"folders.add" = "追加…";
 "folders.addApps" = "アプリを追加…";
 "folders.addFiles" = "ファイルを追加…";
+"folders.addWebPage" = "Webページを追加…";
+"folders.webPageAlert.message" = "Webページを追加";
+"folders.webPageAlert.informative" = "WebページのURLを入力してください。タイトルは省略できます。";
+"folders.webPageAlert.addressPlaceholder" = "URL";
+"folders.webPageAlert.titlePlaceholder" = "タイトル（オプション）";
+"folders.webPageAlert.fetchingTitle" = "タイトルを取得中…";
+"folders.webPageAlert.add" = "追加";
+"folders.webPageAlert.cancel" = "キャンセル";
 "folders.addToDock" = "Dockに追加";
 "folders.notOnDock" = "Dockにありません";
 "folders.remove" = "削除";

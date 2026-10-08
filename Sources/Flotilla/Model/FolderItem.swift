@@ -40,11 +40,11 @@ extension FolderItem {
     /// 为要加入文件夹的 URL 建一个新项：App bundle 为 App，其余存在的一切为文件，包括文件包、访达里的文件夹与卷；
     /// `http`、`https` 网址为网页；不存在的文件与其它网址返回 nil
     ///
-    /// 设置窗口的拖入、“添加 App…” “添加文件…” 与拖到 Dock 上的 tile 都经这里分类；
+    /// 设置窗口的拖入、“添加 App…” “添加文件…” “添加网页…” 与拖到 Dock 上的 tile 都经这里分类；
     /// 同一个 App 或文件不因 URL 写法不同而得到不同的 URL，加入时才能去重
     /// - Parameters:
     ///   - url: 文件 URL 或网址
-    ///   - title: 浏览器给出的网页标题，只用于网页；首尾空白会被去掉，空串视为没有
+    ///   - title: 网页的标题，只用于网页：浏览器给出的，或 “添加网页…” 里填写的；首尾空白会被去掉，空串视为没有
     init?(url: URL, title: String?) {
         let item = url.isFileURL
             ? Self.localItem(at: url)
@@ -138,7 +138,7 @@ extension FolderItem {
             return nil
         }
 
-        // 浏览器给的标题可能带首尾空白，也可能是空串
+        // 浏览器给的与用户填写的标题都可能带首尾空白，也可能是空串
         let trimmedTitle = title?.trimmingCharacters(in: .whitespacesAndNewlines)
         let pageTitle = trimmedTitle.flatMap { $0.isEmpty ? nil : $0 }
 

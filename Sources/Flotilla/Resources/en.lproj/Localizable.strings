@@ -15,14 +15,23 @@
 "statusBar.iconDescription" = "Flotilla";
 
 /* 设置窗口 */
-"settings.windowTitle" = "Flotilla Settings";
+"settings.windowTitle" = "Settings";
 
 /* 设置窗口的文件夹区 */
 "folders.sectionTitle" = "Folders";
 "folders.newFolder" = "New Folder";
 "folders.untitledFolder" = "Untitled Folder";
+"folders.add" = "Add…";
 "folders.addApps" = "Add Apps…";
 "folders.addFiles" = "Add Files…";
+"folders.addWebPage" = "Add Web Page…";
+"folders.webPageAlert.message" = "Add Web Page";
+"folders.webPageAlert.informative" = "Enter the address of the web page. The title is optional.";
+"folders.webPageAlert.addressPlaceholder" = "Address";
+"folders.webPageAlert.titlePlaceholder" = "Title (Optional)";
+"folders.webPageAlert.fetchingTitle" = "Fetching Title…";
+"folders.webPageAlert.add" = "Add";
+"folders.webPageAlert.cancel" = "Cancel";
 "folders.addToDock" = "Add to Dock";
 "folders.notOnDock" = "Not in Dock";
 "folders.remove" = "Delete";

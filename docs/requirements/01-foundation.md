@@ -12,6 +12,7 @@
   - `CFBundleURLTypes`：注册 scheme `flotilla`，`CFBundleURLName = com.rakuyo.flotilla.url`
   - `CFBundleAllowMixedLocalizations = true`：让 App 显示名等来自其它 bundle 的文字按系统语言本地化，不受 Flotilla 自身支持的语言限制
   - `CFBundleDevelopmentRegion = en`：系统语言不在 Flotilla 支持的语言之内时，界面文字回落到英文
+  - `NSAppTransportSecurity` 里只有 `NSAllowsArbitraryLoadsInWebContent = true`：只为网页内容放开明文 HTTP，让 “添加网页…” 自动获取 `http://` 网页的标题（见 09）
 - 启动时调用 `NSWorkspace.shared.setDefaultApplication(at: Bundle.main.bundleURL, toOpenURLsWithScheme: "flotilla")`，让当前这份 App 成为 scheme 的处理者。
   - 原因：重新打包后 bundle 内容变了，Launch Services 的旧注册可能失效。
 
@@ -213,7 +214,7 @@ enum FolderIconRenderer {
 
 ## 设置窗口（`Sources/Flotilla/Settings/`）
 
-一个窗口，标题 “归帆设置”，关闭即隐藏，不退出 App。界面全部用代码构建（Auto Layout）。
+一个窗口，标题 “设置”，关闭即隐藏，不退出 App。界面全部用代码构建（Auto Layout）。
 
 ### 文件夹区
 
@@ -223,8 +224,10 @@ enum FolderIconRenderer {
 - 底部按钮：
   - “新建文件夹”：有选中项时在其所属文件夹内新建子文件夹（选中的是文件夹则在该文件夹内），无选中项时新建根文件夹
     - 默认名 “未命名文件夹”，新建后立即进入重命名编辑
-  - “添加 App…”：`NSOpenPanel`，只允许 `.applicationBundle`，允许多选，起始目录 `/Applications`；加入选中项所属的文件夹；无选中项时按钮禁用
-  - “添加文件…”：选择文件与访达里的文件夹，见 07
+  - “添加…”：下拉按钮，菜单里是 “添加 App…” “添加文件…” “添加网页…”，都加入选中项所属的文件夹；无选中项时按钮禁用，见 09
+    - “添加 App…”：`NSOpenPanel`，只允许 `.applicationBundle`，允许多选，起始目录 `/Applications`
+    - “添加文件…”：选择文件与访达里的文件夹，见 07
+    - “添加网页…”：输入网址与可选的标题，见 09
   - “删除”：删除选中项；无选中项时禁用
 - 重命名：双击文件夹名进入编辑；App、文件与网页的名称不可编辑。
 - 拖放：

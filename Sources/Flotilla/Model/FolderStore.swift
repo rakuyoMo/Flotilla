@@ -160,6 +160,36 @@ extension FolderStore {
         commit()
     }
 
+    /// 给不带标题加入的网页补上标题，位置与 id 不变
+    ///
+    /// 只在这一项仍在、是网页、标题仍为 nil 时才改，改了就提交并发一次变更通知；其余情况什么都不做
+    /// - Parameters:
+    ///   - title: 网页的标题，已去掉首尾空白，不为空
+    ///   - webPageID: 网页项的 id
+    func fillTitle(_ title: String, ofWebPageWithID webPageID: UUID) {
+        guard
+            case .webPage(let webPage) = Self.findItem(id: webPageID, in: rootItems),
+            webPage.title == nil,
+            let parent = parentFolder(of: webPageID)
+        else {
+            return
+        }
+
+        let titledWebPage = WebPageReference(id: webPage.id, url: webPage.url, title: title)
+
+        // 网页只放在文件夹里：在所在的文件夹里原地换成带标题的那一份
+        var tree = rootItems
+
+        _ = Self.modifyFolder(id: parent.id, in: &tree) { folder in
+            guard let index = folder.items.firstIndex(where: { $0.id == webPageID }) else { return }
+
+            folder.items[index] = .webPage(titledWebPage)
+        }
+
+        rootItems = tree
+        commit()
+    }
+
     /// 按书签把 App 项与文件项跟到当前位置：移动或改名后换成新位置，id 不变；
     /// App 更新之后书签找不到装好的那一份时，按 bundle id 找回
     ///

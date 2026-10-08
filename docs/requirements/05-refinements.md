@@ -74,7 +74,7 @@
 ### 设置窗口
 
 - 文件夹树里，tile 不在 Dock 上的根文件夹这一行，在名称右侧显示状态文字 “不在 Dock 上”：次要文字颜色（`secondaryLabelColor`）、小号系统字体；在 Dock 上的根文件夹、子文件夹与 App 都不显示。
-- 底部按钮行新增 “添加到 Dock”，排在 “添加文件…”（见 07）之后；只有选中的是 tile 不在 Dock 上的根文件夹时可用，点击后调用 `addTile(for:)`。
+- 底部按钮行新增 “添加到 Dock”，排在 “添加…”（见 09）之后；只有选中的是 tile 不在 Dock 上的根文件夹时可用，点击后调用 `addTile(for:)`。
 - 文件夹树每次重建或刷新状态时读取一次 `rootFolderIDsRemovedFromDock()`，行的状态与按钮的可用状态都用这一次读取的结果；点击 “添加到 Dock” 后立即刷新一次，状态文字随即消失。
 - `FolderStore.didChangeNotification` 时重建整棵树。
   - `DockTileSynchronizer.didSynchronizeNotification`、`DockTileSynchronizer.dockTilesDidChangeNotification` 与设置窗口成为 key window 时只原地刷新已显示各行的状态与按钮的可用状态，不重建
@@ -150,12 +150,21 @@
 | `mainMenu.paste` | Paste | 粘贴 | 貼上 | ペースト | 붙이기 |
 | `mainMenu.selectAll` | Select All | 全选 | 全選 | すべてを選択 | 전체 선택 |
 | `statusBar.settings` | Settings… | 设置… | 設定… | 設定… | 설정… |
-| `settings.windowTitle` | Flotilla Settings | 归帆设置 | 歸帆設定 | 帰帆の設定 | Flotilla 설정 |
+| `settings.windowTitle` | Settings | 设置 | 設定 | 設定 | 설정 |
 | `folders.sectionTitle` | Folders | 文件夹 | 檔案夾 | フォルダ | 폴더 |
 | `folders.newFolder` | New Folder | 新建文件夹 | 新增檔案夾 | 新規フォルダ | 새로운 폴더 |
 | `folders.untitledFolder` | Untitled Folder | 未命名文件夹 | 未命名檔案夾 | 名称未設定フォルダ | 제목 없는 폴더 |
+| `folders.add` | Add… | 添加… | 加入… | 追加… | 추가… |
 | `folders.addApps` | Add Apps… | 添加 App… | 加入 App… | アプリを追加… | 앱 추가… |
 | `folders.addFiles` | Add Files… | 添加文件… | 加入檔案… | ファイルを追加… | 파일 추가… |
+| `folders.addWebPage` | Add Web Page… | 添加网页… | 加入網頁… | Webページを追加… | 웹 페이지 추가… |
+| `folders.webPageAlert.message` | Add Web Page | 添加网页 | 加入網頁 | Webページを追加 | 웹 페이지 추가 |
+| `folders.webPageAlert.informative` | Enter the address of the web page. The title is optional. | 输入网页的网址，标题可留空。 | 輸入網頁的網址，標題可留空。 | WebページのURLを入力してください。タイトルは省略できます。 | 웹 페이지의 주소를 입력하십시오. 제목은 비워 둘 수 있습니다. |
+| `folders.webPageAlert.addressPlaceholder` | Address | 网址 | 網址 | URL | 주소 |
+| `folders.webPageAlert.titlePlaceholder` | Title (Optional) | 标题（可选） | 標題（可選） | タイトル（オプション） | 제목(선택 사항) |
+| `folders.webPageAlert.fetchingTitle` | Fetching Title… | 正在获取标题… | 正在取得標題… | タイトルを取得中… | 제목 가져오는 중… |
+| `folders.webPageAlert.add` | Add | 添加 | 加入 | 追加 | 추가 |
+| `folders.webPageAlert.cancel` | Cancel | 取消 | 取消 | キャンセル | 취소 |
 | `folders.addToDock` | Add to Dock | 添加到 Dock | 加入 Dock | Dockに追加 | Dock에 추가 |
 | `folders.notOnDock` | Not in Dock | 不在 Dock 上 | 不在 Dock 上 | Dockにありません | Dock에 없음 |
 | `folders.remove` | Delete | 删除 | 刪除 | 削除 | 삭제 |

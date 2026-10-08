@@ -4,7 +4,7 @@ import UniformTypeIdentifiers
 // MARK: - FolderTreeViewController
 
 /// 设置窗口的文件夹区：
-/// 展示完整的文件夹树，提供新建、添加 App、添加文件、添加到 Dock、删除、重命名与拖放；
+/// 展示完整的文件夹树，提供新建、添加 App、文件与网页、添加到 Dock、删除、重命名与拖放；
 /// 被拖出 Dock 的根文件夹标出 “不在 Dock 上”
 @MainActor
 final class FolderTreeViewController: NSViewController {
@@ -26,25 +26,8 @@ final class FolderTreeViewController: NSViewController {
     /// 展示文件夹树
     private let outlineView = NSOutlineView()
 
-    /// “添加 App…” 按钮，无选中项时禁用
-    private let addAppsButton = NSButton(
-        title: String(
-            localized: "folders.addApps",
-            comment: "文件夹区的按钮：选择 App 加入选中项所属的文件夹"
-        ),
-        target: nil,
-        action: nil
-    )
-
-    /// “添加文件…” 按钮，无选中项时禁用
-    private let addFilesButton = NSButton(
-        title: String(
-            localized: "folders.addFiles",
-            comment: "文件夹区的按钮：选择文件或访达里的文件夹，加入选中项所属的文件夹"
-        ),
-        target: nil,
-        action: nil
-    )
+    /// “添加…” 下拉按钮，菜单里是 “添加 App…” “添加文件…” “添加网页…”；无选中项时禁用
+    private let addPopUpButton = NSPopUpButton(frame: .zero, pullsDown: true)
 
     /// “添加到 Dock” 按钮，只有选中被拖出 Dock 的根文件夹时可用
     private let addToDockButton = NSButton(
@@ -68,6 +51,9 @@ final class FolderTreeViewController: NSViewController {
 
     /// 最近一次读取到的、被拖出 Dock 的根文件夹；行的状态与按钮的可用状态都按它判断
     private var rootFolderIDsRemovedFromDock: Set<UUID> = []
+
+    /// 正在编辑文件夹名时取到的网页标题，按网页项的 id 记下，编辑结束时补上
+    private var pendingWebPageTitles: [UUID: String] = [:]
 
     /// 当前选中行的节点
     private var selectedNode: FolderTreeNode? {
@@ -167,6 +153,21 @@ final class FolderTreeViewController: NSViewController {
 
         store.updateItemLocations()
     }
+
+    /// 给不带标题加入的网页补上取到的标题
+    ///
+    /// 正在编辑文件夹名时先记下，编辑结束再补：补上标题会重建树，重建会结束编辑并提交输入到一半的名称
+    /// - Parameters:
+    ///   - title: 取到的标题，已去掉首尾空白
+    ///   - webPageID: 网页项的 id
+    func fillTitle(_ title: String, ofWebPageWithID webPageID: UUID) {
+        guard !isEditingFolderName else {
+            pendingWebPageTitles[webPageID] = title
+            return
+        }
+
+        store.fillTitle(title, ofWebPageWithID: webPageID)
+    }
 }
 
 // MARK: NSOutlineViewDelegate
@@ -202,7 +203,8 @@ extension FolderTreeViewController: NSOutlineViewDelegate {
 // MARK: NSTextFieldDelegate
 
 extension FolderTreeViewController: NSTextFieldDelegate {
-    /// 结束编辑文件夹名时写回数据源；新建的根文件夹名称就此定下，解除搁置，tile 带着这个名称出现
+    /// 结束编辑文件夹名时写回数据源；新建的根文件夹名称就此定下，解除搁置，tile 带着这个名称出现。
+    /// 编辑期间取到的网页标题随后补上
     func controlTextDidEndEditing(_ notification: Notification) {
         guard let textField = notification.object as? NSTextField else { return }
 
@@ -213,9 +215,12 @@ extension FolderTreeViewController: NSTextFieldDelegate {
 
         store.rename(folderID: folder.id, to: textField.stringValue)
         dockTileSynchronizer?.releaseTile(for: folder.id)
+
+        fillPendingWebPageTitles()
     }
 
-    /// 按 Esc 取消编辑时名称保持原样，同样算名称定下来了：解除搁置，tile 带着原名出现
+    /// 按 Esc 取消编辑时名称保持原样，同样算名称定下来了：解除搁置，tile 带着原名出现；
+    /// 编辑期间取到的网页标题等编辑结束后补上
     ///
     /// 实测 outline view 取消编辑时不发 `controlTextDidEndEditing`，只能在这里得知
     func control(
@@ -230,6 +235,18 @@ extension FolderTreeViewController: NSTextFieldDelegate {
 
         if let folder = node?.folder {
             dockTileSynchronizer?.releaseTile(for: folder.id)
+        }
+
+        // outline view 在这之后才结束编辑，补标题要等到那时
+        Task { [weak self] in
+            guard
+                let self,
+                !isEditingFolderName
+            else {
+                return
+            }
+
+            fillPendingWebPageTitles()
         }
 
         // 取消编辑本身仍交给 outline view 处理
@@ -285,6 +302,30 @@ extension FolderTreeViewController {
         panel.allowsMultipleSelection = true
 
         addItems(chosenIn: panel)
+    }
+
+    /// 输入网址与可选的标题，把网页加入弹出时选中项所属的文件夹；
+    /// 不带标题加入的网页，取到标题后补上
+    ///
+    /// 弹出期间这个文件夹被删掉时，`addItems` 找不到它，什么都不做；之后取到的标题同样找不到这一项
+    @objc
+    private func addWebPage() {
+        guard
+            let folderID = selectedNode?.containingFolderID,
+            let window = view.window
+        else {
+            return
+        }
+
+        AddWebPageAlert().beginSheetModal(
+            for: window,
+            completionHandler: { [weak self] in
+                self?.store.addItems([$0], to: folderID)
+            },
+            titleHandler: { [weak self] in
+                self?.fillTitle($0, ofWebPageWithID: $1)
+            }
+        )
     }
 
     /// 把选中的根文件夹重新添加到 Dock；记为待添加后它就不再算被拖出，状态随即刷新
@@ -401,11 +442,7 @@ extension FolderTreeViewController {
             action: #selector(addFolder)
         )
 
-        addAppsButton.target = self
-        addAppsButton.action = #selector(addApps)
-
-        addFilesButton.target = self
-        addFilesButton.action = #selector(addFiles)
+        configureAddPopUpButton()
 
         addToDockButton.target = self
         addToDockButton.action = #selector(addSelectedFolderToDock)
@@ -416,7 +453,7 @@ extension FolderTreeViewController {
 
         let buttonRow = NSStackView()
         buttonRow.setViews(
-            [newFolderButton, addAppsButton, addFilesButton, addToDockButton],
+            [newFolderButton, addPopUpButton, addToDockButton],
             in: .leading
         )
         buttonRow.setViews([removeButton], in: .trailing)
@@ -436,11 +473,55 @@ extension FolderTreeViewController {
         return stackView
     }
 
-    /// 根据选中项更新 “添加 App…” “添加文件…” “添加到 Dock” 与 “删除” 的可用状态
+    /// 配置 “添加…”：pull-down 按钮上显示的是第一项的标题，点击后在按钮下方弹出其后的各项
+    private func configureAddPopUpButton() {
+        addPopUpButton.addItem(
+            withTitle: String(
+                localized: "folders.add",
+                comment: "文件夹区的下拉按钮：点击后弹出菜单，选择添加 App、文件或网页"
+            )
+        )
+
+        let menuItems = [
+            NSMenuItem(
+                title: String(
+                    localized: "folders.addApps",
+                    comment: "“添加…” 菜单的一项：选择 App 加入选中项所属的文件夹"
+                ),
+                action: #selector(addApps),
+                keyEquivalent: ""
+            ),
+
+            NSMenuItem(
+                title: String(
+                    localized: "folders.addFiles",
+                    comment: "“添加…” 菜单的一项：选择文件或访达里的文件夹，加入选中项所属的文件夹"
+                ),
+                action: #selector(addFiles),
+                keyEquivalent: ""
+            ),
+
+            NSMenuItem(
+                title: String(
+                    localized: "folders.addWebPage",
+                    comment: "“添加…” 菜单的一项：输入网址，把网页加入选中项所属的文件夹"
+                ),
+                action: #selector(addWebPage),
+                keyEquivalent: ""
+            ),
+        ]
+
+        // 各项自带 target 与 action，选中后直接调用对应的方法
+        for menuItem in menuItems {
+            menuItem.target = self
+            addPopUpButton.menu?.addItem(menuItem)
+        }
+    }
+
+    /// 根据选中项更新 “添加…” “添加到 Dock” 与 “删除” 的可用状态
     private func updateButtons() {
         let hasSelection = selectedNode != nil
-        addAppsButton.isEnabled = hasSelection
-        addFilesButton.isEnabled = hasSelection
+        addPopUpButton.isEnabled = hasSelection
         removeButton.isEnabled = hasSelection
 
         addToDockButton.isEnabled = selectedNode.map { isRemovedFromDock($0) } ?? false
@@ -496,6 +577,16 @@ extension FolderTreeViewController {
         outlineView.selectRowIndexes([row], byExtendingSelection: false)
         outlineView.scrollRowToVisible(row)
         outlineView.editColumn(0, row: row, with: nil, select: true)
+    }
+
+    /// 补上编辑文件夹名期间记下的网页标题
+    private func fillPendingWebPageTitles() {
+        let titles = pendingWebPageTitles
+        pendingWebPageTitles = [:]
+
+        for (webPageID, title) in titles {
+            store.fillTitle(title, ofWebPageWithID: webPageID)
+        }
     }
 
     /// 收集当前展开的文件夹 id；收起的文件夹不再深入

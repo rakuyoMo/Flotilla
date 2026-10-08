@@ -15,14 +15,23 @@
 "statusBar.iconDescription" = "Flotilla";
 
 /* 设置窗口 */
-"settings.windowTitle" = "Flotilla 설정";
+"settings.windowTitle" = "설정";
 
 /* 设置窗口的文件夹区 */
 "folders.sectionTitle" = "폴더";
 "folders.newFolder" = "새로운 폴더";
 "folders.untitledFolder" = "제목 없는 폴더";
+"folders.add" = "추가…";
 "folders.addApps" = "앱 추가…";
 "folders.addFiles" = "파일 추가…";
+"folders.addWebPage" = "웹 페이지 추가…";
+"folders.webPageAlert.message" = "웹 페이지 추가";
+"folders.webPageAlert.informative" = "웹 페이지의 주소를 입력하십시오. 제목은 비워 둘 수 있습니다.";
+"folders.webPageAlert.addressPlaceholder" = "주소";
+"folders.webPageAlert.titlePlaceholder" = "제목(선택 사항)";
+"folders.webPageAlert.fetchingTitle" = "제목 가져오는 중…";
+"folders.webPageAlert.add" = "추가";
+"folders.webPageAlert.cancel" = "취소";
 "folders.addToDock" = "Dock에 추가";
 "folders.notOnDock" = "Dock에 없음";
 "folders.remove" = "삭제";

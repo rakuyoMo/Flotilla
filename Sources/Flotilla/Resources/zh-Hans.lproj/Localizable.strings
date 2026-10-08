@@ -15,14 +15,23 @@
 "statusBar.iconDescription" = "归帆";
 
 /* 设置窗口 */
-"settings.windowTitle" = "归帆设置";
+"settings.windowTitle" = "设置";
 
 /* 设置窗口的文件夹区 */
 "folders.sectionTitle" = "文件夹";
 "folders.newFolder" = "新建文件夹";
 "folders.untitledFolder" = "未命名文件夹";
+"folders.add" = "添加…";
 "folders.addApps" = "添加 App…";
 "folders.addFiles" = "添加文件…";
+"folders.addWebPage" = "添加网页…";
+"folders.webPageAlert.message" = "添加网页";
+"folders.webPageAlert.informative" = "输入网页的网址，标题可留空。";
+"folders.webPageAlert.addressPlaceholder" = "网址";
+"folders.webPageAlert.titlePlaceholder" = "标题（可选）";
+"folders.webPageAlert.fetchingTitle" = "正在获取标题…";
+"folders.webPageAlert.add" = "添加";
+"folders.webPageAlert.cancel" = "取消";
 "folders.addToDock" = "添加到 Dock";
 "folders.notOnDock" = "不在 Dock 上";
 "folders.remove" = "删除";
