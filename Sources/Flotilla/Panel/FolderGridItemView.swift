@@ -3,8 +3,14 @@ import AppKit
 // MARK: - FolderGridItemView
 
 /// 网格中的一个单元格：图标在上、名称在下；悬停没有任何变化，按下与抬起的表现见 `FolderGridItemStyle`
+///
+/// 文件夹的层级里按下后移动超过 `FolderPanelMetrics.dragThreshold` 即开始拖动，拖动与松开都转交给网格
 @MainActor
 final class FolderGridItemView: NSView {
+    /// 拖动转交给的网格：文件夹的层级里由网格设置；
+    /// 为 nil 时（访达里的文件夹的层级、“在访达中打开”）不能拖动，按下与抬起照旧
+    weak var dragTarget: FolderGridView?
+
     /// 显示图标的视图：大小按样式在 `layout()` 里定，以图标中心定位
     private let imageView = NSImageView()
 
@@ -33,10 +39,29 @@ final class FolderGridItemView: NSView {
     /// 点击后执行的动作
     private let clickHandler: () -> Void
 
-    /// 是否处于按下状态：各项拖出单元格即恢复、拖回来再次按下，“在访达中打开” 保持到抬起
+    /// 是否处于按下状态：各项拖出单元格即恢复、拖回来再次按下，开始拖动时恢复；“在访达中打开” 保持到抬起
     private var isPressed = false {
         didSet {
             imageView.image = isPressed ? pressedImage : normalImage
+        }
+    }
+
+    /// 这次按下的位置，窗口坐标：自己收到按下时记下，抬起时清空；没有记下的抬起不算点击
+    private var pressLocation: CGPoint?
+
+    /// 这次按下是否已经变成拖动：变成拖动后在哪里抬起都不算点击
+    private var isDragging = false
+
+    /// 图标与名称是否隐藏：拖动这一项时原处留出空位
+    ///
+    /// 隐藏的是两个子视图而不是单元格自己：拖动与抬起的事件仍发给按下的这个单元格
+    var isContentHidden: Bool {
+        get {
+            imageView.isHidden
+        }
+        set {
+            imageView.isHidden = newValue
+            titleField.isHidden = newValue
         }
     }
 
@@ -156,23 +181,52 @@ final class FolderGridItemView: NSView {
         refreshImages()
     }
 
-    /// 按下：图标换成按下时的图，等抬起才判定是否算一次点击
-    override func mouseDown(with _: NSEvent) {
+    /// 按下：图标换成按下时的图，记下按下的位置，等抬起才判定是否算一次点击
+    override func mouseDown(with event: NSEvent) {
+        pressLocation = event.locationInWindow
+        isDragging = false
         isPressed = true
     }
 
-    /// 拖动：各项只在鼠标仍位于单元格内时保持按下状态；“在访达中打开” 一直保持到抬起
+    /// 拖动：已开始拖动时交给网格；有网格可转交时，移动超过阈值即开始拖动；
+    /// 其余情况下各项只在鼠标仍位于单元格内时保持按下状态，“在访达中打开” 一直保持到抬起
     override func mouseDragged(with event: NSEvent) {
+        if isDragging {
+            dragTarget?.continueDrag(with: event)
+            return
+        }
+
+        if beginsDrag(with: event) {
+            return
+        }
+
         guard style == .item else { return }
 
         isPressed = contains(event)
     }
 
-    /// 抬起：各项在单元格内抬起才算一次点击；“在访达中打开” 拖出单元格、拖出面板再抬起也算
+    /// 抬起：变成了拖动的交给网格松开，不算点击；
+    /// 否则各项在单元格内抬起才算一次点击，“在访达中打开” 拖出单元格、拖出面板再抬起也算
     override func mouseUp(with event: NSEvent) {
+        let wasPressed = pressLocation != nil
+        let wasDragging = isDragging
+
+        pressLocation = nil
+        isDragging = false
         isPressed = false
 
-        guard style == .openInFinder || contains(event) else { return }
+        if wasDragging {
+            dragTarget?.endDrag(with: event)
+            return
+        }
+
+        // 只有自己收到过按下的抬起才算点击：按下之后网格被重建，新的单元格可能收到旧按下的抬起
+        guard
+            wasPressed,
+            style == .openInFinder || contains(event)
+        else {
+            return
+        }
 
         clickHandler()
     }
@@ -189,6 +243,34 @@ extension FolderGridItemView {
     /// 事件发生的位置是否在单元格内
     private func contains(_ event: NSEvent) -> Bool {
         bounds.contains(convert(event.locationInWindow, from: nil))
+    }
+
+    /// 按下后移动超过阈值时开始拖动：按下的压暗恢复，之后的拖动与抬起都交给网格
+    /// - Returns: 开始了拖动时为 true；没有网格可转交、移动还没超过阈值、或网格不接受时为 false
+    private func beginsDrag(with event: NSEvent) -> Bool {
+        guard
+            let dragTarget,
+            let pressLocation
+        else {
+            return false
+        }
+
+        // 与 Dock 判定拖动 tile 的阈值相同：不超过时仍按点击处理
+        let distance = hypot(
+            event.locationInWindow.x - pressLocation.x,
+            event.locationInWindow.y - pressLocation.y
+        )
+
+        guard distance > FolderPanelMetrics.dragThreshold else { return false }
+
+        guard dragTarget.beginDrag(of: self, pressedAt: pressLocation, with: event) else {
+            return false
+        }
+
+        isDragging = true
+        isPressed = false
+
+        return true
     }
 
     /// 平常或按下时显示的图：各项平常就是图标、按下时压暗；“在访达中打开” 按外观着色

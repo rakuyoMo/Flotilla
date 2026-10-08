@@ -66,6 +66,22 @@ struct FolderGridItemViewTests {
         #expect(try displayedImage(of: itemView) === normalImage)
     }
 
+    /// 没有收到过按下的抬起不算点击：按下之后网格被重建，新的单元格可能收到旧按下的抬起
+    @Test
+    func releaseWithoutPressDoesNotClick() throws {
+        var clickCount = 0
+
+        for style in [FolderGridItemStyle.item, .openInFinder] {
+            let (window, itemView) = makeItemView(style: style) {
+                clickCount += 1
+            }
+
+            itemView.mouseUp(with: try mouseEvent(.leftMouseUp, at: inside, in: window))
+        }
+
+        #expect(clickCount == 0)
+    }
+
     /// “在访达中打开” 的图标：深色以 plus-lighter 合成，平时每个通道加 124、按下加 50；
     /// 浅色以 plus-darker 合成，平时减 127、按下减 194
     @Test
