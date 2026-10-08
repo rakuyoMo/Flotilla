@@ -59,6 +59,8 @@ docs/requirements/      需求文档：00 为总览，01–08 为按实现顺序
 .github/workflows/      GitHub Actions：ci.yml 检查与构建，release.yml 发布新版本
 .claude/skills/release/ Claude Code 的 release skill：用自然语言发布新版本
 .claude/agents/         Claude Code 的 flotilla-implementer 代理：按阶段需求文档实现功能
+README.md               英文 README：只写项目环境、配置、编译、运行，不写使用说明
+README-ZH.md            README.md 的简体中文版，与它同步修改
 ```
 
 ## 开发注意事项

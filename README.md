@@ -1,159 +1,177 @@
 # Flotilla
 
-在 macOS 的 Dock 上增加“文件夹”，把多个 App 分类收纳进去；像 Dock 右侧区域那样，文件夹里也可以放文件、访达里的文件夹与网页。点击文件夹，它会在 Dock 上展开，显示其中的内容；点击即可打开，访达里的文件夹则像 Dock 叠放那样继续展开。
+English | [简体中文](README-ZH.md)
 
-## 安装
+Flotilla adds folders to the macOS Dock, so you can sort multiple apps into them. Just like the right side of the Dock, a folder can also hold files, Finder folders, and web pages.
 
-需要 macOS 15 或更高版本。
+Click a folder and it expands from the Dock to show its contents. Click an item to open it; a Finder folder expands further, like a Dock stack.
 
-1. 在 [Releases](https://github.com/rakuyoMo/Flotilla/releases) 页面下载最新版本的 `Flotilla-X.Y.Z.zip`
-2. 双击解压，把 `Flotilla.app` 拖到“应用程序”文件夹
-3. 打开 Flotilla
+The interface follows the system language:
 
-### 第一次打开
+- Available in English, Simplified Chinese, Traditional Chinese, Japanese, and Korean; other languages fall back to English
+- The app is shown as 归帆 in Simplified Chinese, 歸帆 in Traditional Chinese, and Flotilla in other languages
 
-Flotilla 没有经过 Apple 公证。第一次打开时，系统会提示 Apple 无法验证它是否包含恶意软件，并拒绝打开。
+## Requirements
 
-点击“完成”关闭提示，然后按以下步骤放行：
+macOS 15 or later.
 
-1. 打开“系统设置 › 隐私与安全性”
-   - macOS 27 里这一页是“隐私与安全”
-2. 向下滚动到“安全性”，在提示 Flotilla 已被阻止的那一行点击“仍要打开”
-   - 这个按钮只在尝试打开 Flotilla 之后的一小时内出现
-3. 按提示输入登录密码确认
+## Installation
 
-之后 Flotilla 就能像其它 App 一样正常打开。
+1. Download the latest `Flotilla-X.Y.Z.zip` from the [Releases](https://github.com/rakuyoMo/Flotilla/releases) page
+2. Double-click to unzip it, then drag `Flotilla.app` into the Applications folder
+3. Open Flotilla
 
-也可以在终端里移除 Flotilla 的隔离属性，之后直接打开：
+### First launch
+
+Flotilla is not notarized by Apple. The first time you open it, macOS says that Apple cannot verify it is free of malware, and refuses to open it.
+
+Click **Done** to close the alert, then allow the app to open:
+
+1. Open **System Settings › Privacy & Security**
+2. Scroll down to **Security**, and click **Open Anyway** on the line saying the app was blocked
+   - This button only appears for an hour after you try to open Flotilla
+3. Confirm with your login password when prompted
+
+After that, Flotilla opens like any other app.
+
+Alternatively, remove the quarantine attribute in Terminal, then open it directly:
 
 ```bash
 xattr -d com.apple.quarantine /Applications/Flotilla.app
 ```
 
-## 使用方法
+## Permissions
 
-Flotilla 启动后没有 Dock 图标，只在菜单栏显示一个小帆船图标。
+### Accessibility
 
-界面语言跟随系统，支持英文、简体中文、繁体中文、日文、韩文；其它语言显示英文。
+Flotilla uses Accessibility to read the Dock's interface, in order to:
 
-### 管理文件夹
+- Find where a folder's tile (its icon in the Dock) is on screen, so the panel and its tail line up with the tile
+- Detect clicks on a tile and expand on mouse-up, with the same timing as the Dock's built-in folders
 
-点击菜单栏图标，选择“设置…”打开设置窗口。
+Flotilla still works without this permission, except that:
 
-设置窗口打开期间 Dock 上会出现 Flotilla 的图标，关闭后消失。
+- The panel is placed at the mouse location of the click, and may not line up exactly with the tile
+- The panel appears only after the Dock launches the tile, slightly later than with the permission
 
-这个图标跟随“系统设置 › 外观 › 图标与小组件样式”：
+Granting the permission:
 
-- 选“深色”：换成夜间版
-- “透明”“色调”选“深色”：换成去色、着色后的夜间版；选“浅色”：由系统处理白天版
-- 选“自动”：随系统深浅外观
+- Without the permission, macOS prompts for it the first time a tile is clicked after each launch of Flotilla
+- It is granted in **System Settings › Privacy & Security › Accessibility**
+  - On macOS 27, this page is **Privacy & Security › Device Control and Data Access**
 
-访达里始终显示白天版。
+Flotilla is ad-hoc signed. After switching to a new version, the previous grant may stop working, and the permission needs to be granted again.
 
-- **新建文件夹**：没有选中项时新建根文件夹；选中某一项时，在它所属的文件夹里新建子文件夹
-- **加入 App**：选中某一项后点击“添加 App…”，选中的 App 会加入该项所属的文件夹；也可以从访达把 App 拖到文件夹上
-- **加入文件与网页**：
-  - 选中某一项后点击“添加文件…”，选中的文件与访达里的文件夹会加入该项所属的文件夹
-  - 从访达把文件与访达里的文件夹、从浏览器把网页拖到文件夹上
-  - 文件与访达里的文件夹也可以直接拖到 Dock 上的文件夹，见下文
-  - 网页的名称用浏览器给出的网页标题
-  - 访达里的文件夹在树里的名称后用灰色小字标出所在位置，例如 `~/Documents`
-- **跟随移动**：App、文件与访达里的文件夹移动或改名后，Flotilla 会自动跟到新位置
-- **重命名**：新建后直接输入名称，之后双击文件夹名修改
-- **整理**：在树里拖动即可排序、移入其它文件夹，或把子文件夹拖到最外层成为根文件夹；App、文件与网页只能放在文件夹里
-- **删除**：选中后点击“删除”，文件夹连同其中的内容一起删除
+### Files and folders
 
-“文件夹图标内显示的图标数量”可在 0–4 之间调整，0 表示只显示空白的圆角底板。
+The first time the panel expands a Finder folder in Documents, Desktop, Downloads, or a similar location, macOS asks whether to allow access.
 
-勾选“访达里的文件夹：显示隐藏文件”后，访达里的文件夹在面板里展开时也显示隐藏文件：与访达按下 ⌘⇧. 时一样半透明，`.DS_Store` 与 `.localized` 仍不显示。
+Flotilla needs to read a folder's contents to expand it in the panel.
 
-### Dock 上的文件夹
+## Changes to your system
 
-每个根文件夹对应 Dock 上的一个 tile（Dock 上的一个图标）：
+### Dock preferences
 
-- tile 出现在 Dock 左侧 App 区域的末尾，可以像其它 App 一样拖动调整位置
-- tile 的名称是文件夹名，图标是一块磨砂的圆角方形底板，上面按 2 × 2 排着文件夹里前几项的图标（App、文件与网页都算，子文件夹不算）；底板随系统外观为浅色或深色
-- 根文件夹增删、重命名，或 tile 的图标需要更新（包括切换系统深浅外观）时，Dock 会重启一次来刷新 tile
-- 新建的根文件夹在名称输入完成（按回车、点别处或按 Esc）之后才出现在 Dock 上，tile 直接带着这个名称
-- 从访达把一个或多个 App、文件或访达里的文件夹拖到 tile 上，松手后它们加入这个文件夹
-  - 网页不能拖到 tile 上，要拖进设置窗口的文件夹里
-- 可以像其它 App 一样把 tile 拖出 Dock，Flotilla 不会再把它加回，重启 Flotilla 后也一样
-  - 设置窗口里，这个文件夹的名称右侧显示“不在 Dock 上”
-  - 选中它后点击“添加到 Dock”，tile 回到 Dock
-  - 新建的根文件夹，以及拖到最外层成为根文件夹的子文件夹，仍会自动出现在 Dock 上
+Flotilla adds its tiles to the Dock by modifying the Dock preferences (`com.apple.dock`):
 
-### 展开与收起
+- It only adds, removes, and changes its own tiles, which live in `persistent-apps`, the app section on the left side of the Dock; other tiles and other Dock settings are left untouched
+- After each change, it terminates the Dock process; macOS relaunches the Dock automatically, and the change takes effect
+- Before its first change in each run, it exports the entire `com.apple.dock` preferences as a backup
+  - Location: `~/Library/Application Support/Flotilla/Backups/com.apple.dock-<yyyyMMdd-HHmmss>.plist`
+  - Only the 5 most recent backups are kept
 
-- 点击 tile，文件夹在 Dock 上方以网格展开
-- 点击其中的 App：启动它，同时收起
-- 点击其中的文件或网页：用默认 App 或默认浏览器打开，同时收起
-- 点击其中的子文件夹：在同一个面板里进入；点击左上角的返回按钮回到上一层
-- 点击其中的访达里的文件夹：像 Dock 叠放那样在同一个面板里展开它的内容，按名称排序，文件显示内容缩略图；默认不显示隐藏文件，可在设置窗口里打开
-  - 其中的 App、文件与文件夹同样可以点击启动、打开或继续进入
-  - 最后一格“在访达中打开”：在访达里打开这个文件夹，同时收起
-  - 第一次展开“文稿”“桌面”“下载”等位置时，系统会先询问是否允许 Flotilla 访问
-    - 询问框里写明了用途：Flotilla 要读取文件夹的内容，才能在面板里展开它
-- 再次点击 tile、点击面板以外的任何位置，或按 Esc：收起
+### Data and settings
 
-Flotilla 没有运行时点击 tile，系统会先启动 Flotilla，再展开文件夹。
+Data is stored in `~/Library/Application Support/Flotilla`:
 
-## 辅助功能权限
+- `folders.json`: the folder data
+- `DockTiles/`: placeholder apps that put each top-level folder into the Dock
+- `Backups/`: backups of the Dock preferences
 
-Flotilla 通过辅助功能读取 Dock 的界面信息，用来：
+Settings are stored in the preferences domain `com.rakuyo.flotilla`.
 
-- 找到 tile 在屏幕上的位置，让面板和它的尾巴对准 tile
-- 识别鼠标在 tile 上的点击，在抬起的一刻就展开，与系统自带的 Dock 文件夹时机一致
+## Building from source
 
-没有这项权限时仍然可以使用，区别是：
+Only the Xcode Command Line Tools and [mise](https://mise.jdx.dev) are needed; Xcode is not required.
 
-- 面板以点击时鼠标所在的位置为准摆放，不一定正好对准 tile
-- 要等 Dock 启动 tile 之后面板才会出现，比有权限时稍慢
+Within the limits of the Command Line Tools, the project is set up as follows:
 
-授权入口：
+- It is managed by Swift Package Manager
+- The UI is built entirely in AppKit code: the plugin that implements SwiftUI's macros is not included
+- Tests use Swift Testing: XCTest is not included
+- There are no asset catalogs, storyboards, or xibs: `actool` and `ibtool` are not included
 
-- 第一次点击 tile 时系统会弹出授权提示，每次启动 Flotilla 最多提示一次
-- 也可以在设置窗口的“辅助功能权限”一行点击“打开系统设置”，在“隐私与安全性 › 辅助功能”里打开 Flotilla
-  - macOS 27 里这一页是“隐私与安全 › 设备控制和数据访问”
-  - 这一行会显示当前是否已授权
-
-Flotilla 使用 ad-hoc 签名，换用新版本或重新打包后，原来的授权可能失效，需要重新授权。
-
-## Flotilla 对 Dock 的改动
-
-Dock 上的 tile 是通过修改 Dock 偏好（`com.apple.dock`）加上去的：
-
-- 只增删改 Flotilla 自己的 tile，位于 `persistent-apps`，即 Dock 左侧的 App 区域；其它 tile 与 Dock 的其它设置都不动
-- 每次改动后结束 Dock 进程，由系统自动重新启动 Dock，改动随之生效
-- 每次运行中第一次改动之前，先把整个 `com.apple.dock` 偏好导出备份
-  - 位置：`~/Library/Application Support/Flotilla/Backups/com.apple.dock-<yyyyMMdd-HHmmss>.plist`
-  - 最多保留最新的 5 份
-
-## 彻底移除
-
-1. 在设置窗口里删除全部根文件夹，等 Dock 重启、Flotilla 的 tile 消失
-   - 如果 Flotilla 已经无法运行，直接把残留的 tile 拖出 Dock
-2. 从菜单栏图标的菜单里选择“退出 Flotilla”
-3. 删除数据目录 `~/Library/Application Support/Flotilla`，其中包括：
-   - `folders.json`：文件夹数据
-   - `DockTiles/`：代表每个根文件夹放进 Dock 的占位 App
-   - `Backups/`：Dock 偏好的备份
-4. 删除设置：`defaults delete com.rakuyo.flotilla`
-5. 在“系统设置 › 隐私与安全性 › 辅助功能”里移除 Flotilla
-   - macOS 27 里这一页是“隐私与安全 › 设备控制和数据访问”
-6. 删除 Flotilla.app
-
-## 构建
-
-只需要 Xcode Command Line Tools 与 [mise](https://mise.jdx.dev)，不需要安装 Xcode。
+See the "Command Line Tools 的限制" section of [AGENTS.md](AGENTS.md) (in Chinese) for details.
 
 ```bash
-# 编译并打包，产物为 build/Flotilla.app
+# Build the debug version
+mise run build
+
+# Build the release version, bundle it as build/Flotilla.app, and ad-hoc sign it
 mise run bundle
 
-# 启动
+# Launch the bundled app
 open build/Flotilla.app
 ```
 
-## 许可证
+The two `ld: warning: search path ... not found` warnings during the build can be ignored: they point to directories that the Command Line Tools don't include.
+
+## Development
+
+### Tests
+
+```bash
+swift test
+```
+
+- If it occasionally fails with `plugin for module 'TestingMacros' not found`, run it again; this happens more often right after `mise run swift:format`
+- In a git worktree, it fails every time; pass the plugin directory explicitly:
+
+  ```bash
+  swift test -Xswiftc -plugin-path -Xswiftc /Library/Developer/CommandLineTools/usr/lib/swift/host/plugins/testing
+  ```
+
+### Code style
+
+The code style follows [RakuyoKit/swift](https://github.com/RakuyoKit/swift).
+
+```bash
+# Format the code
+mise run swift:format
+
+# Check the code style
+mise run swift:lint
+```
+
+### Logs
+
+In zsh, `log` is a builtin command, so write the full path `/usr/bin/log` to view the system log:
+
+```bash
+/usr/bin/log show --last 5m --predicate 'subsystem == "com.rakuyo.flotilla"'
+```
+
+### Accessibility while developing
+
+- The bundled app is ad-hoc signed; after re-bundling, the previous Accessibility grant may stop working, and the permission needs to be granted again
+- Which grant applies depends on how Flotilla is launched, so the two launch methods can be used to test the paths with and without the permission:
+  - When `build/Flotilla.app/Contents/MacOS/Flotilla` is run directly from Terminal, the process inherits Terminal's Accessibility grant
+  - When launched with `open build/Flotilla.app`, Flotilla's own grant applies
+
+### Single instance
+
+When an instance with the same bundle ID is already running, a newly launched copy activates it and quits immediately.
+
+Quit any installed Flotilla before launching `build/Flotilla.app`.
+
+### Dock preferences
+
+Back up the Dock preferences before modifying them while debugging:
+
+```bash
+defaults export com.apple.dock <file>
+```
+
+## License
 
 [GNU General Public License v3.0](LICENSE)
