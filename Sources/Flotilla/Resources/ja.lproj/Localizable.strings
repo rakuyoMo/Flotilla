@@ -32,8 +32,10 @@
 "folders.webPageAlert.fetchingTitle" = "タイトルを取得中…";
 "folders.webPageAlert.add" = "追加";
 "folders.webPageAlert.cancel" = "キャンセル";
-"folders.addToDock" = "Dockに追加";
 "folders.notOnDock" = "Dockにありません";
+"folders.addToDock" = "Dockに追加";
+"folders.showInFinder" = "Finderに表示";
+"folders.openInDefaultBrowser" = "デフォルトのブラウザで開く";
 "folders.remove" = "削除";
 
 /* 设置窗口的通用区 */

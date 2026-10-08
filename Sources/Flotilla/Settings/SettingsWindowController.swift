@@ -8,7 +8,7 @@ final class SettingsWindowController: NSWindowController {
     /// 内容区四边的边距
     static let contentInset: CGFloat = 20
 
-    /// 内容区的最小尺寸：宽度扣除左右边距后，五种语言的文件夹区按钮行都能完整显示，最宽的日文要 509 pt
+    /// 内容区的最小尺寸：宽度扣除左右边距后，五种语言的文件夹区按钮行都能完整显示
     static let minimumContentSize = NSSize(width: 570, height: 480)
 
     /// 文件夹区，在窗口上部，随窗口高度伸缩

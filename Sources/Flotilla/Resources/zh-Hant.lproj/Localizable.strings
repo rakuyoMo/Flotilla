@@ -32,8 +32,10 @@
 "folders.webPageAlert.fetchingTitle" = "正在取得標題…";
 "folders.webPageAlert.add" = "加入";
 "folders.webPageAlert.cancel" = "取消";
-"folders.addToDock" = "加入 Dock";
 "folders.notOnDock" = "不在 Dock 上";
+"folders.addToDock" = "加入 Dock";
+"folders.showInFinder" = "顯示於Finder";
+"folders.openInDefaultBrowser" = "在預設瀏覽器中打開";
 "folders.remove" = "刪除";
 
 /* 设置窗口的通用区 */

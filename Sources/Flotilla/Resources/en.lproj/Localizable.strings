@@ -32,8 +32,10 @@
 "folders.webPageAlert.fetchingTitle" = "Fetching Title…";
 "folders.webPageAlert.add" = "Add";
 "folders.webPageAlert.cancel" = "Cancel";
-"folders.addToDock" = "Add to Dock";
 "folders.notOnDock" = "Not in Dock";
+"folders.addToDock" = "Add to Dock";
+"folders.showInFinder" = "Show in Finder";
+"folders.openInDefaultBrowser" = "Open in Default Browser";
 "folders.remove" = "Delete";
 
 /* 设置窗口的通用区 */

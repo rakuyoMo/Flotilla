@@ -32,8 +32,10 @@
 "folders.webPageAlert.fetchingTitle" = "제목 가져오는 중…";
 "folders.webPageAlert.add" = "추가";
 "folders.webPageAlert.cancel" = "취소";
-"folders.addToDock" = "Dock에 추가";
 "folders.notOnDock" = "Dock에 없음";
+"folders.addToDock" = "Dock에 추가";
+"folders.showInFinder" = "Finder에서 보기";
+"folders.openInDefaultBrowser" = "기본 브라우저에서 열기";
 "folders.remove" = "삭제";
 
 /* 设置窗口的通用区 */
