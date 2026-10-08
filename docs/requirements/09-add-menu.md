@@ -23,7 +23,7 @@
   - 标题（`messageText`）：添加网页
   - 说明（`informativeText`）：输入网页的网址，标题可留空。
   - 附件（`accessoryView`）：上下两个单行输入框（`NSTextField(string:)`），相距 8 pt
-    - 网址框在上，占位文字 “网址”；设为窗口的 `initialFirstResponder`，弹出时就是第一响应者，可以直接打字、⌘V 粘贴
+    - 网址框在上，占位文字 “网址”；弹出时就是第一响应者，可以直接打字、⌘V 粘贴：设为窗口的 `initialFirstResponder`，`beginSheetModal` 之后再显式 `makeFirstResponder`，见 “平台事实”
     - 标题框在下，占位文字 “标题（可选）”；获取标题期间的样子见 “自动获取标题”
     - Tab 从网址框到标题框，Shift-Tab 回来：提示框的窗口按位置排出 Tab 的顺序，不另外设 `nextKeyView`
   - 按钮：“添加” 是第一个按钮，即默认按钮，两个框里按回车都触发它；“取消” 的 key equivalent 显式设为 Esc：只有英文标题 “Cancel” 会自动得到 Esc
@@ -154,7 +154,7 @@
   - “添加” 的 key equivalent 是回车，“取消” 是 Esc
   - 标题、说明、按钮与两个占位文字用的是上表的键（测试进程读不到译文，读到的是键名）
   - 网址框在上、标题框在下，`layout()` 之后都与说明文字左右对齐；网址框是窗口的 `initialFirstResponder`
-  - 以 sheet 弹出后网址框是第一响应者，Tab 到标题框，Shift-Tab 回来
+  - 以 sheet 弹出，`beginSheetModal` 一返回网址框就是第一响应者；Tab 到标题框，Shift-Tab 回来
 - 自动获取标题（`AddWebPageAlertTests`，`AddWebPageAlertStub` 代替取标题、等停顿与等时限，由测试决定停顿何时结束、哪一次获取到时、何时交出什么标题）：
   - 不可用的网址、停顿之前都不获取；停顿之内网址又变了就重新计时，只为最后的网址获取一次，取的是补好 scheme 的网址
   - 获取期间网址变了：前一次被取消，停顿之后为新网址重新获取
@@ -222,7 +222,7 @@
 
 ## 平台事实
 
-以下都是 macOS 27 上的实测。
+以下除注明外都是 macOS 27 上的实测。
 
 - pull-down 的 `NSPopUpButton`：
   - `title` 读到的是第一项的标题；给 `title` 赋值换掉的正是第一项的标题，按钮显示的文字与宽度随之改变
@@ -236,6 +236,7 @@
   - 标题与说明距左右两边各 20 pt
   - 附件比提示框内容宽 − 32 窄时居中放置，不改变提示框的宽度；更宽时提示框随之变宽，附件距左右各 16 pt
   - `initialFirstResponder` 起初为 nil，`layout()` 把它设为左边的按钮，即第二个加入的按钮；在 `layout()` 之前或之后设成输入框，再 `layout()` 都保持是输入框
+  - macOS 26（CI 的 `macos-26` 镜像，测试进程里）：`initialFirstResponder` 设成网址框后以 sheet 弹出，`beginSheetModal` 返回时窗口的第一响应者不是网址框，Tab 之后才到网址框；macOS 27 上返回时已经是网址框，键盘导航关闭时 `initialFirstResponder` 留着 `layout()` 设的按钮也是
   - 按钮设成禁用后，`layout()` 不会改回可用
   - 窗口的 `autorecalculatesKeyViewLoop` 为真：附件里上下放两个输入框，不设 `nextKeyView`，网址框 Tab 到标题框，标题框 Shift-Tab 回到网址框
   - 附件里放两个 24 pt 高的输入框、相距 8 pt 时，简体中文的提示框为 260 × 274 pt（一个输入框时 260 × 242）

@@ -130,7 +130,7 @@ final class AddWebPageAlert: NSObject {
         return FolderItem(url: url, title: title)
     }
 
-    /// 以 sheet 挂在窗口上弹出
+    /// 以 sheet 挂在窗口上弹出，网址框是第一响应者
     ///
     /// 点 “添加” 时把输入的网页交给 completionHandler：标题框有内容时带着这个标题；
     /// 标题框空着时先不带标题交出，提示框关掉之后取到了标题，再交给 titleHandler 补上。
@@ -154,6 +154,10 @@ final class AddWebPageAlert: NSObject {
 
             add(completionHandler: completionHandler, titleHandler: titleHandler)
         }
+
+        // 弹出后可以直接打字或粘贴网址，不必先点网址框。
+        // 不能只靠 `initialFirstResponder`：macOS 26 上（CI 实测），`beginSheetModal` 返回时第一响应者不是网址框
+        alert.window.makeFirstResponder(addressField)
     }
 }
 
@@ -205,7 +209,7 @@ extension AddWebPageAlert {
         cancelButton.keyEquivalent = "\u{1b}"
     }
 
-    /// 把网址框与标题框上下放在说明文字下方，与正文左右对齐；弹出时网址框是第一响应者
+    /// 把网址框与标题框上下放在说明文字下方，与正文左右对齐；网址框设为窗口的 `initialFirstResponder`
     ///
     /// 正文宽度随提示框的宽度变化，提示框又随按钮标题变宽：
     /// 先按没有附件的样子排一次，得到提示框的宽度，再扣掉正文两侧的距离
@@ -252,7 +256,7 @@ extension AddWebPageAlert {
 
         alert.accessoryView = accessoryView
 
-        // 弹出后可以直接打字或粘贴网址，不必先点网址框
+        // `layout()` 已把 `initialFirstResponder` 设成按钮：改成网址框，系统按它设第一响应者时也落在网址框上
         alert.window.initialFirstResponder = addressField
     }
 
