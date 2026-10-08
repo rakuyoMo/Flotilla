@@ -21,8 +21,14 @@
 "folders.sectionTitle" = "폴더";
 "folders.newFolder" = "새로운 폴더";
 "folders.untitledFolder" = "제목 없는 폴더";
+"folders.add" = "추가…";
 "folders.addApps" = "앱 추가…";
 "folders.addFiles" = "파일 추가…";
+"folders.addWebPage" = "웹 페이지 추가…";
+"folders.webPageAlert.message" = "웹 페이지 추가";
+"folders.webPageAlert.informative" = "웹 페이지의 주소를 입력하십시오.";
+"folders.webPageAlert.add" = "추가";
+"folders.webPageAlert.cancel" = "취소";
 "folders.addToDock" = "Dock에 추가";
 "folders.notOnDock" = "Dock에 없음";
 "folders.remove" = "삭제";

@@ -4,7 +4,7 @@ import UniformTypeIdentifiers
 // MARK: - FolderTreeViewController
 
 /// 设置窗口的文件夹区：
-/// 展示完整的文件夹树，提供新建、添加 App、添加文件、添加到 Dock、删除、重命名与拖放；
+/// 展示完整的文件夹树，提供新建、添加 App、文件与网页、添加到 Dock、删除、重命名与拖放；
 /// 被拖出 Dock 的根文件夹标出 “不在 Dock 上”
 @MainActor
 final class FolderTreeViewController: NSViewController {
@@ -26,25 +26,8 @@ final class FolderTreeViewController: NSViewController {
     /// 展示文件夹树
     private let outlineView = NSOutlineView()
 
-    /// “添加 App…” 按钮，无选中项时禁用
-    private let addAppsButton = NSButton(
-        title: String(
-            localized: "folders.addApps",
-            comment: "文件夹区的按钮：选择 App 加入选中项所属的文件夹"
-        ),
-        target: nil,
-        action: nil
-    )
-
-    /// “添加文件…” 按钮，无选中项时禁用
-    private let addFilesButton = NSButton(
-        title: String(
-            localized: "folders.addFiles",
-            comment: "文件夹区的按钮：选择文件或访达里的文件夹，加入选中项所属的文件夹"
-        ),
-        target: nil,
-        action: nil
-    )
+    /// “添加…” 下拉按钮，菜单里是 “添加 App…” “添加文件…” “添加网页…”；无选中项时禁用
+    private let addPopUpButton = NSPopUpButton(frame: .zero, pullsDown: true)
 
     /// “添加到 Dock” 按钮，只有选中被拖出 Dock 的根文件夹时可用
     private let addToDockButton = NSButton(
@@ -287,6 +270,23 @@ extension FolderTreeViewController {
         addItems(chosenIn: panel)
     }
 
+    /// 输入网址，把网页加入弹出时选中项所属的文件夹
+    ///
+    /// 弹出期间这个文件夹被删掉时，`addItems` 找不到它，什么都不做
+    @objc
+    private func addWebPage() {
+        guard
+            let folderID = selectedNode?.containingFolderID,
+            let window = view.window
+        else {
+            return
+        }
+
+        AddWebPageAlert().beginSheetModal(for: window) { [weak self] in
+            self?.store.addItems([$0], to: folderID)
+        }
+    }
+
     /// 把选中的根文件夹重新添加到 Dock；记为待添加后它就不再算被拖出，状态随即刷新
     @objc
     private func addSelectedFolderToDock() {
@@ -401,11 +401,7 @@ extension FolderTreeViewController {
             action: #selector(addFolder)
         )
 
-        addAppsButton.target = self
-        addAppsButton.action = #selector(addApps)
-
-        addFilesButton.target = self
-        addFilesButton.action = #selector(addFiles)
+        configureAddPopUpButton()
 
         addToDockButton.target = self
         addToDockButton.action = #selector(addSelectedFolderToDock)
@@ -416,7 +412,7 @@ extension FolderTreeViewController {
 
         let buttonRow = NSStackView()
         buttonRow.setViews(
-            [newFolderButton, addAppsButton, addFilesButton, addToDockButton],
+            [newFolderButton, addPopUpButton, addToDockButton],
             in: .leading
         )
         buttonRow.setViews([removeButton], in: .trailing)
@@ -436,11 +432,55 @@ extension FolderTreeViewController {
         return stackView
     }
 
-    /// 根据选中项更新 “添加 App…” “添加文件…” “添加到 Dock” 与 “删除” 的可用状态
+    /// 配置 “添加…”：pull-down 按钮上显示的是第一项的标题，点击后在按钮下方弹出其后的各项
+    private func configureAddPopUpButton() {
+        addPopUpButton.addItem(
+            withTitle: String(
+                localized: "folders.add",
+                comment: "文件夹区的下拉按钮：点击后弹出菜单，选择添加 App、文件或网页"
+            )
+        )
+
+        let menuItems = [
+            NSMenuItem(
+                title: String(
+                    localized: "folders.addApps",
+                    comment: "“添加…” 菜单的一项：选择 App 加入选中项所属的文件夹"
+                ),
+                action: #selector(addApps),
+                keyEquivalent: ""
+            ),
+
+            NSMenuItem(
+                title: String(
+                    localized: "folders.addFiles",
+                    comment: "“添加…” 菜单的一项：选择文件或访达里的文件夹，加入选中项所属的文件夹"
+                ),
+                action: #selector(addFiles),
+                keyEquivalent: ""
+            ),
+
+            NSMenuItem(
+                title: String(
+                    localized: "folders.addWebPage",
+                    comment: "“添加…” 菜单的一项：输入网址，把网页加入选中项所属的文件夹"
+                ),
+                action: #selector(addWebPage),
+                keyEquivalent: ""
+            ),
+        ]
+
+        // 各项自带 target 与 action，选中后直接调用对应的方法
+        for menuItem in menuItems {
+            menuItem.target = self
+            addPopUpButton.menu?.addItem(menuItem)
+        }
+    }
+
+    /// 根据选中项更新 “添加…” “添加到 Dock” 与 “删除” 的可用状态
     private func updateButtons() {
         let hasSelection = selectedNode != nil
-        addAppsButton.isEnabled = hasSelection
-        addFilesButton.isEnabled = hasSelection
+        addPopUpButton.isEnabled = hasSelection
         removeButton.isEnabled = hasSelection
 
         addToDockButton.isEnabled = selectedNode.map { isRemovedFromDock($0) } ?? false

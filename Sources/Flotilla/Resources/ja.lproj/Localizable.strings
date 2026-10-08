@@ -21,8 +21,14 @@
 "folders.sectionTitle" = "フォルダ";
 "folders.newFolder" = "新規フォルダ";
 "folders.untitledFolder" = "名称未設定フォルダ";
+"folders.add" = "追加…";
 "folders.addApps" = "アプリを追加…";
 "folders.addFiles" = "ファイルを追加…";
+"folders.addWebPage" = "Webページを追加…";
+"folders.webPageAlert.message" = "Webページを追加";
+"folders.webPageAlert.informative" = "WebページのURLを入力してください。";
+"folders.webPageAlert.add" = "追加";
+"folders.webPageAlert.cancel" = "キャンセル";
 "folders.addToDock" = "Dockに追加";
 "folders.notOnDock" = "Dockにありません";
 "folders.remove" = "削除";

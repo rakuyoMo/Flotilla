@@ -11,7 +11,7 @@ struct WebPageReference: Codable, Hashable, Identifiable {
     /// 网页的网址
     let url: URL
 
-    /// 加入时浏览器给出的网页标题；浏览器没给标题，或给的是空白时为 nil
+    /// 加入时浏览器给出的网页标题；浏览器没给标题、给的是空白，或经 “添加网页…” 输入网址加入时为 nil
     let title: String?
 }
 
