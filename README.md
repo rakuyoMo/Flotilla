@@ -94,6 +94,8 @@ Settings are stored in the preferences domain `com.rakuyo.flotilla`.
 
 Only the Xcode Command Line Tools and [mise](https://mise.jdx.dev) are needed; Xcode is not required.
 
+The Command Line Tools must be version 26 or later, which ships with Swift 6.2 and the macOS 26 SDK: `Package.swift` declares `swift-tools-version: 6.1`, but `NSGlassEffectView`, which the panel uses on macOS 26, is only available in the macOS 26 SDK.
+
 Within the limits of the Command Line Tools, the project is set up as follows:
 
 - It is managed by Swift Package Manager

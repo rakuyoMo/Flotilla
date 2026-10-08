@@ -96,6 +96,8 @@ xattr -d com.apple.quarantine /Applications/Flotilla.app
 
 只需要 Xcode Command Line Tools 与 [mise](https://mise.jdx.dev)，不需要安装 Xcode。
 
+Command Line Tools 需要 26 或更高版本，即 Swift 6.2 与 macOS 26 SDK：`Package.swift` 声明的是 `swift-tools-version: 6.1`，但面板在 macOS 26 上用到的 `NSGlassEffectView` 只在 macOS 26 SDK 里才有。
+
 受 Command Line Tools 的限制，工程这样组织：
 
 - 由 Swift Package Manager 管理
