@@ -2,12 +2,12 @@ import AppKit
 
 @testable import Flotilla
 
-// MARK: - AddWebPageAlertStub
+// MARK: - WebPageAlertStub
 
 /// “添加网页…” 提示框的假环境：取标题、等停顿与等时限都是假的，由测试决定停顿与时限何时结束、何时交出什么标题；
 /// 同时记下提示框交出的网页与补上的标题。不联网，也不真的等待，CI 上同样确定
 @MainActor
-final class AddWebPageAlertStub {
+final class WebPageAlertStub {
     /// 收到的取标题请求，按先后顺序：网址，与交出结果的回调
     private var requests: [(url: URL, completion: @MainActor (String?) -> Void)] = []
 
@@ -32,8 +32,8 @@ final class AddWebPageAlertStub {
     }
 
     /// 用这个假环境取标题、等停顿与时限的提示框
-    func makeAlert() -> AddWebPageAlert {
-        AddWebPageAlert(
+    func makeAlert() -> WebPageAlert {
+        WebPageAlert(
             fetchTitle: { url, completion in
                 self.requests.append((url, completion))
 
@@ -54,7 +54,7 @@ final class AddWebPageAlertStub {
     /// - Parameters:
     ///   - alert: 提示框
     ///   - window: 提示框挂在这个窗口上
-    func beginSheet(of alert: AddWebPageAlert, on window: NSWindow) {
+    func beginSheet(of alert: WebPageAlert, on window: NSWindow) {
         alert.beginSheetModal(
             for: window,
             completionHandler: {

@@ -317,7 +317,7 @@ extension FolderTreeViewController {
             return
         }
 
-        AddWebPageAlert().beginSheetModal(
+        WebPageAlert().beginSheetModal(
             for: window,
             completionHandler: { [weak self] in
                 self?.store.addItems([$0], to: folderID)

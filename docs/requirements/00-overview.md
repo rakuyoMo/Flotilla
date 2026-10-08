@@ -90,7 +90,7 @@ App 的代码在 `Sources/Flotilla/` 下，按职责分子目录；stub 的可�
 | `Rendering/` | `FolderIconRenderer` | 把文件夹渲染成图标（需求 2、17） | 01、07 |
 | `StatusBar/` | `StatusBarController` | 状态栏图标与菜单（需求 7） | 01 |
 | `Settings/` | `SettingsWindowController` 等 | 设置窗口 | 01 |
-| `Settings/` | `AddWebPageAlert` | “添加网页…” 的提示框：输入网址与可选的标题，确认后得到要加入的网页；标题留空时自动获取 | 09 |
+| `Settings/` | `WebPageAlert` | “添加网页…” 的提示框：输入网址与可选的标题，确认后得到要加入的网页；标题留空时自动获取 | 09 |
 | `Settings/` | `WebPageTitleFetcher` | 用 LinkPresentation 获取网页的标题 | 09 |
 | 根目录 | `AppDelegate` | App 生命周期、主菜单、URL 事件分发 | 01 |
 | `Panel/` | `DockFolderPresenter` | 面板的展开、收起、切换；展开请求的最终接收者 | 03 |

@@ -1,13 +1,13 @@
 import AppKit
 
-// MARK: - AddWebPageAlert
+// MARK: - WebPageAlert
 
 /// “添加网页…” 的提示框：输入网址与可选的标题，点 “添加” 后得到要加入文件夹的网页
 ///
 /// 输入不是可用的网址时 “添加” 禁用，随输入实时更新：确认之后不会再报错，也不必再弹第二个提示框。
 /// 网址停顿一会儿不再变时自动获取网页的标题，填进空着的标题框；获取期间标题框照样可以输入，用户输入的内容不被覆盖
 @MainActor
-final class AddWebPageAlert: NSObject {
+final class WebPageAlert: NSObject {
     /// 提示框正文距左右两边的距离，实测（macOS 27）；输入框按它与正文左右对齐
     private static let textInset: CGFloat = 20
 
@@ -163,7 +163,7 @@ final class AddWebPageAlert: NSObject {
 
 // MARK: NSTextFieldDelegate
 
-extension AddWebPageAlert: NSTextFieldDelegate {
+extension WebPageAlert: NSTextFieldDelegate {
     /// 输入变化时更新，键入与粘贴都会走到这里：
     /// 网址变了就更新 “添加” 的可用状态、重新获取标题；标题框是否空着决定转圈显示与否
     func controlTextDidChange(_ notification: Notification) {
@@ -177,7 +177,7 @@ extension AddWebPageAlert: NSTextFieldDelegate {
 
 // MARK: - Private
 
-extension AddWebPageAlert {
+extension WebPageAlert {
     /// 网址框里的文字对应的网址；不是可用的网址时为 nil
     private var enteredURL: URL? {
         guard case .webPage(let webPage) = Self.webPage(from: addressField.stringValue) else {
@@ -450,7 +450,7 @@ extension AddWebPageAlert {
 
 // MARK: - Helpers
 
-extension AddWebPageAlert {
+extension WebPageAlert {
     /// 等一段时间、再在主线程执行给它的闭包的方法：App 里的停顿与时限都这样等
     /// - Parameter duration: 等多久
     private static func waiting(

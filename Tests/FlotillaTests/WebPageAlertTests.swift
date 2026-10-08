@@ -3,17 +3,17 @@ import Testing
 
 @testable import Flotilla
 
-// MARK: - AddWebPageAlertTests
+// MARK: - WebPageAlertTests
 
 /// “添加网页…” 的提示框：输入的文字要像浏览器地址栏那样成为网页，不是网址的输入在确认之前就挡下，
 /// 用户点了 “添加” 就一定加得进去；标题留空时自动获取，但用户自己输入的标题永远优先
 @MainActor
-struct AddWebPageAlertTests {
+struct WebPageAlertTests {
     /// 假的取标题与停顿，并记下提示框交出的网页与补上的标题
-    private let stub = AddWebPageAlertStub()
+    private let stub = WebPageAlertStub()
 
     /// 本用例的提示框，取标题与等停顿都由 `stub` 代替
-    private let addWebPageAlert: AddWebPageAlert
+    private let addWebPageAlert: WebPageAlert
 
     /// 用假环境建好提示框
     init() {
@@ -29,7 +29,7 @@ struct AddWebPageAlertTests {
         "HTTPS://EXAMPLE.COM",
     ])
     func completeAddressIsKeptAsTyped(address: String) {
-        let item = AddWebPageAlert.webPage(from: address)
+        let item = WebPageAlert.webPage(from: address)
 
         guard case .webPage(let webPage) = item else {
             Issue.record("\(address) 应当是网页：\(String(describing: item))")
@@ -48,7 +48,7 @@ struct AddWebPageAlertTests {
         "\t https://www.apple.com/cn/ \r\n",
     ])
     func surroundingWhitespaceIsTrimmed(input: String) {
-        let item = AddWebPageAlert.webPage(from: input)
+        let item = WebPageAlert.webPage(from: input)
 
         guard case .webPage(let webPage) = item else {
             Issue.record("\(input.debugDescription) 应当是网页：\(String(describing: item))")
@@ -68,7 +68,7 @@ struct AddWebPageAlertTests {
         ("localhost:8080/?next=http://x", "https://localhost:8080/?next=http://x"),
     ])
     func missingSchemeBecomesHTTPS(input: String, expected: String) {
-        let item = AddWebPageAlert.webPage(from: input)
+        let item = WebPageAlert.webPage(from: input)
 
         guard case .webPage(let webPage) = item else {
             Issue.record("\(input) 应当是网页：\(String(describing: item))")
@@ -87,14 +87,14 @@ struct AddWebPageAlertTests {
         "ftp://example.com",
     ])
     func unusableInputIsRejected(input: String) {
-        #expect(AddWebPageAlert.webPage(from: input) == nil)
+        #expect(WebPageAlert.webPage(from: input) == nil)
     }
 
     /// 文件 URL 不可用，指向的目录确实存在也不成为文件项：这里只加网页，文件走 “添加文件…”
     @Test
     func fileURLIsRejectedEvenIfDirectoryExists() {
         #expect(FileManager.default.fileExists(atPath: "/Applications"))
-        #expect(AddWebPageAlert.webPage(from: "file:///Applications") == nil)
+        #expect(WebPageAlert.webPage(from: "file:///Applications") == nil)
     }
 
     // MARK: 提示框
@@ -205,7 +205,7 @@ struct AddWebPageAlertTests {
 
 // MARK: - Title Fetching
 
-extension AddWebPageAlertTests {
+extension WebPageAlertTests {
     /// 网址可用并停顿下来才开始获取，取的是补好 scheme 的网址：不可用的输入与停顿之前都不联网，
     /// 停顿之内网址又变了就重新计时，只为最后的网址获取一次
     @Test
@@ -372,7 +372,7 @@ extension AddWebPageAlertTests {
 
 // MARK: - Adding and Cancelling
 
-extension AddWebPageAlertTests {
+extension WebPageAlertTests {
     /// 标题框有内容：带着去掉首尾空白的标题加入；正在进行的获取被取消，之后取到的标题不再补
     @Test
     func addWithTitleUsesItAndCancelsFetch() throws {
@@ -507,7 +507,7 @@ extension AddWebPageAlertTests {
 
 // MARK: - Time Limit
 
-extension AddWebPageAlertTests {
+extension WebPageAlertTests {
     /// 获取进行中到时：这一次被取消，转圈消失、占位文字恢复，当作取不到；
     /// 转圈不会一直转下去，之后才到的标题也不再突然填进标题框
     @Test
@@ -600,7 +600,7 @@ extension AddWebPageAlertTests {
 
 // MARK: - Private
 
-extension AddWebPageAlertTests {
+extension WebPageAlertTests {
     /// 项是网页时返回它的引用
     private static func webPageReference(of item: FolderItem) -> WebPageReference? {
         guard case .webPage(let webPage) = item else { return nil }
