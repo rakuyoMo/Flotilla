@@ -11,7 +11,7 @@ struct WebPageReference: Codable, Hashable, Identifiable {
     /// 网页的网址
     let url: URL
 
-    /// 网页的标题：从浏览器拖入时浏览器给出的，或 “添加网页…” 里填写、自动获取到的；都没有时为 nil
+    /// 网页的标题：从浏览器拖入时浏览器给出的，或网页提示框（“添加网页…” 与 “编辑…”）里填写、自动获取到的；都没有时为 nil
     let title: String?
 }
 

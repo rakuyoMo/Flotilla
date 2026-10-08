@@ -160,30 +160,47 @@ extension FolderStore {
         commit()
     }
 
-    /// 给不带标题加入的网页补上标题，位置与 id 不变
+    /// 给不带标题加入或保存的网页补上取到的标题，位置与 id 不变
     ///
-    /// 只在这一项仍在、是网页、标题仍为 nil 时才改，改了就提交并发一次变更通知；其余情况什么都不做
+    /// 只在这一项仍在、是网页、网址仍是取标题时那个、标题仍为 nil 时才改：
+    /// 保存之后网址又被改掉时，旧网址晚到的标题不属于它，不补。
+    /// 改了就提交并发一次变更通知；其余情况什么都不做
     /// - Parameters:
     ///   - title: 网页的标题，已去掉首尾空白，不为空
-    ///   - webPageID: 网页项的 id
-    func fillTitle(_ title: String, ofWebPageWithID webPageID: UUID) {
+    ///   - webPage: 不带标题交出的那一份网页：按它的 id 找这一项，核对它的网址，即取标题的网址
+    func fillTitle(_ title: String, of webPage: WebPageReference) {
         guard
-            case .webPage(let webPage) = Self.findItem(id: webPageID, in: rootItems),
-            webPage.title == nil,
-            let parent = parentFolder(of: webPageID)
+            case .webPage(let current) = Self.findItem(id: webPage.id, in: rootItems),
+            current.url == webPage.url,
+            current.title == nil
         else {
             return
         }
 
-        let titledWebPage = WebPageReference(id: webPage.id, url: webPage.url, title: title)
+        updateWebPage(WebPageReference(id: webPage.id, url: webPage.url, title: title))
+    }
 
-        // 网页只放在文件夹里：在所在的文件夹里原地换成带标题的那一份
+    /// 把网页换成给定的网址与标题，位置与 id 不变
+    ///
+    /// 按 id 找到这一项；它已不在、不是网页、网址与标题都没变时什么都不做，改了就提交并发一次变更通知。
+    /// 不按网址去重：去重只在加入时进行，改成与同一文件夹里另一个网页相同的网址时两项都保留
+    /// - Parameter webPage: 改好的网页，id 与要改的那一项相同
+    func updateWebPage(_ webPage: WebPageReference) {
+        guard
+            case .webPage(let current) = Self.findItem(id: webPage.id, in: rootItems),
+            current != webPage,
+            let parent = parentFolder(of: webPage.id)
+        else {
+            return
+        }
+
+        // 网页只放在文件夹里：在所在的文件夹里原地换成新的那一份
         var tree = rootItems
 
         _ = Self.modifyFolder(id: parent.id, in: &tree) { folder in
-            guard let index = folder.items.firstIndex(where: { $0.id == webPageID }) else { return }
+            guard let index = folder.items.firstIndex(where: { $0.id == webPage.id }) else { return }
 
-            folder.items[index] = .webPage(titledWebPage)
+            folder.items[index] = .webPage(webPage)
         }
 
         rootItems = tree

@@ -4,7 +4,7 @@ import AppKit
 
 // MARK: - WebPageAlertStub
 
-/// “添加网页…” 提示框的假环境：取标题、等停顿与等时限都是假的，由测试决定停顿与时限何时结束、何时交出什么标题；
+/// 网页提示框的假环境：取标题、等停顿与等时限都是假的，由测试决定停顿与时限何时结束、何时交出什么标题；
 /// 同时记下提示框交出的网页与补上的标题。不联网，也不真的等待，CI 上同样确定
 @MainActor
 final class WebPageAlertStub {
@@ -20,11 +20,11 @@ final class WebPageAlertStub {
     /// 被取消的取标题请求的网址，按先后顺序
     private(set) var cancelledURLs: [URL] = []
 
-    /// 提示框交出的、要加入的网页，按先后顺序
-    private(set) var addedItems: [FolderItem] = []
+    /// 提示框交出的网页：添加时是要加入的，编辑时是改好的；按先后顺序
+    private(set) var confirmedWebPages: [WebPageReference] = []
 
-    /// 提示框交给调用方补上的标题，与那一项的 id，按先后顺序
-    private(set) var filledTitles: [(title: String, webPageID: UUID)] = []
+    /// 提示框交给调用方补上的标题，与不带标题交出的那一份网页，按先后顺序
+    private(set) var filledTitles: [(title: String, webPage: WebPageReference)] = []
 
     /// 请求过标题的网址，按先后顺序
     var requestedURLs: [URL] {
@@ -32,8 +32,10 @@ final class WebPageAlertStub {
     }
 
     /// 用这个假环境取标题、等停顿与时限的提示框
-    func makeAlert() -> WebPageAlert {
+    /// - Parameter webPage: 要编辑的网页；添加时传 nil
+    func makeAlert(editing webPage: WebPageReference? = nil) -> WebPageAlert {
         WebPageAlert(
+            editing: webPage,
             fetchTitle: { url, completion in
                 self.requests.append((url, completion))
 
@@ -58,7 +60,7 @@ final class WebPageAlertStub {
         alert.beginSheetModal(
             for: window,
             completionHandler: {
-                self.addedItems.append($0)
+                self.confirmedWebPages.append($0)
             },
             titleHandler: {
                 self.filledTitles.append(($0, $1))

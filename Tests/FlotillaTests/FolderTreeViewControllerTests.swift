@@ -182,7 +182,7 @@ final class FolderTreeViewControllerTests {
 
         let webPage = try addUntitledWebPage()
 
-        controller.fillTitle("Apple", ofWebPageWithID: webPage.id)
+        controller.fillTitle("Apple", of: webPage)
 
         #expect(try lastItemOfWork() == titled(webPage, "Apple"))
     }
@@ -202,7 +202,7 @@ final class FolderTreeViewControllerTests {
 
         fieldEditor.insertText("工作区", replacementRange: NSRange(location: NSNotFound, length: 0))
 
-        controller.fillTitle("Apple", ofWebPageWithID: webPage.id)
+        controller.fillTitle("Apple", of: webPage)
 
         #expect(window.firstResponder === fieldEditor)
         #expect(store.rootFolders.first?.name == "工作")
@@ -229,7 +229,7 @@ final class FolderTreeViewControllerTests {
 
         fieldEditor.insertText("工作区", replacementRange: NSRange(location: NSNotFound, length: 0))
 
-        controller.fillTitle("Apple", ofWebPageWithID: webPage.id)
+        controller.fillTitle("Apple", of: webPage)
         fieldEditor.doCommand(by: #selector(NSResponder.cancelOperation(_:)))
 
         // outline view 收到 Esc 之后才结束编辑，补标题经主线程上排着的任务进行
@@ -239,6 +239,33 @@ final class FolderTreeViewControllerTests {
 
         #expect(window.firstResponder !== fieldEditor)
         #expect(store.rootFolders.first?.name == "工作")
+        #expect(try lastItemOfWork() == titled(webPage, "Apple"))
+    }
+
+    /// 编辑文件夹名期间同一网页先后取到两个标题：先到的是这一项现在的网址的，后到的是保存之前旧网址的。
+    /// 两条都记下，后到的不挤掉先到的；编辑结束后补上的是网址相符的那一条
+    @Test
+    func pendingTitlesOfSameWebPageAreAllKept() throws {
+        let controller = FolderTreeViewController(store: store, dockTileSynchronizer: nil)
+        let window = makeWindow(width: Self.minimumWidth)
+
+        window.contentView = controller.view
+        controller.view.layoutSubtreeIfNeeded()
+
+        let webPage = try addUntitledWebPage()
+        let oldURL = try #require(URL(string: "https://example.com"))
+        let savedWithOldURL = WebPageReference(id: webPage.id, url: oldURL, title: nil)
+
+        _ = try beginEditingWorkName(in: controller)
+
+        controller.fillTitle("Apple", of: webPage)
+        controller.fillTitle("Example Domain", of: savedWithOldURL)
+
+        #expect(try lastItemOfWork() == .webPage(webPage))
+
+        // 点别处结束编辑
+        window.makeFirstResponder(nil)
+
         #expect(try lastItemOfWork() == titled(webPage, "Apple"))
     }
 }
@@ -269,7 +296,7 @@ extension FolderTreeViewControllerTests {
             (0, work.id, ["folders.remove"]),
             (1, work.items[0].id, ["folders.remove"]),
             (2, work.items[1].id, showInFinder),
-            (3, addedIDs[0], ["folders.openInDefaultBrowser", "—", "folders.remove"]),
+            (3, addedIDs[0], ["folders.openInDefaultBrowser", "folders.editWebPage", "—", "folders.remove"]),
             (4, addedIDs[1], showInFinder),
             (5, addedIDs[2], showInFinder),
         ]
@@ -414,6 +441,60 @@ extension FolderTreeViewControllerTests {
     }
 }
 
+// MARK: - Editing Web Pages
+
+extension FolderTreeViewControllerTests {
+    /// “编辑…” 以 sheet 弹出网页的提示框，填着原来的网址与标题，标题与按钮是编辑的文字；
+    /// 改好后点 “保存”，这一项原地换成新的网址与标题，id 与位置不变
+    ///
+    /// 弹出的是真的提示框：只直接改输入框的值、不发输入变化的通知，它就不会联网获取标题
+    @Test
+    func editWebPageSavesInPlace() throws {
+        let (controller, window) = try showWebPageFixtures()
+        defer { window.orderOut(nil) }
+
+        let webPageID = try #require(store.rootFolders.first?.items[2].id)
+        let sheet = try beginEditingWebPage(in: controller)
+        let fields = editableTextFields(in: sheet)
+
+        #expect(fields.map(\.stringValue) == ["https://apple.com", "Apple"])
+        #expect(labels(in: sheet).contains("folders.webPageAlert.editMessage"))
+
+        // 测试进程读不到译文，按钮标题就是键名：编辑时第一个按钮是 “保存”，没有 “添加”
+        #expect(buttonTitles(in: sheet) == ["folders.webPageAlert.cancel", "folders.webPageAlert.save"])
+
+        fields[0].stringValue = "python.org"
+        fields[1].stringValue = "Python"
+
+        try button(titled: "folders.webPageAlert.save", in: sheet).performClick(nil)
+
+        let url = try #require(URL(string: "https://python.org"))
+        let saved = WebPageReference(id: webPageID, url: url, title: "Python")
+
+        #expect(window.attachedSheet == nil)
+        #expect(store.rootFolders.first?.items[2] == .webPage(saved))
+    }
+
+    /// 点 “取消”：改过的输入都不算，什么都不变
+    @Test
+    func cancelEditingWebPageChangesNothing() throws {
+        let (controller, window) = try showWebPageFixtures()
+        defer { window.orderOut(nil) }
+
+        let before = store.rootFolders
+        let sheet = try beginEditingWebPage(in: controller)
+        let fields = editableTextFields(in: sheet)
+
+        fields[0].stringValue = "python.org"
+        fields[1].stringValue = "Python"
+
+        try button(titled: "folders.webPageAlert.cancel", in: sheet).performClick(nil)
+
+        #expect(window.attachedSheet == nil)
+        #expect(store.rootFolders == before)
+    }
+}
+
 // MARK: - Private
 
 extension FolderTreeViewControllerTests {
@@ -428,6 +509,7 @@ extension FolderTreeViewControllerTests {
             "folders.addToDock": "addClickedFolderToDock:",
             "folders.showInFinder": "showClickedItemInFinder:",
             "folders.openInDefaultBrowser": "openClickedWebPageInDefaultBrowser:",
+            "folders.editWebPage": "editClickedWebPage:",
             "folders.remove": "removeClickedItem:",
         ]
 
@@ -588,10 +670,82 @@ extension FolderTreeViewControllerTests {
         )
     }
 
-    /// 放文件夹区的离屏窗口，内容区宽 `width`
+    /// 把文件夹区放进窗口，在 “工作” 末尾加入网页、文件与访达里的文件夹并展开 “工作”：
+    /// 行依次是 工作、开发、Chess、网页、文件、访达里的文件夹
+    private func showWebPageFixtures() throws -> (controller: FolderTreeViewController, window: NSWindow) {
+        let controller = FolderTreeViewController(store: store, dockTileSynchronizer: nil)
+        let window = makeWindow(width: Self.minimumWidth)
+
+        window.contentView = controller.view
+
+        _ = try addWebPageFileAndFinderFolder()
+
+        let outlineView = try outlineView(of: controller)
+
+        outlineView.expandItem(outlineView.item(atRow: 0))
+        controller.view.layoutSubtreeIfNeeded()
+
+        return (controller, window)
+    }
+
+    /// 右键点网页那一行（第 3 行），点 “编辑…”，返回弹出的提示框的窗口
+    private func beginEditingWebPage(in controller: FolderTreeViewController) throws -> NSWindow {
+        let menu = try contextMenu(of: outlineView(of: controller), clickingRow: 3)
+        let editIndex = menu.indexOfItem(withTitle: "folders.editWebPage")
+
+        try #require(editIndex >= 0)
+
+        menu.performActionForItem(at: editIndex)
+
+        return try #require(controller.view.window?.attachedSheet)
+    }
+
+    /// 窗口里全部可编辑的输入框，自上而下
+    private func editableTextFields(in window: NSWindow) -> [NSTextField] {
+        descendants(of: window.contentView)
+            .compactMap { $0 as? NSTextField }
+            .filter(\.isEditable)
+            .sorted {
+                $0.convert($0.bounds, to: nil).minY > $1.convert($1.bounds, to: nil).minY
+            }
+    }
+
+    /// 窗口里全部只读文字的内容
+    private func labels(in window: NSWindow) -> [String] {
+        descendants(of: window.contentView)
+            .compactMap { $0 as? NSTextField }
+            .filter { !$0.isEditable }
+            .map(\.stringValue)
+    }
+
+    /// 提示框窗口里网页提示框的按钮标题，按字母顺序
+    private func buttonTitles(in window: NSWindow) -> [String] {
+        descendants(of: window.contentView)
+            .compactMap { ($0 as? NSButton)?.title }
+            .filter { $0.hasPrefix("folders.webPageAlert.") }
+            .sorted()
+    }
+
+    /// 提示框窗口里标题为 title 的按钮
+    private func button(titled title: String, in window: NSWindow) throws -> NSButton {
+        try #require(
+            descendants(of: window.contentView)
+                .compactMap { $0 as? NSButton }
+                .first { $0.title == title }
+        )
+    }
+
+    /// 视图的全部子孙视图
+    private func descendants(of view: NSView?) -> [NSView] {
+        let subviews = view?.subviews ?? []
+
+        return subviews + subviews.flatMap { descendants(of: $0) }
+    }
+
+    /// 放文件夹区的窗口，内容区宽 `width`；放在所有屏幕之外：弹出 sheet 时它会被放上屏幕
     private func makeWindow(width: CGFloat) -> NSWindow {
         NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: width, height: 400),
+            contentRect: NSRect(x: -20_000, y: -20_000, width: width, height: 400),
             styleMask: [.titled],
             backing: .buffered,
             defer: false

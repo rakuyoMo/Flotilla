@@ -3,7 +3,7 @@ import LinkPresentation
 
 // MARK: - WebPageTitleFetcher
 
-/// 用系统的 LinkPresentation 取网页的标题：“添加网页…” 的标题框留空时，自动带入网页的标题
+/// 用系统的 LinkPresentation 取网页的标题：网页提示框（“添加网页…” 与 “编辑…”）的标题框留空时，自动带入网页的标题
 ///
 /// 跳转、编码与 HTML 实体都由 LinkPresentation 处理
 enum WebPageTitleFetcher {

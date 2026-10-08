@@ -5,7 +5,7 @@ import UniformTypeIdentifiers
 
 /// 设置窗口的文件夹区：
 /// 展示完整的文件夹树；底部按钮行提供新建文件夹与添加 App、文件与网页，
-/// 右键菜单提供添加到 Dock、在访达中显示、在默认浏览器中打开与删除；另有重命名与拖放；
+/// 右键菜单提供添加到 Dock、在访达中显示、在默认浏览器中打开、编辑网页与删除；另有重命名与拖放；
 /// 被拖出 Dock 的根文件夹标出 “不在 Dock 上”
 @MainActor
 final class FolderTreeViewController: NSViewController {
@@ -33,8 +33,9 @@ final class FolderTreeViewController: NSViewController {
     /// 最近一次读取到的、被拖出 Dock 的根文件夹；行的状态与右键菜单里 “添加到 Dock” 的可用状态都按它判断
     private var rootFolderIDsRemovedFromDock: Set<UUID> = []
 
-    /// 正在编辑文件夹名时取到的网页标题，按网页项的 id 记下，编辑结束时补上
-    private var pendingWebPageTitles: [UUID: String] = [:]
+    /// 正在编辑文件夹名时取到的网页标题，连同取标题时那一份网页按先后记下，编辑结束时依次补上。
+    /// 同一项先后记下的几条都留着：旧网址的标题可能晚到，不能把新网址的挤掉，补哪一条由数据源核对网址决定
+    private var pendingWebPageTitles: [(title: String, webPage: WebPageReference)] = []
 
     /// 当前选中行的节点
     private var selectedNode: FolderTreeNode? {
@@ -134,19 +135,19 @@ final class FolderTreeViewController: NSViewController {
         store.updateItemLocations()
     }
 
-    /// 给不带标题加入的网页补上取到的标题
+    /// 给不带标题加入或保存的网页补上取到的标题；这一项的网址已不是取标题的那个时，由数据源丢掉
     ///
     /// 正在编辑文件夹名时先记下，编辑结束再补：补上标题会重建树，重建会结束编辑并提交输入到一半的名称
     /// - Parameters:
     ///   - title: 取到的标题，已去掉首尾空白
-    ///   - webPageID: 网页项的 id
-    func fillTitle(_ title: String, ofWebPageWithID webPageID: UUID) {
+    ///   - webPage: 不带标题交出的那一份网页：id 与取标题的网址
+    func fillTitle(_ title: String, of webPage: WebPageReference) {
         guard !isEditingFolderName else {
-            pendingWebPageTitles[webPageID] = title
+            pendingWebPageTitles.append((title, webPage))
             return
         }
 
-        store.fillTitle(title, ofWebPageWithID: webPageID)
+        store.fillTitle(title, of: webPage)
     }
 }
 
@@ -343,10 +344,10 @@ extension FolderTreeViewController {
         WebPageAlert().beginSheetModal(
             for: window,
             completionHandler: { [weak self] in
-                self?.store.addItems([$0], to: folderID)
+                self?.store.addItems([.webPage($0)], to: folderID)
             },
             titleHandler: { [weak self] in
-                self?.fillTitle($0, ofWebPageWithID: $1)
+                self?.fillTitle($0, of: $1)
             }
         )
     }
@@ -398,6 +399,30 @@ extension FolderTreeViewController {
             [webPage.url],
             withApplicationAt: browserURL,
             configuration: NSWorkspace.OpenConfiguration()
+        )
+    }
+
+    /// 编辑右键点到的网页：以 sheet 弹出网页的提示框，填着它的网址与标题；保存后原地换成改好的网址与标题，id 与位置不变。
+    /// 不带标题保存的网页，取到标题后补上
+    ///
+    /// 弹出期间这个网页被删掉时，保存与之后取到的标题都找不到这一项，什么都不做
+    @objc
+    private func editClickedWebPage(_ sender: NSMenuItem) {
+        guard
+            case .webPage(let webPage) = clickedNode(of: sender)?.item,
+            let window = view.window
+        else {
+            return
+        }
+
+        WebPageAlert(editing: webPage).beginSheetModal(
+            for: window,
+            completionHandler: { [weak self] in
+                self?.store.updateWebPage($0)
+            },
+            titleHandler: { [weak self] in
+                self?.fillTitle($0, of: $1)
+            }
         )
     }
 
@@ -583,7 +608,7 @@ extension FolderTreeViewController {
     }
 
     /// 右键菜单里 “删除” 之前的各项，按右键点到的那一行的类型给出：
-    /// 文件夹是 “添加到 Dock”，App 与文件是 “在访达中显示”，网页是 “在默认浏览器中打开”
+    /// 文件夹是 “添加到 Dock”，App 与文件是 “在访达中显示”，网页是 “在默认浏览器中打开” 与 “编辑…”
     private func contextMenuItems(for node: FolderTreeNode) -> [NSMenuItem] {
         switch node.item {
         // Dock 集成不可用时没有 “添加到 Dock”；只有被拖出 Dock 的根文件夹可用，其余文件夹置灰
@@ -623,6 +648,15 @@ extension FolderTreeViewController {
                         comment: "网页这一行右键菜单的一项：用系统的默认浏览器打开它"
                     ),
                     action: #selector(openClickedWebPageInDefaultBrowser(_:)),
+                    keyEquivalent: ""
+                ),
+
+                NSMenuItem(
+                    title: String(
+                        localized: "folders.editWebPage",
+                        comment: "网页这一行右键菜单的一项：在提示框里编辑它的网址与标题"
+                    ),
+                    action: #selector(editClickedWebPage(_:)),
                     keyEquivalent: ""
                 ),
             ]
@@ -688,13 +722,13 @@ extension FolderTreeViewController {
         outlineView.editColumn(0, row: row, with: nil, select: true)
     }
 
-    /// 补上编辑文件夹名期间记下的网页标题
+    /// 按记下的先后，补上编辑文件夹名期间取到的网页标题
     private func fillPendingWebPageTitles() {
         let titles = pendingWebPageTitles
-        pendingWebPageTitles = [:]
+        pendingWebPageTitles = []
 
-        for (webPageID, title) in titles {
-            store.fillTitle(title, ofWebPageWithID: webPageID)
+        for (title, webPage) in titles {
+            store.fillTitle(title, of: webPage)
         }
     }
 
