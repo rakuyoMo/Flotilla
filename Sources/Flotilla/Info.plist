@@ -41,6 +41,11 @@
 	<string>15.0</string>
 	<key>LSUIElement</key>
 	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoadsInWebContent</key>
+		<true/>
+	</dict>
 	<key>NSDesktopFolderUsageDescription</key>
 	<string>Flotilla needs to read the contents of Finder folders to expand them in its panel on the Dock.</string>
 	<key>NSDocumentsFolderUsageDescription</key>
