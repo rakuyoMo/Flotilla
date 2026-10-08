@@ -505,6 +505,99 @@ extension AddWebPageAlertTests {
     }
 }
 
+// MARK: - Time Limit
+
+extension AddWebPageAlertTests {
+    /// 获取进行中到时：这一次被取消，转圈消失、占位文字恢复，当作取不到；
+    /// 转圈不会一直转下去，之后才到的标题也不再突然填进标题框
+    @Test
+    func timeLimitCancelsFetchAndDropsLateTitle() throws {
+        let fields = try textFields()
+        let apple = try url("https://apple.com")
+
+        type("apple.com", into: fields.address)
+        stub.endPauses()
+
+        #expect(try isShowingFetchingTitle())
+
+        stub.endTimeLimit(of: apple)
+
+        #expect(stub.cancelledURLs == [apple])
+        #expect(try !isShowingFetchingTitle())
+
+        stub.complete(apple, with: "Apple")
+
+        #expect(fields.title.stringValue.isEmpty)
+    }
+
+    /// 不带标题加入之后到时：时限从开始获取时算起，点 “添加” 不重新计时；
+    /// 这一次被取消，这一项保持显示网址，之后才到的标题不补
+    @Test
+    func timeLimitAfterAddingKeepsAddress() throws {
+        let fields = try textFields()
+        let apple = try url("https://apple.com")
+
+        let window = makeSheetParentWindow()
+        defer { window.orderOut(nil) }
+
+        stub.beginSheet(of: addWebPageAlert, on: window)
+
+        type("apple.com", into: fields.address)
+        stub.endPauses()
+
+        try clickAdd()
+
+        stub.endTimeLimit(of: apple)
+
+        #expect(stub.cancelledURLs == [apple])
+
+        stub.complete(apple, with: "Apple")
+
+        #expect(try onlyAddedWebPage().displayName == "https://apple.com")
+        #expect(stub.filledTitles.isEmpty)
+    }
+
+    /// 换了网址之后，旧网址那一次的时限到了：新网址的获取不受影响，不被取消、转圈还在，取到的标题照样填入
+    @Test
+    func earlierTimeLimitLeavesNewFetchAlone() throws {
+        let fields = try textFields()
+        let apple = try url("https://apple.com")
+        let python = try url("https://python.org")
+
+        type("apple.com", into: fields.address)
+        stub.endPauses()
+
+        type("python.org", into: fields.address)
+        stub.endPauses()
+
+        stub.endTimeLimit(of: apple)
+
+        // 取消只有换网址时的那一次
+        #expect(stub.cancelledURLs == [apple])
+        #expect(try isShowingFetchingTitle())
+
+        stub.complete(python, with: "Welcome to Python.org")
+
+        #expect(fields.title.stringValue == "Welcome to Python.org")
+    }
+
+    /// 已经取完之后到时：什么都不发生，不再取消，填好的标题保留
+    @Test
+    func timeLimitAfterTitleArrivesDoesNothing() throws {
+        let fields = try textFields()
+        let apple = try url("https://apple.com")
+
+        type("apple.com", into: fields.address)
+        stub.endPauses()
+        stub.complete(apple, with: "Apple")
+
+        stub.endTimeLimit(of: apple)
+
+        #expect(stub.cancelledURLs.isEmpty)
+        #expect(fields.title.stringValue == "Apple")
+    }
+}
+
 // MARK: - Private
 
 extension AddWebPageAlertTests {

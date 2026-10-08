@@ -7,9 +7,6 @@ import LinkPresentation
 ///
 /// 跳转、编码与 HTML 实体都由 LinkPresentation 处理
 enum WebPageTitleFetcher {
-    /// 取一次标题最多等多久
-    private static let timeout: TimeInterval = 10
-
     /// 开始取一个网址的标题，在主线程把结果交给 completionHandler；失败、超时、被取消或网页没有标题时为 nil
     ///
     /// 不隔离到主线程：LinkPresentation 在后台队列调用完成回调
@@ -26,7 +23,6 @@ enum WebPageTitleFetcher {
 
         // 只要标题：不下载图标、预览图等附带资源，实测（macOS 27）耗时约为默认的一半
         provider.shouldFetchSubresources = false
-        provider.timeout = timeout
 
         // `LPLinkMetadata` 不是 Sendable，只把标题字符串带回主线程
         provider.startFetchingMetadata(for: url) { metadata, _ in

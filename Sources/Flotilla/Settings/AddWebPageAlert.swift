@@ -17,6 +17,9 @@ final class AddWebPageAlert: NSObject {
     /// 网址停顿多久不再变，才开始获取标题
     private static let pauseDuration = Duration.milliseconds(300)
 
+    /// 一次获取最多等多久：从开始获取算起，不含停顿；到时还没有结果就取消，当作取不到
+    private static let timeLimit = Duration.seconds(10)
+
     /// 提示框：标题、说明、“添加” “取消” 两个按钮，网址框与标题框作为附件
     let alert = NSAlert()
 
@@ -35,6 +38,9 @@ final class AddWebPageAlert: NSObject {
     /// 等网址停顿一会儿，然后在主线程执行给它的闭包
     private let waitForPause: (@escaping @MainActor () -> Void) -> Void
 
+    /// 等一次获取的时限到，然后在主线程执行给它的闭包
+    private let waitForTimeLimit: (@escaping @MainActor () -> Void) -> Void
+
     /// 正在等的那次停顿：编号，与停顿结束后要取标题的网址；网址再变、开始获取或关掉提示框时清空
     private var pendingPause: (id: UUID, url: URL)?
 
@@ -47,16 +53,12 @@ final class AddWebPageAlert: NSObject {
     /// 网页已不带标题加入之后，把取到的标题补到那一项上；还没加入时为 nil
     private var fillAddedWebPageTitle: ((String) -> Void)?
 
-    /// 用 LinkPresentation 获取标题，网址停顿 0.3 s 不再变才开始
+    /// 用 LinkPresentation 获取标题：网址停顿 0.3 s 不再变才开始，一次最多等 10 s
     override convenience init() {
         self.init(
             fetchTitle: WebPageTitleFetcher.fetchTitle(of:completionHandler:),
-            waitForPause: { action in
-                Task {
-                    try? await Task.sleep(for: Self.pauseDuration)
-                    action()
-                }
-            }
+            waitForPause: Self.waiting(for: Self.pauseDuration),
+            waitForTimeLimit: Self.waiting(for: Self.timeLimit)
         )
     }
 
@@ -64,12 +66,15 @@ final class AddWebPageAlert: NSObject {
     /// - Parameters:
     ///   - fetchTitle: 开始取一个网址的标题，在主线程把结果交给回调，取不到时为 nil；返回取消这一次的闭包。测试里传入假实现
     ///   - waitForPause: 等网址停顿一会儿，然后在主线程执行给它的闭包。测试里传入假实现
+    ///   - waitForTimeLimit: 等一次获取的时限到，然后在主线程执行给它的闭包；每开始一次获取就等一次。测试里传入假实现
     init(
         fetchTitle: @escaping (URL, @escaping @MainActor (String?) -> Void) -> () -> Void,
-        waitForPause: @escaping (@escaping @MainActor () -> Void) -> Void
+        waitForPause: @escaping (@escaping @MainActor () -> Void) -> Void,
+        waitForTimeLimit: @escaping (@escaping @MainActor () -> Void) -> Void
     ) {
         self.fetchTitle = fetchTitle
         self.waitForPause = waitForPause
+        self.waitForTimeLimit = waitForTimeLimit
 
         super.init()
 
@@ -349,7 +354,7 @@ extension AddWebPageAlert {
         }
     }
 
-    /// 开始获取一个网址的标题
+    /// 开始获取一个网址的标题，同时开始计时：到时还没有结果就取消，当作取不到
     private func startFetchingTitle(of url: URL) {
         let fetchID = UUID()
 
@@ -361,6 +366,22 @@ extension AddWebPageAlert {
         titleFetch = (fetchID, cancel)
 
         updateTitleProgress()
+
+        // LinkPresentation 的 `timeout` 不是硬上限，由这里掐断。
+        // 到时这一次已有结果或已被取消，编号就对不上，什么都不做
+        waitForTimeLimit { [weak self] in
+            guard
+                let self,
+                let titleFetch,
+                titleFetch.id == fetchID
+            else {
+                return
+            }
+
+            // 当作取不到；之后才到的结果编号对不上，被丢掉
+            titleFetch.cancel()
+            finishFetchingTitle(fetchID, title: nil)
+        }
     }
 
     /// 取消正在进行的获取，作废正在等的停顿
@@ -371,13 +392,13 @@ extension AddWebPageAlert {
         titleFetch = nil
     }
 
-    /// 一次获取有了结果：去掉首尾空白，空的当作没取到；
+    /// 一次获取有了结果，或到时当作取不到：去掉首尾空白，空的当作没取到；
     /// 网页已不带标题加入时补到那一项上，否则只填进空着的标题框，用户输入的内容不覆盖
     /// - Parameters:
     ///   - fetchID: 这次获取的编号
     ///   - title: 取到的标题；取不到时为 nil
     private func finishFetchingTitle(_ fetchID: UUID, title: String?) {
-        // 被取消的那一次晚到的结果丢掉：LinkPresentation 取消之后仍会调用完成回调
+        // 被取消或已到时的那一次晚到的结果丢掉：LinkPresentation 取消之后仍会调用完成回调
         guard titleFetch?.id == fetchID else { return }
 
         titleFetch = nil
@@ -420,5 +441,22 @@ extension AddWebPageAlert {
                 localized: "folders.webPageAlert.titlePlaceholder",
                 comment: "“添加网页…” 提示框里标题框的占位文字：标题可以留空"
             )
+    }
+}
+
+// MARK: - Helpers
+
+extension AddWebPageAlert {
+    /// 等一段时间、再在主线程执行给它的闭包的方法：App 里的停顿与时限都这样等
+    /// - Parameter duration: 等多久
+    private static func waiting(
+        for duration: Duration
+    ) -> (@escaping @MainActor () -> Void) -> Void {
+        { action in
+            Task {
+                try? await Task.sleep(for: duration)
+                action()
+            }
+        }
     }
 }

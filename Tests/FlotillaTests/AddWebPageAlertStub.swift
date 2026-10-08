@@ -4,7 +4,7 @@ import AppKit
 
 // MARK: - AddWebPageAlertStub
 
-/// “添加网页…” 提示框的假环境：取标题与等停顿都是假的，由测试决定停顿何时结束、何时交出什么标题；
+/// “添加网页…” 提示框的假环境：取标题、等停顿与等时限都是假的，由测试决定停顿与时限何时结束、何时交出什么标题；
 /// 同时记下提示框交出的网页与补上的标题。不联网，也不真的等待，CI 上同样确定
 @MainActor
 final class AddWebPageAlertStub {
@@ -13,6 +13,9 @@ final class AddWebPageAlertStub {
 
     /// 正在等的停顿，按先后顺序
     private var pauses: [@MainActor () -> Void] = []
+
+    /// 每次获取开始等的时限，按先后顺序，与 `requests` 一一对应：提示框每开始一次获取就等一次时限
+    private var timeLimits: [@MainActor () -> Void] = []
 
     /// 被取消的取标题请求的网址，按先后顺序
     private(set) var cancelledURLs: [URL] = []
@@ -28,7 +31,7 @@ final class AddWebPageAlertStub {
         requests.map(\.url)
     }
 
-    /// 用这个假环境取标题、等停顿的提示框
+    /// 用这个假环境取标题、等停顿与时限的提示框
     func makeAlert() -> AddWebPageAlert {
         AddWebPageAlert(
             fetchTitle: { url, completion in
@@ -40,6 +43,9 @@ final class AddWebPageAlertStub {
             },
             waitForPause: {
                 self.pauses.append($0)
+            },
+            waitForTimeLimit: {
+                self.timeLimits.append($0)
             }
         )
     }
@@ -67,6 +73,14 @@ final class AddWebPageAlertStub {
 
         for pause in endedPauses {
             pause()
+        }
+    }
+
+    /// 让为某个网址开始的每一次获取都到时，不论它是否已有结果或已被取消
+    /// - Parameter url: 网页的网址
+    func endTimeLimit(of url: URL) {
+        for (request, timeLimit) in zip(requests, timeLimits) where request.url == url {
+            timeLimit()
         }
     }
 
