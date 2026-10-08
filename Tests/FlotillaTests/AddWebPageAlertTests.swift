@@ -27,6 +27,7 @@ struct AddWebPageAlertTests {
 
         #expect(webPage.url.absoluteString == address)
         #expect(webPage.title == nil)
+        #expect(webPage.displayName == address)
     }
 
     /// 首尾的空白与换行被去掉：从别处拷来的网址常带着它们
