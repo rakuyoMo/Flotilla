@@ -26,14 +26,19 @@
 "folders.addFiles" = "加入檔案…";
 "folders.addWebPage" = "加入網頁…";
 "folders.webPageAlert.message" = "加入網頁";
+"folders.webPageAlert.editMessage" = "編輯網頁";
 "folders.webPageAlert.informative" = "輸入網頁的網址，標題可留空。";
 "folders.webPageAlert.addressPlaceholder" = "網址";
 "folders.webPageAlert.titlePlaceholder" = "標題（可選）";
 "folders.webPageAlert.fetchingTitle" = "正在取得標題…";
 "folders.webPageAlert.add" = "加入";
+"folders.webPageAlert.save" = "儲存";
 "folders.webPageAlert.cancel" = "取消";
-"folders.addToDock" = "加入 Dock";
 "folders.notOnDock" = "不在 Dock 上";
+"folders.addToDock" = "加入 Dock";
+"folders.showInFinder" = "顯示於Finder";
+"folders.openInDefaultBrowser" = "在預設瀏覽器中打開";
+"folders.editWebPage" = "編輯…";
 "folders.remove" = "刪除";
 
 /* 设置窗口的通用区 */

@@ -1,13 +1,14 @@
 import AppKit
 
-// MARK: - AddWebPageAlert
+// MARK: - WebPageAlert
 
-/// “添加网页…” 的提示框：输入网址与可选的标题，点 “添加” 后得到要加入文件夹的网页
+/// 网页的提示框，“添加网页…” 与网页的 “编辑…” 共用：输入网址与可选的标题，
+/// 点 “添加” 后得到要加入文件夹的网页，点 “保存” 后得到改好的网页
 ///
-/// 输入不是可用的网址时 “添加” 禁用，随输入实时更新：确认之后不会再报错，也不必再弹第二个提示框。
-/// 网址停顿一会儿不再变时自动获取网页的标题，填进空着的标题框；获取期间标题框照样可以输入，用户输入的内容不被覆盖
+/// 输入不是可用的网址时 “添加” “保存” 禁用，随输入实时更新：确认之后不会再报错，也不必再弹第二个提示框。
+/// 网址改了、停顿一会儿不再变时自动获取网页的标题，填进空着的标题框；获取期间标题框照样可以输入，用户输入的内容不被覆盖
 @MainActor
-final class AddWebPageAlert: NSObject {
+final class WebPageAlert: NSObject {
     /// 提示框正文距左右两边的距离，实测（macOS 27）；输入框按它与正文左右对齐
     private static let textInset: CGFloat = 20
 
@@ -20,8 +21,11 @@ final class AddWebPageAlert: NSObject {
     /// 一次获取最多等多久：从开始获取算起，不含停顿；到时还没有结果就取消，当作取不到
     private static let timeLimit = Duration.seconds(10)
 
-    /// 提示框：标题、说明、“添加” “取消” 两个按钮，网址框与标题框作为附件
+    /// 提示框：标题、说明、“添加” 或 “保存” 与 “取消” 两个按钮，网址框与标题框作为附件
     let alert = NSAlert()
+
+    /// 正在编辑的网页；添加时为 nil
+    private let editedWebPage: WebPageReference?
 
     /// 输入网址的单行输入框，弹出时是第一响应者
     private let addressField = NSTextField(string: "")
@@ -50,50 +54,72 @@ final class AddWebPageAlert: NSObject {
     /// 上一次自动填进标题框的标题；标题框里的文字仍与它相同，就是用户没改过
     private var autofilledTitle: String?
 
-    /// 网页已不带标题加入之后，把取到的标题补到那一项上；还没加入时为 nil
-    private var fillAddedWebPageTitle: ((String) -> Void)?
+    /// 网页已不带标题交出之后，把取到的标题补到那一项上；还没交出时为 nil
+    private var fillConfirmedWebPageTitle: ((String) -> Void)?
 
     /// 用 LinkPresentation 获取标题：网址停顿 0.3 s 不再变才开始，一次最多等 10 s
-    override convenience init() {
+    /// - Parameter webPage: 要编辑的网页；添加时传 nil
+    convenience init(editing webPage: WebPageReference? = nil) {
         self.init(
+            editing: webPage,
             fetchTitle: WebPageTitleFetcher.fetchTitle(of:completionHandler:),
             waitForPause: Self.waiting(for: Self.pauseDuration),
             waitForTimeLimit: Self.waiting(for: Self.timeLimit)
         )
     }
 
-    /// 配好提示框的文字、按钮与输入框；刚弹出时输入为空，“添加” 禁用
+    /// 配好提示框的文字、按钮与输入框
+    ///
+    /// 添加时输入为空，“添加” 禁用；编辑时两个框填着这个网页的网址与标题，“保存” 的可用状态按填进去的网址判断
     /// - Parameters:
+    ///   - webPage: 要编辑的网页；添加时传 nil
     ///   - fetchTitle: 开始取一个网址的标题，在主线程把结果交给回调，取不到时为 nil；返回取消这一次的闭包。测试里传入假实现
     ///   - waitForPause: 等网址停顿一会儿，然后在主线程执行给它的闭包。测试里传入假实现
     ///   - waitForTimeLimit: 等一次获取的时限到，然后在主线程执行给它的闭包；每开始一次获取就等一次。测试里传入假实现
     init(
+        editing webPage: WebPageReference? = nil,
         fetchTitle: @escaping (URL, @escaping @MainActor (String?) -> Void) -> () -> Void,
         waitForPause: @escaping (@escaping @MainActor () -> Void) -> Void,
         waitForTimeLimit: @escaping (@escaping @MainActor () -> Void) -> Void
     ) {
+        editedWebPage = webPage
         self.fetchTitle = fetchTitle
         self.waitForPause = waitForPause
         self.waitForTimeLimit = waitForTimeLimit
 
         super.init()
 
-        alert.messageText = String(
-            localized: "folders.webPageAlert.message",
-            comment: "“添加网页…” 提示框的标题"
-        )
+        alert.messageText = webPage == nil
+            ? String(
+                localized: "folders.webPageAlert.message",
+                comment: "“添加网页…” 提示框的标题"
+            )
+            : String(
+                localized: "folders.webPageAlert.editMessage",
+                comment: "网页 “编辑…” 提示框的标题"
+            )
 
         alert.informativeText = String(
             localized: "folders.webPageAlert.informative",
-            comment: "“添加网页…” 提示框的说明文字，位于网址框与标题框上方"
+            comment: "网页提示框的说明文字，添加与编辑共用，位于网址框与标题框上方"
         )
 
         configureButtons()
         configureTextFields()
+
+        // 编辑时填上这个网页的网址与标题；填进去的原标题算用户的内容：换网址时不清空，取到的标题也不覆盖它
+        if let webPage {
+            addressField.stringValue = webPage.url.absoluteString
+            titleField.stringValue = webPage.title ?? ""
+        }
+
+        // 第一个按钮起初的可用状态按网址框里的网址判断：添加时网址框空着，“添加” 禁用
+        alert.buttons.first?.isEnabled = enteredURL != nil
+
         updateTitleProgress()
     }
 
-    /// 把输入的网址与标题变成要加入的网页，没写 scheme 时像浏览器地址栏那样补上 `https://`；不是可用的网址时为 nil
+    /// 把输入的网址与标题变成网页，没写 scheme 时像浏览器地址栏那样补上 `https://`；不是可用的网址时为 nil
     ///
     /// 除此之外保持输入的样子：大小写、末尾斜杠、`www.` 都不改
     /// - Parameters:
@@ -132,17 +158,18 @@ final class AddWebPageAlert: NSObject {
 
     /// 以 sheet 挂在窗口上弹出，网址框是第一响应者
     ///
-    /// 点 “添加” 时把输入的网页交给 completionHandler：标题框有内容时带着这个标题；
-    /// 标题框空着时先不带标题交出，提示框关掉之后取到了标题，再交给 titleHandler 补上。
+    /// 点 “添加” 或 “保存” 时把输入的网页交给 completionHandler：编辑时沿用原来的 id；标题框有内容时带着这个标题；
+    /// 标题框空着时先不带标题交出，提示框关掉之后取到了标题，再连同交出的那一份网页交给 titleHandler 补上。
     /// 点 “取消” 或按 Esc 时什么都不交出
     /// - Parameters:
     ///   - window: 提示框挂在这个窗口上
-    ///   - completionHandler: 收到要加入的网页
-    ///   - titleHandler: 不带标题交出的网页取到了标题：收到这个标题与那一项的 id
+    ///   - completionHandler: 收到要加入的网页，或改好的网页
+    ///   - titleHandler: 不带标题交出的网页取到了标题：收到这个标题，与交出的那一份网页（id 与取标题的网址）。
+    ///     交出之后那一项的网址可能又被改掉，补之前要核对网址
     func beginSheetModal(
         for window: NSWindow,
-        completionHandler: @escaping @MainActor (FolderItem) -> Void,
-        titleHandler: @escaping @MainActor (_ title: String, _ webPageID: UUID) -> Void
+        completionHandler: @escaping @MainActor (WebPageReference) -> Void,
+        titleHandler: @escaping @MainActor (_ title: String, _ webPage: WebPageReference) -> Void
     ) {
         // 弹出期间由完成回调持有自己：输入框的 delegate 是弱引用
         alert.beginSheetModal(for: window) { [self] response in
@@ -152,7 +179,7 @@ final class AddWebPageAlert: NSObject {
                 return
             }
 
-            add(completionHandler: completionHandler, titleHandler: titleHandler)
+            confirm(completionHandler: completionHandler, titleHandler: titleHandler)
         }
 
         // 弹出后可以直接打字或粘贴网址，不必先点网址框。
@@ -163,9 +190,9 @@ final class AddWebPageAlert: NSObject {
 
 // MARK: NSTextFieldDelegate
 
-extension AddWebPageAlert: NSTextFieldDelegate {
+extension WebPageAlert: NSTextFieldDelegate {
     /// 输入变化时更新，键入与粘贴都会走到这里：
-    /// 网址变了就更新 “添加” 的可用状态、重新获取标题；标题框是否空着决定转圈显示与否
+    /// 网址变了就更新 “添加” “保存” 的可用状态、重新获取标题；标题框是否空着决定转圈显示与否
     func controlTextDidChange(_ notification: Notification) {
         if (notification.object as? NSTextField) === addressField {
             addressDidChange()
@@ -177,7 +204,7 @@ extension AddWebPageAlert: NSTextFieldDelegate {
 
 // MARK: - Private
 
-extension AddWebPageAlert {
+extension WebPageAlert {
     /// 网址框里的文字对应的网址；不是可用的网址时为 nil
     private var enteredURL: URL? {
         guard case .webPage(let webPage) = Self.webPage(from: addressField.stringValue) else {
@@ -187,22 +214,25 @@ extension AddWebPageAlert {
         return webPage.url
     }
 
-    /// 加上 “添加” 与 “取消”：提示框把第一个按钮设为默认按钮，回车触发 “添加”；
+    /// 加上 “添加”（编辑时是 “保存”）与 “取消”：提示框把第一个按钮设为默认按钮，回车触发它；
     /// 只有英文标题 “Cancel” 会自动得到 Esc，其它语言的 “取消” 要显式设上
     private func configureButtons() {
-        let addButton = alert.addButton(
-            withTitle: String(
-                localized: "folders.webPageAlert.add",
-                comment: "“添加网页…” 提示框的按钮：把输入的网页加入文件夹"
-            )
+        alert.addButton(
+            withTitle: editedWebPage == nil
+                ? String(
+                    localized: "folders.webPageAlert.add",
+                    comment: "“添加网页…” 提示框的按钮：把输入的网页加入文件夹"
+                )
+                : String(
+                    localized: "folders.webPageAlert.save",
+                    comment: "网页 “编辑…” 提示框的按钮：保存改好的网址与标题"
+                )
         )
-
-        addButton.isEnabled = false
 
         let cancelButton = alert.addButton(
             withTitle: String(
                 localized: "folders.webPageAlert.cancel",
-                comment: "“添加网页…” 提示框的按钮：关闭提示框，什么都不加入"
+                comment: "网页提示框的按钮，添加与编辑共用：关闭提示框，什么都不变"
             )
         )
 
@@ -219,7 +249,7 @@ extension AddWebPageAlert {
 
         addressField.placeholderString = String(
             localized: "folders.webPageAlert.addressPlaceholder",
-            comment: "“添加网页…” 提示框里网址框的占位文字"
+            comment: "网页提示框里网址框的占位文字，添加与编辑共用"
         )
 
         alert.layout()
@@ -279,35 +309,43 @@ extension AddWebPageAlert {
         )
     }
 
-    /// 点了 “添加”：标题框有内容时带着这个标题加入，不再需要自动获取；
-    /// 空着时先不带标题加入，取到标题后补上
+    /// 点了 “添加” 或 “保存”：按输入得到网页，编辑时沿用原来的 id；
+    /// 标题框有内容时带着这个标题交出，不再需要自动获取；空着时先不带标题交出，取到标题后补上
     /// - Parameters:
-    ///   - completionHandler: 收到要加入的网页
-    ///   - titleHandler: 收到补上的标题与那一项的 id
-    private func add(
-        completionHandler: @MainActor (FolderItem) -> Void,
-        titleHandler: @escaping @MainActor (String, UUID) -> Void
+    ///   - completionHandler: 收到要加入的网页，或改好的网页
+    ///   - titleHandler: 收到补上的标题，与不带标题交出的那一份网页
+    private func confirm(
+        completionHandler: @MainActor (WebPageReference) -> Void,
+        titleHandler: @escaping @MainActor (String, WebPageReference) -> Void
     ) {
         let item = Self.webPage(
             from: addressField.stringValue,
             title: titleField.stringValue
         )
 
-        guard case .webPage(let webPage) = item else { return }
+        guard case .webPage(let enteredWebPage) = item else { return }
 
-        // 标题框有内容：带着它加入，正在进行的获取不再需要
+        // 网址与标题按添加的同一规则取；编辑的是原来那一项，id 不变
+        let webPage = WebPageReference(
+            id: editedWebPage?.id ?? enteredWebPage.id,
+            url: enteredWebPage.url,
+            title: enteredWebPage.title
+        )
+
+        // 标题框有内容：带着它交出，正在进行的获取不再需要
         guard webPage.title == nil else {
             stopFetchingTitle()
-            completionHandler(.webPage(webPage))
+            completionHandler(webPage)
             return
         }
 
-        // 先不带标题加入，显示名是网址；之后取到的标题补到这一项上
-        fillAddedWebPageTitle = {
-            titleHandler($0, webPage.id)
+        // 先不带标题交出，显示名是网址；之后取到的标题连同交出的这一份交给调用方，补之前核对网址。
+        // 每次网址变化都取消之前的获取，此刻正在进行或随即开始的获取，取的就是交出的这个网址
+        fillConfirmedWebPageTitle = {
+            titleHandler($0, webPage)
         }
 
-        completionHandler(.webPage(webPage))
+        completionHandler(webPage)
 
         // 正在进行的那一次继续，不重新发起；还在等停顿的不再等，现在就开始
         guard let pendingPause else { return }
@@ -316,7 +354,7 @@ extension AddWebPageAlert {
         startFetchingTitle(of: pendingPause.url)
     }
 
-    /// 网址变了：更新 “添加” 的可用状态；之前的停顿与获取作废，自动填进去的旧标题清空，
+    /// 网址变了：更新 “添加” “保存” 的可用状态；之前的停顿与获取作废，自动填进去的旧标题清空，
     /// 新网址可用时等停顿之后重新获取
     private func addressDidChange() {
         let url = enteredURL
@@ -362,7 +400,7 @@ extension AddWebPageAlert {
     private func startFetchingTitle(of url: URL) {
         let fetchID = UUID()
 
-        // 回调持有自己：不带标题加入之后提示框已经关掉，取到的标题仍要补上
+        // 回调持有自己：不带标题交出之后提示框已经关掉，取到的标题仍要补上
         let cancel = fetchTitle(url) { [self] in
             finishFetchingTitle(fetchID, title: $0)
         }
@@ -397,7 +435,7 @@ extension AddWebPageAlert {
     }
 
     /// 一次获取有了结果，或到时当作取不到：去掉首尾空白，空的当作没取到；
-    /// 网页已不带标题加入时补到那一项上，否则只填进空着的标题框，用户输入的内容不覆盖
+    /// 网页已不带标题交出时补到那一项上，否则只填进空着的标题框，用户输入的内容不覆盖
     /// - Parameters:
     ///   - fetchID: 这次获取的编号
     ///   - title: 取到的标题；取不到时为 nil
@@ -413,8 +451,8 @@ extension AddWebPageAlert {
 
         guard !trimmedTitle.isEmpty else { return }
 
-        if let fillAddedWebPageTitle {
-            fillAddedWebPageTitle(trimmedTitle)
+        if let fillConfirmedWebPageTitle {
+            fillConfirmedWebPageTitle(trimmedTitle)
             return
         }
 
@@ -439,18 +477,18 @@ extension AddWebPageAlert {
         titleField.placeholderString = isFetching
             ? String(
                 localized: "folders.webPageAlert.fetchingTitle",
-                comment: "“添加网页…” 提示框里标题框的占位文字：正在获取网页的标题"
+                comment: "网页提示框里标题框的占位文字，添加与编辑共用：正在获取网页的标题"
             )
             : String(
                 localized: "folders.webPageAlert.titlePlaceholder",
-                comment: "“添加网页…” 提示框里标题框的占位文字：标题可以留空"
+                comment: "网页提示框里标题框的占位文字，添加与编辑共用：标题可以留空"
             )
     }
 }
 
 // MARK: - Helpers
 
-extension AddWebPageAlert {
+extension WebPageAlert {
     /// 等一段时间、再在主线程执行给它的闭包的方法：App 里的停顿与时限都这样等
     /// - Parameter duration: 等多久
     private static func waiting(

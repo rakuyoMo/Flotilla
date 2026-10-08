@@ -4,7 +4,8 @@ import UniformTypeIdentifiers
 // MARK: - FolderTreeViewController
 
 /// 设置窗口的文件夹区：
-/// 展示完整的文件夹树，提供新建、添加 App、文件与网页、添加到 Dock、删除、重命名与拖放；
+/// 展示完整的文件夹树；底部按钮行提供新建文件夹与添加 App、文件与网页，
+/// 右键菜单提供添加到 Dock、在访达中显示、在默认浏览器中打开、编辑网页与删除；另有重命名与拖放；
 /// 被拖出 Dock 的根文件夹标出 “不在 Dock 上”
 @MainActor
 final class FolderTreeViewController: NSViewController {
@@ -29,31 +30,12 @@ final class FolderTreeViewController: NSViewController {
     /// “添加…” 下拉按钮，菜单里是 “添加 App…” “添加文件…” “添加网页…”；无选中项时禁用
     private let addPopUpButton = NSPopUpButton(frame: .zero, pullsDown: true)
 
-    /// “添加到 Dock” 按钮，只有选中被拖出 Dock 的根文件夹时可用
-    private let addToDockButton = NSButton(
-        title: String(
-            localized: "folders.addToDock",
-            comment: "文件夹区的按钮：把 tile 不在 Dock 上的根文件夹重新添加到 Dock"
-        ),
-        target: nil,
-        action: nil
-    )
-
-    /// “删除” 按钮，无选中项时禁用
-    private let removeButton = NSButton(
-        title: String(
-            localized: "folders.remove",
-            comment: "文件夹区的按钮：删除选中的文件夹、App、文件或网页"
-        ),
-        target: nil,
-        action: nil
-    )
-
-    /// 最近一次读取到的、被拖出 Dock 的根文件夹；行的状态与按钮的可用状态都按它判断
+    /// 最近一次读取到的、被拖出 Dock 的根文件夹；行的状态与右键菜单里 “添加到 Dock” 的可用状态都按它判断
     private var rootFolderIDsRemovedFromDock: Set<UUID> = []
 
-    /// 正在编辑文件夹名时取到的网页标题，按网页项的 id 记下，编辑结束时补上
-    private var pendingWebPageTitles: [UUID: String] = [:]
+    /// 正在编辑文件夹名时取到的网页标题，连同取标题时那一份网页按先后记下，编辑结束时依次补上。
+    /// 同一项先后记下的几条都留着：旧网址的标题可能晚到，不能把新网址的挤掉，补哪一条由数据源核对网址决定
+    private var pendingWebPageTitles: [(title: String, webPage: WebPageReference)] = []
 
     /// 当前选中行的节点
     private var selectedNode: FolderTreeNode? {
@@ -95,6 +77,7 @@ final class FolderTreeViewController: NSViewController {
     override func loadView() {
         configureOutlineView()
         view = makeContentView()
+        updateAddPopUpButton()
         refreshDockStatus()
 
         NotificationCenter.default.addObserver(
@@ -122,7 +105,7 @@ final class FolderTreeViewController: NSViewController {
         )
     }
 
-    /// 重新读取被拖出 Dock 的根文件夹，原地更新各行的状态文字与按钮的可用状态
+    /// 重新读取被拖出 Dock 的根文件夹，原地更新各行的状态文字
     ///
     /// 不重建树：新建的根文件夹正在重命名时，随后的同步会发出通知，
     /// 重建会结束编辑并提交输入到一半的名称
@@ -141,8 +124,6 @@ final class FolderTreeViewController: NSViewController {
 
             cell.showsNotOnDockLabel = isRemovedFromDock(node)
         }
-
-        updateButtons()
     }
 
     /// 按书签把整棵树里的 App 与文件跟到新位置
@@ -154,19 +135,19 @@ final class FolderTreeViewController: NSViewController {
         store.updateItemLocations()
     }
 
-    /// 给不带标题加入的网页补上取到的标题
+    /// 给不带标题加入或保存的网页补上取到的标题；这一项的网址已不是取标题的那个时，由数据源丢掉
     ///
     /// 正在编辑文件夹名时先记下，编辑结束再补：补上标题会重建树，重建会结束编辑并提交输入到一半的名称
     /// - Parameters:
     ///   - title: 取到的标题，已去掉首尾空白
-    ///   - webPageID: 网页项的 id
-    func fillTitle(_ title: String, ofWebPageWithID webPageID: UUID) {
+    ///   - webPage: 不带标题交出的那一份网页：id 与取标题的网址
+    func fillTitle(_ title: String, of webPage: WebPageReference) {
         guard !isEditingFolderName else {
-            pendingWebPageTitles[webPageID] = title
+            pendingWebPageTitles.append((title, webPage))
             return
         }
 
-        store.fillTitle(title, ofWebPageWithID: webPageID)
+        store.fillTitle(title, of: webPage)
     }
 }
 
@@ -194,9 +175,9 @@ extension FolderTreeViewController: NSOutlineViewDelegate {
         return cell
     }
 
-    /// 选中项变化时更新按钮的可用状态
+    /// 选中项变化时更新 “添加…” 的可用状态
     func outlineViewSelectionDidChange(_: Notification) {
-        updateButtons()
+        updateAddPopUpButton()
     }
 }
 
@@ -251,6 +232,49 @@ extension FolderTreeViewController: NSTextFieldDelegate {
 
         // 取消编辑本身仍交给 outline view 处理
         return false
+    }
+}
+
+// MARK: NSMenuDelegate
+
+extension FolderTreeViewController: NSMenuDelegate {
+    /// 右键菜单弹出之前，按右键点到的那一行重建：按这一行的类型给出各项，“删除” 隔开放在最后；
+    /// 点在没有行的空白处时菜单没有项，不弹出
+    ///
+    /// 各项记下点到的那一项的 id，执行时按 id 找：菜单开着时树可能重建，重建之后行号可能对上别的项
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        menu.removeAllItems()
+
+        guard let node = outlineView.item(atRow: outlineView.clickedRow) as? FolderTreeNode else {
+            return
+        }
+
+        let leadingItems = contextMenuItems(for: node)
+
+        for menuItem in leadingItems {
+            menu.addItem(menuItem)
+        }
+
+        // “删除” 与其它项隔开、放在最后，免得点第一项时误删
+        if !leadingItems.isEmpty {
+            menu.addItem(.separator())
+        }
+
+        menu.addItem(
+            NSMenuItem(
+                title: String(
+                    localized: "folders.remove",
+                    comment: "文件夹树右键菜单的一项：删除右键点到的文件夹、App、文件或网页"
+                ),
+                action: #selector(removeClickedItem(_:)),
+                keyEquivalent: ""
+            )
+        )
+
+        for menuItem in menu.items where !menuItem.isSeparatorItem {
+            menuItem.target = self
+            menuItem.representedObject = node.item.id
+        }
     }
 }
 
@@ -317,30 +341,95 @@ extension FolderTreeViewController {
             return
         }
 
-        AddWebPageAlert().beginSheetModal(
+        WebPageAlert().beginSheetModal(
             for: window,
             completionHandler: { [weak self] in
-                self?.store.addItems([$0], to: folderID)
+                self?.store.addItems([.webPage($0)], to: folderID)
             },
             titleHandler: { [weak self] in
-                self?.fillTitle($0, ofWebPageWithID: $1)
+                self?.fillTitle($0, of: $1)
             }
         )
     }
 
-    /// 把选中的根文件夹重新添加到 Dock；记为待添加后它就不再算被拖出，状态随即刷新
+    /// 把右键点到的根文件夹重新添加到 Dock；记为待添加后它就不再算被拖出，状态随即刷新
     @objc
-    private func addSelectedFolderToDock() {
-        guard let folder = selectedNode?.folder else { return }
+    private func addClickedFolderToDock(_ sender: NSMenuItem) {
+        guard let folder = clickedNode(of: sender)?.folder else { return }
 
         dockTileSynchronizer?.addTile(for: folder.id)
         refreshDockStatus()
     }
 
-    /// 删除选中项；文件夹连同内容一起删除
+    /// 访达打开右键点到的 App 或文件所在的位置并选中它；访达里的文件夹同样是选中，不是打开
+    ///
+    /// 先按书签找到当前位置，找不到时用记录的位置；只读，不改数据源：
+    /// 右键点后台窗口不会让设置窗口成为 key，按书签更新数据源的时机赶不上
     @objc
-    private func removeSelectedItem() {
-        guard let node = selectedNode else { return }
+    private func showClickedItemInFinder(_ sender: NSMenuItem) {
+        guard let node = clickedNode(of: sender) else { return }
+
+        let url: URL
+
+        switch node.item {
+        case .app(let app):
+            url = app.relocatedApp()?.url ?? app.url
+
+        case .file(let file):
+            url = file.relocated()?.url ?? file.url
+
+        case .folder, .webPage:
+            return
+        }
+
+        NSWorkspace.shared.activateFileViewerSelecting([url])
+    }
+
+    /// 用系统的默认浏览器打开右键点到的网页：先取打开这个网址的默认浏览器，再交给它打开；取不到时什么都不做
+    @objc
+    private func openClickedWebPageInDefaultBrowser(_ sender: NSMenuItem) {
+        guard
+            case .webPage(let webPage) = clickedNode(of: sender)?.item,
+            let browserURL = NSWorkspace.shared.urlForApplication(toOpen: webPage.url)
+        else {
+            return
+        }
+
+        NSWorkspace.shared.open(
+            [webPage.url],
+            withApplicationAt: browserURL,
+            configuration: NSWorkspace.OpenConfiguration()
+        )
+    }
+
+    /// 编辑右键点到的网页：以 sheet 弹出网页的提示框，填着它的网址与标题；保存后原地换成改好的网址与标题，id 与位置不变。
+    /// 不带标题保存的网页，取到标题后补上
+    ///
+    /// 弹出期间这个网页被删掉时，保存与之后取到的标题都找不到这一项，什么都不做
+    @objc
+    private func editClickedWebPage(_ sender: NSMenuItem) {
+        guard
+            case .webPage(let webPage) = clickedNode(of: sender)?.item,
+            let window = view.window
+        else {
+            return
+        }
+
+        WebPageAlert(editing: webPage).beginSheetModal(
+            for: window,
+            completionHandler: { [weak self] in
+                self?.store.updateWebPage($0)
+            },
+            titleHandler: { [weak self] in
+                self?.fillTitle($0, of: $1)
+            }
+        )
+    }
+
+    /// 删除右键点到的那一项；文件夹连同内容一起删除。选中项不变：重建树时按 id 恢复选中
+    @objc
+    private func removeClickedItem(_ sender: NSMenuItem) {
+        guard let node = clickedNode(of: sender) else { return }
 
         store.remove(itemID: node.item.id)
     }
@@ -380,7 +469,7 @@ extension FolderTreeViewController {
             byExtendingSelection: false
         )
 
-        updateButtons()
+        updateAddPopUpButton()
     }
 }
 
@@ -407,6 +496,13 @@ extension FolderTreeViewController {
         outlineView.target = self
         outlineView.doubleAction = #selector(renameClickedFolder)
 
+        // 右键菜单在弹出前按点到的那一行重建；各项的可用状态自己设，不经 `validateMenuItem`
+        let contextMenu = NSMenu()
+        contextMenu.autoenablesItems = false
+        contextMenu.delegate = self
+
+        outlineView.menu = contextMenu
+
         outlineView.registerForDraggedTypes([
             FolderTreeDataSource.itemIDPasteboardType,
             .fileURL,
@@ -431,8 +527,7 @@ extension FolderTreeViewController {
         scrollView.autohidesScrollers = true
         scrollView.borderType = .bezelBorder
 
-        // 底部按钮：新建与添加类靠左，删除靠右；
-        // Dock 集成不可用时隐藏 “添加到 Dock”
+        // 底部按钮：新建文件夹与 “添加…”，靠左
         let newFolderButton = NSButton(
             title: String(
                 localized: "folders.newFolder",
@@ -444,19 +539,8 @@ extension FolderTreeViewController {
 
         configureAddPopUpButton()
 
-        addToDockButton.target = self
-        addToDockButton.action = #selector(addSelectedFolderToDock)
-        addToDockButton.isHidden = dockTileSynchronizer == nil
-
-        removeButton.target = self
-        removeButton.action = #selector(removeSelectedItem)
-
         let buttonRow = NSStackView()
-        buttonRow.setViews(
-            [newFolderButton, addPopUpButton, addToDockButton],
-            in: .leading
-        )
-        buttonRow.setViews([removeButton], in: .trailing)
+        buttonRow.setViews([newFolderButton, addPopUpButton], in: .leading)
 
         let stackView = NSStackView(views: [titleLabel, scrollView, buttonRow])
         stackView.orientation = .vertical
@@ -518,13 +602,72 @@ extension FolderTreeViewController {
         }
     }
 
-    /// 根据选中项更新 “添加…” “添加到 Dock” 与 “删除” 的可用状态
-    private func updateButtons() {
-        let hasSelection = selectedNode != nil
-        addPopUpButton.isEnabled = hasSelection
-        removeButton.isEnabled = hasSelection
+    /// 根据选中项更新 “添加…” 的可用状态：有选中项时可用
+    private func updateAddPopUpButton() {
+        addPopUpButton.isEnabled = selectedNode != nil
+    }
 
-        addToDockButton.isEnabled = selectedNode.map { isRemovedFromDock($0) } ?? false
+    /// 右键菜单里 “删除” 之前的各项，按右键点到的那一行的类型给出：
+    /// 文件夹是 “添加到 Dock”，App 与文件是 “在访达中显示”，网页是 “在默认浏览器中打开” 与 “编辑…”
+    private func contextMenuItems(for node: FolderTreeNode) -> [NSMenuItem] {
+        switch node.item {
+        // Dock 集成不可用时没有 “添加到 Dock”；只有被拖出 Dock 的根文件夹可用，其余文件夹置灰
+        case .folder:
+            guard dockTileSynchronizer != nil else { return [] }
+
+            let addToDockItem = NSMenuItem(
+                title: String(
+                    localized: "folders.addToDock",
+                    comment: "文件夹行右键菜单的一项：把 tile 不在 Dock 上的根文件夹重新添加到 Dock"
+                ),
+                action: #selector(addClickedFolderToDock(_:)),
+                keyEquivalent: ""
+            )
+
+            addToDockItem.isEnabled = isRemovedFromDock(node)
+
+            return [addToDockItem]
+
+        case .app, .file:
+            return [
+                NSMenuItem(
+                    title: String(
+                        localized: "folders.showInFinder",
+                        comment: "App、文件与访达里的文件夹这一行右键菜单的一项：在访达里选中它"
+                    ),
+                    action: #selector(showClickedItemInFinder(_:)),
+                    keyEquivalent: ""
+                ),
+            ]
+
+        case .webPage:
+            return [
+                NSMenuItem(
+                    title: String(
+                        localized: "folders.openInDefaultBrowser",
+                        comment: "网页这一行右键菜单的一项：用系统的默认浏览器打开它"
+                    ),
+                    action: #selector(openClickedWebPageInDefaultBrowser(_:)),
+                    keyEquivalent: ""
+                ),
+
+                NSMenuItem(
+                    title: String(
+                        localized: "folders.editWebPage",
+                        comment: "网页这一行右键菜单的一项：在提示框里编辑它的网址与标题"
+                    ),
+                    action: #selector(editClickedWebPage(_:)),
+                    keyEquivalent: ""
+                ),
+            ]
+        }
+    }
+
+    /// 右键菜单项记下的那一项此刻在树里的行节点；这一项已不在时为 nil
+    private func clickedNode(of menuItem: NSMenuItem) -> FolderTreeNode? {
+        guard let itemID = menuItem.representedObject as? UUID else { return nil }
+
+        return dataSource.node(withID: itemID)
     }
 
     /// 以 sheet 弹出选择面板，把选中的 URL 分类后加入选中项所属的文件夹
@@ -579,13 +722,13 @@ extension FolderTreeViewController {
         outlineView.editColumn(0, row: row, with: nil, select: true)
     }
 
-    /// 补上编辑文件夹名期间记下的网页标题
+    /// 按记下的先后，补上编辑文件夹名期间取到的网页标题
     private func fillPendingWebPageTitles() {
         let titles = pendingWebPageTitles
-        pendingWebPageTitles = [:]
+        pendingWebPageTitles = []
 
-        for (webPageID, title) in titles {
-            store.fillTitle(title, ofWebPageWithID: webPageID)
+        for (title, webPage) in titles {
+            store.fillTitle(title, of: webPage)
         }
     }
 

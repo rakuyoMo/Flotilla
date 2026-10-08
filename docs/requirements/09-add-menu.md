@@ -7,7 +7,7 @@
 ### 按钮行与菜单
 
 - “添加 App…” 与 “添加文件…” 两个按钮合并为一个 “添加…”：`NSPopUpButton` 的 pull-down（`pullsDown = true`），点击后在按钮下方弹出菜单
-- 按钮行从左到右：新建文件夹 · 添加… · 添加到 Dock ⋯⋯ 删除
+- 按钮行从左到右：新建文件夹 · 添加…；“添加到 Dock” 与 “删除” 在文件夹树的右键菜单里，见 10
 - 菜单从上到下：添加 App… · 添加文件… · 添加网页…
   - pull-down 的第一项是按钮上显示的 “添加…”，不出现在菜单里
   - 其后三项各自带 target 与 action，选中后直接调用对应的方法
@@ -17,7 +17,7 @@
 
 ### “添加网页…” 的提示框
 
-`Settings/AddWebPageAlert` 持有 `NSAlert`、网址框与标题框，做两个输入框的 delegate，确认后把要加入的网页交给调用方。
+`Settings/WebPageAlert` 持有 `NSAlert`、网址框与标题框，做两个输入框的 delegate，确认后把要加入的网页交给调用方；网页的 “编辑…” 同样用它，见 10。
 
 - 以 sheet 弹出 `NSAlert`，挂在设置窗口上，与 “添加 App…” 的选择面板一致：
   - 标题（`messageText`）：添加网页
@@ -37,13 +37,13 @@
 - 两个输入框都与上方的说明文字左右对齐，不把提示框撑宽：
   - 先不带附件 `layout()` 一次，得到提示框的宽度；输入框宽 = 提示框内容宽 − 2 × 20
   - 正文宽度随按钮标题变化：英文 “Cancel” 把提示框撑到 265 pt，正文宽 225；其它四种语言提示框 260 pt，正文宽 220（实测 macOS 27）
-- `FolderTreeViewController` 只在菜单项被点时取目标文件夹、弹出提示框，把要加入的网页交给 `store.addItems`，把晚到的标题交给自己的 `fillTitle(_:ofWebPageWithID:)`
-  - 输入框的 delegate 是 `AddWebPageAlert`，不是 `FolderTreeViewController`：后者已是树里改名输入框的 delegate，`controlTextDidEndEditing(_:)` 会被两边混用
-  - 弹出期间由 `beginSheetModal` 的完成回调持有 `AddWebPageAlert`：输入框的 delegate 是弱引用
+- `FolderTreeViewController` 只在菜单项被点时取目标文件夹、弹出提示框，把要加入的网页交给 `store.addItems`，把晚到的标题交给自己的 `fillTitle(_:of:)`
+  - 输入框的 delegate 是 `WebPageAlert`，不是 `FolderTreeViewController`：后者已是树里改名输入框的 delegate，`controlTextDidEndEditing(_:)` 会被两边混用
+  - 弹出期间由 `beginSheetModal` 的完成回调持有 `WebPageAlert`：输入框的 delegate 是弱引用
 
 ### 输入怎样成为网页
 
-`AddWebPageAlert.webPage(from:)`。这条规则只属于 “添加网页…”，不改 `FolderItem(url:title:)` 与拖入的规则。
+`WebPageAlert.webPage(from:)`。这条规则只属于网页的提示框（“添加网页…” 与网页的 “编辑…”，见 10），不改 `FolderItem(url:title:)` 与拖入的规则。
 
 1. 去掉首尾空白与换行；结果为空 → 不可用
 2. 中间还有空白 → 不可用（多半是把一句话当成了网址）
@@ -73,7 +73,7 @@
   - 从开始获取算起，0.3 s 的停顿不算在内；点 “添加” 之后获取继续，时限仍从开始获取时算起，不重新计时
   - 到时还没有结果：取消这一次，当作取不到
   - 到时之后才到的结果一律丢掉：包括取消之后才到的完成回调，也包括到时之后才取到的标题
-  - 时限由 `AddWebPageAlert` 掐断，不设 LinkPresentation 的 `timeout`：它不是硬上限（见 “平台事实”）
+  - 时限由 `WebPageAlert` 掐断，不设 LinkPresentation 的 `timeout`：它不是硬上限（见 “平台事实”）
 - 标题框任何时候都能输入，获取期间也一样
 - 取到的标题去掉首尾空白，空串当作没取到
 - 怎样填：
@@ -94,15 +94,18 @@
   - 标题框空着：先不带标题加入；正在进行的那一次继续，不重新发起；还在等停顿的不再等，立刻开始；取到后补到刚加入的那一项上
 - 点 “取消” 或按 Esc：取消正在进行的获取，作废正在等的停顿，什么都不加入
 - 被取消或已到时的那一次晚到的结果丢掉：LinkPresentation 取消之后仍会调用完成回调（见 “平台事实”），每次获取带编号，只认最新的一次
-- 提示框关掉之后，获取的完成回调持有 `AddWebPageAlert`，直到结果到达；它把标题与那一项的 id 交给 `beginSheetModal` 的 `titleHandler`。`FolderTreeViewController` 不直接碰 LinkPresentation
-- `AddWebPageAlert.init(fetchTitle:waitForPause:waitForTimeLimit:)` 接收取标题、等停顿与等时限的方法：App 里用 `WebPageTitleFetcher`，停顿与时限分别是 0.3 s 与 10 s 的 `Task.sleep`；单元测试传入假实现，不联网、不真的等待
+- 提示框关掉之后，获取的完成回调持有 `WebPageAlert`，直到结果到达；它把标题连同不带标题交出的那一份网页（`WebPageReference`：id、取标题的网址，标题为 nil）交给 `beginSheetModal` 的 `titleHandler(_ title: String, _ webPage: WebPageReference)`。`FolderTreeViewController` 不直接碰 LinkPresentation
+  - 交出的那一份的网址就是取标题的网址：每次网址变化都取消之前的获取，交出时正在进行或随即开始的获取，取的就是它
+- `WebPageAlert.init(editing:fetchTitle:waitForPause:waitForTimeLimit:)` 接收取标题、等停顿与等时限的方法（`editing` 见 10）：App 里用 `WebPageTitleFetcher`，停顿与时限分别是 0.3 s 与 10 s 的 `Task.sleep`；单元测试传入假实现，不联网、不真的等待
 
 ### 补标题
 
-- `FolderStore.fillTitle(_:ofWebPageWithID:)`：只在这一项仍在、是网页、标题仍为 nil 时才改，位置与 id 不变；改了就提交并发一次变更通知，没改就什么都不做
+- `FolderStore.fillTitle(_:of:)`：按交来的那一份网页的 id 找，只在这一项仍在、是网页、网址仍是取标题时的那个、标题仍为 nil 时才改，位置与 id 不变；改了就提交并发一次变更通知，没改就什么都不做
+  - 网址已不是取标题时的那个：晚到的标题不属于它，丢掉；保存之后网址又被改掉时会这样，见 10 的 “编辑…”
   - 去重时没有真正加入（同一个文件夹里已有同一网址）：按 id 找不到，什么都不做
 - 正在编辑文件夹名时不补：补标题会重建树，重建会结束编辑并提交输入到一半的名称；与 `updateItemLocations()` 一样按 `isEditingFolderName` 判断
-  - `FolderTreeViewController` 先按网页项的 id 记下，编辑结束再补
+  - `FolderTreeViewController` 把标题连同交来的那一份网页按先后记下，编辑结束后依次交给 `fillTitle(_:of:)`，由它按上一条取舍
+  - 同一项先后记下的几条都留着：旧网址的标题可能晚到，不能把新网址的挤掉
   - 按回车或点别处结束编辑：在 `controlTextDidEndEditing(_:)` 里改名之后补
   - 按 Esc 取消编辑：outline view 不发 `controlTextDidEndEditing(_:)`；在 `control(_:textView:doCommandBy:)` 里排一个主线程任务，outline view 结束编辑之后补
 - 补标题不改写 stub、不重启 Dock：
@@ -113,14 +116,8 @@
 ## 设置窗口
 
 - 窗口尺寸不变（见 07）：最窄时文件夹区宽 530
-- 按钮行宽（`NSStackView` 默认间距 8，四个控件之间含两侧 gravity 区之间共三个间距），实测（macOS 27）：
-
-  | en | zh-Hans | zh-Hant | ja | ko |
-  |---|---|---|---|---|
-  | 362 | 344 | 331.5 | 352.5 | 327.5 |
-
-  - 最窄时文件夹区宽 530，比最宽的 en 多 168
-  - “添加…” 宽 80.5–84 pt：pull-down 的宽度只取决于第一项的标题
+- 按钮行宽的实测见 10
+- “添加…” 宽 80.5–84 pt：pull-down 的宽度只取决于第一项的标题
 
 ## 本地化
 
@@ -143,31 +140,31 @@
 
 ## 单元测试
 
-- 输入怎样成为网页（`AddWebPageAlertTests`）：
+- 输入怎样成为网页（`WebPageAlertTests`）：
   - 完整网址原样采用：`https://www.apple.com/cn/`、`http://example.com/path?q=1`、`HTTPS://EXAMPLE.COM`；得到的是网页项，标题为 nil
   - 首尾空白、换行被去掉
   - 补 `https://`：`apple.com`、`apple.com/path?q=1`、`localhost:8080`，以及查询参数里带着网址的 `apple.com/?u=https://x.com`、`localhost:8080/?next=http://x`
   - 不可用：空串、只有空白、`hello world`、`https://`、`ftp://example.com`
   - `file:///Applications` 不可用，这个目录存在也不成为文件项
-- 提示框（`AddWebPageAlertTests`）：
+- 提示框（`WebPageAlertTests`）：
   - 提示框自己是两个输入框的 delegate；刚弹出时 “添加” 禁用，网址输入 `apple.com` 后可用，改成 `ftp://x` 又禁用，标题框的内容不影响它（直接改输入框的值，再按 delegate 的方式通知）
   - “添加” 的 key equivalent 是回车，“取消” 是 Esc
   - 标题、说明、按钮与两个占位文字用的是上表的键（测试进程读不到译文，读到的是键名）
   - 网址框在上、标题框在下，`layout()` 之后都与说明文字左右对齐；网址框是窗口的 `initialFirstResponder`
   - 以 sheet 弹出，`beginSheetModal` 一返回网址框就是第一响应者；Tab 到标题框，Shift-Tab 回来
-- 自动获取标题（`AddWebPageAlertTests`，`AddWebPageAlertStub` 代替取标题、等停顿与等时限，由测试决定停顿何时结束、哪一次获取到时、何时交出什么标题）：
+- 自动获取标题（`WebPageAlertTests`，`WebPageAlertStub` 代替取标题、等停顿与等时限，由测试决定停顿何时结束、哪一次获取到时、何时交出什么标题）：
   - 不可用的网址、停顿之前都不获取；停顿之内网址又变了就重新计时，只为最后的网址获取一次，取的是补好 scheme 的网址
   - 获取期间网址变了：前一次被取消，停顿之后为新网址重新获取
   - 取到时标题框空着就填，首尾空白去掉；取不到或只有空白时保持空着
   - 用户输入的标题不被覆盖；换网址时自动填的旧标题清空、换成新网址的，被取消的那一次晚到的结果丢掉；换网址时用户输入的保留
   - 获取期间标题框可以输入；转圈与 “正在获取标题…” 只在获取中、标题框空着时显示，取完恢复
-- 添加与取消（`AddWebPageAlertTests`，以 sheet 挂在放在所有屏幕之外的窗口上，`performClick(_:)` 点按钮）：
+- 添加与取消（`WebPageAlertTests`，以 sheet 挂在放在所有屏幕之外的窗口上，`performClick(_:)` 点按钮）：
   - 标题框有内容：带着去掉首尾空白的标题加入，获取被取消，之后取到的标题不补
   - 标题框空着、正在获取：先不带标题加入，取到后补到这一项上，只获取一次
   - 标题框空着、还在等停顿：立刻开始获取，停顿结束时不重复获取
   - 标题框空着、取不到：网页照样加入，显示名是网址，什么都不补
   - “取消”：获取被取消，正在等的停顿作废，什么都不加入，之后取到的标题不补
-- 时限（`AddWebPageAlertTests`）：
+- 时限（`WebPageAlertTests`）：
   - 获取进行中到时：这一次被取消，转圈隐藏、占位文字恢复；之后再交出这个网址的标题，标题框也不填
   - 不带标题加入之后到时：这一次被取消，这一项保持显示网址，之后才到的标题不补
   - 换了网址之后，旧网址那一次到时：新的获取不被取消，转圈还在，取到的标题照样填入
@@ -181,7 +178,7 @@
   - `FolderTreeViewControllerTests`（离屏窗口里用 `editColumn` 造出编辑文件夹名的状态）：没在编辑时立刻补；编辑中先不补，编辑没被打断、输入到一半的名称没有提交，点别处结束编辑后名称与标题都写进去；按 Esc 取消编辑后补上，名称保持原样
   - `DockTileBundleBuilderTests`：网页补上标题，stub 不改写
 - 文件夹区（`FolderTreeViewControllerTests`）：
-  - 按钮行是四个控件，顺序为 新建文件夹、添加…、添加到 Dock、删除；“添加…” 是 pull-down
+  - 按钮行是两个控件，顺序为 新建文件夹、添加…（见 10）；“添加…” 是 pull-down
   - “添加…” 的菜单依次是 添加 App…、添加文件…、添加网页…，各自接到对应的方法，target 是文件夹区
   - 无选中项时 “添加…” 禁用；选中一行后可用
   - 按钮行宽：五种语言各一例，见 07；“添加…” 换上译文后第一项的标题就是译文，宽度与只有这一项的 pull-down 相同
@@ -191,7 +188,7 @@
 
 - `mise run swift:lint`、`swift test`、`mise run bundle` 全部通过
 - 按钮行与菜单：
-  - 按钮行从左到右为 新建文件夹 · 添加… · 添加到 Dock ⋯⋯ 删除；“添加…” 右侧有下拉箭头，与相邻按钮同高，文字基线看起来对齐
+  - 按钮行从左到右为 新建文件夹 · 添加…（见 10）；“添加…” 右侧有下拉箭头，与相邻按钮同高，文字基线看起来对齐
   - 无选中项时 “添加…” 禁用；选中任意一行后可用
   - 点 “添加…”：菜单在按钮下方弹出，依次是 添加 App… · 添加文件… · 添加网页…
   - 五种语言下把窗口拉到最窄，按钮行完整显示、不截断、不重叠

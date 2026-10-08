@@ -7,6 +7,7 @@ import Testing
 
 /// 设置窗口的文件夹区：树的宽度必须始终与滚动区一致，行尾的 “不在 Dock 上” 才不会被右缘裁掉；
 /// 添加 App、文件与网页都从 “添加…” 的菜单进入；窗口缩到最窄时，底部按钮行在每种语言下都完整显示；
+/// 右键菜单按点到的那一行给出各项，作用于点到的那一项，不论之后选中项与树怎样变；
 /// 网页的标题晚到时补上，但不打断正在编辑的文件夹名
 @MainActor
 final class FolderTreeViewControllerTests {
@@ -49,10 +50,8 @@ final class FolderTreeViewControllerTests {
         window.contentView = controller.view
         controller.view.layoutSubtreeIfNeeded()
 
-        let scrollView = try #require(
-            controller.view.subviews.compactMap { $0 as? NSScrollView }.first
-        )
-        let outlineView = try #require(scrollView.documentView as? NSOutlineView)
+        let outlineView = try folderTreeView(of: controller)
+        let scrollView = try #require(outlineView.enclosingScrollView)
 
         outlineView.expandItem(outlineView.item(atRow: 0))
         controller.view.layoutSubtreeIfNeeded()
@@ -70,14 +69,12 @@ final class FolderTreeViewControllerTests {
         let row = try buttonRow(of: controller)
         let buttons = row.views.compactMap { $0 as? NSButton }
 
-        // 测试进程读不到 `.lproj` 里的译文，按钮标题就是键名，按键名换成这种语言的文字；
-        // “添加到 Dock” 在没有同步器时隐藏，这里也显示出来
+        // 测试进程读不到 `.lproj` 里的译文，按钮标题就是键名，按键名换成这种语言的文字
         for button in buttons {
             button.title = try #require(table[button.title], "表里没有 \(button.title)")
-            button.isHidden = false
         }
 
-        #expect(buttons.count == 4)
+        #expect(buttons.count == 2)
 
         // pull-down 显示的是第一项的标题：给 `title` 赋值换掉的正是这一项，宽度按译文重新计算
         let addPopUp = try #require(buttons[1] as? NSPopUpButton)
@@ -114,9 +111,10 @@ final class FolderTreeViewControllerTests {
         #expect(try #require(placed.last).frame.maxX <= Self.minimumWidth)
     }
 
-    /// 按钮行从左到右是 新建文件夹、添加…、添加到 Dock、删除；“添加…” 是点击后在下方弹出菜单的 pull-down
+    /// 按钮行从左到右是 新建文件夹、添加…；“添加…” 是点击后在下方弹出菜单的 pull-down。
+    /// “添加到 Dock” 与 “删除” 在右键菜单里，不在按钮行
     @Test
-    func buttonRowListsFourControlsInOrder() throws {
+    func buttonRowListsNewFolderAndAdd() throws {
         let controller = FolderTreeViewController(store: store, dockTileSynchronizer: nil)
         let controls = try buttonRow(of: controller).views
 
@@ -124,8 +122,6 @@ final class FolderTreeViewControllerTests {
         #expect(controls.map { ($0 as? NSButton)?.title } == [
             "folders.newFolder",
             "folders.add",
-            "folders.addToDock",
-            "folders.remove",
         ])
 
         #expect(try #require(controls[1] as? NSPopUpButton).pullsDown)
@@ -168,12 +164,7 @@ final class FolderTreeViewControllerTests {
 
         #expect(!addPopUp.isEnabled)
 
-        let scrollView = try #require(
-            controller.view.subviews.compactMap { $0 as? NSScrollView }.first
-        )
-        let outlineView = try #require(scrollView.documentView as? NSOutlineView)
-
-        outlineView.selectRowIndexes([0], byExtendingSelection: false)
+        try folderTreeView(of: controller).selectRowIndexes([0], byExtendingSelection: false)
 
         #expect(addPopUp.isEnabled)
     }
@@ -191,7 +182,7 @@ final class FolderTreeViewControllerTests {
 
         let webPage = try addUntitledWebPage()
 
-        controller.fillTitle("Apple", ofWebPageWithID: webPage.id)
+        controller.fillTitle("Apple", of: webPage)
 
         #expect(try lastItemOfWork() == titled(webPage, "Apple"))
     }
@@ -211,7 +202,7 @@ final class FolderTreeViewControllerTests {
 
         fieldEditor.insertText("工作区", replacementRange: NSRange(location: NSNotFound, length: 0))
 
-        controller.fillTitle("Apple", ofWebPageWithID: webPage.id)
+        controller.fillTitle("Apple", of: webPage)
 
         #expect(window.firstResponder === fieldEditor)
         #expect(store.rootFolders.first?.name == "工作")
@@ -238,7 +229,7 @@ final class FolderTreeViewControllerTests {
 
         fieldEditor.insertText("工作区", replacementRange: NSRange(location: NSNotFound, length: 0))
 
-        controller.fillTitle("Apple", ofWebPageWithID: webPage.id)
+        controller.fillTitle("Apple", of: webPage)
         fieldEditor.doCommand(by: #selector(NSResponder.cancelOperation(_:)))
 
         // outline view 收到 Esc 之后才结束编辑，补标题经主线程上排着的任务进行
@@ -250,11 +241,303 @@ final class FolderTreeViewControllerTests {
         #expect(store.rootFolders.first?.name == "工作")
         #expect(try lastItemOfWork() == titled(webPage, "Apple"))
     }
+
+    /// 编辑文件夹名期间同一网页先后取到两个标题：先到的是这一项现在的网址的，后到的是保存之前旧网址的。
+    /// 两条都记下，后到的不挤掉先到的；编辑结束后补上的是网址相符的那一条
+    @Test
+    func pendingTitlesOfSameWebPageAreAllKept() throws {
+        let controller = FolderTreeViewController(store: store, dockTileSynchronizer: nil)
+        let window = makeWindow(width: Self.minimumWidth)
+
+        window.contentView = controller.view
+        controller.view.layoutSubtreeIfNeeded()
+
+        let webPage = try addUntitledWebPage()
+        let oldURL = try #require(URL(string: "https://example.com"))
+        let savedWithOldURL = WebPageReference(id: webPage.id, url: oldURL, title: nil)
+
+        _ = try beginEditingWorkName(in: controller)
+
+        controller.fillTitle("Apple", of: webPage)
+        controller.fillTitle("Example Domain", of: savedWithOldURL)
+
+        #expect(try lastItemOfWork() == .webPage(webPage))
+
+        // 点别处结束编辑
+        window.makeFirstResponder(nil)
+
+        #expect(try lastItemOfWork() == titled(webPage, "Apple"))
+    }
+}
+
+// MARK: - Context Menu
+
+extension FolderTreeViewControllerTests {
+    /// 右键菜单按点到的那一行的类型给出各项，“删除” 隔开放在最后；各项接到文件夹区的方法，记下点到的那一项。
+    /// 没有 Dock 集成时没有 “添加到 Dock”，文件夹的菜单只有 “删除”，也没有分隔线
+    @Test
+    func contextMenuFollowsClickedRowKind() throws {
+        let controller = FolderTreeViewController(store: store, dockTileSynchronizer: nil)
+        let window = makeWindow(width: Self.minimumWidth)
+
+        window.contentView = controller.view
+
+        let addedIDs = try addWebPageFileAndFinderFolder()
+        let outlineView = try folderTreeView(of: controller)
+
+        outlineView.expandItem(outlineView.item(atRow: 0))
+        controller.view.layoutSubtreeIfNeeded()
+
+        let work = try #require(store.rootFolders.first)
+        let showInFinder = ["folders.showInFinder", "—", "folders.remove"]
+
+        let webPageMenu = [
+            "folders.openInDefaultBrowser",
+            "folders.editWebPage",
+            "—",
+            "folders.remove",
+        ]
+
+        // 行依次是 工作、开发、Chess、网页、文件、访达里的文件夹
+        let expectations: [(row: Int, itemID: UUID, titles: [String])] = [
+            (0, work.id, ["folders.remove"]),
+            (1, work.items[0].id, ["folders.remove"]),
+            (2, work.items[1].id, showInFinder),
+            (3, addedIDs[0], webPageMenu),
+            (4, addedIDs[1], showInFinder),
+            (5, addedIDs[2], showInFinder),
+        ]
+
+        for (row, itemID, titles) in expectations {
+            let menu = try contextMenu(of: outlineView, clickingRow: row)
+
+            #expect(outlineView.clickedRow == row)
+            #expect(Self.titles(of: menu) == titles, "第 \(row) 行的菜单不对")
+            #expect(menu.items.map(\.action) == titles.map(Self.action(forTitle:)))
+
+            for menuItem in menu.items where !menuItem.isSeparatorItem {
+                #expect(menuItem.target === controller)
+                #expect(menuItem.representedObject as? UUID == itemID)
+                #expect(menuItem.isEnabled)
+            }
+        }
+    }
+
+    /// 右键点在没有行的空白处：菜单没有项，不弹出；之前点过某一行留下的项也不留着
+    @Test
+    func blankAreaContextMenuHasNoItems() throws {
+        let controller = FolderTreeViewController(store: store, dockTileSynchronizer: nil)
+        let window = makeWindow(width: Self.minimumWidth)
+
+        window.contentView = controller.view
+        controller.view.layoutSubtreeIfNeeded()
+
+        let outlineView = try folderTreeView(of: controller)
+
+        #expect(try !contextMenu(of: outlineView, clickingRow: 0).items.isEmpty)
+
+        let menu = try contextMenu(of: outlineView, clickingRow: nil)
+
+        #expect(outlineView.clickedRow == -1)
+        #expect(menu.items.isEmpty)
+    }
+
+    /// 有 Dock 集成时文件夹的菜单是 “添加到 Dock” 与 “删除”：只有被拖出 Dock 的根文件夹能添加，
+    /// 在 Dock 上的根文件夹与子文件夹置灰
+    ///
+    /// 同步器只读、不启动，也不点 “添加到 Dock”：添加会安排同步，同步会重启真实的 Dock
+    @Test
+    func addToDockIsEnabledOnlyForRootFolderRemovedFromDock() throws {
+        let work = try #require(store.rootFolders.first)
+        let life = store.addRootFolder(named: "生活")
+
+        let synchronizer = try makeSynchronizer(tilesOnDock: [work.id])
+        let controller = FolderTreeViewController(store: store, dockTileSynchronizer: synchronizer)
+        let window = makeWindow(width: Self.minimumWidth)
+
+        window.contentView = controller.view
+
+        let outlineView = try folderTreeView(of: controller)
+
+        outlineView.expandItem(outlineView.item(atRow: 0))
+        controller.view.layoutSubtreeIfNeeded()
+
+        #expect(synchronizer.rootFolderIDsRemovedFromDock() == [life.id])
+
+        // 行依次是 工作（在 Dock 上）、开发（子文件夹）、Chess、生活（被拖出 Dock）
+        let expectations = [
+            (row: 0, canAddToDock: false),
+            (row: 1, canAddToDock: false),
+            (row: 3, canAddToDock: true),
+        ]
+
+        let titles = ["folders.addToDock", "—", "folders.remove"]
+
+        for (row, canAddToDock) in expectations {
+            let menu = try contextMenu(of: outlineView, clickingRow: row)
+
+            #expect(Self.titles(of: menu) == titles, "第 \(row) 行的菜单不对")
+            #expect(menu.items.map(\.action) == titles.map(Self.action(forTitle:)))
+            #expect(
+                menu.items.first?.isEnabled == canAddToDock,
+                "第 \(row) 行的 “添加到 Dock” 可用状态不对"
+            )
+            #expect(try #require(menu.items.last).isEnabled)
+        }
+    }
+
+    /// “删除” 删掉的是右键点到的那一项，不是选中项：右键不改变选中项，删除之后选中项仍选中
+    @Test
+    func removeDeletesClickedItemAndKeepsSelection() throws {
+        let controller = FolderTreeViewController(store: store, dockTileSynchronizer: nil)
+        let window = makeWindow(width: Self.minimumWidth)
+
+        window.contentView = controller.view
+
+        let outlineView = try folderTreeView(of: controller)
+
+        outlineView.expandItem(outlineView.item(atRow: 0))
+        controller.view.layoutSubtreeIfNeeded()
+
+        let development = try #require(store.rootFolders.first?.items.first)
+
+        // 选中 “开发”，右键点 Chess
+        outlineView.selectRowIndexes([1], byExtendingSelection: false)
+
+        let menu = try contextMenu(of: outlineView, clickingRow: 2)
+
+        #expect(outlineView.selectedRow == 1)
+
+        menu.performActionForItem(at: menu.items.count - 1)
+
+        #expect(store.rootFolders.first?.items == [development])
+
+        let selectedNode = outlineView.item(atRow: outlineView.selectedRow) as? FolderTreeNode
+
+        #expect(selectedNode?.item.id == development.id)
+    }
+
+    /// 菜单开着时树重建、行号错位：“删除” 仍删掉原来点到的那一项，不删此刻占着那一行的项
+    @Test
+    func removeAfterTreeReloadDeletesOriginallyClickedItem() throws {
+        let controller = FolderTreeViewController(store: store, dockTileSynchronizer: nil)
+        let window = makeWindow(width: Self.minimumWidth)
+
+        window.contentView = controller.view
+
+        let outlineView = try folderTreeView(of: controller)
+
+        outlineView.expandItem(outlineView.item(atRow: 0))
+        controller.view.layoutSubtreeIfNeeded()
+
+        let work = try #require(store.rootFolders.first)
+        let development = work.items[0]
+
+        // 右键点 Chess（第 2 行）
+        let menu = try contextMenu(of: outlineView, clickingRow: 2)
+
+        // 菜单开着时，“工作” 最前面多了一个网页：树重建，Chess 下移一行，第 2 行换成 “开发”
+        let url = try #require(URL(string: "https://apple.com"))
+        let webPage = try #require(FolderItem(url: url, title: nil))
+
+        store.addItems([webPage], to: work.id)
+        store.move(itemID: webPage.id, to: work.id, at: 0)
+
+        #expect((outlineView.item(atRow: 2) as? FolderTreeNode)?.item.id == development.id)
+
+        menu.performActionForItem(at: menu.items.count - 1)
+
+        #expect(store.rootFolders.first?.items.map(\.id) == [webPage.id, development.id])
+    }
+}
+
+// MARK: - Editing Web Pages
+
+extension FolderTreeViewControllerTests {
+    /// “编辑…” 以 sheet 弹出网页的提示框，填着原来的网址与标题，标题与按钮是编辑的文字；
+    /// 改好后点 “保存”，这一项原地换成新的网址与标题，id 与位置不变
+    ///
+    /// 弹出的是真的提示框：只直接改输入框的值、不发输入变化的通知，它就不会联网获取标题
+    @Test
+    func editWebPageSavesInPlace() throws {
+        let (controller, window) = try showWebPageFixtures()
+        defer { window.orderOut(nil) }
+
+        let webPageID = try #require(store.rootFolders.first?.items[2].id)
+        let sheet = try beginEditingWebPage(in: controller)
+        let fields = editableTextFields(in: sheet)
+
+        #expect(fields.map(\.stringValue) == ["https://apple.com", "Apple"])
+        #expect(labels(in: sheet).contains("folders.webPageAlert.editMessage"))
+
+        // 测试进程读不到译文，按钮标题就是键名：编辑时第一个按钮是 “保存”，没有 “添加”
+        #expect(buttonTitles(in: sheet) == [
+            "folders.webPageAlert.cancel",
+            "folders.webPageAlert.save",
+        ])
+
+        fields[0].stringValue = "python.org"
+        fields[1].stringValue = "Python"
+
+        try button(titled: "folders.webPageAlert.save", in: sheet).performClick(nil)
+
+        let url = try #require(URL(string: "https://python.org"))
+        let saved = WebPageReference(id: webPageID, url: url, title: "Python")
+
+        #expect(window.attachedSheet == nil)
+        #expect(store.rootFolders.first?.items[2] == .webPage(saved))
+    }
+
+    /// 点 “取消”：改过的输入都不算，什么都不变
+    @Test
+    func cancelEditingWebPageChangesNothing() throws {
+        let (controller, window) = try showWebPageFixtures()
+        defer { window.orderOut(nil) }
+
+        let before = store.rootFolders
+        let sheet = try beginEditingWebPage(in: controller)
+        let fields = editableTextFields(in: sheet)
+
+        fields[0].stringValue = "python.org"
+        fields[1].stringValue = "Python"
+
+        try button(titled: "folders.webPageAlert.cancel", in: sheet).performClick(nil)
+
+        #expect(window.attachedSheet == nil)
+        #expect(store.rootFolders == before)
+    }
 }
 
 // MARK: - Private
 
 extension FolderTreeViewControllerTests {
+    /// 菜单各项的标题，分隔线记为 “—”
+    private static func titles(of menu: NSMenu) -> [String] {
+        menu.items.map { $0.isSeparatorItem ? "—" : $0.title }
+    }
+
+    /// 右键菜单里各标题的项应当接到的方法；分隔线没有
+    private static func action(forTitle title: String) -> Selector? {
+        let actionNames = [
+            "folders.addToDock": "addClickedFolderToDock:",
+            "folders.showInFinder": "showClickedItemInFinder:",
+            "folders.openInDefaultBrowser": "openClickedWebPageInDefaultBrowser:",
+            "folders.editWebPage": "editClickedWebPage:",
+            "folders.remove": "removeClickedItem:",
+        ]
+
+        return actionNames[title].map(NSSelectorFromString)
+    }
+
+    /// 文件夹区里的文件夹树
+    private func folderTreeView(of controller: FolderTreeViewController) throws -> NSOutlineView {
+        let scrollView = try #require(
+            controller.view.subviews.compactMap { $0 as? NSScrollView }.first
+        )
+
+        return try #require(scrollView.documentView as? NSOutlineView)
+    }
+
     /// 文件夹区底部的按钮行
     private func buttonRow(of controller: FolderTreeViewController) throws -> NSStackView {
         try #require(
@@ -292,20 +575,189 @@ extension FolderTreeViewControllerTests {
 
     /// 开始编辑第一行 “工作” 的名称，返回正在编辑它的字段编辑器
     private func beginEditingWorkName(in controller: FolderTreeViewController) throws -> NSTextView {
-        let scrollView = try #require(
-            controller.view.subviews.compactMap { $0 as? NSScrollView }.first
-        )
-        let outlineView = try #require(scrollView.documentView as? NSOutlineView)
+        let outlineView = try folderTreeView(of: controller)
 
         outlineView.editColumn(0, row: 0, with: nil, select: true)
 
         return try #require(outlineView.window?.firstResponder as? NSTextView)
     }
 
-    /// 放文件夹区的离屏窗口，内容区宽 `width`
+    /// 像在某一行上按右键那样取得右键菜单：把合成的右键事件交给 outline view，它记下点到的那一行；
+    /// 再像菜单弹出之前那样让 delegate 重建
+    /// - Parameters:
+    ///   - outlineView: 文件夹树，已放进窗口并排好布局
+    ///   - row: 右键点到的行；nil 表示点在最后一行下方的空白处
+    private func contextMenu(of outlineView: NSOutlineView, clickingRow row: Int?) throws -> NSMenu {
+        let lastRowRect = outlineView.rect(ofRow: outlineView.numberOfRows - 1)
+        let rowRect = row.map { outlineView.rect(ofRow: $0) }
+
+        // outline view 的坐标是翻转的：最后一行下方的空白处 y 更大
+        let point = rowRect.map { NSPoint(x: $0.midX, y: $0.midY) }
+            ?? NSPoint(x: lastRowRect.midX, y: lastRowRect.maxY + outlineView.rowHeight)
+
+        try #require(outlineView.bounds.contains(point))
+
+        let window = try #require(outlineView.window)
+
+        let event = try #require(
+            NSEvent.mouseEvent(
+                with: .rightMouseDown,
+                location: outlineView.convert(point, to: nil),
+                modifierFlags: [],
+                timestamp: 0,
+                windowNumber: window.windowNumber,
+                context: nil,
+                eventNumber: 0,
+                clickCount: 1,
+                pressure: 1
+            )
+        )
+
+        let menu = try #require(outlineView.menu(for: event))
+
+        menu.delegate?.menuNeedsUpdate?(menu)
+
+        return menu
+    }
+
+    /// 在 “工作” 末尾依次加入网页、文件与访达里的文件夹，返回它们的 id；文件与访达里的文件夹建在临时目录里
+    private func addWebPageFileAndFinderFolder() throws -> [UUID] {
+        let work = try #require(store.rootFolders.first)
+        let fileURL = directory.appending(path: "报告.txt")
+        let folderURL = directory.appending(path: "资料", directoryHint: .isDirectory)
+
+        try FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)
+        try Data("报告".utf8).write(to: fileURL)
+
+        let items = [
+            FolderItem(url: try #require(URL(string: "https://apple.com")), title: "Apple"),
+            FolderItem(url: fileURL, title: nil),
+            FolderItem(url: folderURL, title: nil),
+        ]
+
+        let addedItems = try items.map { try #require($0) }
+
+        store.addItems(addedItems, to: work.id)
+
+        return addedItems.map(\.id)
+    }
+
+    /// 只读的 Dock tile 同步器：Dock 偏好与 stub 目录都在本用例的临时目录里，不碰真实的 Dock；
+    /// 不调用 `start()`，不会同步
+    /// - Parameter folderIDs: Dock 偏好里有 tile 的根文件夹
+    private func makeSynchronizer(tilesOnDock folderIDs: [UUID]) throws -> DockTileSynchronizer {
+        let builder = DockTileBundleBuilder(
+            directory: directory.appending(path: "DockTiles", directoryHint: .isDirectory),
+            executableURL: URL(filePath: "/usr/bin/true")
+        )
+
+        // 以临时目录下的绝对路径作域名，偏好写进该目录的 plist
+        let dockDomain = directory.appending(path: "dock").path(percentEncoded: false)
+
+        let tiles = folderIDs.map {
+            DockPreferences.tileEntry(
+                tileURL: builder.directory.appending(path: "\($0.uuidString)/工作.app"),
+                label: "工作",
+                guid: 42
+            )
+        }
+
+        try #require(UserDefaults(suiteName: dockDomain)).set(tiles, forKey: DockDefaults.tilesKey)
+
+        let dockPreferences = try #require(
+            DockPreferences(
+                domainName: dockDomain,
+                backupDirectory: directory.appending(path: "Backups")
+            )
+        )
+
+        let defaultsDomain = directory.appending(path: "defaults").path(percentEncoded: false)
+        let defaults = try #require(UserDefaults(suiteName: defaultsDomain))
+
+        return DockTileSynchronizer(
+            store: store,
+            preferences: Preferences(defaults: defaults),
+            builder: builder,
+            dockPreferences: dockPreferences
+        )
+    }
+
+    /// 把文件夹区放进窗口，在 “工作” 末尾加入网页、文件与访达里的文件夹并展开 “工作”：
+    /// 行依次是 工作、开发、Chess、网页、文件、访达里的文件夹
+    private func showWebPageFixtures() throws -> (controller: FolderTreeViewController, window: NSWindow) {
+        let controller = FolderTreeViewController(store: store, dockTileSynchronizer: nil)
+        let window = makeWindow(width: Self.minimumWidth)
+
+        window.contentView = controller.view
+
+        _ = try addWebPageFileAndFinderFolder()
+
+        let outlineView = try folderTreeView(of: controller)
+
+        outlineView.expandItem(outlineView.item(atRow: 0))
+        controller.view.layoutSubtreeIfNeeded()
+
+        return (controller, window)
+    }
+
+    /// 右键点网页那一行（第 3 行），点 “编辑…”，返回弹出的提示框的窗口
+    private func beginEditingWebPage(in controller: FolderTreeViewController) throws -> NSWindow {
+        let menu = try contextMenu(of: folderTreeView(of: controller), clickingRow: 3)
+        let editIndex = menu.indexOfItem(withTitle: "folders.editWebPage")
+
+        try #require(editIndex >= 0)
+
+        menu.performActionForItem(at: editIndex)
+
+        return try #require(controller.view.window?.attachedSheet)
+    }
+
+    /// 窗口里全部可编辑的输入框，自上而下
+    private func editableTextFields(in window: NSWindow) -> [NSTextField] {
+        descendants(of: window.contentView)
+            .compactMap { $0 as? NSTextField }
+            .filter(\.isEditable)
+            .sorted {
+                $0.convert($0.bounds, to: nil).minY > $1.convert($1.bounds, to: nil).minY
+            }
+    }
+
+    /// 窗口里全部只读文字的内容
+    private func labels(in window: NSWindow) -> [String] {
+        descendants(of: window.contentView)
+            .compactMap { $0 as? NSTextField }
+            .filter { !$0.isEditable }
+            .map(\.stringValue)
+    }
+
+    /// 提示框窗口里网页提示框的按钮标题，按字母顺序
+    private func buttonTitles(in window: NSWindow) -> [String] {
+        descendants(of: window.contentView)
+            .compactMap { ($0 as? NSButton)?.title }
+            .filter { $0.hasPrefix("folders.webPageAlert.") }
+            .sorted()
+    }
+
+    /// 提示框窗口里标题为 title 的按钮
+    private func button(titled title: String, in window: NSWindow) throws -> NSButton {
+        try #require(
+            descendants(of: window.contentView)
+                .compactMap { $0 as? NSButton }
+                .first { $0.title == title }
+        )
+    }
+
+    /// 视图的全部子孙视图
+    private func descendants(of view: NSView?) -> [NSView] {
+        let subviews = view?.subviews ?? []
+
+        return subviews + subviews.flatMap { descendants(of: $0) }
+    }
+
+    /// 放文件夹区的窗口，内容区宽 `width`；放在所有屏幕之外：弹出 sheet 时它会被放上屏幕
     private func makeWindow(width: CGFloat) -> NSWindow {
         NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: width, height: 400),
+            contentRect: NSRect(x: -20_000, y: -20_000, width: width, height: 400),
             styleMask: [.titled],
             backing: .buffered,
             defer: false

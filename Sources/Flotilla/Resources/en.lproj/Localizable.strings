@@ -26,14 +26,19 @@
 "folders.addFiles" = "Add Files…";
 "folders.addWebPage" = "Add Web Page…";
 "folders.webPageAlert.message" = "Add Web Page";
+"folders.webPageAlert.editMessage" = "Edit Web Page";
 "folders.webPageAlert.informative" = "Enter the address of the web page. The title is optional.";
 "folders.webPageAlert.addressPlaceholder" = "Address";
 "folders.webPageAlert.titlePlaceholder" = "Title (Optional)";
 "folders.webPageAlert.fetchingTitle" = "Fetching Title…";
 "folders.webPageAlert.add" = "Add";
+"folders.webPageAlert.save" = "Save";
 "folders.webPageAlert.cancel" = "Cancel";
-"folders.addToDock" = "Add to Dock";
 "folders.notOnDock" = "Not in Dock";
+"folders.addToDock" = "Add to Dock";
+"folders.showInFinder" = "Show in Finder";
+"folders.openInDefaultBrowser" = "Open in Default Browser";
+"folders.editWebPage" = "Edit…";
 "folders.remove" = "Delete";
 
 /* 设置窗口的通用区 */

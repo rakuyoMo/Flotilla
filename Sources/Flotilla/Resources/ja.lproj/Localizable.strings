@@ -26,14 +26,19 @@
 "folders.addFiles" = "ファイルを追加…";
 "folders.addWebPage" = "Webページを追加…";
 "folders.webPageAlert.message" = "Webページを追加";
+"folders.webPageAlert.editMessage" = "Webページを編集";
 "folders.webPageAlert.informative" = "WebページのURLを入力してください。タイトルは省略できます。";
 "folders.webPageAlert.addressPlaceholder" = "URL";
 "folders.webPageAlert.titlePlaceholder" = "タイトル（オプション）";
 "folders.webPageAlert.fetchingTitle" = "タイトルを取得中…";
 "folders.webPageAlert.add" = "追加";
+"folders.webPageAlert.save" = "保存";
 "folders.webPageAlert.cancel" = "キャンセル";
-"folders.addToDock" = "Dockに追加";
 "folders.notOnDock" = "Dockにありません";
+"folders.addToDock" = "Dockに追加";
+"folders.showInFinder" = "Finderに表示";
+"folders.openInDefaultBrowser" = "デフォルトのブラウザで開く";
+"folders.editWebPage" = "編集…";
 "folders.remove" = "削除";
 
 /* 设置窗口的通用区 */

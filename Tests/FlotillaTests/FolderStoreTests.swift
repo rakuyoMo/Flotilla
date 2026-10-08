@@ -375,14 +375,16 @@ final class FolderStoreTests {
 // MARK: - Title Filling
 
 extension FolderStoreTests {
-    /// 不带标题加入的网页取到标题后补上：位置与 id 不变，只发一次变更通知，重新加载后仍在
+    /// 不带标题加入的网页取到标题后补上：网址仍是取标题时那个，标题仍为 nil；
+    /// 位置与 id 不变，只发一次变更通知，重新加载后仍在
     @Test
     func fillsTitleOfUntitledWebPage() async throws {
         let store = FolderStore(fileURL: fileURL)
         let root = store.addRootFolder(named: "根")
-        let example = try webPage("https://example.com/", title: nil)
+        let url = try #require(URL(string: "https://example.com/"))
+        let example = WebPageReference(id: UUID(), url: url, title: nil)
 
-        store.addItems([example] + apps(chess), to: root.id)
+        store.addItems([.webPage(example)] + apps(chess), to: root.id)
 
         await confirmation(expectedCount: 1) { changed in
             let observer = NotificationCenter.default.addObserver(
@@ -395,11 +397,10 @@ extension FolderStoreTests {
 
             defer { NotificationCenter.default.removeObserver(observer) }
 
-            store.fillTitle("Example Domain", ofWebPageWithID: example.id)
+            store.fillTitle("Example Domain", of: example)
         }
 
         let reloadedItems = try items(in: root.id, of: FolderStore(fileURL: fileURL))
-        let url = try #require(URL(string: "https://example.com/"))
 
         #expect(reloadedItems.count == 2)
 
@@ -414,10 +415,16 @@ extension FolderStoreTests {
     func fillTitleLeavesOtherItemsUntouched() async throws {
         let store = FolderStore(fileURL: fileURL)
         let root = store.addRootFolder(named: "根")
-        let example = try webPage("https://example.com/", title: "原来的标题")
+        let url = try #require(URL(string: "https://example.com/"))
+        let example = WebPageReference(id: UUID(), url: url, title: "原来的标题")
         let chessItems = apps(chess)
 
-        store.addItems([example] + chessItems, to: root.id)
+        store.addItems([.webPage(example)] + chessItems, to: root.id)
+
+        // 交来补标题的都是不带标题的那一份，id 分别对上已有标题的网页、App 与不存在的项
+        let forTitledWebPage = WebPageReference(id: example.id, url: url, title: nil)
+        let forApp = WebPageReference(id: chessItems[0].id, url: url, title: nil)
+        let forMissingItem = WebPageReference(id: UUID(), url: url, title: nil)
 
         let before = store.rootFolders
 
@@ -432,12 +439,154 @@ extension FolderStoreTests {
 
             defer { NotificationCenter.default.removeObserver(observer) }
 
-            store.fillTitle("新标题", ofWebPageWithID: example.id)
-            store.fillTitle("新标题", ofWebPageWithID: chessItems[0].id)
-            store.fillTitle("新标题", ofWebPageWithID: UUID())
+            store.fillTitle("新标题", of: forTitledWebPage)
+            store.fillTitle("新标题", of: forApp)
+            store.fillTitle("新标题", of: forMissingItem)
         }
 
         #expect(store.rootFolders == before)
+    }
+
+    /// 保存之后网址又被改掉：旧网址晚到的标题不属于这一项，不补，也不发通知；
+    /// 标题仍为 nil，新网址的标题随后照样补上
+    @Test
+    func fillTitleSkipsWebPageWhoseAddressChanged() async throws {
+        let store = FolderStore(fileURL: fileURL)
+        let root = store.addRootFolder(named: "根")
+        let oldURL = try #require(URL(string: "https://example.com/"))
+        let newURL = try #require(URL(string: "https://apple.com/"))
+        let edited = WebPageReference(id: UUID(), url: newURL, title: nil)
+        let savedWithOldURL = WebPageReference(id: edited.id, url: oldURL, title: nil)
+
+        store.addItems([.webPage(edited)], to: root.id)
+
+        await confirmation(expectedCount: 0) { changed in
+            let observer = NotificationCenter.default.addObserver(
+                forName: FolderStore.didChangeNotification,
+                object: store,
+                queue: nil
+            ) { _ in
+                changed()
+            }
+
+            defer { NotificationCenter.default.removeObserver(observer) }
+
+            store.fillTitle("Example Domain", of: savedWithOldURL)
+        }
+
+        #expect(try items(in: root.id, of: store) == [.webPage(edited)])
+
+        store.fillTitle("Apple", of: edited)
+
+        let titled = WebPageReference(id: edited.id, url: newURL, title: "Apple")
+
+        #expect(try items(in: root.id, of: store) == [.webPage(titled)])
+    }
+}
+
+// MARK: - Web Page Update
+
+extension FolderStoreTests {
+    /// 编辑网页：网址与标题原地换成新的，id 与位置不变，只发一次变更通知，重新加载后仍在
+    @Test
+    func updatesWebPageInPlace() async throws {
+        let store = FolderStore(fileURL: fileURL)
+        let root = store.addRootFolder(named: "根")
+        let example = try webPage("https://example.com/", title: "Example Domain")
+
+        store.addItems(apps(chess) + [example] + apps(calendar), to: root.id)
+
+        let url = try #require(URL(string: "https://apple.com"))
+        let updated = WebPageReference(id: example.id, url: url, title: "Apple")
+
+        await confirmation(expectedCount: 1) { changed in
+            let observer = NotificationCenter.default.addObserver(
+                forName: FolderStore.didChangeNotification,
+                object: store,
+                queue: nil
+            ) { _ in
+                changed()
+            }
+
+            defer { NotificationCenter.default.removeObserver(observer) }
+
+            store.updateWebPage(updated)
+        }
+
+        let reloadedItems = try items(in: root.id, of: FolderStore(fileURL: fileURL))
+
+        #expect(reloadedItems.count == 3)
+        #expect(reloadedItems[1] == .webPage(updated))
+    }
+
+    /// 清空标题也能保存：显示名回到网址
+    @Test
+    func updateWebPageClearsTitle() throws {
+        let store = FolderStore(fileURL: fileURL)
+        let root = store.addRootFolder(named: "根")
+        let example = try webPage("https://example.com/", title: "Example Domain")
+
+        store.addItems([example], to: root.id)
+
+        let url = try #require(URL(string: "https://example.com/"))
+        let untitled = WebPageReference(id: example.id, url: url, title: nil)
+
+        store.updateWebPage(untitled)
+
+        let reloadedItems = try items(in: root.id, of: FolderStore(fileURL: fileURL))
+
+        #expect(reloadedItems == [.webPage(untitled)])
+    }
+
+    /// 找不到的项、不是网页的项、网址与标题都没变：都不变，也不发通知
+    @Test
+    func updateWebPageLeavesOtherCasesUntouched() async throws {
+        let store = FolderStore(fileURL: fileURL)
+        let root = store.addRootFolder(named: "根")
+        let exampleURL = try #require(URL(string: "https://example.com/"))
+        let example = WebPageReference(id: UUID(), url: exampleURL, title: "Example Domain")
+        let chessItems = apps(chess)
+
+        store.addItems([.webPage(example)] + chessItems, to: root.id)
+
+        let before = store.rootFolders
+        let url = try #require(URL(string: "https://apple.com"))
+
+        await confirmation(expectedCount: 0) { changed in
+            let observer = NotificationCenter.default.addObserver(
+                forName: FolderStore.didChangeNotification,
+                object: store,
+                queue: nil
+            ) { _ in
+                changed()
+            }
+
+            defer { NotificationCenter.default.removeObserver(observer) }
+
+            store.updateWebPage(WebPageReference(id: UUID(), url: url, title: "Apple"))
+            store.updateWebPage(WebPageReference(id: chessItems[0].id, url: url, title: "Apple"))
+            store.updateWebPage(example)
+        }
+
+        #expect(store.rootFolders == before)
+    }
+
+    /// 编辑不按网址去重：改成同一文件夹里另一个网页的网址时两项都在，去重只在加入时
+    @Test
+    func updateWebPageKeepsDuplicateAddress() throws {
+        let store = FolderStore(fileURL: fileURL)
+        let root = store.addRootFolder(named: "根")
+        let example = try webPage("https://example.com/", title: nil)
+        let apple = try webPage("https://apple.com/", title: nil)
+
+        store.addItems([example, apple], to: root.id)
+
+        let url = try #require(URL(string: "https://example.com/"))
+        let duplicate = WebPageReference(id: apple.id, url: url, title: nil)
+
+        store.updateWebPage(duplicate)
+
+        #expect(try items(in: root.id, of: store) == [example, .webPage(duplicate)])
     }
 }
 
