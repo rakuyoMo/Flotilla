@@ -10,7 +10,7 @@
     - `.webloc` 这类网址文件按文件处理
   - **网页**：scheme 为 `http` 或 `https` 的网址，连同加入时浏览器给出的网页标题（可能没有）
 - 加入途径与 App 现有的拖放对齐：
-  - 设置窗口：从访达拖文件、从浏览器拖网页到文件夹行上；“添加文件…” 按钮见 07
+  - 设置窗口：从访达拖文件、从浏览器拖网页到文件夹行上；“添加文件…” 见 07，“添加网页…” 见 09
   - Dock tile：从访达拖文件到 tile 上；网页不能拖到 tile 上
   - “添加 App…” 保持只选 App
 - 文件带书签，移动或改名后跟到新位置（见 07）；找不到文件时，点击后系统按 `NSWorkspace` 的默认设置弹出 “找不到” 的提示，同时记日志，面板收起
@@ -39,7 +39,7 @@ struct WebPageReference: Codable, Hashable, Identifiable {
     let id: UUID
     let url: URL
 
-    /// 浏览器没给标题，或给的是空白时为 nil
+    /// 浏览器没给标题、给的是空白，或经 “添加网页…” 输入网址加入时为 nil
     let title: String?
 }
 
@@ -69,7 +69,7 @@ enum FolderItem: Codable, Hashable, Identifiable {
 
 ### 分类
 
-要加入文件夹的 URL 只在一处分类，设置窗口的拖入、“添加 App…” “添加文件…” 与拖到 tile 上的项共用：
+要加入文件夹的 URL 只在一处分类，设置窗口的拖入、“添加 App…” “添加文件…” “添加网页…”（见 09）与拖到 tile 上的项共用：
 
 ```swift
 extension FolderItem {
@@ -108,7 +108,7 @@ extension FolderItem {
   - 交给 `FolderItem(url:title:)`；一个能加入的项都没有时不接收，例如只拖了已不存在的文件或 `ftp:` 网址
 - 文件行、网页行显示图标与 `displayName`，名称不可编辑。
 - 拖动排序、移入其它文件夹、删除，规则与 App 行相同；文件行与网页行不能作为落点。
-- “添加 App…” 保持只选 App，选中的 URL 经 `FolderItem(url:title:)` 后交给 `addItems`；“添加文件…” 见 07。
+- “添加 App…” 保持只选 App，选中的 URL 经 `FolderItem(url:title:)` 后交给 `addItems`；“添加文件…” 见 07，“添加网页…” 见 09。
 
 ## 面板
 

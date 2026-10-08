@@ -56,7 +56,7 @@ Sources/FlotillaDockTile/  Dock tile 的 stub 可执行文件，由打包脚本�
 Tests/FlotillaTests/    单元测试（Swift Testing）
 Scripts/bundle.sh       打包脚本：组装 .app 并签名
 Scripts/release.sh      发版脚本：改版本号并开 release PR
-docs/requirements/      需求文档：00 为总览，01–08 为按实现顺序拆分的阶段
+docs/requirements/      需求文档：00 为总览，01–09 为按实现顺序拆分的阶段
 .github/workflows/      GitHub Actions：ci.yml 检查与构建，release.yml 发布新版本
 .claude/skills/release/ Claude Code 的 release skill：用自然语言发布新版本
 .claude/agents/         Claude Code 的 flotilla-implementer 代理：按阶段需求文档实现功能
