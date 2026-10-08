@@ -1,5 +1,5 @@
 /* 主菜单 */
-"mainMenu.quit" = "Flotillaを終了";
+"mainMenu.quit" = "帰帆を終了";
 "mainMenu.edit" = "編集";
 "mainMenu.undo" = "取り消す";
 "mainMenu.redo" = "やり直す";
@@ -12,10 +12,10 @@
 "statusBar.settings" = "設定…";
 
 /* 状态栏图标的无障碍描述：旁白读出的 App 名 */
-"statusBar.iconDescription" = "Flotilla";
+"statusBar.iconDescription" = "帰帆";
 
 /* 设置窗口 */
-"settings.windowTitle" = "Flotillaの設定";
+"settings.windowTitle" = "帰帆の設定";
 
 /* 设置窗口的文件夹区 */
 "folders.sectionTitle" = "フォルダ";

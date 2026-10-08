@@ -204,7 +204,7 @@ enum FolderIconRenderer {
 需求 7。
 
 - `StatusBarController`：方形的 `NSStatusItem`（`squareLength`），图标取自 `StatusBarIcon`
-- `StatusBarIcon`：按矢量绘制 App 图标里那艘方帆船的剪影，template 模式，无障碍描述为当前语言下的 App 名（简繁中文为“归帆”“歸帆”，其它语言为“Flotilla”）
+- `StatusBarIcon`：按矢量绘制 App 图标里那艘方帆船的剪影，template 模式，无障碍描述为当前语言下的 App 名（简繁中文为“归帆”“歸帆”，日文为“帰帆”，其它语言为“Flotilla”）
   - 部件：桅杆、桅顶向右飘的三角旗、三面上下叠放的横帆（帆桁左高右低、越往下越宽，相邻两面之间留斜缝）、船尾高起而船首上翘的船身、船首斜桅
   - 画布 16 × 16 pt，船从桅顶到船底占满画布高度、左右居中，放进 22 pt 见方的状态栏按钮后四周各留 3 pt
   - 桅杆、甲板、船尾与船底落在整点上，1 倍屏幕上这些边缘不发虚

@@ -9,7 +9,7 @@ Click a folder and it expands from the Dock to show its contents. Click an item 
 The interface follows the system language:
 
 - Available in English, Simplified Chinese, Traditional Chinese, Japanese, and Korean; other languages fall back to English
-- The app is shown as 归帆 in Simplified Chinese, 歸帆 in Traditional Chinese, and Flotilla in other languages
+- The app is shown as 归帆 in Simplified Chinese, 歸帆 in Traditional Chinese, 帰帆 in Japanese, and Flotilla in other languages
 
 ## Requirements
 

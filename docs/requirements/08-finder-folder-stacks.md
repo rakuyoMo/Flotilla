@@ -275,7 +275,7 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
   | en | Flotilla needs to read the contents of Finder folders to expand them in its panel on the Dock. |
   | zh-Hans | 归帆需要读取访达里文件夹的内容，才能在 Dock 上的面板里展开它们。 |
   | zh-Hant | 歸帆需要讀取 Finder 裡檔案夾的內容，才能在 Dock 上的面板裡展開它們。 |
-  | ja | FinderのフォルダをDockのパネルで展開するには、Flotillaがフォルダの内容を読み込む必要があります。 |
+  | ja | FinderのフォルダをDockのパネルで展開するには、帰帆がフォルダの内容を読み込む必要があります。 |
   | ko | Finder 폴더를 Dock의 패널에서 펼치려면 Flotilla가 폴더의 내용을 읽어야 합니다. |
 
 ## 平台事实
