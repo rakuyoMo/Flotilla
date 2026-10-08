@@ -47,11 +47,14 @@ struct AddWebPageAlertTests {
         #expect(webPage.url.absoluteString == "https://www.apple.com/cn/")
     }
 
-    /// 没写 scheme 时像浏览器地址栏那样补上 `https://`，其余保持输入的样子
+    /// 没写 scheme 时像浏览器地址栏那样补上 `https://`，其余保持输入的样子；
+    /// 只看开头：查询参数里带着另一个网址时同样要补，否则整段被判为不可用
     @Test(arguments: [
         ("apple.com", "https://apple.com"),
         ("apple.com/path?q=1", "https://apple.com/path?q=1"),
         ("localhost:8080", "https://localhost:8080"),
+        ("apple.com/?u=https://x.com", "https://apple.com/?u=https://x.com"),
+        ("localhost:8080/?next=http://x", "https://localhost:8080/?next=http://x"),
     ])
     func missingSchemeBecomesHTTPS(input: String, expected: String) {
         let item = AddWebPageAlert.webPage(from: input)

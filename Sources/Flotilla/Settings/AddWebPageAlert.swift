@@ -49,8 +49,10 @@ final class AddWebPageAlert: NSObject {
             return nil
         }
 
+        // 只看开头有没有 `scheme://`（scheme 按 RFC 3986）：查询参数里的 `://` 不算。
         // 不补 scheme 时，`localhost:8080` 会被解析成 scheme 为 `localhost` 的网址
-        let address = text.contains("://") ? text : "https://" + text
+        let hasScheme = text.prefixMatch(of: /[A-Za-z][A-Za-z0-9+.\-]*:\/\//) != nil
+        let address = hasScheme ? text : "https://" + text
 
         // 文件 URL 不交给分类，免得它去读文件系统、把存在的目录当成文件加入；
         // 没有主机名的也不算网页，例如只输入了 `https://`
