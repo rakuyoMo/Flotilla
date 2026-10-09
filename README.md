@@ -2,9 +2,9 @@
 
 English | [简体中文](README-ZH.md)
 
-Flotilla adds folders to the macOS Dock, so you can sort multiple apps into them. Just like the right side of the Dock, a folder can also hold files, Finder folders, and web pages.
+Flotilla adds groups to the macOS Dock, so you can sort multiple apps into them. Just like the right side of the Dock, a group can also hold files, Finder folders, and web pages.
 
-Click a folder and it expands from the Dock to show its contents. Click an item to open it; a Finder folder expands further, like a Dock stack.
+Click a group and it expands from the Dock to show its contents. Click an item to open it; a Finder folder expands further, like a Dock stack.
 
 The interface follows the system language:
 
@@ -46,7 +46,7 @@ xattr -d com.apple.quarantine /Applications/Flotilla.app
 
 Flotilla uses Accessibility to read the Dock's interface, in order to:
 
-- Find where a folder's tile (its icon in the Dock) is on screen, so the panel and its tail line up with the tile
+- Find where a group's tile (its icon in the Dock) is on screen, so the panel and its tail line up with the tile
 - Detect clicks on a tile and expand on mouse-up, with the same timing as the Dock's built-in folders
 
 Flotilla still works without this permission, except that:
@@ -84,8 +84,8 @@ Flotilla adds its tiles to the Dock by modifying the Dock preferences (`com.appl
 
 Data is stored in `~/Library/Application Support/Flotilla`:
 
-- `folders.json`: the folder data
-- `DockTiles/`: placeholder apps that put each top-level folder into the Dock
+- `folders.json`: the group data
+- `DockTiles/`: placeholder apps that put each top-level group into the Dock
 - `Backups/`: backups of the Dock preferences
 
 Settings are stored in the preferences domain `com.rakuyo.flotilla`.

@@ -3,9 +3,9 @@
 "CFBundleName" = "归帆";
 
 /* 隐私授权框里的用途说明 */
-"NSDesktopFolderUsageDescription" = "归帆需要读取访达里文件夹的内容，才能在 Dock 上的面板里展开它们。";
-"NSDocumentsFolderUsageDescription" = "归帆需要读取访达里文件夹的内容，才能在 Dock 上的面板里展开它们。";
-"NSDownloadsFolderUsageDescription" = "归帆需要读取访达里文件夹的内容，才能在 Dock 上的面板里展开它们。";
-"NSFileProviderDomainUsageDescription" = "归帆需要读取访达里文件夹的内容，才能在 Dock 上的面板里展开它们。";
-"NSNetworkVolumesUsageDescription" = "归帆需要读取访达里文件夹的内容，才能在 Dock 上的面板里展开它们。";
-"NSRemovableVolumesUsageDescription" = "归帆需要读取访达里文件夹的内容，才能在 Dock 上的面板里展开它们。";
+"NSDesktopFolderUsageDescription" = "归帆需要读取访达文件夹的内容，才能在 Dock 上的面板里展开它们。";
+"NSDocumentsFolderUsageDescription" = "归帆需要读取访达文件夹的内容，才能在 Dock 上的面板里展开它们。";
+"NSDownloadsFolderUsageDescription" = "归帆需要读取访达文件夹的内容，才能在 Dock 上的面板里展开它们。";
+"NSFileProviderDomainUsageDescription" = "归帆需要读取访达文件夹的内容，才能在 Dock 上的面板里展开它们。";
+"NSNetworkVolumesUsageDescription" = "归帆需要读取访达文件夹的内容，才能在 Dock 上的面板里展开它们。";
+"NSRemovableVolumesUsageDescription" = "归帆需要读取访达文件夹的内容，才能在 Dock 上的面板里展开它们。";

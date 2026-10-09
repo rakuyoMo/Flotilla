@@ -23,7 +23,7 @@ final class DockTileBundleBuilderTests {
 
     /// 用作图标预览的系统 App
     private let apps = ["Calculator", "Chess"].map {
-        FolderItem.app(AppReference(
+        GroupItem.app(AppReference(
             id: UUID(),
             url: URL(filePath: "/System/Applications/\($0).app"),
             bookmark: nil,
@@ -43,25 +43,25 @@ final class DockTileBundleBuilderTests {
     ///
     /// 每次改写 stub 都会向 Launch Services 注册；实测不注销就删除，Launch Services 里会留下指向已删路径的记录
     deinit {
-        let folderDirectories = (try? FileManager.default.contentsOfDirectory(
+        let groupDirectories = (try? FileManager.default.contentsOfDirectory(
             at: directory,
             includingPropertiesForKeys: nil
         )) ?? []
 
-        for folderDirectory in folderDirectories {
-            Self.unregisterStubs(in: folderDirectory)
+        for groupDirectory in groupDirectories {
+            Self.unregisterStubs(in: groupDirectory)
         }
 
         try? FileManager.default.removeItem(at: directory)
     }
 
-    /// stub 位于 `<目录>/<id>/<文件夹名>.app`，包含 Info.plist、可执行文件、图标与自定义图标，并且签名有效
+    /// stub 位于 `<目录>/<id>/<组名>.app`，包含 Info.plist、可执行文件、图标与自定义图标，并且签名有效
     @Test
     func writeCreatesSignedBundle() throws {
-        let folder = makeFolder(name: "工作")
-        let changed = try builder.write(folder: folder, icon: makeIcon(for: folder))
+        let group = makeGroup(name: "工作")
+        let changed = try builder.write(group: group, icon: makeIcon(for: group))
 
-        let bundleURL = directory.appending(path: "\(folder.id.uuidString)/工作.app")
+        let bundleURL = directory.appending(path: "\(group.id.uuidString)/工作.app")
         let relativePaths = [
             "Contents/Info.plist",
             "Contents/MacOS/FlotillaDockTile",
@@ -69,7 +69,7 @@ final class DockTileBundleBuilderTests {
             "Icon\r",
         ]
 
-        let builtURL = builder.bundleURL(for: folder).standardizedFileURL
+        let builtURL = builder.bundleURL(for: group).standardizedFileURL
 
         #expect(changed)
         #expect(builtURL == bundleURL.standardizedFileURL)
@@ -87,14 +87,14 @@ final class DockTileBundleBuilderTests {
         )
     }
 
-    /// Info.plist 让 stub 成为不出现在 Dock 与切换器里的后台 App，并带上 stub 拼 URL 所需的根文件夹 id
+    /// Info.plist 让 stub 成为不出现在 Dock 与切换器里的后台 App，并带上 stub 拼 URL 所需的根组 id
     @Test
     func infoDescribesBackgroundStub() throws {
-        let folder = makeFolder(name: "工作")
-        try builder.write(folder: folder, icon: makeIcon(for: folder))
+        let group = makeGroup(name: "工作")
+        try builder.write(group: group, icon: makeIcon(for: group))
 
-        let info = try readInfo(of: folder)
-        let id = folder.id.uuidString
+        let info = try readInfo(of: group)
+        let id = group.id.uuidString
 
         #expect(info["CFBundleExecutable"] as? String == "FlotillaDockTile")
         #expect(info["CFBundleIdentifier"] as? String == "com.rakuyo.flotilla.tile.\(id)")
@@ -114,10 +114,10 @@ final class DockTileBundleBuilderTests {
     /// `Alternate` 会让 stub 出现在访达的 “打开方式” 里
     @Test
     func infoDeclaresApplicationAndFileDocumentTypes() throws {
-        let folder = makeFolder(name: "工作")
-        try builder.write(folder: folder, icon: makeIcon(for: folder))
+        let group = makeGroup(name: "工作")
+        try builder.write(group: group, icon: makeIcon(for: group))
 
-        let info = try readInfo(of: folder)
+        let info = try readInfo(of: group)
         let documentTypes = try #require(info["CFBundleDocumentTypes"] as? [[String: Any]])
 
         try #require(documentTypes.count == 2)
@@ -146,14 +146,14 @@ final class DockTileBundleBuilderTests {
     /// 实测不重新注册时，Launch Services 一直按旧记录判断，App 拖不到 tile 上
     @Test
     func rewrittenStubIsReregistered() throws {
-        let folder = makeFolder(name: "工作")
-        try builder.write(folder: folder, icon: makeIcon(for: folder))
+        let group = makeGroup(name: "工作")
+        try builder.write(group: group, icon: makeIcon(for: group))
 
-        let stubURL = builder.bundleURL(for: folder)
+        let stubURL = builder.bundleURL(for: group)
         let chessURL = URL(filePath: "/System/Applications/Chess.app")
 
         // 让 Launch Services 先记下一份没有文档类型的 Info.plist
-        var info = try readInfo(of: folder)
+        var info = try readInfo(of: group)
         info["CFBundleDocumentTypes"] = nil
 
         try PropertyListSerialization
@@ -170,7 +170,7 @@ final class DockTileBundleBuilderTests {
         #expect(try !canAccept(chessURL, stubURL: stubURL))
         #expect(try !canAccept(hostsURL, stubURL: stubURL))
 
-        try builder.write(folder: folder, icon: makeIcon(for: folder))
+        try builder.write(group: group, icon: makeIcon(for: group))
 
         #expect(try canAccept(chessURL, stubURL: stubURL))
         #expect(try canAccept(hostsURL, stubURL: stubURL))
@@ -178,43 +178,43 @@ final class DockTileBundleBuilderTests {
 
     /// 名称与图标都没变时不改写：每次改写都可能触发 Dock 重启
     @Test
-    func unchangedFolderIsNotRewritten() throws {
-        let folder = makeFolder(name: "工作")
-        try builder.write(folder: folder, icon: makeIcon(for: folder))
+    func unchangedGroupIsNotRewritten() throws {
+        let group = makeGroup(name: "工作")
+        try builder.write(group: group, icon: makeIcon(for: group))
 
-        #expect(try !builder.write(folder: folder, icon: makeIcon(for: folder)))
+        #expect(try !builder.write(group: group, icon: makeIcon(for: group)))
     }
 
     /// 缺少可执行文件或自定义图标的 stub 即使名称与图标没变也要补全，否则 Dock 上的 tile 点不开或图标不对
     @Test(arguments: ["Contents/MacOS/FlotillaDockTile", "Icon\r"])
     func incompleteBundleIsRewritten(missingPath: String) throws {
-        let folder = makeFolder(name: "工作")
-        try builder.write(folder: folder, icon: makeIcon(for: folder))
+        let group = makeGroup(name: "工作")
+        try builder.write(group: group, icon: makeIcon(for: group))
 
-        let missingURL = builder.bundleURL(for: folder).appending(path: missingPath)
+        let missingURL = builder.bundleURL(for: group).appending(path: missingPath)
         try FileManager.default.removeItem(at: missingURL)
 
-        #expect(try builder.write(folder: folder, icon: makeIcon(for: folder)))
+        #expect(try builder.write(group: group, icon: makeIcon(for: group)))
         #expect(FileManager.default.fileExists(atPath: missingURL.path(percentEncoded: false)))
     }
 
     /// 重命名后 bundle 在原目录里改名，Info.plist 中的名称随之改写：Dock 按 bundle 的文件名显示 tile 的名称
     @Test
     func renameMovesBundleAndRewritesInfo() throws {
-        var folder = makeFolder(name: "工作")
-        try builder.write(folder: folder, icon: makeIcon(for: folder))
+        var group = makeGroup(name: "工作")
+        try builder.write(group: group, icon: makeIcon(for: group))
 
-        let originalURL = builder.bundleURL(for: folder)
+        let originalURL = builder.bundleURL(for: group)
 
-        folder.name = "日常"
-        let changed = try builder.write(folder: folder, icon: makeIcon(for: folder))
+        group.name = "日常"
+        let changed = try builder.write(group: group, icon: makeIcon(for: group))
 
-        let info = try readInfo(of: folder)
-        let renamedURL = builder.bundleURL(for: folder)
+        let info = try readInfo(of: group)
+        let renamedURL = builder.bundleURL(for: group)
 
         #expect(changed)
         #expect(renamedURL.lastPathComponent == "日常.app")
-        #expect(builder.existingBundleURL(for: folder.id)?.lastPathComponent == "日常.app")
+        #expect(builder.existingBundleURL(for: group.id)?.lastPathComponent == "日常.app")
         #expect(!FileManager.default.fileExists(atPath: originalURL.path(percentEncoded: false)))
         #expect(info["CFBundleName"] as? String == "日常")
         #expect(info["CFBundleDisplayName"] as? String == "日常")
@@ -223,20 +223,20 @@ final class DockTileBundleBuilderTests {
     /// 只改大小写的重命名同样生效：卷通常不区分大小写，新旧路径指向同一个文件
     @Test
     func caseOnlyRenameMovesBundle() throws {
-        var folder = makeFolder(name: "work")
-        try builder.write(folder: folder, icon: makeIcon(for: folder))
+        var group = makeGroup(name: "work")
+        try builder.write(group: group, icon: makeIcon(for: group))
 
-        folder.name = "Work"
-        try builder.write(folder: folder, icon: makeIcon(for: folder))
+        group.name = "Work"
+        try builder.write(group: group, icon: makeIcon(for: group))
 
-        #expect(builder.existingBundleURL(for: folder.id)?.lastPathComponent == "Work.app")
+        #expect(builder.existingBundleURL(for: group.id)?.lastPathComponent == "Work.app")
     }
 
     /// 名称里的 `/` 在文件名里写成 `:`，Launch Services 显示时换回 `/`；空名称用 id 作文件名
     @Test
     func fileNameEscapesSlashAndFallsBackToID() {
-        let slashed = makeFolder(name: "工作/学习")
-        let unnamed = makeFolder(name: "")
+        let slashed = makeGroup(name: "工作/学习")
+        let unnamed = makeGroup(name: "")
         let unnamedFileName = builder.bundleURL(for: unnamed).lastPathComponent
 
         #expect(builder.bundleURL(for: slashed).lastPathComponent == "工作:学习.app")
@@ -246,30 +246,30 @@ final class DockTileBundleBuilderTests {
     /// 预览数量变化让图标变化时，改写图标：Dock 上 tile 显示的就是 stub 的图标
     @Test
     func iconChangeRewritesIcon() throws {
-        let folder = makeFolder(name: "工作")
-        let iconURL = builder.bundleURL(for: folder)
+        let group = makeGroup(name: "工作")
+        let iconURL = builder.bundleURL(for: group)
             .appending(path: "Contents/Resources/Icon.icns")
 
-        try builder.write(folder: folder, icon: makeIcon(for: folder))
+        try builder.write(group: group, icon: makeIcon(for: group))
         let original = try Data(contentsOf: iconURL)
 
         let changed = try builder.write(
-            folder: folder,
-            icon: makeIcon(for: folder, previewIconCount: 0)
+            group: group,
+            icon: makeIcon(for: group, previewIconCount: 0)
         )
 
         #expect(changed)
         #expect(try Data(contentsOf: iconURL) != original)
     }
 
-    /// 只列出以根文件夹 id 命名的目录；删除后连同目录一起消失，目录已不存在时再删不报错
+    /// 只列出以根组 id 命名的目录；删除后连同目录一起消失，目录已不存在时再删不报错
     @Test
-    func existingFolderIDsTracksWritesAndRemovals() throws {
-        let first = makeFolder(name: "工作")
-        let second = makeFolder(name: "娱乐")
+    func existingGroupIDsTracksWritesAndRemovals() throws {
+        let first = makeGroup(name: "工作")
+        let second = makeGroup(name: "娱乐")
 
-        try builder.write(folder: first, icon: makeIcon(for: first))
-        try builder.write(folder: second, icon: makeIcon(for: second))
+        try builder.write(group: first, icon: makeIcon(for: first))
+        try builder.write(group: second, icon: makeIcon(for: second))
 
         // 目录里混入无关的文件与目录
         try Data().write(to: directory.appending(path: "notes.txt"))
@@ -278,54 +278,54 @@ final class DockTileBundleBuilderTests {
             withIntermediateDirectories: true
         )
 
-        #expect(builder.existingFolderIDs() == [first.id, second.id])
+        #expect(builder.existingGroupIDs() == [first.id, second.id])
 
-        try builder.remove(folderID: first.id)
+        try builder.remove(groupID: first.id)
 
         let removedPath = directory
             .appending(path: first.id.uuidString)
             .path(percentEncoded: false)
 
-        #expect(builder.existingFolderIDs() == [second.id])
+        #expect(builder.existingGroupIDs() == [second.id])
         #expect(builder.existingBundleURL(for: first.id) == nil)
         #expect(!FileManager.default.fileExists(atPath: removedPath))
 
-        // 同步时删掉 Dock 上残留的 tile 后，会对目录早已不存在的根文件夹再删一次 stub，不能报错
+        // 同步时删掉 Dock 上残留的 tile 后，会对目录早已不存在的根组再删一次 stub，不能报错
         #expect(throws: Never.self) {
-            try builder.remove(folderID: first.id)
+            try builder.remove(groupID: first.id)
         }
     }
 
-    /// AX 给出的 tile URL 以 `/` 结尾：解析出所属根文件夹；不在 stub 目录结构里的 URL 一律不认
+    /// AX 给出的 tile URL 以 `/` 结尾：解析出所属根组；不在 stub 目录结构里的 URL 一律不认
     @Test
-    func folderIDIsParsedFromBundleURL() {
-        let folderID = UUID()
+    func groupIDIsParsedFromBundleURL() {
+        let groupID = UUID()
         let tileURL = URL(
-            string: "\(directory.absoluteString)\(folderID.uuidString)/%E5%B7%A5%E4%BD%9C.app/"
+            string: "\(directory.absoluteString)\(groupID.uuidString)/%E5%B7%A5%E4%BD%9C.app/"
         )
 
         let foreignURLs = [
             URL(filePath: "/Applications/Calculator.app"),
-            directory.appending(path: "\(folderID.uuidString).app"),
-            directory.appending(path: "\(folderID.uuidString)/Icon.icns"),
+            directory.appending(path: "\(groupID.uuidString).app"),
+            directory.appending(path: "\(groupID.uuidString)/Icon.icns"),
             directory.appending(path: "notes/工作.app"),
         ]
 
-        #expect(tileURL.flatMap { builder.folderID(forBundleURL: $0) } == folderID)
+        #expect(tileURL.flatMap { builder.groupID(forBundleURL: $0) } == groupID)
 
         for url in foreignURLs {
-            #expect(builder.folderID(forBundleURL: url) == nil)
+            #expect(builder.groupID(forBundleURL: url) == nil)
         }
     }
 
-    /// 构造包含两个 App 的根文件夹
-    private func makeFolder(name: String) -> Folder {
-        Folder(id: UUID(), name: name, items: apps)
+    /// 构造包含两个 App 的根组
+    private func makeGroup(name: String) -> Group {
+        Group(id: UUID(), name: name, items: apps)
     }
 
-    /// 读取文件夹对应 stub 的 Info.plist
-    private func readInfo(of folder: Folder) throws -> [String: Any] {
-        let infoURL = builder.bundleURL(for: folder).appending(path: "Contents/Info.plist")
+    /// 读取组对应 stub 的 Info.plist
+    private func readInfo(of group: Group) throws -> [String: Any] {
+        let infoURL = builder.bundleURL(for: group).appending(path: "Contents/Info.plist")
 
         let plist = try PropertyListSerialization.propertyList(
             from: Data(contentsOf: infoURL),
@@ -335,10 +335,10 @@ final class DockTileBundleBuilderTests {
         return try #require(plist as? [String: Any])
     }
 
-    /// 按需求 2 渲染文件夹图标
-    private func makeIcon(for folder: Folder, previewIconCount: Int = 4) -> NSImage {
-        FolderIconRenderer.render(
-            folder: folder,
+    /// 按需求 2 渲染组图标
+    private func makeIcon(for group: Group, previewIconCount: Int = 4) -> NSImage {
+        GroupIconRenderer.render(
+            group: group,
             previewIconCount: previewIconCount,
             pointSize: 512,
             appearance: .light
@@ -371,26 +371,26 @@ extension DockTileBundleBuilderTests {
     func webPageTitleDoesNotRewriteStub() throws {
         let url = try #require(URL(string: "https://example.com/"))
         let webPageID = UUID()
-        var folder = makeFolder(name: "工作")
+        var group = makeGroup(name: "工作")
 
-        folder.items.append(.webPage(WebPageReference(id: webPageID, url: url, title: nil)))
-        try builder.write(folder: folder, icon: makeIcon(for: folder))
+        group.items.append(.webPage(WebPageReference(id: webPageID, url: url, title: nil)))
+        try builder.write(group: group, icon: makeIcon(for: group))
 
-        folder.items[folder.items.count - 1] = .webPage(
+        group.items[group.items.count - 1] = .webPage(
             WebPageReference(id: webPageID, url: url, title: "Example Domain")
         )
 
-        #expect(try !builder.write(folder: folder, icon: makeIcon(for: folder)))
+        #expect(try !builder.write(group: group, icon: makeIcon(for: group)))
     }
 }
 
 // MARK: - Private
 
 extension DockTileBundleBuilderTests {
-    /// 注销根文件夹目录里的 stub 在 Launch Services 里的注册
-    private nonisolated static func unregisterStubs(in folderDirectory: URL) {
+    /// 注销根组目录里的 stub 在 Launch Services 里的注册
+    private nonisolated static func unregisterStubs(in groupDirectory: URL) {
         let urls = (try? FileManager.default.contentsOfDirectory(
-            at: folderDirectory,
+            at: groupDirectory,
             includingPropertiesForKeys: nil
         )) ?? []
 

@@ -56,10 +56,10 @@ final class IconFileWriterTests {
         #expect(try Data(contentsOf: firstURL) == Data(contentsOf: secondURL))
     }
 
-    /// 渲染一个带两个 App 预览的文件夹图标
+    /// 渲染一个带两个 App 预览的组图标
     private func makeIcon() -> NSImage {
         let apps = ["Calculator", "Chess"].map {
-            FolderItem.app(AppReference(
+            GroupItem.app(AppReference(
                 id: UUID(),
                 url: URL(filePath: "/System/Applications/\($0).app"),
                 bookmark: nil,
@@ -67,8 +67,8 @@ final class IconFileWriterTests {
             ))
         }
 
-        return FolderIconRenderer.render(
-            folder: Folder(id: UUID(), name: "测试", items: apps),
+        return GroupIconRenderer.render(
+            group: Group(id: UUID(), name: "测试", items: apps),
             previewIconCount: 4,
             pointSize: 512,
             appearance: .light

@@ -1,6 +1,6 @@
 # 01 基础骨架与设置
 
-先读 [00 总览](00-overview.md)。本阶段交付 App 骨架、数据模型与持久化、设置窗口、状态栏、文件夹图标渲染器，以及 URL 事件入口。Dock tile（02）与面板（03）不在本阶段。
+先读 [00 总览](00-overview.md)。本阶段交付 App 骨架、数据模型与持久化、设置窗口、状态栏、组图标渲染器，以及 URL 事件入口。Dock tile（02）与面板（03）不在本阶段。
 
 ## App 骨架
 
@@ -89,23 +89,23 @@ Dock 与 ⌘Tab 里的 Flotilla 图标跟随 “系统设置 › 外观 › 图�
 ### URL 事件
 
 - `AppDelegate.application(_:open:)` 接收 URL，由 `DockTileRequest` 解析（见 [05](05-refinements.md)、[06](06-files-and-web-pages.md)）：
-  - `flotilla://folder/<uuid>` 交给 `DockFolderPresenter.handleURLSignal(folderID:)`
-  - 把项拖到 tile 上的请求，确认 id 是根文件夹后经 `FolderStore.addItems` 加入
+  - `flotilla://folder/<uuid>` 交给 `DockGroupPresenter.handleURLSignal(groupID:)`
+  - 把项拖到 tile 上的请求，确认 id 是根组后经 `GroupStore.addItems` 加入
   - 无法识别的 URL 一律忽略
 - 处理 URL 事件时不得激活 Flotilla。
 
 ## 数据模型（`Sources/Flotilla/Model/`）
 
 ```swift
-struct Folder: Codable, Hashable, Identifiable {
+struct Group: Codable, Hashable, Identifiable {
     let id: UUID
     var name: String
-    var items: [FolderItem]
+    var items: [GroupItem]
 }
 
-enum FolderItem: Codable, Hashable, Identifiable {
+enum GroupItem: Codable, Hashable, Identifiable {
     case app(AppReference)
-    case folder(Folder)
+    case group(Group)
     case file(FileReference)
     case webPage(WebPageReference)
 }
@@ -118,30 +118,32 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
 }
 ```
 
-- `FolderItem.id` 返回所包含项的 id。
+- `GroupItem.id` 返回所包含项的 id。
 - `AppReference` 提供 `displayName`（`FileManager.default.displayName(atPath:)`）与 `icon`（`NSWorkspace.shared.icon(forFile:)`）。
   - 书签与文件的相同，App 移动或改名后据此跟到新位置（需求 19）
   - bundle id 在 App 更新后书签找不到装好的那一份时用来找回（需求 22）
   - 两者见 [08](08-finder-folder-stacks.md)
-- 文件、网页两种情况（`FileReference`、`WebPageReference`）与为要加入的 URL 分类的 `FolderItem(url:title:)` 见 [06](06-files-and-web-pages.md)（需求 14）；访达里的文件夹与文件的书签见 [07](07-file-items-refinements.md)（需求 15、18）。
-- JSON 编码里 `FolderItem` 用显式类型标签区分各种情况，解码要兼容任意嵌套深度。
+- 文件、网页两种情况（`FileReference`、`WebPageReference`）与为要加入的 URL 分类的 `GroupItem(url:title:)` 见 [06](06-files-and-web-pages.md)（需求 14）；访达文件夹与文件的书签见 [07](07-file-items-refinements.md)（需求 15、18）。
+- JSON 编码里 `GroupItem` 用显式类型标签区分各种情况，解码要兼容任意嵌套深度。
+  - 组的类型标签沿用 `folder`：已保存的数据靠它解码
 
-### `FolderStore`
+### `GroupStore`
 
-`@MainActor final class FolderStore`，`static let shared`，是文件夹树的唯一数据源。
+`@MainActor final class GroupStore`，`static let shared`，是组树的唯一数据源。
 
-- 状态：`private(set) var rootFolders: [Folder]`
-- 查询：`folder(id:)`（递归查找任意层级）、`parentFolder(of:)`（返回直接父文件夹，根文件夹返回 nil）
+- 状态：`private(set) var rootGroups: [Group]`
+- 查询：`group(id:)`（递归查找任意层级）、`parentGroup(of:)`（返回直接父组，根组返回 nil）
 - 变更：
-  - `addRootFolder(named:) -> Folder`
-  - `addSubfolder(named:to parentID:) -> Folder?`
-  - `addItems(_ items: [FolderItem], to folderID: UUID)`：把 App、文件与网页追加到末尾；同一文件夹内已存在同类且 URL 相同的项时跳过（见 06）；去重之前先按书签更新该文件夹里的 App 与文件（见 07、08）
+  - `addRootGroup(named:) -> Group`
+  - `addSubgroup(named:to parentID:) -> Group?`
+  - `addItems(_ items: [GroupItem], to groupID: UUID)`：把 App、文件与网页追加到末尾；同一组内已存在同类且 URL 相同的项时跳过（见 06）；去重之前先按书签更新该组里的 App 与文件（见 07、08）
   - `updateItemLocations(in:)`：按书签把 App 项与文件项跟到新位置（见 07、08）
-  - `rename(folderID:to:)`
-  - `remove(itemID:)`：文件夹连同内容一起删
-  - `move(itemID:to folderID: UUID?, at index: Int)`：`folderID` 为 nil 表示移到根层级（只允许文件夹）；禁止把文件夹移入自身或自己的子孙
-- 每次变更后：原子写入持久化文件，并在主线程发出 `FolderStore.didChangeNotification`。
+  - `rename(groupID:to:)`
+  - `remove(itemID:)`：组连同内容一起删
+  - `move(itemID:to groupID: UUID?, at index: Int)`：`groupID` 为 nil 表示移到根层级（只允许组）；禁止把组移入自身或自己的子孙
+- 每次变更后：原子写入持久化文件，并在主线程发出 `GroupStore.didChangeNotification`。
 - 持久化：`~/Library/Application Support/Flotilla/folders.json`，可读的 JSON。
+  - 文件名沿用 `folders.json`：已保存的数据就在这个文件里
   - 启动时加载；文件不存在则为空
   - 解析失败时把原文件改名为 `folders.json.broken-<时间戳>` 保留，然后从空开始
 - 文件位置可通过构造函数注入，`shared` 使用默认位置；单元测试用临时目录。
@@ -155,17 +157,17 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
 - 变更后发出 `Preferences.didChangeNotification`
 - `UserDefaults` 可注入，供测试
 
-## 文件夹图标渲染器（`Sources/Flotilla/Rendering/FolderIconRenderer.swift`）
+## 组图标渲染器（`Sources/Flotilla/Rendering/GroupIconRenderer.swift`）
 
-需求 2 的渲染部分。02 用它生成 Dock 图标，03 用它显示子文件夹。
+需求 2 的渲染部分。02 用它生成 Dock 图标，03 用它显示子组。
 
 ```swift
-enum FolderIconRenderer {
+enum GroupIconRenderer {
     static func render(
-        folder: Folder,
+        group: Group,
         previewIconCount: Int,
         pointSize: CGFloat,
-        appearance: FolderIconAppearance
+        appearance: GroupIconAppearance
     ) -> NSImage
 }
 ```
@@ -173,7 +175,7 @@ enum FolderIconRenderer {
 - 返回的 `NSImage` 必须与分辨率无关（用绘制闭包构造），调用方可按任意像素尺寸栅格化；边线、投影等尺寸都按画布比例换算，16 px 到 1024 px 都成立。
 - 底板颜色随系统的深浅外观分两套；形状、边线宽度、预览网格与投影两种外观完全相同。
   - 跟随的是系统的深浅外观（`AppleInterfaceStyle`），不是 “图标与小组件样式” 设置
-  - `FolderIconAppearance`（`Rendering/`）只有 `dark`、`light` 两种，由 `NSAppearance` 按 `bestMatch(from: [.darkAqua, .aqua])` 归类，高对比度等变体归入对应的一种，与 `FolderPanelAppearance` 的归类方式相同
+  - `GroupIconAppearance`（`Rendering/`）只有 `dark`、`light` 两种，由 `NSAppearance` 按 `bestMatch(from: [.darkAqua, .aqua])` 归类，高对比度等变体归入对应的一种，与 `GroupPanelAppearance` 的归类方式相同
   - 颜色在调用 `render` 时就定下，不随绘制时的外观变化；外观变了由调用方重新渲染
   - 调用方：stub 图标按 `NSApp.effectiveAppearance`（见 02），面板网格按所在视图的 `effectiveAppearance`，视图在 `viewDidChangeEffectiveAppearance` 时重新渲染
 - 以下几何以画布边长为 1，y 轴自上而下。
@@ -191,8 +193,8 @@ enum FolderIconRenderer {
 
   - 深色取自 [macos-dock-folders](https://github.com/wjvalue/macos-dock-folders)（MIT）的 `glass-dark` 样式，换算到上面的结构：它的渐变两端是同一灰度色彩空间里的 0.20、0.08，不透明度同为 0.96，分别作为渐变两端的灰度与底板整体的不透明度；边线的白色、不透明度 0.16 照搬，宽度与浅色相同
   - 深色取值还没有与系统深色图标实测对照
-- 预览：取 `folder.items` 里前 `previewIconCount` 项（保持顺序，只跳过子文件夹；App、文件与网页都算，见 07）的图标，按 2 × 2 网格放在底板上
-  - `previewIconCount` 为 0 或文件夹内只有子文件夹、没有其它项时只画底板。
+- 预览：取 `group.items` 里前 `previewIconCount` 项（保持顺序，只跳过子组；App、文件与网页都算，见 07）的图标，按 2 × 2 网格放在底板上
+  - `previewIconCount` 为 0 或组内只有子组、没有其它项时只画底板。
 - 网格几何：
   - App 图标自带四边各 100 / 1024 的透明边，网格按可见底板定：每个预览的可见底板边长约 0.28，相邻两个间距约 0.064，整体居中，可见范围约 [0.186, 0.814]
   - 换算成单元格：边长 0.35，左上格原点 (0.152, 0.152)，格距 0.346
@@ -216,28 +218,28 @@ enum FolderIconRenderer {
 
 一个窗口，标题 “设置”，关闭即隐藏，不退出 App。界面全部用代码构建（Auto Layout）。
 
-### 文件夹区
+### 组区
 
-- `NSOutlineView` 展示完整的树：根文件夹、子文件夹、App、文件与网页。
-  - 每行显示图标与名称；文件夹图标用系统的通用文件夹图标（`NSWorkspace.shared.icon(for: .folder)`），根文件夹与子文件夹相同，不渲染其中的 App 图标，也不随预览数量与系统外观变化（需求 13）；App、文件与网页的图标用各自的 `icon`。
-- 树随 `FolderStore.didChangeNotification` 刷新，尽量保留展开状态与选中项。
+- `NSOutlineView` 展示完整的树：根组、子组、App、文件与网页。
+  - 每行显示图标与名称；组的图标用系统的通用文件夹图标（`NSWorkspace.shared.icon(for: .folder)`），根组与子组相同，不渲染其中的 App 图标，也不随预览数量与系统外观变化（需求 13）；App、文件与网页的图标用各自的 `icon`。
+- 树随 `GroupStore.didChangeNotification` 刷新，尽量保留展开状态与选中项。
 - 底部按钮：
-  - “新建文件夹”：有选中项时在其所属文件夹内新建子文件夹（选中的是文件夹则在该文件夹内），无选中项时新建根文件夹
-    - 默认名 “未命名文件夹”，新建后立即进入重命名编辑
-  - “添加…”：下拉按钮，菜单里是 “添加 App…” “添加文件…” “添加网页…”，都加入选中项所属的文件夹；无选中项时按钮禁用，见 09
+  - “新建组”：选中组时在该组内新建子组，无选中项时新建根组；选中 App、文件、访达文件夹与网页时禁用，见 12
+    - 默认名 “未命名组”，新建后立即进入重命名编辑
+  - “添加…”：下拉按钮，菜单里是 “添加 App…” “添加文件…” “添加网页…”，都加入选中的组；只在选中组时可用，见 09、12
     - “添加 App…”：`NSOpenPanel`，只允许 `.applicationBundle`，允许多选，起始目录 `/Applications`
-    - “添加文件…”：选择文件与访达里的文件夹，见 07
+    - “添加文件…”：选择文件与访达文件夹，见 07
     - “添加网页…”：输入网址与可选的标题，见 09
 - 右键菜单：“删除” 删除右键点到的那一项，其余各项按那一行的类型给出，见 10
-- 重命名：双击文件夹名进入编辑；App、文件与网页的名称不可编辑。
+- 重命名：双击组名进入编辑；App、文件与网页的名称不可编辑。
 - 拖放：
-  - 树内拖动排序与移动：App、文件与网页可拖到任意文件夹内；文件夹可拖到其它文件夹内，也可拖到根层级；禁止拖入自身或自己的子孙
-  - 从访达拖入 App、文件与访达里的文件夹，从浏览器拖入网页到某个文件夹上，加入该文件夹（见 06、07）
+  - 树内拖动排序与移动：App、文件与网页可拖到任意组内；组可拖到其它组内，也可拖到根层级；禁止拖入自身或自己的子孙
+  - 从访达拖入 App、文件与访达文件夹，从浏览器拖入网页到某个组上，加入该组（见 06、07）
 
 ### 通用区
 
-- “文件夹图标内显示的图标数量”：`NSPopUpButton`，选项 0–4，绑定 `Preferences.previewIconCount`
-- “访达里的文件夹”：`NSButton` 复选框 “显示隐藏文件”，默认不勾，绑定 `Preferences.showsHiddenFiles`；切换后不发设置变更通知，见 08 的需求 23
+- “组图标内显示的图标数量”：`NSPopUpButton`，选项 0–4，绑定 `Preferences.previewIconCount`
+- “访达文件夹”：`NSButton` 复选框 “显示隐藏文件”，默认不勾，绑定 `Preferences.showsHiddenFiles`；切换后不发设置变更通知，见 08 的需求 23
 - “辅助功能权限”：显示 “已授权” 或 “未授权”（`AXIsProcessTrusted()`）
   - 旁边一个 “打开系统设置” 按钮，打开 `x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility`
   - 窗口每次显示时刷新状态
@@ -250,11 +252,11 @@ enum FolderIconRenderer {
 ## 单元测试（`Tests/FlotillaTests/`）
 
 - 模型：嵌套结构 JSON 编解码往返一致
-- `FolderStore`：增删改查、移动（含禁止移入子孙）、持久化到临时目录后重新加载一致、损坏文件的处理
+- `GroupStore`：增删改查、移动（含禁止移入子孙）、持久化到临时目录后重新加载一致、损坏文件的处理
 - `Preferences`：默认值与夹取
 - `StatusBarIcon`：是 template 图、无障碍描述为各语言下的 App 名；在 16 pt 画布里上下占满、左右居中；1 倍下桅杆、甲板与船底落在整像素上
-- `FolderIconRenderer`：0–4 个预览都能渲染、`previewIconCount` 超过 App 数量时不崩溃、输出尺寸正确，以上在深浅两种外观下都成立；两种外观的底板透明区域逐像素相同；深色底板比中灰暗、浅色比中灰亮，都是上亮下暗；深色边线亮于底板内部、浅色边线暗于内部
-- `FolderIconAppearance`：高对比度、vibrant 等变体归入对应的深色或浅色；面板网格里的文件夹图标在视图外观切换后换成对应外观的版本
+- `GroupIconRenderer`：0–4 个预览都能渲染、`previewIconCount` 超过 App 数量时不崩溃、输出尺寸正确，以上在深浅两种外观下都成立；两种外观的底板透明区域逐像素相同；深色底板比中灰暗、浅色比中灰亮，都是上亮下暗；深色边线亮于底板内部、浅色边线暗于内部
+- `GroupIconAppearance`：高对比度、vibrant 等变体归入对应的深色或浅色；面板网格里的组图标在视图外观切换后换成对应外观的版本
 - `AppIconController`：深色、透明、色调三种样式的 “深色” 子变体（深色样式为 “始终”）不看外观，换成夜间版、去色的夜间版、着色的夜间版；“自动” 子变体只在深色外观（含高对比度、vibrant 变体）下同样换；默认样式与透明、色调的 “浅色” 子变体在任何外观下都不设运行时图标
 - `DarkIconStyleRenderer`：去色后红、绿、蓝相等；着色后亮部的色相与色调颜色一致；黑色变成中性的深色；明暗顺序与透明度不变；夜间版母版处理后比白天版暗，平均亮度低于一半
 - 单实例：同一 bundle id 的实例里只有当前进程时不算重复启动；另有实例时，不论它排在当前进程之前还是之后都能找出
@@ -265,6 +267,6 @@ enum FolderIconRenderer {
 - 其它 App 在前台时打开设置窗口，Flotilla 成为前台 App、设置窗口在最前；关闭后重开同样如此
 - 设置窗口打开期间切换 “图标与小组件样式”、色调颜色或系统深浅外观，Dock 上的 Flotilla 图标随即按上文 “App 图标” 一节变化；透明 · 深色、色调 · 深色下是深底，与相邻系统 App 的图标一致
 - Flotilla 运行时再启动一份：新的一份立即退出，Dock 偏好不变
-- 设置窗口能新建嵌套文件夹、添加 App、重命名、拖放、删除；重启 App 后数据仍在
-- 终端执行 `open "flotilla://folder/<某个根文件夹 id>"` 后，`DockFolderPresenter` 收到该 id，且 Flotilla 没有被激活
+- 设置窗口能新建嵌套组、添加 App、重命名、拖放、删除；重启 App 后数据仍在
+- 终端执行 `open "flotilla://folder/<某个根组 id>"` 后，`DockGroupPresenter` 收到该 id，且 Flotilla 没有被激活
 - `mise run swift:lint` 与 `swift test` 通过

@@ -2,10 +2,10 @@ import Foundation
 
 // MARK: - Preferences
 
-/// 用户设置：预览图标数（需求 2），访达里的文件夹在面板里展开时是否显示隐藏文件（需求 23）
+/// 用户设置：预览图标数（需求 2），访达文件夹在面板里展开时是否显示隐藏文件（需求 23）
 @MainActor
 final class Preferences {
-    /// 预览图标数的上限：文件夹图标正面的 2 × 2 网格最多容纳 4 个
+    /// 预览图标数的上限：组图标正面的 2 × 2 网格最多容纳 4 个
     nonisolated static let maximumPreviewIconCount = 4
 
     /// 预览图标数变更后发出的通知，`object` 为发生变更的 `Preferences`；Dock 上 tile 的图标据此重画
@@ -25,7 +25,7 @@ final class Preferences {
     /// 存放设置的 `UserDefaults`
     private let defaults: UserDefaults
 
-    /// 渲染进文件夹图标的预览图标数量：按顺序取前几个 App、文件或网页，默认取上限 4；读写都夹在 `0...maximumPreviewIconCount`
+    /// 渲染进组图标的预览图标数量：按顺序取前几个 App、文件或网页，默认取上限 4；读写都夹在 `0...maximumPreviewIconCount`
     var previewIconCount: Int {
         get {
             let stored = defaults.object(forKey: Self.previewIconCountKey) as? Int
@@ -40,7 +40,7 @@ final class Preferences {
         }
     }
 
-    /// 访达里的文件夹在面板里展开时是否显示隐藏文件，默认不显示
+    /// 访达文件夹在面板里展开时是否显示隐藏文件，默认不显示
     var showsHiddenFiles: Bool {
         get {
             defaults.bool(forKey: Self.showsHiddenFilesKey)

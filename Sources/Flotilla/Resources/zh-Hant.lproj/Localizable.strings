@@ -17,34 +17,34 @@
 /* 设置窗口 */
 "settings.windowTitle" = "設定";
 
-/* 设置窗口的文件夹区 */
-"folders.sectionTitle" = "檔案夾";
-"folders.newFolder" = "新增檔案夾";
-"folders.untitledFolder" = "未命名檔案夾";
-"folders.add" = "加入…";
-"folders.addApps" = "加入 App…";
-"folders.addFiles" = "加入檔案…";
-"folders.addWebPage" = "加入網頁…";
-"folders.webPageAlert.message" = "加入網頁";
-"folders.webPageAlert.editMessage" = "編輯網頁";
-"folders.webPageAlert.informative" = "輸入網頁的網址，標題可留空。";
-"folders.webPageAlert.addressPlaceholder" = "網址";
-"folders.webPageAlert.titlePlaceholder" = "標題（可選）";
-"folders.webPageAlert.fetchingTitle" = "正在取得標題…";
-"folders.webPageAlert.add" = "加入";
-"folders.webPageAlert.save" = "儲存";
-"folders.webPageAlert.cancel" = "取消";
-"folders.notOnDock" = "不在 Dock 上";
-"folders.addToDock" = "加入 Dock";
-"folders.showInFinder" = "顯示於Finder";
-"folders.openInDefaultBrowser" = "在預設瀏覽器中打開";
-"folders.editWebPage" = "編輯…";
-"folders.remove" = "刪除";
+/* 设置窗口的组区 */
+"groups.sectionTitle" = "組";
+"groups.newGroup" = "新增組";
+"groups.untitledGroup" = "未命名組";
+"groups.add" = "加入…";
+"groups.addApps" = "加入 App…";
+"groups.addFiles" = "加入檔案…";
+"groups.addWebPage" = "加入網頁…";
+"groups.webPageAlert.message" = "加入網頁";
+"groups.webPageAlert.editMessage" = "編輯網頁";
+"groups.webPageAlert.informative" = "輸入網頁的網址，標題可留空。";
+"groups.webPageAlert.addressPlaceholder" = "網址";
+"groups.webPageAlert.titlePlaceholder" = "標題（可選）";
+"groups.webPageAlert.fetchingTitle" = "正在取得標題…";
+"groups.webPageAlert.add" = "加入";
+"groups.webPageAlert.save" = "儲存";
+"groups.webPageAlert.cancel" = "取消";
+"groups.notOnDock" = "不在 Dock 上";
+"groups.addToDock" = "加入 Dock";
+"groups.showInFinder" = "顯示於Finder";
+"groups.openInDefaultBrowser" = "在預設瀏覽器中打開";
+"groups.editWebPage" = "編輯…";
+"groups.remove" = "刪除";
 
 /* 设置窗口的通用区 */
 "general.sectionTitle" = "一般";
-"general.previewIconCount" = "檔案夾圖像內顯示的圖像數量：";
-"general.finderFolders" = "Finder 裡的檔案夾：";
+"general.previewIconCount" = "組圖像內顯示的圖像數量：";
+"general.finderFolders" = "Finder 檔案夾：";
 "general.showHiddenFiles" = "顯示隱藏檔案";
 "general.accessibility" = "輔助使用權限：";
 "general.accessibilityGranted" = "已授權";

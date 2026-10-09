@@ -5,10 +5,10 @@ import Testing
 
 // MARK: - FinderFolderContentsTests
 
-/// 访达里的文件夹在面板里展开时读出的内容：顺序与访达 “名称” 一致，隐藏文件按设置跳过或标为隐藏，
+/// 访达文件夹在面板里展开时读出的内容：顺序与访达 “名称” 一致，隐藏文件按设置跳过或标为隐藏，
 /// 每一项的身份决定点击后是启动、继续进入还是打开；同一次展开里 id 不变，返回时才找得到缩回的图标
 final class FinderFolderContentsTests {
-    /// 本用例独占的临时目录，作为被展开的访达里的文件夹
+    /// 本用例独占的临时目录，作为被展开的访达文件夹
     private let directory = FileManager.default.temporaryDirectory
         .appending(path: "FlotillaTests-\(UUID().uuidString)")
 
@@ -69,10 +69,10 @@ final class FinderFolderContentsTests {
         #expect(names(of: items) == ["a2.txt", "a10.txt", "B.txt"])
     }
 
-    /// App bundle 是 App；访达里的文件夹、文件包、普通文件与指向目录的符号链接都是文件，只有访达里的文件夹能继续进入
+    /// App bundle 是 App；访达文件夹、文件包、普通文件与指向目录的符号链接都是文件，只有访达文件夹能继续进入
     @Test
     func classifiesEachEntry() throws {
-        // 每种身份各布置一个：App、访达里的文件夹、文件包、普通文件、指向目录的符号链接
+        // 每种身份各布置一个：App、访达文件夹、文件包、普通文件、指向目录的符号链接
         for name in ["Tool.app", "资料", "笔记.rtfd"] {
             try FileManager.default.createDirectory(
                 at: directory.appending(path: name),
@@ -90,7 +90,7 @@ final class FinderFolderContentsTests {
         var contents = FinderFolderContents()
         let items = try contents.items(of: finderFolder(), includingHiddenFiles: false)
 
-        // 分别挑出 App 与能继续进入的访达里的文件夹
+        // 分别挑出 App 与能继续进入的访达文件夹
         let apps = items.compactMap { item -> String? in
             guard case .app(let app) = item else { return nil }
 
@@ -201,10 +201,10 @@ final class FinderFolderContentsTests {
 extension FinderFolderContentsTests {
     /// 临时目录本身经分类后成为的文件项
     private func finderFolder() throws -> FileReference {
-        let item = FolderItem(url: directory, title: nil)
+        let item = GroupItem(url: directory, title: nil)
         let file: FileReference? = if case .file(let file) = item { file } else { nil }
 
-        return try #require(file, "访达里的文件夹应当是文件：\(String(describing: item))")
+        return try #require(file, "访达文件夹应当是文件：\(String(describing: item))")
     }
 
     /// 在临时目录里写一个文件
@@ -233,7 +233,7 @@ extension FinderFolderContentsTests {
     }
 
     /// 一项的 URL；目录里读出的只有 App 与文件
-    private func url(of item: FolderItem) -> URL? {
+    private func url(of item: GroupItem) -> URL? {
         switch item {
         case .app(let app):
             app.url
@@ -241,20 +241,20 @@ extension FinderFolderContentsTests {
         case .file(let file):
             file.url
 
-        case .folder, .webPage:
+        case .group, .webPage:
             nil
         }
     }
 
     /// 一项是不是 App
-    private func isApp(_ item: FolderItem) -> Bool {
+    private func isApp(_ item: GroupItem) -> Bool {
         guard case .app = item else { return false }
 
         return true
     }
 
     /// 各文件项的文件名，App 不算
-    private func names(of items: [FolderItem]) -> [String] {
+    private func names(of items: [GroupItem]) -> [String] {
         items.compactMap {
             guard case .file(let file) = $0 else { return nil }
 

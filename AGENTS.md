@@ -4,7 +4,7 @@
 
 ## 项目概述
 
-Flotilla 是一个原生 macOS App：在 Dock 上增加 “文件夹”，把多个 App 分类收纳进去，文件夹里也可以放文件、访达里的文件夹与网页；点击文件夹后在 Dock 上展开，显示其中的内容，点击即可打开，访达里的文件夹则像 Dock 叠放那样继续展开。
+Flotilla 是一个原生 macOS App：在 Dock 上增加 “组”，把多个 App 分类收纳进去，组里也可以放文件、访达文件夹与网页；点击组后在 Dock 上展开，显示其中的内容，点击即可打开，访达文件夹则像 Dock 叠放那样继续展开。
 
 - 中文名 “归帆”，繁体写作 “歸帆”：简繁中文环境下 App 以这个名字显示，中文界面文案提到 App 时也写这个名字
 - 日文名 “帰帆”：日文环境下 App 以这个名字显示，日文界面文案提到 App 时也写这个名字
@@ -42,9 +42,9 @@ Flotilla 是一个原生 macOS App：在 Dock 上增加 “文件夹”，把多
 
 ```
 Sources/Flotilla/       App 源码
-  Model/                文件夹数据模型与持久化
+  Model/                组的数据模型与持久化
   Preferences/          用户设置
-  Rendering/            文件夹图标渲染、App 图标的透明与色调处理
+  Rendering/            组图标渲染、App 图标的透明与色调处理
   StatusBar/            状态栏图标与菜单
   Settings/             设置窗口
   Resources/            五种语言的 Localizable.strings、InfoPlist.strings 与白天、夜间两版 App 图标母版，不参与编译；
@@ -56,7 +56,7 @@ Sources/FlotillaDockTile/  Dock tile 的 stub 可执行文件，由打包脚本�
 Tests/FlotillaTests/    单元测试（Swift Testing）
 Scripts/bundle.sh       打包脚本：组装 .app 并签名
 Scripts/release.sh      发版脚本：改版本号并开 release PR
-docs/requirements/      需求文档：00 为总览，01–11 为按实现顺序拆分的阶段
+docs/requirements/      需求文档：00 为总览，01–12 为按实现顺序拆分的阶段
 .github/workflows/      GitHub Actions：ci.yml 检查与构建，release.yml 发布新版本
 .claude/skills/release/ Claude Code 的 release skill：用自然语言发布新版本
 .claude/agents/         Claude Code 的 flotilla-implementer 代理：按阶段需求文档实现功能
@@ -116,7 +116,7 @@ README-ZH.md            README.md 的简体中文版，与它同步修改
 
 - 日志、代码注释、文档使用中文
 - 中文与英文之间、中文与数字之间、符号和文本之间留一个空格，如 `2 × 2`、`100 / 1024`、`A → B`、`——`
-  - 引号的外侧同样留空格，连着的几个引号之间也留，如 `访达里的文件夹如果在 “文稿” “桌面” “下载” 等位置`
+  - 引号的外侧同样留空格，连着的几个引号之间也留，如 `访达文件夹如果在 “文稿” “桌面” “下载” 等位置`
   - 紧贴不留空格的：
     - 范围号 `–`（`01–08`）与负号（`−5 pt`）
     - 数字后的单位符号（`5.5%`、`45°`）

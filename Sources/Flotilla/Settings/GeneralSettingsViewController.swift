@@ -3,7 +3,7 @@ import ApplicationServices
 
 // MARK: - GeneralSettingsViewController
 
-/// 设置窗口的通用区：预览图标数、访达里的文件夹是否显示隐藏文件，以及辅助功能权限的授权状态
+/// 设置窗口的通用区：预览图标数、访达文件夹是否显示隐藏文件，以及辅助功能权限的授权状态
 @MainActor
 final class GeneralSettingsViewController: NSViewController {
     /// 系统设置里辅助功能权限页的地址
@@ -17,11 +17,11 @@ final class GeneralSettingsViewController: NSViewController {
     /// 预览图标数的选择器，选项 0–4，第 n 项即数量 n
     private let previewIconCountPopUp = NSPopUpButton()
 
-    /// 访达里的文件夹在面板里展开时是否显示隐藏文件
+    /// 访达文件夹在面板里展开时是否显示隐藏文件
     private let showsHiddenFilesCheckbox = NSButton(
         checkboxWithTitle: String(
             localized: "general.showHiddenFiles",
-            comment: "访达里的文件夹一行的复选框：在面板里展开时显示隐藏文件"
+            comment: "访达文件夹一行的复选框：在面板里展开时显示隐藏文件"
         ),
         target: nil,
         action: nil
@@ -73,14 +73,14 @@ final class GeneralSettingsViewController: NSViewController {
         let previewIconCountLabel = NSTextField(
             labelWithString: String(
                 localized: "general.previewIconCount",
-                comment: "预览图标数选择器左侧的标签：Dock 上的文件夹图标里最多显示几个 App、文件或网页的图标"
+                comment: "预览图标数选择器左侧的标签：Dock 上的组图标里最多显示几个 App、文件或网页的图标"
             )
         )
 
         let finderFoldersLabel = NSTextField(
             labelWithString: String(
                 localized: "general.finderFolders",
-                comment: "显示隐藏文件复选框左侧的标签：设置作用于访达里的文件夹在面板里展开的内容"
+                comment: "显示隐藏文件复选框左侧的标签：设置作用于访达文件夹在面板里展开的内容"
             )
         )
 

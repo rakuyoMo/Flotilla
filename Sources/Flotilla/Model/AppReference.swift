@@ -7,7 +7,7 @@ import UniformTypeIdentifiers
 ///
 /// 带着书签与 bundle id：App 移动或改名后按书签找到新位置，App 更新后书签找不到时按 bundle id 找回
 struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
-    /// 这一项的唯一标识；同一个 App 放进不同文件夹时各有各的 id
+    /// 这一项的唯一标识；同一个 App 放进不同组时各有各的 id
     let id: UUID
 
     /// App bundle 的文件 URL
@@ -52,7 +52,7 @@ extension AppReference {
 extension AppReference {
     /// URL 是否指向 App bundle：内容类型符合 `.applicationBundle`；文件不存在时为否
     ///
-    /// `FolderItem(url:title:)` 据此把要加入文件夹的 URL 分成 App 与文件
+    /// `GroupItem(url:title:)` 据此把要加入组的 URL 分成 App 与文件
     static func isApplicationBundle(_ url: URL) -> Bool {
         let contentType = try? url
             .resourceValues(forKeys: [.contentTypeKey])

@@ -1,22 +1,22 @@
 # 10 设置窗口的右键菜单
 
-先读 [00 总览](00-overview.md) 与 01–09 九份文档，并以 09 阶段合入后的代码为基线。本阶段交付需求 25：设置窗口的文件夹树支持右键菜单，按钮行的 “添加到 Dock” 与 “删除” 移入其中；App、文件与访达里的文件夹可以在访达中显示，网页可以在默认浏览器中打开，也可以在 “添加网页…” 的提示框里编辑网址与标题。
+先读 [00 总览](00-overview.md) 与 01–09 九份文档，并以 09 阶段合入后的代码为基线。本阶段交付需求 25：设置窗口的组树支持右键菜单，按钮行的 “添加到 Dock” 与 “删除” 移入其中；App、文件与访达文件夹可以在访达中显示，网页可以在默认浏览器中打开，也可以在 “添加网页…” 的提示框里编辑网址与标题。
 
 ## 规则
 
 ### 按钮行
 
-- 删掉 “添加到 Dock” 与 “删除” 两个按钮，按钮行从左到右只剩 新建文件夹 · 添加…，都靠左
-- “添加…” 的可用条件不变：有选中项时可用（见 09）
+- 删掉 “添加到 Dock” 与 “删除” 两个按钮，按钮行从左到右只剩 新建组 · 添加…，都靠左
+- “添加…” 只在选中组时可用，“新建组” 在选中组或没有选中项时可用（见 12）
 
 ### 右键菜单出现在哪、作用于谁
 
-- 文件夹树（`NSOutlineView`）的右键菜单，右键、Control-点按都能弹出
+- 组树（`NSOutlineView`）的右键菜单，右键、Control-点按都能弹出
 - 按 AppKit 原生的表格行为：右键点到哪一行，菜单就作用于哪一行（`clickedRow`），那一行画出右键高亮框；不改变选中项
 - 右键点在没有行的空白处：不弹菜单
 - 菜单挂在 `outlineView.menu` 上，弹出之前在 `NSMenuDelegate.menuNeedsUpdate(_:)` 里按点到的那一行重建；菜单项各自带 target 与 action
 - 菜单项在 `representedObject` 里记下点到的那一项的 id，执行时按 id 在当前的树里找：菜单开着时树可能重建（补标题、Dock 同步的通知），重建之后行号可能对上别的项；这一项已不在就什么都不做
-- 菜单项的可用状态自己设（`autoenablesItems = false`），`FolderTreeViewController` 不实现 `validateMenuItem`：它也是 “添加…” 菜单项的 target
+- 菜单项的可用状态自己设（`autoenablesItems = false`），`GroupTreeViewController` 不实现 `validateMenuItem`：它也是 “添加…” 菜单项的 target
 
 ### 各类行的菜单
 
@@ -24,20 +24,20 @@
 
 | 点到的行 | 菜单 |
 |---|---|
-| 文件夹（根文件夹与子文件夹） | 添加到 Dock ── 删除 |
-| App、文件、访达里的文件夹 | 在访达中显示 ── 删除 |
+| 组（根组与子组） | 添加到 Dock ── 删除 |
+| App、文件、访达文件夹 | 在访达中显示 ── 删除 |
 | 网页 | 在默认浏览器中打开 · 编辑… ── 删除 |
 
 - “删除” 与其它项隔开、放在最后，照按钮行原来把 “删除” 单独放在最右边的做法，免得点第一项时误删
-- Dock 集成不可用（同步器为 nil）时没有 “添加到 Dock”，原来的按钮此时也是隐藏的；文件夹的菜单只有 “删除”，不加分隔线
+- Dock 集成不可用（同步器为 nil）时没有 “添加到 Dock”，原来的按钮此时也是隐藏的；组的菜单只有 “删除”，不加分隔线
 
 ### 各项的行为
 
 - “添加到 Dock”：
-  - 可用条件与原来的按钮相同：这一行是被拖出 Dock 的根文件夹，与行尾的 “不在 Dock 上” 用同一次读取的结果（见 05）；在 Dock 上的根文件夹与子文件夹显示但置灰
+  - 可用条件与原来的按钮相同：这一行是被拖出 Dock 的根组，与行尾的 “不在 Dock 上” 用同一次读取的结果（见 05）；在 Dock 上的根组与子组显示但置灰
   - 点击：`addTile(for:)` 后立即 `refreshDockStatus()`，状态文字随即消失
-- “删除”：删除点到的这一项，文件夹连同内容一起删除，不弹确认；点到的不是选中行时，选中项保持不变（重建树时按 id 恢复选中）
-- “在访达中显示”：访达打开它所在的位置并选中它（`NSWorkspace.shared.activateFileViewerSelecting`）；访达里的文件夹同样是选中它，不是打开它
+- “删除”：删除点到的这一项，组连同内容一起删除，不弹确认；点到的不是选中行时，选中项保持不变（重建树时按 id 恢复选中）
+- “在访达中显示”：访达打开它所在的位置并选中它（`NSWorkspace.shared.activateFileViewerSelecting`）；访达文件夹同样是选中它，不是打开它
   - 用它当前的位置：先按书签找（App 用 `relocatedApp()`，文件用 `relocated()`），找不到时用记录的位置
   - 只读，不改数据源：数据源仍按已有的四个时机更新（见 07、08）；右键点后台窗口不会让设置窗口成为 key，那个时机赶不上
 - “在默认浏览器中打开”：按字面意思，取系统的默认浏览器（`NSWorkspace.shared.urlForApplication(toOpen:)`，传这个网址）后用它打开（`open(_:withApplicationAt:configuration:completionHandler:)`）；取不到浏览器时什么都不做
@@ -46,7 +46,7 @@
 ### “编辑…” 与网页的提示框
 
 - “添加网页…” 的提示框同时用于编辑，按身份改名为 `WebPageAlert`；测试与替身同样改名为 `WebPageAlertTests`、`WebPageAlertStub`
-- `FolderTreeViewController` 取点到的网页，以 sheet 挂在设置窗口上弹出 `WebPageAlert(editing:)`；添加时不传，即 nil
+- `GroupTreeViewController` 取点到的网页，以 sheet 挂在设置窗口上弹出 `WebPageAlert(editing:)`；添加时不传，即 nil
 - 编辑与添加不同的只有：
   - 标题（`messageText`）：编辑网页；说明文字沿用添加的那句
   - 第一个按钮：保存，是默认按钮，回车触发；“取消” 不变，Esc 触发
@@ -59,31 +59,31 @@
   - 标题框空着点 “保存”：先不带标题保存；正在获取或还在等停顿的，取到后补到这一项上（`titleHandler` 交出保存的那一份：原来的 id 与新的网址）；网址没改过、没有在获取时，保存后显示网址
 - 补标题要核对网址：不带标题加入或保存之后、标题还没取到时，这一项可能又被编辑成别的网址，几次获取补的是同一个 id
   - 例如不带标题加入 A，获取还没完就编辑成 B、同样不带标题保存：A 的标题先到时这一项已是 B，补上的话 B 显示的是 A 的标题，标题也不再为 nil，B 的标题随后到时补不上
-  - 所以 `fillTitle(_:of:)` 只补网址仍是取标题时那个的网页：A 的标题丢掉，B 的标题照样补上；编辑文件夹名期间记下的几条都留着，由它逐条取舍（见 09 的 “补标题”）
+  - 所以 `fillTitle(_:of:)` 只补网址仍是取标题时那个的网页：A 的标题丢掉，B 的标题照样补上；编辑组名期间记下的几条都留着，由它逐条取舍（见 09 的 “补标题”）
 - `beginSheetModal` 的 `completionHandler` 交出 `WebPageReference`：
   - 添加时调用方包成 `.webPage` 交给 `addItems`
-  - 编辑时交给 `FolderStore.updateWebPage(_:)`
-  - 晚到的标题都交给 `FolderTreeViewController.fillTitle(_:of:)`，正在编辑文件夹名时先记下，编辑结束再补（见 09 的 “补标题”）
+  - 编辑时交给 `GroupStore.updateWebPage(_:)`
+  - 晚到的标题都交给 `GroupTreeViewController.fillTitle(_:of:)`，正在编辑组名时先记下，编辑结束再补（见 09 的 “补标题”）
 - 弹出期间这个网页被删掉：保存与晚到的标题都找不到这一项，什么都不做
 
-### `FolderStore`：改网页的网址与标题
+### `GroupStore`：改网页的网址与标题
 
 - `updateWebPage(_ webPage: WebPageReference)`：按 id 找到网页，原地换成给定的网址与标题，位置与 id 不变；改了就提交并发一次变更通知
 - 这一项已不在、不是网页、网址与标题都没变：什么都不做，不发通知
-- 不按网址去重：去重只在加入时进行（见 06），与树内移动相同；改成与同一文件夹里另一个网页相同的网址时两项都保留
-- `fillTitle(_:of:)` 确认这一项的网址仍是取标题时那个、标题仍为 nil 后交给 `updateWebPage(_:)`：“在所在的文件夹里原地换成另一份” 只写一处
+- 不按网址去重：去重只在加入时进行（见 06），与树内移动相同；改成与同一组里另一个网页相同的网址时两项都保留
+- `fillTitle(_:of:)` 确认这一项的网址仍是取标题时那个、标题仍为 nil 后交给 `updateWebPage(_:)`：“在所在的组里原地换成另一份” 只写一处
 
 ## 设置窗口
 
-- 窗口尺寸不变（见 07）：最窄时文件夹区宽 530
+- 窗口尺寸不变（见 07）：最窄时组区宽 530
 - 按钮行宽（`NSStackView` 默认间距 8，两个控件都在左侧的 gravity 区，之间一个间距），五种语言离屏实测（macOS 27）：
 
   | en | zh-Hans | zh-Hant | ja | ko |
   |---|---|---|---|---|
-  | 183.5 | 180.5 | 180.5 | 191.5 | 172.5 |
+  | 182.5 | 155 | 155 | 191.5 | 172.5 |
 
-  - 最窄时文件夹区宽 530，比最宽的 ja 多 338.5
-  - “新建文件夹” 宽 84–99.5 pt，“添加…” 宽 80.5–84 pt
+  - 最窄时组区宽 530，比最宽的 ja 多 338.5
+  - “新建组” 宽 63–99.5 pt，“添加…” 宽 80.5–84 pt
 
 ## 本地化
 
@@ -91,33 +91,33 @@
 
 | 键 | en | zh-Hans | zh-Hant | ja | ko |
 |---|---|---|---|---|---|
-| `folders.showInFinder` | Show in Finder | 在访达中显示 | 顯示於Finder | Finderに表示 | Finder에서 보기 |
-| `folders.openInDefaultBrowser` | Open in Default Browser | 在默认浏览器中打开 | 在預設瀏覽器中打開 | デフォルトのブラウザで開く | 기본 브라우저에서 열기 |
-| `folders.editWebPage` | Edit… | 编辑… | 編輯… | 編集… | 편집… |
-| `folders.webPageAlert.editMessage` | Edit Web Page | 编辑网页 | 編輯網頁 | Webページを編集 | 웹 페이지 편집 |
-| `folders.webPageAlert.save` | Save | 保存 | 儲存 | 保存 | 저장 |
+| `groups.showInFinder` | Show in Finder | 在访达中显示 | 顯示於Finder | Finderに表示 | Finder에서 보기 |
+| `groups.openInDefaultBrowser` | Open in Default Browser | 在默认浏览器中打开 | 在預設瀏覽器中打開 | デフォルトのブラウザで開く | 기본 브라우저에서 열기 |
+| `groups.editWebPage` | Edit… | 编辑… | 編輯… | 編集… | 편집… |
+| `groups.webPageAlert.editMessage` | Edit Web Page | 编辑网页 | 編輯網頁 | Webページを編集 | 웹 페이지 편집 |
+| `groups.webPageAlert.save` | Save | 保存 | 儲存 | 保存 | 저장 |
 
-- `folders.showInFinder` 照抄 Dock 右键菜单的 `SHOW_IN_FINDER`（`/System/Library/CoreServices/Dock.app/Contents/Resources/<语言>.lproj/DockMenus.strings`，zh-Hant 取 `zh_TW`）；这是界面文字，照原生原样，不加中英文之间的空格
-- `folders.webPageAlert.save` 照抄 AppKit 的 “Save”（`/System/Library/Frameworks/AppKit.framework/Versions/C/Resources/SavePanel.loctable`）
-- `folders.openInDefaultBrowser` 系统里没有现成的文案：“默认 / 預設 / デフォルト / 기본” 取自系统设置 “桌面与程序坞” 里 “默认网页浏览器” 的各语言译法，“打开 / 打開 / 開く / 열기” 与 Dock 的 `OPEN_IN_FINDER` 一致
-- 原有的 `folders.addToDock`、`folders.remove` 原样用作菜单项的标题，不再是按钮
+- `groups.showInFinder` 照抄 Dock 右键菜单的 `SHOW_IN_FINDER`（`/System/Library/CoreServices/Dock.app/Contents/Resources/<语言>.lproj/DockMenus.strings`，zh-Hant 取 `zh_TW`）；这是界面文字，照原生原样，不加中英文之间的空格
+- `groups.webPageAlert.save` 照抄 AppKit 的 “Save”（`/System/Library/Frameworks/AppKit.framework/Versions/C/Resources/SavePanel.loctable`）
+- `groups.openInDefaultBrowser` 系统里没有现成的文案：“默认 / 預設 / デフォルト / 기본” 取自系统设置 “桌面与程序坞” 里 “默认网页浏览器” 的各语言译法，“打开 / 打開 / 開く / 열기” 与 Dock 的 `OPEN_IN_FINDER` 一致
+- 原有的 `groups.addToDock`、`groups.remove` 原样用作菜单项的标题，不再是按钮
 - 省略号用 `…`（U+2026），与 “添加网页…” 一致
-- `.strings` 里新键放在 “设置窗口的文件夹区” 一段，顺序与界面一致：提示框的两个键跟在添加时对应的键之后；菜单项按菜单里的顺序，排在行尾的 “不在 Dock 上” 之后
+- `.strings` 里新键放在 “设置窗口的组区” 一段，顺序与界面一致：提示框的两个键跟在添加时对应的键之后；菜单项按菜单里的顺序，排在行尾的 “不在 Dock 上” 之后
 
 ## 单元测试
 
-- 按钮行（`FolderTreeViewControllerTests`）：两个控件，顺序为 新建文件夹、添加…；按钮行宽五种语言各一例，见 07
-- 右键菜单（`FolderTreeViewControllerTests`，离屏窗口；合成的右键事件交给 `outlineView.menu(for:)`，再像菜单弹出之前那样调用 delegate 的 `menuNeedsUpdate(_:)`）：
-  - 网页、App、文件、访达里的文件夹、根文件夹、子文件夹各一例（文件与访达里的文件夹建在临时目录里）：各项的标题、分隔线的位置、target 与 action，记下的是点到的那一项的 id；没有同步器时文件夹的菜单只有 “删除”
+- 按钮行（`GroupTreeViewControllerTests`）：两个控件，顺序为 新建组、添加…；按钮行宽五种语言各一例，见 07
+- 右键菜单（`GroupTreeViewControllerTests`，离屏窗口；合成的右键事件交给 `outlineView.menu(for:)`，再像菜单弹出之前那样调用 delegate 的 `menuNeedsUpdate(_:)`）：
+  - 网页、App、文件、访达文件夹、根组、子组各一例（文件与访达文件夹建在临时目录里）：各项的标题、分隔线的位置、target 与 action，记下的是点到的那一项的 id；没有同步器时组的菜单只有 “删除”
   - 空白处：菜单没有项，之前点过某一行留下的项也不留着
-  - 有同步器时：被拖出 Dock 的根文件夹 “添加到 Dock” 可用，在 Dock 上的根文件夹与子文件夹置灰
-    - 同步器的 Dock 偏好是临时目录里的 plist（`DockPreferences(domainName:backupDirectory:)` 传它的绝对路径），stub 目录也在临时目录里；不调用 `start()`，只读 `rootFolderIDsRemovedFromDock()`
+  - 有同步器时：被拖出 Dock 的根组 “添加到 Dock” 可用，在 Dock 上的根组与子组置灰
+    - 同步器的 Dock 偏好是临时目录里的 plist（`DockPreferences(domainName:backupDirectory:)` 传它的绝对路径），stub 目录也在临时目录里；不调用 `start()`，只读 `rootGroupIDsRemovedFromDock()`
   - “删除” 删掉的是点到的那一项，不是选中项；右键不改变选中项，删除之后选中项保持选中
   - 菜单开着时树重建、行号错位：“删除” 仍删掉原来点到的那一项
   - “编辑…”：以 sheet 弹出，网址框与标题框填着原来的值，标题与按钮是编辑的键；改网址与标题后点 “保存”，数据源里这一项 id 与位置不变、网址与标题换成新的；点 “取消” 什么都不变
     - 弹出的是真的提示框：只直接改输入框的值、不发输入变化的通知，它就不会联网获取标题
   - 不调用 “在访达中显示” “在默认浏览器中打开” “添加到 Dock” 的动作：前两个会真的打开访达与浏览器，后一个会安排同步、重启真实的 Dock；只验菜单项接到的方法
-- 补标题核对网址（`FolderTreeViewControllerTests`）：编辑文件夹名期间同一网页先后记下两条，先到的是这一项现在的网址的，旧网址的晚到；编辑结束后补上的是网址相符的那一条
+- 补标题核对网址（`GroupTreeViewControllerTests`）：编辑组名期间同一网页先后记下两条，先到的是这一项现在的网址的，旧网址的晚到；编辑结束后补上的是网址相符的那一条
 - 提示框（`WebPageAlertTests`，`WebPageAlertStub` 代替取标题、等停顿与等时限，不联网）：
   - 编辑：两个框填着原值；“保存” 一弹出就可用，改成不可用的网址又禁用；标题与按钮用编辑的键，说明文字与添加相同
   - 没有标题的网页：标题框空着；网址没改过就保存，不获取标题，交出的网页与原来的相同
@@ -125,29 +125,29 @@
   - 弹出时不获取，改了网址、停顿之后才获取；原标题换网址时不被清空，也不被取到的标题覆盖
   - 清空标题、改了网址后保存：先不带标题交出，取到后连同保存的那一份交出，是原来的 id 与新的网址
   - 添加时标题框空着：取到后连同加入的那一份交出，网址是加入时的网址
-  - 保存后又改网址：真的 `FolderStore`（临时文件）与两个提示框，替身决定两次获取的先后；不带标题加入 A、获取未完，编辑成 B 不带标题保存、获取未完；A 的标题先到，这一项仍是 B、标题为 nil；B 的标题再到，补上
+  - 保存后又改网址：真的 `GroupStore`（临时文件）与两个提示框，替身决定两次获取的先后；不带标题加入 A、获取未完，编辑成 B 不带标题保存、获取未完；A 的标题先到，这一项仍是 B、标题为 nil；B 的标题再到，补上
   - 添加的已有用例全部保持通过
-- `FolderStoreTests`：
-  - 改网址与标题后 id 与位置不变、只发一次通知、重新加载后仍在；清空标题也能保存；找不到、不是网页、什么都没变时不变也不发通知；改成同一文件夹里另一个网页的网址时两项都在
+- `GroupStoreTests`：
+  - 改网址与标题后 id 与位置不变、只发一次通知、重新加载后仍在；清空标题也能保存；找不到、不是网页、什么都没变时不变也不发通知；改成同一组里另一个网页的网址时两项都在
   - 补标题时网址与这一项不同：不补，也不发通知；网址相同、标题为 nil 的照样补上；`fillTitle` 的已有用例全部保持通过
 - 新键五种语言齐全：`LocalizationTests` 自动覆盖
 
 ## 验收
 
 - `mise run swift:lint`、`swift test`、`mise run bundle` 全部通过
-- 按钮行：从左到右只有 新建文件夹 · 添加…；五种语言下把窗口拉到最窄，完整显示、不截断、不重叠
+- 按钮行：从左到右只有 新建组 · 添加…；五种语言下把窗口拉到最窄，完整显示、不截断、不重叠
 - 右键菜单：
-  - 右键点根文件夹、子文件夹：添加到 Dock ── 删除
-  - 右键点 App、文件、访达里的文件夹：在访达中显示 ── 删除
+  - 右键点根组、子组：添加到 Dock ── 删除
+  - 右键点 App、文件、访达文件夹：在访达中显示 ── 删除
   - 右键点网页：在默认浏览器中打开 · 编辑… ── 删除
   - Control-点按同样弹出
   - 点到的那一行画出右键高亮框，选中项不变
   - 右键点在最后一行下方的空白处：不弹菜单
 - “添加到 Dock”：
-  - 把 tile 拖出 Dock 后，右键点这个根文件夹，“添加到 Dock” 可用；点击后 tile 回到 Dock，“不在 Dock 上” 随即消失
-  - 在 Dock 上的根文件夹与子文件夹：“添加到 Dock” 置灰
-- “删除”：选中一行、右键点另一行删除，删掉的是右键点的那一行，选中项仍选中；文件夹连同内容一起删除；删的是根文件夹时 Dock 上的 tile 随之消失
-- “在访达中显示”：访达打开所在的位置并选中它，访达里的文件夹是选中而不是打开；文件在访达里改名或移动之后，设置窗口还没成为 key 就右键点它，选中的是改名或移动之后的那一份
+  - 把 tile 拖出 Dock 后，右键点这个根组，“添加到 Dock” 可用；点击后 tile 回到 Dock，“不在 Dock 上” 随即消失
+  - 在 Dock 上的根组与子组：“添加到 Dock” 置灰
+- “删除”：选中一行、右键点另一行删除，删掉的是右键点的那一行，选中项仍选中；组连同内容一起删除；删的是根组时 Dock 上的 tile 随之消失
+- “在访达中显示”：访达打开所在的位置并选中它，访达文件夹是选中而不是打开；文件在访达里改名或移动之后，设置窗口还没成为 key 就右键点它，选中的是改名或移动之后的那一份
 - “在默认浏览器中打开”：用默认浏览器打开这个网址
 - “编辑…”：
   - 以 sheet 挂在设置窗口上弹出；标题 “编辑网页”，说明 “输入网页的网址，标题可留空。”，按钮 “保存” “取消”
@@ -156,7 +156,7 @@
   - 改网址与标题后保存：树里这一行换成新标题，位置不变；面板里同样，点击打开新网址
   - 只改网址、标题框保留原标题：停顿之后转圈不出现，原标题不被换掉
   - 清空标题、改网址后保存：这一行先显示网址，取到标题后换成标题
-  - 改成同一文件夹里另一个网页的网址：两项都在
+  - 改成同一组里另一个网页的网址：两项都在
   - 点 “取消” 或按 Esc：什么都不变
 - 五种语言下右键菜单与提示框的文字依次是上表与 09 的译文
 - 退出重开 Flotilla 后数据仍在

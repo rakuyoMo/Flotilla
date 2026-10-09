@@ -3,7 +3,7 @@ import AppKit
 // MARK: - WebPageAlert
 
 /// 网页的提示框，“添加网页…” 与网页的 “编辑…” 共用：输入网址与可选的标题，
-/// 点 “添加” 后得到要加入文件夹的网页，点 “保存” 后得到改好的网页
+/// 点 “添加” 后得到要加入组的网页，点 “保存” 后得到改好的网页
 ///
 /// 输入不是可用的网址时 “添加” “保存” 禁用，随输入实时更新：确认之后不会再报错，也不必再弹第二个提示框。
 /// 网址改了、停顿一会儿不再变时自动获取网页的标题，填进空着的标题框；获取期间标题框照样可以输入，用户输入的内容不被覆盖
@@ -91,16 +91,16 @@ final class WebPageAlert: NSObject {
 
         alert.messageText = webPage == nil
             ? String(
-                localized: "folders.webPageAlert.message",
+                localized: "groups.webPageAlert.message",
                 comment: "“添加网页…” 提示框的标题"
             )
             : String(
-                localized: "folders.webPageAlert.editMessage",
+                localized: "groups.webPageAlert.editMessage",
                 comment: "网页 “编辑…” 提示框的标题"
             )
 
         alert.informativeText = String(
-            localized: "folders.webPageAlert.informative",
+            localized: "groups.webPageAlert.informative",
             comment: "网页提示框的说明文字，添加与编辑共用，位于网址框与标题框上方"
         )
 
@@ -125,7 +125,7 @@ final class WebPageAlert: NSObject {
     /// - Parameters:
     ///   - input: 网址框里的文字
     ///   - title: 标题框里的文字；首尾空白会被去掉，空串视为没有标题
-    static func webPage(from input: String, title: String? = nil) -> FolderItem? {
+    static func webPage(from input: String, title: String? = nil) -> GroupItem? {
         let text = input.trimmingCharacters(in: .whitespacesAndNewlines)
 
         // 中间还有空白时多半是把一句话当成了网址
@@ -153,7 +153,7 @@ final class WebPageAlert: NSObject {
         }
 
         // 只收 `http`、`https` 由分类决定，与从浏览器拖入的网页同一套规则
-        return FolderItem(url: url, title: title)
+        return GroupItem(url: url, title: title)
     }
 
     /// 以 sheet 挂在窗口上弹出，网址框是第一响应者
@@ -220,18 +220,18 @@ extension WebPageAlert {
         alert.addButton(
             withTitle: editedWebPage == nil
                 ? String(
-                    localized: "folders.webPageAlert.add",
-                    comment: "“添加网页…” 提示框的按钮：把输入的网页加入文件夹"
+                    localized: "groups.webPageAlert.add",
+                    comment: "“添加网页…” 提示框的按钮：把输入的网页加入组"
                 )
                 : String(
-                    localized: "folders.webPageAlert.save",
+                    localized: "groups.webPageAlert.save",
                     comment: "网页 “编辑…” 提示框的按钮：保存改好的网址与标题"
                 )
         )
 
         let cancelButton = alert.addButton(
             withTitle: String(
-                localized: "folders.webPageAlert.cancel",
+                localized: "groups.webPageAlert.cancel",
                 comment: "网页提示框的按钮，添加与编辑共用：关闭提示框，什么都不变"
             )
         )
@@ -248,7 +248,7 @@ extension WebPageAlert {
         titleField.delegate = self
 
         addressField.placeholderString = String(
-            localized: "folders.webPageAlert.addressPlaceholder",
+            localized: "groups.webPageAlert.addressPlaceholder",
             comment: "网页提示框里网址框的占位文字，添加与编辑共用"
         )
 
@@ -476,11 +476,11 @@ extension WebPageAlert {
 
         titleField.placeholderString = isFetching
             ? String(
-                localized: "folders.webPageAlert.fetchingTitle",
+                localized: "groups.webPageAlert.fetchingTitle",
                 comment: "网页提示框里标题框的占位文字，添加与编辑共用：正在获取网页的标题"
             )
             : String(
-                localized: "folders.webPageAlert.titlePlaceholder",
+                localized: "groups.webPageAlert.titlePlaceholder",
                 comment: "网页提示框里标题框的占位文字，添加与编辑共用：标题可以留空"
             )
     }

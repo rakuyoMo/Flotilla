@@ -5,7 +5,7 @@ import Testing
 
 // MARK: - FinderFolderReadPeriodsTests
 
-/// 读访达里的文件夹期间的鼠标按下：第一次读受保护的位置时，用户点隐私授权框的按下排到读取结束后才处理，
+/// 读访达文件夹期间的鼠标按下：第一次读受保护的位置时，用户点隐私授权框的按下排到读取结束后才处理，
 /// 若当成面板以外的点击，刚进入的层级会随即收起；读取之外的按下必须照常收起面板、切换 tile
 struct FinderFolderReadPeriodsTests {
     /// 等用户回答授权框的一次读取：第 100 秒开始，第 103.5 秒读完
@@ -40,7 +40,7 @@ struct FinderFolderReadPeriodsTests {
         #expect(!periods.contains(99.9))
     }
 
-    /// 没有读过访达里的文件夹时，任何按下都照常处理
+    /// 没有读过访达文件夹时，任何按下都照常处理
     @Test
     func noReadIgnoresNothing() {
         let periods = FinderFolderReadPeriods()

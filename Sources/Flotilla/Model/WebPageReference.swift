@@ -5,7 +5,7 @@ import UniformTypeIdentifiers
 
 /// 对一个网页的引用：`http` 或 `https` 网址，连同网页的标题
 struct WebPageReference: Codable, Hashable, Identifiable {
-    /// 这一项的唯一标识；同一个网页放进不同文件夹时各有各的 id
+    /// 这一项的唯一标识；同一个网页放进不同组时各有各的 id
     let id: UUID
 
     /// 网页的网址

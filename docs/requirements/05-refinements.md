@@ -1,6 +1,6 @@
 # 05 Dock 状态、拖放加入与本地化
 
-先读 [00 总览](00-overview.md) 与 01–04 四份文档，并以 04 阶段合入后的代码为基线。本阶段交付需求 10–13：tile 被拖出 Dock 后的状态显示与重新添加、把 App 拖到 tile 上加入文件夹、界面本地化，以及设置窗口里的文件夹图标用固定图标。
+先读 [00 总览](00-overview.md) 与 01–04 四份文档，并以 04 阶段合入后的代码为基线。本阶段交付需求 10–13：tile 被拖出 Dock 后的状态显示与重新添加、把 App 拖到 tile 上加入组、界面本地化，以及设置窗口里的组图标用固定图标。
 
 ## tile 被拖出 Dock 后的状态与重新添加（需求 10）
 
@@ -8,57 +8,57 @@
 
 - 用户可以像其它 App 一样把 Flotilla 的 tile 拖出 Dock；拖出后 Flotilla 不再自动把它加回。
 - `DockTileSynchronizer` 只在两种情况下向 Dock 添加 tile：
-  1. 根文件夹是新出现的：上一次同步时它还不是根文件夹（新建的根文件夹、被拖成根文件夹的子文件夹）
-     - 启动时的同步把当时的全部根文件夹都视为已同步过：Flotilla 没运行时不会有新的根文件夹出现，此时缺少 tile 的根文件夹都是被用户拖出去的
+  1. 根组是新出现的：上一次同步时它还不是根组（新建的根组、被拖成根组的子组）
+     - 启动时的同步把当时的全部根组都视为已同步过：Flotilla 没运行时不会有新的根组出现，此时缺少 tile 的根组都是被用户拖出去的
   2. 用户在设置窗口点了 “添加到 Dock”
-- 添加过 tile 的根文件夹先算作 “待添加”，直到确认 tile 已经加上。添加 tile 后同步器重启 Dock，旧 Dock 退出后核对新 Dock 读到的偏好（见 02 的 “Dock 重启后的核对”）：
-  - 核对通过：新拉起的 Dock 读到了期望状态，此刻 Dock 偏好里有 tile 的根文件夹确认加上，不再待添加；此后新 Dock 自己的写回也保留这些条目
+- 添加过 tile 的根组先算作 “待添加”，直到确认 tile 已经加上。添加 tile 后同步器重启 Dock，旧 Dock 退出后核对新 Dock 读到的偏好（见 02 的 “Dock 重启后的核对”）：
+  - 核对通过：新拉起的 Dock 读到了期望状态，此刻 Dock 偏好里有 tile 的根组确认加上，不再待添加；此后新 Dock 自己的写回也保留这些条目
   - 旧 Dock 终止时的写回抹掉了刚加的 tile 时，核对里立即补写，补写赶在新 Dock 读取偏好之前才算通过
   - 核对放弃（一次同步重启 Dock 3 次，补写仍晚于新 Dock 读取）时仍待添加，之后的同步再加
   - 同步看到 tile 在 Dock 上时同样不再待添加
 - 不再待添加之后 tile 不在 Dock 上，就是用户拖出去的：之后的同步都不加回
   - 用户在 tile 出现后立即把它拖出同样不加回
-- 待添加的根文件夹被删除或被拖成子文件夹时，不再添加
-- 在设置窗口新建的根文件夹，在输入名称期间搁置：不添加 tile，也不算被拖出；名称编辑结束（回车确认、点别处提交、Esc 取消）后解除搁置，按新出现的根文件夹添加，tile 带着最终名称出现，Dock 只重启一次
-  - 新建子文件夹不涉及 tile，不搁置；拖放等其它途径出现的根文件夹也不搁置
-  - 搁置只在内存里：搁置期间退出 Flotilla，下次启动时它与其它根文件夹一样视为已同步过，没有 tile，显示 “不在 Dock 上”
+- 待添加的根组被删除或被拖成子组时，不再添加
+- 在设置窗口新建的根组，在输入名称期间搁置：不添加 tile，也不算被拖出；名称编辑结束（回车确认、点别处提交、Esc 取消）后解除搁置，按新出现的根组添加，tile 带着最终名称出现，Dock 只重启一次
+  - 新建子组不涉及 tile，不搁置；拖放等其它途径出现的根组也不搁置
+  - 搁置只在内存里：搁置期间退出 Flotilla，下次启动时它与其它根组一样视为已同步过，没有 tile，显示 “不在 Dock 上”
 - 这部分是纯逻辑，放在 `Dock/DockTileAdditionTracker.swift`：
 
   ```swift
   struct DockTileAdditionTracker {
-      /// 启动时的根文件夹都视为已同步过
-      init(rootFolderIDs: Set<UUID>)
+      /// 启动时的根组都视为已同步过
+      init(rootGroupIDs: Set<UUID>)
 
-      /// 用户要求把该根文件夹添加到 Dock
-      mutating func request(folderID: UUID)
+      /// 用户要求把该根组添加到 Dock
+      mutating func request(groupID: UUID)
 
-      /// 搁置新建的根文件夹：名称定下来之前不添加 tile
-      mutating func hold(folderID: UUID)
+      /// 搁置新建的根组：名称定下来之前不添加 tile
+      mutating func hold(groupID: UUID)
 
-      /// 解除搁置，返回它此前是否在搁置中；此后的同步把它当作新出现的根文件夹
+      /// 解除搁置，返回它此前是否在搁置中；此后的同步把它当作新出现的根组
       @discardableResult
-      mutating func release(folderID: UUID) -> Bool
+      mutating func release(groupID: UUID) -> Bool
 
-      /// 重启后的 Dock 已读到期望的偏好：此刻偏好里已有 tile 的根文件夹确认加上，不再待添加
-      mutating func recordDockRelaunch(onDockFolderIDs: Set<UUID>)
+      /// 重启后的 Dock 已读到期望的偏好：此刻偏好里已有 tile 的根组确认加上，不再待添加
+      mutating func recordDockRelaunch(onDockGroupIDs: Set<UUID>)
 
-      /// 本次同步要添加 tile 的根文件夹：待添加的与新出现的，去掉已在 Dock 上的、已不是根文件夹的与搁置中的；
+      /// 本次同步要添加 tile 的根组：待添加的与新出现的，去掉已在 Dock 上的、已不是根组的与搁置中的；
       /// 返回的集合就是同步之后仍待添加的集合
-      mutating func folderIDsToAdd(
-          rootFolderIDs: Set<UUID>,
-          onDockFolderIDs: Set<UUID>
+      mutating func groupIDsToAdd(
+          rootGroupIDs: Set<UUID>,
+          onDockGroupIDs: Set<UUID>
       ) -> Set<UUID>
 
-      /// 被用户拖出 Dock 的根文件夹：tile 不在 Dock 上，下一次同步也不会添加；
+      /// 被用户拖出 Dock 的根组：tile 不在 Dock 上，下一次同步也不会添加；
       /// 新出现的、搁置中的与待添加的都不算，它们的 tile 只是还没加上
-      func removedFolderIDs(
-          rootFolderIDs: Set<UUID>,
-          onDockFolderIDs: Set<UUID>
+      func removedGroupIDs(
+          rootGroupIDs: Set<UUID>,
+          onDockGroupIDs: Set<UUID>
       ) -> Set<UUID>
   }
   ```
 
-- 其余同步逻辑不变：stub 照常生成与更新（tile 不在 Dock 上的根文件夹也保留 stub，重新添加时直接引用）；已有 tile 的名称、位置与图标照常更新；多余的 tile 与 stub 照常删除。
+- 其余同步逻辑不变：stub 照常生成与更新（tile 不在 Dock 上的根组也保留 stub，重新添加时直接引用）；已有 tile 的名称、位置与图标照常更新；多余的 tile 与 stub 照常删除。
 - 每次同步结束后发出 `DockTileSynchronizer.didSynchronizeNotification`（`object` 为同步器），设置窗口据此刷新状态。
 - Dock 偏好里的 tile 变化时发出 `DockTileSynchronizer.dockTilesDidChangeNotification`（`object` 为同步器），不触发同步：用户把 tile 拖出 Dock 后，实测 Dock 约 4.1 秒才把删除写进偏好，设置窗口据此立即刷新状态（观察方式见 02 的 `observeTiles(_:)`）。
 
@@ -66,25 +66,25 @@
 
 `DockTileSynchronizer` 提供：
 
-- `func rootFolderIDsRemovedFromDock() -> Set<UUID>`：被用户拖出 Dock 的根文件夹，即 `removedFolderIDs` 对当前根文件夹与 Dock 上现有 tile（`DockPreferences.folderIDs(ofTilesIn:)` 对 stub 目录的结果）的判定；刚新建、还没同步的根文件夹，搁置中的与已经要求添加的都不算
-- `func addTile(for folderID: UUID)`：把该根文件夹记为待添加，并安排一次同步
-- `func holdTile(for folderID: UUID)`：搁置新建的根文件夹
-- `func releaseTile(for folderID: UUID)`：解除搁置；它此前在搁置中时安排一次同步
+- `func rootGroupIDsRemovedFromDock() -> Set<UUID>`：被用户拖出 Dock 的根组，即 `removedGroupIDs` 对当前根组与 Dock 上现有 tile（`DockPreferences.groupIDs(ofTilesIn:)` 对 stub 目录的结果）的判定；刚新建、还没同步的根组，搁置中的与已经要求添加的都不算
+- `func addTile(for groupID: UUID)`：把该根组记为待添加，并安排一次同步
+- `func holdTile(for groupID: UUID)`：搁置新建的根组
+- `func releaseTile(for groupID: UUID)`：解除搁置；它此前在搁置中时安排一次同步
 
 ### 设置窗口
 
-- 文件夹树里，tile 不在 Dock 上的根文件夹这一行，在名称右侧显示状态文字 “不在 Dock 上”：次要文字颜色（`secondaryLabelColor`）、小号系统字体；在 Dock 上的根文件夹、子文件夹与 App 都不显示。
-- “添加到 Dock” 是文件夹行右键菜单里的一项（见 10）；只有右键点到的是 tile 不在 Dock 上的根文件夹时可用，点击后调用 `addTile(for:)`。
-- 文件夹树每次重建或刷新状态时读取一次 `rootFolderIDsRemovedFromDock()`，行的状态与 “添加到 Dock” 的可用状态都用这一次读取的结果；点击 “添加到 Dock” 后立即刷新一次，状态文字随即消失。
-- `FolderStore.didChangeNotification` 时重建整棵树。
+- 组树里，tile 不在 Dock 上的根组这一行，在名称右侧显示状态文字 “不在 Dock 上”：次要文字颜色（`secondaryLabelColor`）、小号系统字体；在 Dock 上的根组、子组与 App 都不显示。
+- “添加到 Dock” 是组的右键菜单里的一项（见 10）；只有右键点到的是 tile 不在 Dock 上的根组时可用，点击后调用 `addTile(for:)`。
+- 组树每次重建或刷新状态时读取一次 `rootGroupIDsRemovedFromDock()`，行的状态与 “添加到 Dock” 的可用状态都用这一次读取的结果；点击 “添加到 Dock” 后立即刷新一次，状态文字随即消失。
+- `GroupStore.didChangeNotification` 时重建整棵树。
   - `DockTileSynchronizer.didSynchronizeNotification`、`DockTileSynchronizer.dockTilesDidChangeNotification` 与设置窗口成为 key window 时只原地刷新已显示各行的状态，不重建
-    - 新建根文件夹后立即进入重命名，随后的同步与 Dock 偏好里 tile 的变化都会发出通知；实测 view-based `NSOutlineView` 在编辑中 `reloadData` 会结束编辑，并把输入到一半的名称提交出去
+    - 新建根组后立即进入重命名，随后的同步与 Dock 偏好里 tile 的变化都会发出通知；实测 view-based `NSOutlineView` 在编辑中 `reloadData` 会结束编辑，并把输入到一半的名称提交出去
   - 设置窗口成为 key window 时另按书签更新 App 与文件的位置，有变化才重建（见 07、08）
-- “新建文件夹” 新建根文件夹时，先加入数据源再立即 `holdTile(for:)`（同步器收到变更通知后要等防抖间隔才同步，搁置赶得上）；名称编辑结束（`controlTextDidEndEditing`）时写回名称并 `releaseTile(for:)`
+- “新建组” 新建根组时，先加入数据源再立即 `holdTile(for:)`（同步器收到变更通知后要等防抖间隔才同步，搁置赶得上）；名称编辑结束（`controlTextDidEndEditing`）时写回名称并 `releaseTile(for:)`
   - 按 Esc 取消编辑时名称保持原样，同样 `releaseTile(for:)`：实测 outline view 取消编辑时不发 `controlTextDidEndEditing`，在 `control(_:textView:doCommandBy:)` 收到 `cancelOperation(_:)` 时解除搁置，返回 false，取消编辑仍交给 outline view
-- `SettingsWindowController` 与 `FolderTreeViewController` 通过构造函数拿到同步器，由 `AppDelegate` 传入。Dock 集成不可用（没有 stub 可执行文件，或读不到 Dock 偏好）时同步器为 nil：不显示状态，右键菜单里没有 “添加到 Dock”（见 10）。
+- `SettingsWindowController` 与 `GroupTreeViewController` 通过构造函数拿到同步器，由 `AppDelegate` 传入。Dock 集成不可用（没有 stub 可执行文件，或读不到 Dock 偏好）时同步器为 nil：不显示状态，右键菜单里没有 “添加到 Dock”（见 10）。
 
-## 把 App 拖到 tile 上加入文件夹（需求 11）
+## 把 App 拖到 tile 上加入组（需求 11）
 
 ### stub 声明可接收 App
 
@@ -112,22 +112,22 @@
 
   ```swift
   enum DockTileRequest: Equatable {
-      /// 展开或收起根文件夹的面板
-      case toggleFolder(UUID)
+      /// 展开或收起根组的面板
+      case toggleGroup(UUID)
 
-      /// 把拖到 tile 上的这些项加入根文件夹
-      case addItems(folderID: UUID, fileURLs: [URL])
+      /// 把拖到 tile 上的这些项加入根组
+      case addItems(groupID: UUID, fileURLs: [URL])
 
       init?(url: URL)
   }
   ```
 
-  - `flotilla://folder/<uuid>` → `.toggleFolder`
+  - `flotilla://folder/<uuid>` → `.toggleGroup`
   - `flotilla://folder/<uuid>/items?path=…&path=…` → `.addItems`：`path` 解码后用 `URL(filePath:)` 还原，stub 送来的文件包、App 与文件夹路径以 `/` 结尾，还原成目录 URL；顺序与查询项一致；没有任何 `path` 时视为无法识别
   - 其它 URL 一律为 nil
-- `AppDelegate.application(_:open:)`：`.toggleFolder` 交给 `DockFolderPresenter`；`.addItems` 先确认 id 是根文件夹（stub 只代表根文件夹，其它 id 一律忽略），再经 `FolderItem(url:title:)` 分类后交给 `FolderStore.shared.addItems(_:to:)`（见 06）；整个过程不激活 Flotilla。
-  - App bundle 的判断在 `AppReference.isApplicationBundle(_ url: URL) -> Bool`，由 `FolderItem(url:title:)` 分类时调用
-- 加入之后，文件夹树、tile 图标与面板都按既有的变更通知更新，不另加提示。
+- `AppDelegate.application(_:open:)`：`.toggleGroup` 交给 `DockGroupPresenter`；`.addItems` 先确认 id 是根组（stub 只代表根组，其它 id 一律忽略），再经 `GroupItem(url:title:)` 分类后交给 `GroupStore.shared.addItems(_:to:)`（见 06）；整个过程不激活 Flotilla。
+  - App bundle 的判断在 `AppReference.isApplicationBundle(_ url: URL) -> Bool`，由 `GroupItem(url:title:)` 分类时调用
+- 加入之后，组树、tile 图标与面板都按既有的变更通知更新，不另加提示。
 
 ## 界面本地化（需求 12）
 
@@ -151,26 +151,26 @@
 | `mainMenu.selectAll` | Select All | 全选 | 全選 | すべてを選択 | 전체 선택 |
 | `statusBar.settings` | Settings… | 设置… | 設定… | 設定… | 설정… |
 | `settings.windowTitle` | Settings | 设置 | 設定 | 設定 | 설정 |
-| `folders.sectionTitle` | Folders | 文件夹 | 檔案夾 | フォルダ | 폴더 |
-| `folders.newFolder` | New Folder | 新建文件夹 | 新增檔案夾 | 新規フォルダ | 새로운 폴더 |
-| `folders.untitledFolder` | Untitled Folder | 未命名文件夹 | 未命名檔案夾 | 名称未設定フォルダ | 제목 없는 폴더 |
-| `folders.add` | Add… | 添加… | 加入… | 追加… | 추가… |
-| `folders.addApps` | Add Apps… | 添加 App… | 加入 App… | アプリを追加… | 앱 추가… |
-| `folders.addFiles` | Add Files… | 添加文件… | 加入檔案… | ファイルを追加… | 파일 추가… |
-| `folders.addWebPage` | Add Web Page… | 添加网页… | 加入網頁… | Webページを追加… | 웹 페이지 추가… |
-| `folders.webPageAlert.message` | Add Web Page | 添加网页 | 加入網頁 | Webページを追加 | 웹 페이지 추가 |
-| `folders.webPageAlert.informative` | Enter the address of the web page. The title is optional. | 输入网页的网址，标题可留空。 | 輸入網頁的網址，標題可留空。 | WebページのURLを入力してください。タイトルは省略できます。 | 웹 페이지의 주소를 입력하십시오. 제목은 비워 둘 수 있습니다. |
-| `folders.webPageAlert.addressPlaceholder` | Address | 网址 | 網址 | URL | 주소 |
-| `folders.webPageAlert.titlePlaceholder` | Title (Optional) | 标题（可选） | 標題（可選） | タイトル（オプション） | 제목(선택 사항) |
-| `folders.webPageAlert.fetchingTitle` | Fetching Title… | 正在获取标题… | 正在取得標題… | タイトルを取得中… | 제목 가져오는 중… |
-| `folders.webPageAlert.add` | Add | 添加 | 加入 | 追加 | 추가 |
-| `folders.webPageAlert.cancel` | Cancel | 取消 | 取消 | キャンセル | 취소 |
-| `folders.addToDock` | Add to Dock | 添加到 Dock | 加入 Dock | Dockに追加 | Dock에 추가 |
-| `folders.notOnDock` | Not in Dock | 不在 Dock 上 | 不在 Dock 上 | Dockにありません | Dock에 없음 |
-| `folders.remove` | Delete | 删除 | 刪除 | 削除 | 삭제 |
+| `groups.sectionTitle` | Groups | 组 | 組 | グループ | 그룹 |
+| `groups.newGroup` | New Group | 新建组 | 新增組 | 新規グループ | 새로운 그룹 |
+| `groups.untitledGroup` | Untitled Group | 未命名组 | 未命名組 | 名称未設定グループ | 제목 없는 그룹 |
+| `groups.add` | Add… | 添加… | 加入… | 追加… | 추가… |
+| `groups.addApps` | Add Apps… | 添加 App… | 加入 App… | アプリを追加… | 앱 추가… |
+| `groups.addFiles` | Add Files… | 添加文件… | 加入檔案… | ファイルを追加… | 파일 추가… |
+| `groups.addWebPage` | Add Web Page… | 添加网页… | 加入網頁… | Webページを追加… | 웹 페이지 추가… |
+| `groups.webPageAlert.message` | Add Web Page | 添加网页 | 加入網頁 | Webページを追加 | 웹 페이지 추가 |
+| `groups.webPageAlert.informative` | Enter the address of the web page. The title is optional. | 输入网页的网址，标题可留空。 | 輸入網頁的網址，標題可留空。 | WebページのURLを入力してください。タイトルは省略できます。 | 웹 페이지의 주소를 입력하십시오. 제목은 비워 둘 수 있습니다. |
+| `groups.webPageAlert.addressPlaceholder` | Address | 网址 | 網址 | URL | 주소 |
+| `groups.webPageAlert.titlePlaceholder` | Title (Optional) | 标题（可选） | 標題（可選） | タイトル（オプション） | 제목(선택 사항) |
+| `groups.webPageAlert.fetchingTitle` | Fetching Title… | 正在获取标题… | 正在取得標題… | タイトルを取得中… | 제목 가져오는 중… |
+| `groups.webPageAlert.add` | Add | 添加 | 加入 | 追加 | 추가 |
+| `groups.webPageAlert.cancel` | Cancel | 取消 | 取消 | キャンセル | 취소 |
+| `groups.addToDock` | Add to Dock | 添加到 Dock | 加入 Dock | Dockに追加 | Dock에 추가 |
+| `groups.notOnDock` | Not in Dock | 不在 Dock 上 | 不在 Dock 上 | Dockにありません | Dock에 없음 |
+| `groups.remove` | Delete | 删除 | 刪除 | 削除 | 삭제 |
 | `general.sectionTitle` | General | 通用 | 一般 | 一般 | 일반 |
-| `general.previewIconCount` | Icons shown in folder icon: | 文件夹图标内显示的图标数量： | 檔案夾圖像內顯示的圖像數量： | フォルダアイコンに表示するアイコンの数： | 폴더 아이콘에 표시할 아이콘 수: |
-| `general.finderFolders` | Finder folders: | 访达里的文件夹： | Finder 裡的檔案夾： | Finderのフォルダ： | Finder 폴더: |
+| `general.previewIconCount` | Icons shown in group icon: | 组图标内显示的图标数量： | 組圖像內顯示的圖像數量： | グループアイコンに表示するアイコンの数： | 그룹 아이콘에 표시할 아이콘 수: |
+| `general.finderFolders` | Finder folders: | 访达文件夹： | Finder 檔案夾： | Finderのフォルダ： | Finder 폴더: |
 | `general.showHiddenFiles` | Show hidden files | 显示隐藏文件 | 顯示隱藏檔案 | 不可視ファイルを表示 | 숨김 파일 보기 |
 | `general.accessibility` | Accessibility permission: | 辅助功能权限： | 輔助使用權限： | アクセシビリティの権限： | 손쉬운 사용 권한: |
 | `general.accessibilityGranted` | Granted | 已授权 | 已授權 | 許可済み | 허용됨 |
@@ -182,17 +182,17 @@
 - `panel.back` 是面板返回按钮的辅助功能标签；状态栏图标的辅助功能描述是 App 名，简繁中文为 “归帆” “歸帆”，日文为 “帰帆”，其它语言为 “Flotilla”。
 - `panel.openInFinder` 照抄 Dock 自己的 `SHOW_IN_FINDER`，照原生原样不加中英文之间的空格（见 08）。
 
-## 设置窗口的文件夹图标（需求 13）
+## 设置窗口的组图标（需求 13）
 
-- 文件夹树里文件夹行的图标是系统的通用文件夹图标（`NSWorkspace.shared.icon(for: .folder)`），根文件夹与子文件夹相同，不随预览数量与系统外观变化。
+- 组树里组这一行的图标是系统的通用文件夹图标（`NSWorkspace.shared.icon(for: .folder)`），根组与子组相同，不随预览数量与系统外观变化。
 - App 行用 `AppReference.icon`。
-- 需求 2 的预览图标与外观跟随只影响 Dock 上的 tile 与面板里的子文件夹。
+- 需求 2 的预览图标与外观跟随只影响 Dock 上的 tile 与面板里的子组。
 
 ## 单元测试
 
 - `DockTileAdditionTracker`：
-  - 启动时缺少 tile 的根文件夹不添加
-  - 新出现的根文件夹添加
+  - 启动时缺少 tile 的根组不添加
+  - 新出现的根组添加
   - 还没确认新 Dock 读到的 tile 不在 Dock 上时不算被拖出、下一次同步再加
   - 新 Dock 读到之后、下一次同步之前被拖出的不再添加
   - 新 Dock 只读到部分 tile 时只确认读到的
@@ -201,7 +201,7 @@
   - 搁置期间不添加也不算被拖出，解除后添加
   - 只有搁置过的才报告解除
   - 搁置期间被删除的不添加
-  - 待添加的被删除或不再是根文件夹时不添加
+  - 待添加的被删除或不再是根组时不添加
   - 被拖出的判定只包含启动时就缺 tile 的与确认加上之后又消失的，新出现的、待添加的与已要求添加的都不算
 - `DockTileRequest`：两种 URL 的解析，`path` 里的空格与中文，多个 `path` 保持顺序；scheme、host、层级、id 不符或没有 `path` 的 URL 一律为 nil
 - stub 的 Info.plist 含上述 `CFBundleDocumentTypes`
@@ -211,8 +211,8 @@
 
 - `mise run swift:lint`、`swift test`、`mise run bundle` 全部通过；`build/Flotilla.app/Contents/Resources/` 下有五个 `.lproj`
 - 真实 Dock 上：
-  - 把 tile 拖出 Dock 后，Flotilla 不加回；设置窗口里该根文件夹显示 “不在 Dock 上”，右键点它时菜单里的 “添加到 Dock” 可用（见 10），点击后 tile 回到 Dock、状态消失
-  - 新建根文件夹仍自动出现在 Dock 上；重启 Flotilla 后被拖出的 tile 仍不加回
-  - 从访达把一个或多个 App 拖到 tile 上：tile 高亮，松手后 App 出现在该文件夹里；前台 App 保持前台；拖文件与访达里的文件夹的结果见 06、07
+  - 把 tile 拖出 Dock 后，Flotilla 不加回；设置窗口里该根组显示 “不在 Dock 上”，右键点它时菜单里的 “添加到 Dock” 可用（见 10），点击后 tile 回到 Dock、状态消失
+  - 新建根组仍自动出现在 Dock 上；重启 Flotilla 后被拖出的 tile 仍不加回
+  - 从访达把一个或多个 App 拖到 tile 上：tile 高亮，松手后 App 出现在该组里；前台 App 保持前台；拖文件与访达文件夹的结果见 06、07
   - 系统语言或 Flotilla 的单独语言设置切到五种语言之一时，菜单、设置窗口与面板返回按钮的辅助功能标签都换成对应语言；其它语言显示英文
-  - 设置窗口里文件夹行显示系统文件夹图标，切换外观不重绘
+  - 设置窗口里组这一行显示系统文件夹图标，切换外观不重绘

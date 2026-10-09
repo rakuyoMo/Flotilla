@@ -15,13 +15,13 @@ final class AppDelegate: NSObject {
     /// 状态栏图标与菜单；启动完成后创建
     private var statusBarController: StatusBarController?
 
-    /// 让 Dock 上的 tile 与根文件夹保持一致；
+    /// 让 Dock 上的 tile 与根组保持一致；
     /// 在 `applicationWillFinishLaunching` 里创建
     private var dockTileSynchronizer: DockTileSynchronizer?
 
     /// 面板的展开、收起与切换；
     /// 在 `applicationWillFinishLaunching` 里创建
-    private var dockFolderPresenter: DockFolderPresenter?
+    private var dockGroupPresenter: DockGroupPresenter?
 
     /// 让 Dock 与 ⌘Tab 里的 App 图标跟随系统的 “图标与小组件样式”
     private let appIconController = AppIconController()
@@ -53,7 +53,7 @@ extension AppDelegate: NSApplicationDelegate {
         exitIfAnotherInstanceIsRunning()
 
         // 没运行期间移动或改名的 App 与文件先跟到新位置，Dock 第一次同步渲染的 tile 图标就用上新位置
-        FolderStore.shared.updateItemLocations()
+        GroupStore.shared.updateItemLocations()
 
         startDockIntegration()
     }
@@ -73,7 +73,7 @@ extension AppDelegate: NSApplicationDelegate {
         registerAsURLHandler()
     }
 
-    /// 处理 stub 发来的请求：展开或收起面板交给面板处理，拖到 tile 上的 App 与文件加入根文件夹；
+    /// 处理 stub 发来的请求：展开或收起面板交给面板处理，拖到 tile 上的 App 与文件加入根组；
     /// 整个过程不激活 Flotilla
     func application(_: NSApplication, open urls: [URL]) {
         for url in urls {
@@ -83,28 +83,28 @@ extension AppDelegate: NSApplicationDelegate {
             }
 
             switch request {
-            case .toggleFolder(let folderID):
-                guard let dockFolderPresenter else {
+            case .toggleGroup(let groupID):
+                guard let dockGroupPresenter else {
                     Self.logger.error("面板不可用，忽略 URL：\(url.absoluteString, privacy: .public)")
                     continue
                 }
 
-                dockFolderPresenter.handleURLSignal(folderID: folderID)
+                dockGroupPresenter.handleURLSignal(groupID: groupID)
 
             // 同一次拖放重复送达时由 `addItems` 去重
-            case .addItems(let folderID, let fileURLs):
-                // stub 只代表根文件夹，指向其它文件夹的 URL 一律忽略
-                guard FolderStore.shared.rootFolders.contains(where: { $0.id == folderID }) else {
-                    Self.logger.notice("忽略不存在的根文件夹：\(folderID.uuidString, privacy: .public)")
+            case .addItems(let groupID, let fileURLs):
+                // stub 只代表根组，指向其它组的 URL 一律忽略
+                guard GroupStore.shared.rootGroups.contains(where: { $0.id == groupID }) else {
+                    Self.logger.notice("忽略不存在的根组：\(groupID.uuidString, privacy: .public)")
                     continue
                 }
 
-                // 访达里的文件夹同样作为文件加入；已不存在的文件在分类时被略过
+                // 访达文件夹同样作为文件加入；已不存在的文件在分类时被略过
                 let items = fileURLs.compactMap {
-                    FolderItem(url: $0, title: nil)
+                    GroupItem(url: $0, title: nil)
                 }
 
-                FolderStore.shared.addItems(items, to: folderID)
+                GroupStore.shared.addItems(items, to: groupID)
             }
         }
     }
@@ -250,13 +250,13 @@ extension AppDelegate {
 
         startDockTileSynchronizer(builder: builder)
 
-        let presenter = DockFolderPresenter(
+        let presenter = DockGroupPresenter(
             store: .shared,
             preferences: .shared,
             locator: DockTileLocator(builder: builder)
         )
         presenter.start()
-        dockFolderPresenter = presenter
+        dockGroupPresenter = presenter
     }
 
     /// 创建并启动 Dock tile 同步器；无法读写 Dock 偏好时只记录日志

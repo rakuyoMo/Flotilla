@@ -35,12 +35,13 @@ extension DockTileAppDelegate: NSApplicationDelegate {
         droppedURLs += urls
     }
 
-    /// 拼出 URL 并打开；缺少根文件夹 id 时以非零状态退出
+    /// 拼出 URL 并打开；缺少根组 id 时以非零状态退出
     func applicationDidFinishLaunching(_: Notification) {
-        // 根文件夹 id 由 Flotilla 生成 stub 时写进 Info.plist
+        // 根组 id 由 Flotilla 生成 stub 时写进 Info.plist；
+        // 键名沿用 `FlotillaFolderID`：Flotilla 写进 Info.plist 的就是它
         guard
-            let folderID = Bundle.main.infoDictionary?["FlotillaFolderID"] as? String,
-            let url = makeURL(folderID: folderID)
+            let groupID = Bundle.main.infoDictionary?["FlotillaFolderID"] as? String,
+            let url = makeURL(groupID: groupID)
         else {
             Self.logger.error("Info.plist 缺少有效的 FlotillaFolderID")
             exit(EXIT_FAILURE)
@@ -80,11 +81,13 @@ extension DockTileAppDelegate {
     }
 
     /// 发给 Flotilla 的 URL：有被拖的项时带上它们的 POSIX 路径，由 `URLComponents` 编码
-    private func makeURL(folderID: String) -> URL? {
+    private func makeURL(groupID: String) -> URL? {
         var components = URLComponents()
         components.scheme = "flotilla"
+
+        // host 沿用 `folder`：Flotilla 只认它，Dock 上已有的 stub 发的也是它
         components.host = "folder"
-        components.path = "/\(folderID)"
+        components.path = "/\(groupID)"
 
         guard !droppedURLs.isEmpty else { return components.url }
 

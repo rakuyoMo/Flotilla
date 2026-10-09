@@ -140,16 +140,16 @@ struct WebPageAlertTests {
         let alert = addWebPageAlert.alert
         let fields = try textFields(of: addWebPageAlert)
 
-        #expect(alert.messageText == "folders.webPageAlert.message")
-        #expect(alert.informativeText == "folders.webPageAlert.informative")
+        #expect(alert.messageText == "groups.webPageAlert.message")
+        #expect(alert.informativeText == "groups.webPageAlert.informative")
 
         #expect(alert.buttons.map(\.title) == [
-            "folders.webPageAlert.add",
-            "folders.webPageAlert.cancel",
+            "groups.webPageAlert.add",
+            "groups.webPageAlert.cancel",
         ])
 
-        #expect(fields.address.placeholderString == "folders.webPageAlert.addressPlaceholder")
-        #expect(fields.title.placeholderString == "folders.webPageAlert.titlePlaceholder")
+        #expect(fields.address.placeholderString == "groups.webPageAlert.addressPlaceholder")
+        #expect(fields.title.placeholderString == "groups.webPageAlert.titlePlaceholder")
     }
 
     /// 网址框在上、标题框在下，都与上方的说明文字左右对齐，不把提示框撑宽；网址框是窗口的第一响应者
@@ -615,12 +615,12 @@ extension WebPageAlertTests {
         #expect(fields.address.stringValue == "https://example.com/")
         #expect(fields.title.stringValue == "Example Domain")
 
-        #expect(alert.messageText == "folders.webPageAlert.editMessage")
+        #expect(alert.messageText == "groups.webPageAlert.editMessage")
         #expect(alert.informativeText == addWebPageAlert.alert.informativeText)
 
         #expect(alert.buttons.map(\.title) == [
-            "folders.webPageAlert.save",
-            "folders.webPageAlert.cancel",
+            "groups.webPageAlert.save",
+            "groups.webPageAlert.cancel",
         ])
 
         #expect(alert.buttons.map(\.keyEquivalent) == ["\r", "\u{1b}"])
@@ -649,7 +649,7 @@ extension WebPageAlertTests {
         defer { window.orderOut(nil) }
 
         #expect(fields.title.stringValue.isEmpty)
-        #expect(fields.title.placeholderString == "folders.webPageAlert.titlePlaceholder")
+        #expect(fields.title.placeholderString == "groups.webPageAlert.titlePlaceholder")
 
         stub.beginSheet(of: editAlert, on: window)
         stub.endPauses()
@@ -752,8 +752,8 @@ extension WebPageAlertTests {
 
         defer { try? FileManager.default.removeItem(at: directory) }
 
-        let store = FolderStore(fileURL: directory.appending(path: "folders.json"))
-        let folder = store.addRootFolder(named: "根")
+        let store = GroupStore(fileURL: directory.appending(path: "folders.json"))
+        let group = store.addRootGroup(named: "根")
         let apple = try url("https://apple.com")
         let python = try url("https://python.org")
 
@@ -766,7 +766,7 @@ extension WebPageAlertTests {
         addWebPageAlert.beginSheetModal(
             for: window,
             completionHandler: {
-                store.addItems([.webPage($0)], to: folder.id)
+                store.addItems([.webPage($0)], to: group.id)
             },
             titleHandler: {
                 store.fillTitle($0, of: $1)
@@ -845,8 +845,8 @@ extension WebPageAlertTests {
         let isSpinning = try !progressIndicator().isHidden
 
         let expectedPlaceholder = isSpinning
-            ? "folders.webPageAlert.fetchingTitle"
-            : "folders.webPageAlert.titlePlaceholder"
+            ? "groups.webPageAlert.fetchingTitle"
+            : "groups.webPageAlert.titlePlaceholder"
 
         #expect(fields.title.placeholderString == expectedPlaceholder, "转圈与占位文字没有一起换")
 
@@ -876,9 +876,9 @@ extension WebPageAlertTests {
         WebPageReference(id: UUID(), url: try url("https://example.com/"), title: title)
     }
 
-    /// 数据源里第一个根文件夹的第一项：是网页时给出它，否则为 nil
-    private func firstWebPage(in store: FolderStore) -> WebPageReference? {
-        guard case .webPage(let webPage) = store.rootFolders.first?.items.first else { return nil }
+    /// 数据源里第一个根组的第一项：是网页时给出它，否则为 nil
+    private func firstWebPage(in store: GroupStore) -> WebPageReference? {
+        guard case .webPage(let webPage) = store.rootGroups.first?.items.first else { return nil }
 
         return webPage
     }

@@ -4,7 +4,7 @@ import os
 
 // MARK: - DockTileLocator
 
-/// 通过辅助功能（AX）读取 Dock 进程的 AX 树，定位根文件夹的 tile；无权限或找不到 tile 时退化为鼠标位置在 Dock 方向上的投影
+/// 通过辅助功能（AX）读取 Dock 进程的 AX 树，定位根组的 tile；无权限或找不到 tile 时退化为鼠标位置在 Dock 方向上的投影
 ///
 /// AX 的坐标以主屏左上角为原点、y 向下，交给 AppKit 之前都要换算
 @MainActor
@@ -33,14 +33,14 @@ final class DockTileLocator {
         category: "DockTileLocator"
     )
 
-    /// 从 AX 树里 tile 的 `AXURL`（指向 stub）解析出根文件夹 id
+    /// 从 AX 树里 tile 的 `AXURL`（指向 stub）解析出根组 id
     private let builder: DockTileBundleBuilder
 
     /// 本次启动是否已经带提示地请求过辅助功能权限
     private var hasPromptedForTrust = false
 
     /// 创建定位器，并设置 AX 调用的全局超时
-    /// - Parameter builder: 从 stub 位置解析根文件夹 id 的生成器
+    /// - Parameter builder: 从 stub 位置解析根组 id 的生成器
     init(builder: DockTileBundleBuilder) {
         self.builder = builder
 
@@ -52,17 +52,17 @@ final class DockTileLocator {
 // MARK: - Locating
 
 extension DockTileLocator {
-    /// 定位根文件夹的 tile
+    /// 定位根组的 tile
     ///
     /// 第一次调用时带提示地请求辅助功能权限，每次启动最多提示一次；
     /// 没有权限、Dock 正在重启或找不到 tile 时，退化为鼠标位置在 Dock 方向上的投影
     /// - Returns: 没有任何屏幕时为 nil
-    func locate(folderID: UUID) -> DockTileAnchor? {
+    func locate(groupID: UUID) -> DockTileAnchor? {
         let edge = dockEdge()
 
         if
             requestTrustIfNeeded(),
-            let tileFrame = tileFrame(of: folderID),
+            let tileFrame = tileFrame(of: groupID),
             let screen = Self.screen(
                 containing: CGPoint(x: tileFrame.midX, y: tileFrame.midY)
             )
@@ -71,7 +71,7 @@ extension DockTileLocator {
         }
 
         Self.logger.notice(
-            "未能通过辅助功能定位 tile，改用鼠标位置：\(folderID.uuidString, privacy: .public)"
+            "未能通过辅助功能定位 tile，改用鼠标位置：\(groupID.uuidString, privacy: .public)"
         )
 
         return fallbackAnchor(edge: edge)
@@ -80,8 +80,8 @@ extension DockTileLocator {
     /// 快速路径：鼠标位置下的 Flotilla tile；没有权限或不在任何 Flotilla tile 上时返回 nil
     /// - Parameters:
     ///   - point: AppKit 屏幕坐标
-    ///   - folderIDs: 候选的根文件夹
-    func folderID(at point: CGPoint, among folderIDs: [UUID]) -> UUID? {
+    ///   - groupIDs: 候选的根组
+    func groupID(at point: CGPoint, among groupIDs: [UUID]) -> UUID? {
         guard
             AXIsProcessTrusted(),
             let dockElement = Self.dockApplicationElement(),
@@ -95,7 +95,7 @@ extension DockTileLocator {
             primaryScreenHeight: primaryScreenHeight
         )
 
-        // 取 Dock 的 AX 树里该点下的元素，按它的 `AXURL` 认出是哪个根文件夹的 stub
+        // 取 Dock 的 AX 树里该点下的元素，按它的 `AXURL` 认出是哪个根组的 stub
         var element: AXUIElement? = nil
         let error = AXUIElementCopyElementAtPosition(
             dockElement,
@@ -108,12 +108,12 @@ extension DockTileLocator {
             error == .success,
             let element,
             let url = Self.url(of: element),
-            let folderID = builder.folderID(forBundleURL: url)
+            let groupID = builder.groupID(forBundleURL: url)
         else {
             return nil
         }
 
-        return folderIDs.contains(folderID) ? folderID : nil
+        return groupIDs.contains(groupID) ? groupID : nil
     }
 
     /// 一次点击是否落在 Dock 区域，按 `dockArea(in:edge:tileSize:)` 估算
@@ -222,11 +222,11 @@ extension DockTileLocator {
         return AXIsProcessTrustedWithOptions(options)
     }
 
-    /// 在 Dock 的 AX 树里查找 `AXURL` 指向该根文件夹 stub 的 tile，返回它的 AppKit 屏幕坐标
+    /// 在 Dock 的 AX 树里查找 `AXURL` 指向该根组 stub 的 tile，返回它的 AppKit 屏幕坐标
     ///
     /// Dock 应用元素的子元素是 tile 列表，列表的子元素才是各个 tile；
     /// 开启自动隐藏时，Dock 重启后到第一次显示之前，所有 tile 的 frame 都是宽度为 0 的无效值，视同找不到
-    private func tileFrame(of folderID: UUID) -> CGRect? {
+    private func tileFrame(of groupID: UUID) -> CGRect? {
         guard
             let dockElement = Self.dockApplicationElement(),
             let primaryScreenHeight = Self.primaryScreenHeight()
@@ -237,7 +237,7 @@ extension DockTileLocator {
         let tiles = Self.children(of: dockElement).flatMap { Self.children(of: $0) }
 
         let tile = tiles.first {
-            Self.url(of: $0).flatMap { builder.folderID(forBundleURL: $0) } == folderID
+            Self.url(of: $0).flatMap { builder.groupID(forBundleURL: $0) } == groupID
         }
 
         guard

@@ -2,9 +2,9 @@ import Foundation
 
 // MARK: - FinderFolderContents
 
-/// 面板里展开访达里的文件夹时读出的内容：按设置跳过或显示隐藏文件，按访达 “名称” 的顺序排列，App bundle 为 App，其余为文件
+/// 面板里展开访达文件夹时读出的内容：按设置跳过或显示隐藏文件，按访达 “名称” 的顺序排列，App bundle 为 App，其余为文件
 ///
-/// 各项只存在于这一次展开里，不进 `FolderStore`、不建书签。同一个层级里同名的项在一次展开里 id 不变：
+/// 各项只存在于这一次展开里，不进 `GroupStore`、不建书签。同一个层级里同名的项在一次展开里 id 不变：
 /// 返回时父层级是重新读出来的，要按 id 找到缩回的图标、恢复滚动位置
 struct FinderFolderContents {
     /// 显示隐藏文件时仍不显示的文件名，与访达的 ⌘⇧. 相同（macOS 27 实测）
@@ -12,22 +12,22 @@ struct FinderFolderContents {
 
     /// 本次展开里已分配的 id：所在层级的 id → 名称 → 这一项的 id
     ///
-    /// 按所在层级与名称而不是完整路径记：最外层的访达里的文件夹按书签跟到新位置后，里面各项的 id 仍然不变
+    /// 按所在层级与名称而不是完整路径记：最外层的访达文件夹按书签跟到新位置后，里面各项的 id 仍然不变
     private var itemIDs: [UUID: [String: UUID]] = [:]
 
     /// 本次展开里读出的隐藏项的 id，面板把它们画成半透明；以每一项最近一次读到的属性为准
     private(set) var hiddenItemIDs: Set<UUID> = []
 
-    /// 读出访达里的文件夹里的各项，并按这次读到的属性更新 `hiddenItemIDs`
+    /// 读出访达文件夹里的各项，并按这次读到的属性更新 `hiddenItemIDs`
     /// - Parameters:
-    ///   - finderFolder: 访达里的文件夹；它的 id 就是展开后那一层的 id
+    ///   - finderFolder: 访达文件夹；它的 id 就是展开后那一层的 id
     ///   - includingHiddenFiles: 是否显示隐藏文件；显示时 `.DS_Store` 与 `.localized` 仍不显示
     /// - Returns: 按显示名排好序的各项
     /// - Throws: 读不出内容时抛出：已删除、没有权限、隐私授权被拒
     mutating func items(
         of finderFolder: FileReference,
         includingHiddenFiles: Bool
-    ) throws -> [FolderItem] {
+    ) throws -> [GroupItem] {
         // 读目录时一并取齐排序、分类与是否隐藏要用的属性，之后各项只读这份缓存，不再逐项访问磁盘
         let urls = try FileManager.default.contentsOfDirectory(
             at: finderFolder.url,
@@ -74,7 +74,7 @@ extension FinderFolderContents {
     /// - Parameters:
     ///   - url: 这一项的 URL
     ///   - levelID: 所在层级的 id
-    private mutating func item(at url: URL, in levelID: UUID) -> FolderItem? {
+    private mutating func item(at url: URL, in levelID: UUID) -> GroupItem? {
         // 是否目录、是否隐藏与内容类型都取自读目录时的预取，不再访问磁盘
         guard
             let values = try? url.resourceValues(forKeys: [.isDirectoryKey, .isHiddenKey])
@@ -82,7 +82,7 @@ extension FinderFolderContents {
             return nil
         }
 
-        // 按加入文件夹时的同一规则记录 URL：目录为目录 URL，其余为文件 URL
+        // 按加入组时的同一规则记录 URL：目录为目录 URL，其余为文件 URL
         let normalizedURL = FileReference.normalizedURL(
             url,
             isDirectory: values.isDirectory ?? false

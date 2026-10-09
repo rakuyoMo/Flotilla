@@ -3,7 +3,7 @@ import QuickLookThumbnailing
 
 // MARK: - FileThumbnailLoader
 
-/// 为访达里的文件夹的层级里的文件请求 QuickLook 内容缩略图：原生叠放里，文件显示的是内容缩略图而不是通用图标
+/// 为访达文件夹的层级里的文件请求 QuickLook 内容缩略图：原生叠放里，文件显示的是内容缩略图而不是通用图标
 ///
 /// 缩略图在主线程交给调用方；`cancel(_:)` 取消一个还没完成的请求，`cancelAll()` 取消全部，之后到达的结果一律丢掉
 @MainActor
@@ -79,7 +79,7 @@ extension FileThumbnailLoader {
         // 已取消的请求不在表里：晚到的结果丢掉，不会落到已离开的层级上
         guard let request = pendingRequests.removeValue(forKey: id) else { return }
 
-        // 生成不出缩略图是常态（访达里的文件夹、没有缩略图扩展的类型、已删除、没有权限），
+        // 生成不出缩略图是常态（访达文件夹、没有缩略图扩展的类型、已删除、没有权限），
         // 保持图标，不记日志
         guard let thumbnail else { return }
 
@@ -103,7 +103,7 @@ extension FileThumbnailLoader {
         scale: CGFloat,
         completion: @escaping @Sendable (NSImage?) -> Void
     ) -> () -> Void {
-        let side = FolderPanelMetrics.fileThumbnailSize
+        let side = GroupPanelMetrics.fileThumbnailSize
 
         let request = QLThumbnailGenerator.Request(
             fileAt: url,
@@ -130,8 +130,8 @@ extension FileThumbnailLoader {
     ///
     /// 单元格把图标缩放到图标画布的大小显示；缩略图的画布比图标画布小，先居中放进去，才按原样大小显示，中心与图标相同
     private nonisolated static func centeredInIconCanvas(_ thumbnail: NSImage) -> NSImage {
-        let canvas = FolderPanelMetrics.iconSize
-        let inset = (canvas - FolderPanelMetrics.fileThumbnailSize) / 2
+        let canvas = GroupPanelMetrics.iconSize
+        let inset = (canvas - GroupPanelMetrics.fileThumbnailSize) / 2
 
         return NSImage(size: CGSize(width: canvas, height: canvas), flipped: false) { rect in
             thumbnail.draw(in: rect.insetBy(dx: inset, dy: inset))
