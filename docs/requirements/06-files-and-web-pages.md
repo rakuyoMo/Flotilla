@@ -54,7 +54,7 @@ enum GroupItem: Codable, Hashable, Identifiable {
 - `FileReference`：`displayName` 为 `FileManager.default.displayName(atPath:)`，`icon` 为 `NSWorkspace.shared.icon(forFile:)`，与 `AppReference` 相同；名称以 `.` 开头、没有扩展名的文件与访达文件夹按内容类型取，见 08 的需求 23。
   - 访达文件夹的层级里，面板网格另给文件换上内容缩略图，见 08 的 “文件的内容缩略图”
 - `WebPageReference`：
-  - `displayName`：有标题用标题，没有时用 `url.absoluteString`
+  - `displayName`：有标题用标题，没有时用显示的网址（`displayAddress`）：网址里的中文等按解码后的文字显示，见 [12](12-groups.md) 的需求 34
   - `icon`：与 Dock 右侧网页 tile 相同，取 `/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/BookmarkIcon.icns`（蓝色地球）；所有网页共用，只加载一次；读不到时退回网址文件（`com.apple.web-internet-location`）的图标
     - 实测（macOS 27）：Dock 右侧网页 tile 的图标与 `BookmarkIcon.icns` 逐像素比对一致；`NSWorkspace` 按 `com.apple.web-internet-location`、`com.apple.internet-location`、`public.url` 取到的图标都不是它
 - JSON 与 App、子组一样平铺，类型标签为 `file` 与 `webPage`：
