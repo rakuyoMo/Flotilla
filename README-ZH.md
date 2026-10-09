@@ -2,9 +2,9 @@
 
 [English](README.md) | 简体中文
 
-归帆（Flotilla）在 macOS 的 Dock 上增加 “文件夹”，把多个 App 分类收纳进去；像 Dock 右侧区域那样，文件夹里也可以放文件、访达里的文件夹与网页。
+归帆（Flotilla）在 macOS 的 Dock 上增加 “组”，把多个 App 分类收纳进去；像 Dock 右侧区域那样，组里也可以放文件、访达文件夹与网页。
 
-点击文件夹，它会在 Dock 上展开，显示其中的内容；点击即可打开，访达里的文件夹则像 Dock 叠放那样继续展开。
+点击组，它会在 Dock 上展开，显示其中的内容；点击即可打开，访达文件夹则像 Dock 叠放那样继续展开。
 
 界面语言跟随系统：
 
@@ -48,7 +48,7 @@ xattr -d com.apple.quarantine /Applications/Flotilla.app
 
 归帆通过辅助功能读取 Dock 的界面信息，用来：
 
-- 找到文件夹的 tile（Dock 上的一个图标）在屏幕上的位置，让面板和它的尾巴对准 tile
+- 找到组的 tile（Dock 上的一个图标）在屏幕上的位置，让面板和它的尾巴对准 tile
 - 识别鼠标在 tile 上的点击，在抬起的一刻就展开，与系统自带的 Dock 文件夹时机一致
 
 没有这项权限时仍然可以使用，区别是：
@@ -66,7 +66,7 @@ xattr -d com.apple.quarantine /Applications/Flotilla.app
 
 ### 文件与文件夹
 
-访达里的文件夹如果在 “文稿” “桌面” “下载” 等位置，面板第一次展开它时，系统会先询问是否允许访问。
+访达文件夹如果在 “文稿” “桌面” “下载” 等位置，面板第一次展开它时，系统会先询问是否允许访问。
 
 归帆要读取文件夹的内容，才能在面板里展开它。
 
@@ -86,8 +86,8 @@ xattr -d com.apple.quarantine /Applications/Flotilla.app
 
 数据保存在 `~/Library/Application Support/Flotilla`：
 
-- `folders.json`：文件夹数据
-- `DockTiles/`：代表每个根文件夹放进 Dock 的占位 App
+- `folders.json`：组的数据
+- `DockTiles/`：代表每个根组放进 Dock 的占位 App
 - `Backups/`：Dock 偏好的备份
 
 设置保存在偏好设置域 `com.rakuyo.flotilla`。
