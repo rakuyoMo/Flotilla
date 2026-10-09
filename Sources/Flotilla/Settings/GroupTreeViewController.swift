@@ -164,7 +164,7 @@ final class GroupTreeViewController: NSViewController {
 // MARK: NSOutlineViewDelegate
 
 extension GroupTreeViewController: NSOutlineViewDelegate {
-    /// 每一行显示图标、名称、访达文件夹的位置，
+    /// 每一行显示图标、名称、访达文件夹的位置或网页的网址，
     /// 以及被拖出 Dock 的根组的 “不在 Dock 上”
     func outlineView(
         _ outlineView: NSOutlineView,

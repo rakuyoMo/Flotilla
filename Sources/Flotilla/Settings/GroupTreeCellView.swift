@@ -3,7 +3,8 @@ import UniformTypeIdentifiers
 
 // MARK: - GroupTreeCellView
 
-/// 组树的一行：图标、名称、访达文件夹所在的位置与状态文字；组名可编辑，App、文件与网页的名称只读
+/// 组树的一行：图标、名称、访达文件夹的位置或网页的网址，以及状态文字；
+/// 组名可编辑，App、文件与网页的名称只读
 final class GroupTreeCellView: NSTableCellView {
     /// 行视图的复用标识
     static let reuseIdentifier = NSUserInterfaceItemIdentifier("GroupTreeCell")
@@ -11,7 +12,7 @@ final class GroupTreeCellView: NSTableCellView {
     /// 行首图标的边长（pt）
     private static let iconSize: CGFloat = 20
 
-    /// 访达文件夹名称后的位置文字，与 “不在 Dock 上” 同样的灰色小字；其余各行隐藏
+    /// 名称后的灰色小字，与 “不在 Dock 上” 样式相同：访达文件夹的位置或网页的网址；其余各行隐藏
     ///
     /// 设置窗口里访达文件夹与组的图标相同，靠它区分
     private let locationLabel = NSTextField(labelWithString: "")
@@ -30,12 +31,12 @@ final class GroupTreeCellView: NSTableCellView {
         set { notOnDockLabel.isHidden = !newValue }
     }
 
-    /// 这一行显示的位置文字；不显示时为 nil
+    /// 这一行名称后显示的位置或网址；不显示时为 nil
     var locationText: String? {
         locationLabel.isHidden ? nil : locationLabel.stringValue
     }
 
-    /// 创建图标、名称、位置文字与状态文字四个子视图并完成布局
+    /// 创建图标、名称、位置或网址、状态文字四个子视图并完成布局
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
 
@@ -48,7 +49,7 @@ final class GroupTreeCellView: NSTableCellView {
         let nameField = NSTextField(labelWithString: "")
         nameField.lineBreakMode = .byTruncatingTail
 
-        // 位置文字隐藏时名称占满状态文字以外的宽度；
+        // 位置或网址隐藏时名称占满状态文字以外的宽度；
         // 放不下时截断名称，状态文字保持完整
         nameField.setContentHuggingPriority(.defaultLow, for: .horizontal)
         nameField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
@@ -57,10 +58,11 @@ final class GroupTreeCellView: NSTableCellView {
         locationLabel.textColor = .secondaryLabelColor
         locationLabel.isHidden = true
 
-        // 位置在中间省略：开头的 `~/` 与离它最近的那一级目录都留着
+        // 在中间省略：位置开头的 `~/` 与离它最近的那一级目录，
+        // 网址的开头与末尾，都留着
         locationLabel.lineBreakMode = .byTruncatingMiddle
 
-        // 位置文字紧跟名称、占满剩下的宽度；两者都放不下时先截断位置，再截断名称
+        // 位置或网址紧跟名称、占满剩下的宽度；两者都放不下时先截断它，再截断名称
         locationLabel.setContentHuggingPriority(.defaultLow - 1, for: .horizontal)
         locationLabel.setContentCompressionResistancePriority(.defaultLow - 1, for: .horizontal)
 
@@ -70,7 +72,7 @@ final class GroupTreeCellView: NSTableCellView {
         notOnDockLabel.setContentHuggingPriority(.defaultHigh, for: .horizontal)
         notOnDockLabel.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
 
-        // 隐藏的位置文字与状态文字不占位置，名称随之占满整行
+        // 隐藏的位置或网址与状态文字不占位置，名称随之占满整行
         let labelRow = NSStackView(views: [nameField, locationLabel, notOnDockLabel])
         labelRow.orientation = .horizontal
         labelRow.alignment = .firstBaseline
@@ -108,7 +110,7 @@ final class GroupTreeCellView: NSTableCellView {
         // 只有组名可编辑：App、文件与网页的名称来自访达或浏览器
         textField?.isEditable = node.group != nil
 
-        // 只有访达文件夹这一行显示位置，行视图复用时其余各行要隐藏
+        // 只有访达文件夹与网页的行可能显示，行视图复用时其余各行要隐藏
         let location = Self.location(of: node.item)
 
         locationLabel.stringValue = location ?? ""
@@ -138,9 +140,18 @@ final class GroupTreeCellView: NSTableCellView {
 // MARK: - Private
 
 extension GroupTreeCellView {
-    /// 访达文件夹所在的位置：父目录的路径，家目录写成 `~`，例如 `~/Documents`
-    /// - Returns: 不是访达文件夹（组、App、文件、文件包、网页、已删除的），或是没有父目录的 `/` 时为 nil
+    /// 名称后的灰色小字：访达文件夹所在的位置，或网页的网址
+    ///
+    /// 位置是父目录的路径，家目录写成 `~`，例如 `~/Documents`；网址是 `url.absoluteString`
+    /// - Returns: 组、App、文件、文件包、已删除的访达文件夹、没有父目录的 `/`，以及名称就是网址的网页为 nil
     private static func location(of item: GroupItem) -> String? {
+        // 没有标题时名称就是网址，标题恰好与网址相同时同理：不再重复一遍
+        if case .webPage(let webPage) = item {
+            let address = webPage.url.absoluteString
+
+            return webPage.displayName == address ? nil : address
+        }
+
         guard
             case .file(let file) = item,
             file.isFinderFolder,
