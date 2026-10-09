@@ -1,12 +1,15 @@
 import AppKit
 import Testing
+import UniformTypeIdentifiers
 
 @testable import Flotilla
 
 // MARK: - GroupTreeCellViewTests
 
-/// 名称后的灰色小字：设置窗口里访达文件夹与组的图标相同，只靠它标出的位置区分；带标题的网页靠它标出网址。
+/// 名称后的灰色小字：访达文件夹靠它标出位置，带标题的网页靠它标出网址。
 /// 只有这两种行显示，行视图复用后其余各行不能残留；宽度不够时先让出它、在中间省略，名称尽量完整
+///
+/// 行首图标：组是黄色文件夹，与系统给的蓝色访达文件夹区分开
 @MainActor
 final class GroupTreeCellViewTests {
     /// 本用例独占的临时目录
@@ -197,9 +200,76 @@ extension GroupTreeCellViewTests {
     }
 }
 
+// MARK: - Icon
+
+extension GroupTreeCellViewTests {
+    /// 组这一行是黄色文件夹：文件夹正面中央的红、绿明显高于蓝，色相落在黄色
+    @Test(arguments: [1, 2] as [CGFloat])
+    func groupRowIconIsYellow(scale: CGFloat) throws {
+        let pixels = try pixels(of: #require(groupCell().imageView?.image), scale: scale)
+        let side = Int(Self.iconSide * scale)
+
+        // 图标中心落在文件夹正面上
+        let base = (side / 2 * side + side / 2) * 4
+
+        let red = Double(pixels[base])
+        let green = Double(pixels[base + 1])
+        let blue = Double(pixels[base + 2])
+
+        #expect(red - blue > 128)
+        #expect(green - blue > 128)
+
+        // 红最大、蓝最小时色相是 60° × (绿 − 蓝) / (红 − 蓝)：0° 是红，60° 是黄
+        try #require(red >= green && green >= blue)
+
+        #expect((40 ... 60).contains(60 * (green - blue) / (red - blue)))
+    }
+
+    /// 着色只换颜色：透明度与系统的通用文件夹图标逐像素相同，形状不变，1 倍、2 倍屏上都不经缩放；
+    /// 完全不透明的像素颜色都换了，文件夹下方黑色的阴影仍是黑色，与系统的黄色文件夹一样
+    @Test(arguments: [1, 2] as [CGFloat])
+    func groupRowIconKeepsFolderShape(scale: CGFloat) throws {
+        let yellow = try pixels(of: #require(groupCell().imageView?.image), scale: scale)
+        let folder = try pixels(of: NSWorkspace.shared.icon(for: .folder), scale: scale)
+
+        let alphaIndices = stride(from: 3, to: folder.count, by: 4)
+
+        #expect(alphaIndices.allSatisfy { yellow[$0] == folder[$0] })
+
+        let opaqueBases = stride(from: 0, to: folder.count, by: 4)
+            .filter { folder[$0 + 3] == 255 }
+
+        try #require(!opaqueBases.isEmpty)
+
+        #expect(opaqueBases.allSatisfy { yellow[$0 ..< $0 + 3] != folder[$0 ..< $0 + 3] })
+
+        // 阴影：半透明、颜色是黑色的像素
+        let shadowBases = stride(from: 0, to: folder.count, by: 4)
+            .filter { folder[$0 + 3] > 0 && folder[$0 + 3] < 255 }
+            .filter { folder[$0 ..< $0 + 3].allSatisfy { $0 == 0 } }
+
+        try #require(!shadowBases.isEmpty)
+
+        #expect(shadowBases.allSatisfy { yellow[$0 ..< $0 + 3].allSatisfy { $0 == 0 } })
+    }
+
+    /// 访达文件夹这一行仍是系统给的蓝色文件夹，与组这一行的黄色文件夹区分开
+    @Test
+    func finderFolderRowKeepsSystemIcon() throws {
+        let cell = try configuredCell(with: directory.appending(path: "资料"))
+        let finderFolder = try pixels(of: #require(cell.imageView?.image), scale: 2)
+
+        #expect(try finderFolder == pixels(of: NSWorkspace.shared.icon(for: .folder), scale: 2))
+        #expect(try finderFolder != pixels(of: #require(groupCell().imageView?.image), scale: 2))
+    }
+}
+
 // MARK: - Private
 
 extension GroupTreeCellViewTests {
+    /// 行首图标的边长（pt），与 `GroupTreeCellView` 的相同
+    private nonisolated static let iconSide: CGFloat = 20
+
     /// 网页测试用的网址
     private nonisolated static let macAddress = "https://www.apple.com/mac/"
 
@@ -231,5 +301,48 @@ extension GroupTreeCellViewTests {
         view.subviews.flatMap {
             ($0 as? NSTextField).map { [$0] } ?? textFields(in: $0)
         }
+    }
+
+    /// 显示一个空组的行
+    private func groupCell() -> GroupTreeCellView {
+        let group = Group(id: UUID(), name: "工作", items: [])
+
+        let cell = GroupTreeCellView()
+        cell.configure(with: GroupTreeNode(item: .group(group), parent: nil))
+
+        return cell
+    }
+
+    /// 把图像按行首图标的边长、scale 倍画进 8 位 RGBA、预乘透明度的 sRGB 位图，读出全部字节，自上而下逐行排列
+    private func pixels(of image: NSImage, scale: CGFloat) throws -> [UInt8] {
+        let side = Int(Self.iconSide * scale)
+        let colorSpace = try #require(CGColorSpace(name: CGColorSpace.sRGB))
+
+        let context = try #require(
+            CGContext(
+                data: nil,
+                width: side,
+                height: side,
+                bitsPerComponent: 8,
+                bytesPerRow: side * 4,
+                space: colorSpace,
+                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+            )
+        )
+
+        // 按点绘制、按倍率换算像素，与图标显示在这种屏幕上相同
+        context.scaleBy(x: scale, y: scale)
+
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(cgContext: context, flipped: false)
+
+        image.draw(in: NSRect(x: 0, y: 0, width: Self.iconSide, height: Self.iconSide))
+
+        NSGraphicsContext.restoreGraphicsState()
+
+        let data = try #require(context.data)
+            .bindMemory(to: UInt8.self, capacity: side * side * 4)
+
+        return Array(UnsafeBufferPointer(start: data, count: side * side * 4))
     }
 }
