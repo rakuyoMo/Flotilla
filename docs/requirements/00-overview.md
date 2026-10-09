@@ -98,7 +98,8 @@ App 的代码在 `Sources/Flotilla/` 下，按职责分子目录；stub 的可�
 | `Model/` | `WebPageReference` | 对一个网页的引用：网址与网页标题；显示的名称与网址，网址里的中文按解码后的文字显示 | 06、12 |
 | `Model/` | `GroupStore` | 组树的唯一数据源：增删改查、持久化、变更通知；按书签更新 App 项与文件项的位置；给不带标题加入的网页补上标题；改网页的网址与标题 | 01、07、08、09、10 |
 | `Preferences/` | `Preferences` | 用户设置：预览图标数；访达文件夹是否显示隐藏文件 | 01、08 |
-| `Rendering/` | `GroupIconRenderer` | 把组渲染成图标（需求 2、17） | 01、07 |
+| `Rendering/` | `GroupIconRenderer` | 把组渲染成图标（需求 2、17）；给出参与预览的项，渲染与 `GroupIconInputs` 共用这一条规则 | 01、02、07 |
+| `Rendering/` | `GroupIconInputs` | 组图标的输入：底板的外观与按顺序参与预览的项；输入没变的根组，同步时不重新渲染图标 | 02 |
 | `Rendering/` | `YellowFolderIconRenderer` | 设置窗口里组这一行的黄色文件夹：系统的通用文件夹图标按亮度换成系统黄色标签的颜色（需求 35） | 12 |
 | `StatusBar/` | `StatusBarController` | 状态栏图标与菜单（需求 7） | 01 |
 | `Settings/` | `SettingsWindowController` 等 | 设置窗口 | 01 |

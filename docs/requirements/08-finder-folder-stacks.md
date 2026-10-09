@@ -65,7 +65,7 @@
 
 - 设置窗口通用区一行：左列 “访达文件夹：”，右列复选框 “显示隐藏文件”，默认不勾，见 01 的 “通用区”
   - `Preferences.showsHiddenFiles`，`UserDefaults` 键 `showsHiddenFiles`
-  - 切换它不发 `Preferences.didChangeNotification`：`DockTileSynchronizer` 监听这个通知，收到就重画 stub 图标，可能改写 stub、重启 Dock，而这个开关与 tile 的图标无关
+  - 切换它不发 `Preferences.didChangeNotification`：`DockTileSynchronizer` 监听这个通知，收到就同步一次 stub 与 tile，而这个开关与 tile 无关
   - 面板读访达文件夹时取当时的值；切换要点设置窗口，面板这时已经收起，不监听设置的变化
 - 文字：两个新键；用词与 `Localizable.strings` 已有的一致，ja 的 “不可視ファイル” 与 ko 的 “… 보기” 取自访达自己的界面文字
 

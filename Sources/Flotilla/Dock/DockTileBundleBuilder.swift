@@ -82,11 +82,17 @@ extension DockTileBundleBuilder {
     /// 名称与图标都没有变化、stub 也不残缺时不动任何文件
     /// - Parameters:
     ///   - group: 根组
-    ///   - icon: 按需求 2 渲染好的组图标
+    ///   - isIconCurrent: 调用方确认现有的图标就是这个组的图标；
+    ///     名称没变、stub 也不残缺时不渲染、不比对图标，名称变了或 stub 残缺时照常渲染并改写，图标不比对
+    ///   - renderIcon: 按需求 2 渲染组图标，只在要比对或改写图标时调用
     /// - Returns: 是否改写了 stub
     /// - Throws: 改名、渲染图标、写文件、签名、设自定义图标或向 Launch Services 注册失败时抛出
     @discardableResult
-    func write(group: Group, icon: NSImage) throws -> Bool {
+    func write(
+        group: Group,
+        isIconCurrent: Bool = false,
+        renderIcon: () -> NSImage
+    ) throws -> Bool {
         let fileManager = FileManager.default
         let bundleURL = bundleURL(for: group)
 
@@ -104,13 +110,6 @@ extension DockTileBundleBuilder {
         let iconURL = contentsURL.appending(path: "Resources/\(Self.iconName).icns")
         let stubExecutableURL = contentsURL.appending(path: "MacOS/\(Self.executableName)")
 
-        // 先把图标写到临时位置，与现有图标按像素比对；相同时直接丢弃
-        let renderedIconURL = fileManager.temporaryDirectory
-            .appending(path: "Flotilla-\(UUID().uuidString).icns")
-
-        try IconFileWriter.write(icon, to: renderedIconURL)
-        defer { try? fileManager.removeItem(at: renderedIconURL) }
-
         // Info.plist 逐字节比对：XML 格式的属性列表按键排序输出，内容相同时字节一致
         let infoData = try PropertyListSerialization.data(
             fromPropertyList: Self.infoDictionary(for: group),
@@ -118,25 +117,41 @@ extension DockTileBundleBuilder {
             options: 0
         )
 
-        let renderedIcon = try Data(contentsOf: renderedIconURL)
-
         let isInfoChanged = (try? Data(contentsOf: infoURL)) != infoData
 
-        // 预览里的 App 图标在系统缓存重新生成后像素会差一两级，按 `IconFileComparator` 的容差比对；
-        // 现有图标读不出时视为变了
-        let isIconChanged = (try? Data(contentsOf: iconURL)).map {
-            !IconFileComparator.isEquivalent($0, renderedIcon)
-        } ?? true
-
-        // 缺少可执行文件或自定义图标的 stub 视为残缺，同样要重新生成
+        // 缺少可执行文件、图标或自定义图标的 stub 视为残缺，同样要重新生成
         let isIncomplete = [
             stubExecutableURL,
+            iconURL,
             bundleURL.appending(path: Self.customIconFileName),
         ].contains {
             !fileManager.fileExists(atPath: $0.path(percentEncoded: false))
         }
 
-        guard isInfoChanged || isIconChanged || isIncomplete else { return false }
+        // 现有的图标就是这个组的图标，名称也没变、stub 也齐全：不必渲染，什么也不动
+        if isIconCurrent, !isInfoChanged, !isIncomplete {
+            return false
+        }
+
+        // 先把图标写到临时位置，需要时与现有图标比对；不改写时直接丢弃
+        let renderedIconURL = fileManager.temporaryDirectory
+            .appending(path: "Flotilla-\(UUID().uuidString).icns")
+
+        try IconFileWriter.write(renderIcon(), to: renderedIconURL)
+        defer { try? fileManager.removeItem(at: renderedIconURL) }
+
+        // 名称变了或 stub 残缺时必定改写，不再比对图标；调用方确认图标没变时，走到这里只会是这两种情况
+        if !isInfoChanged, !isIncomplete {
+            let renderedIcon = try Data(contentsOf: renderedIconURL)
+
+            // 预览里的 App 图标在系统缓存重新生成后像素会差一两级，按 `IconFileComparator` 的容差比对；
+            // 现有图标读不出时视为变了
+            let isIconChanged = (try? Data(contentsOf: iconURL)).map {
+                !IconFileComparator.isEquivalent($0, renderedIcon)
+            } ?? true
+
+            guard isIconChanged else { return false }
+        }
 
         // 按 App bundle 的结构写入三个文件；
         // 可执行文件在每次改写时都从 Flotilla.app 重新拷贝
