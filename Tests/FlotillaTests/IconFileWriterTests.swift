@@ -43,19 +43,6 @@ final class IconFileWriterTests {
         #expect(pixelWidths.isSuperset(of: [16, 32, 64, 128, 256, 512, 1024]))
     }
 
-    /// 同一张图写两次，文件逐字节相同：stub 靠比对文件内容判断图标是否变化，内容不稳定会让 Dock 无谓地重启
-    @Test
-    func sameImageProducesIdenticalFiles() throws {
-        let icon = makeIcon()
-        let firstURL = directory.appending(path: "First.icns")
-        let secondURL = directory.appending(path: "Second.icns")
-
-        try IconFileWriter.write(icon, to: firstURL)
-        try IconFileWriter.write(icon, to: secondURL)
-
-        #expect(try Data(contentsOf: firstURL) == Data(contentsOf: secondURL))
-    }
-
     /// 渲染一个带两个 App 预览的组图标
     private func makeIcon() -> NSImage {
         let apps = ["Calculator", "Chess"].map {

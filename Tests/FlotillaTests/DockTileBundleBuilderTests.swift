@@ -384,6 +384,20 @@ extension DockTileBundleBuilderTests {
     }
 }
 
+// MARK: - Icon Tolerance
+
+extension DockTileBundleBuilderTests {
+    /// 图标只差 1 级像素时不改写：预览里的 App 图标在系统缓存重新生成后会差一两级，
+    /// 这种差别不该让 stub 改写、Dock 重启
+    @Test
+    func iconWithinToleranceIsNotRewritten() throws {
+        let group = makeGroup(name: "工作")
+        try builder.write(group: group, icon: SolidColorIcon.make(red: 100))
+
+        #expect(try !builder.write(group: group, icon: SolidColorIcon.make(red: 101)))
+    }
+}
+
 // MARK: - Private
 
 extension DockTileBundleBuilderTests {
