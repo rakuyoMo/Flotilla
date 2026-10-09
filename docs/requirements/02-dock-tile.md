@@ -67,7 +67,7 @@
   - `groupDirectory(for groupID:)`（stub 独占的 `<id>` 目录）
   - `existingBundleURL(for groupID:)`
   - `groupID(forBundleURL:)`
-  - `write(group:icon:)`
+  - `write(group:isIconCurrent:renderIcon:)`（图标由闭包按需渲染，见下文 “图标的输入没变时不重新渲染”）
   - `remove(groupID:)`（先 `lsregister -u` 注销，再连同 `<id>` 目录一起删除）
   - `existingGroupIDs()`
 - 只在内容确有变化时重写文件，与按当前组新生成的结果比对：
@@ -79,6 +79,22 @@
       - 系统把一批 App 图标的缓存整体换代前后，同一个组图标最多差 4 级
     - 按预乘的值比较：几乎透明的像素反预乘后，1 级的差会被放大
     - 已有的 stub（包括旧版本生成的）同样按像素比对，图标没变就不改写
+  - 缺少可执行文件、`Contents/Resources/Icon.icns` 或自定义图标的 stub 视为残缺，名称与图标都没变也重新生成
+- 图标的输入没变时不重新渲染（`Sources/Flotilla/Rendering/GroupIconInputs.swift`）：
+  - 图标的输入是底板的外观与按顺序参与预览的项
+    - 参与预览的项与渲染共用一条规则（`GroupIconRenderer.previewItems(of:previewIconCount:)`）：按顺序取前几个非子组的项，数量夹到 `0...Preferences.maximumPreviewIconCount`
+    - 预览数量只通过取到哪几项影响图标，不单独算：只有三项的组，预览数量从 3 改成 4，输入不变
+    - 项按整个值比较，含书签、bundle id 与网页标题：这些变了只多渲染一次，再由像素比对判定图标没变
+  - 同步器在内存里记下各根组的 stub 图标最近一次写入或核对时的输入，只管本次运行，只留当前的根组
+    - `write` 成功（不论改没改写）后记下这次的输入，失败时去掉这一组的记录
+    - 组被删除或被拖成子组后 stub 会被删，再成为根组时重新渲染、比对
+  - 输入与记下的相同时，`write` 的 `isIconCurrent` 为真：
+    - 名称没变、stub 也不残缺：不调用渲染闭包、不写临时 icns、不比对，什么也不动
+    - 名称变了或 stub 残缺：照常渲染并改写全部文件，图标不比对
+  - 容差取的是实测上限，没有余量：输入没变就不渲染，缓存换代带来的像素差不会让图标没变的 stub 改写、Dock 重启
+    - 调整预览之外的顺序、删除或追加预览之外的项、子组里的改动、别的根组的改动，都不重新渲染这个根组的图标
+  - 启动后的第一次同步没有记录，渲染并按像素比对：App 在 Flotilla 没运行时换了图标、渲染规则随版本变化，都由它发现
+  - 运行期间预览里的 App 原地更新换了图标、这一项的值又没变时，要等下次启动或这个组的预览变化才重画
 
 ## `.icns` 写入（`Sources/Flotilla/Dock/IconFileWriter.swift`）
 
@@ -143,7 +159,7 @@
     - 多余的 tile 也包括 Dock 偏好里指向 `DockTiles/` 下、目录已不存在的条目
   - 再订阅 `GroupStore.didChangeNotification` 与 `Preferences.didChangeNotification`，用 KVO 观察 `NSApp.effectiveAppearance`，并用 `DockPreferences.observeTiles(_:)` 观察 Dock 偏好里的 tile
 - 变更后合并处理（防抖 0.5 秒）：
-  1. 重新渲染每个根组的图标，底板按 `NSApp.effectiveAppearance` 取深浅（见 01），按需更新 stub 的 icns 与 plist
+  1. 按需更新每个根组 stub 的 icns 与 plist：图标的输入与上次写入或核对时相同就不重新渲染（见上文 “图标的输入没变时不重新渲染”）；渲染时底板按 `NSApp.effectiveAppearance` 取深浅（见 01）
   2. 把各根组 tile 的期望状态写进 Dock 偏好（`apply`）：tile 集合或名称有变化，或 stub 被改写过（条目换新的 `GUID`）
   3. 偏好有改动就重启 Dock，每次同步只重启一次；只有图标变化时，实测（macOS 27）Dock 不会自动刷新，`touch` bundle、重新注册 Launch Services、替换自定义图标都无效，因此同样靠新的 `GUID` 加重启
 - Dock 重启后的核对：
@@ -190,12 +206,18 @@
 - `.icns` 写入
 - 图标比对：同一个组图标、只差 1 级或正好差 4 级的两份算相同；差 5 级，或预览换顺序、少一项、预览数量变化、换外观、某一格换成别的图标的算不同；解不出图像的算不同
 - stub 的图标只差 1 级时不改写
+- 参与预览的项：跳过子组，按顺序取前几项，数量越界时夹取；`render` 画进单元格的正是这几项
+- 图标的输入：只动预览之外的项（换序、删除、追加）、子组里的改动、预览数量变了而取到的项不变，输入相同；前几项换序、某一格换成别的项、取到的项变了、外观变了，输入不同
+- `isIconCurrent` 为真：名称没变、stub 齐全时不调用渲染闭包，Info.plist、可执行文件与 `Icon.icns` 的内容和修改时间都不变；改了名，或分别缺可执行文件、`Icon.icns`、自定义图标时照常渲染、改写
 - Dock 重启后的核对：按同一份期望补写被终止写回盖掉的条目，没有写回时不补写；补写是否赶在新 Dock 读取之前（纯逻辑）
 
 ## 验收
 
 - 新建根组后 Dock 左侧的 App 区域出现 tile，图标含 App 预览；修改预览数量后图标更新；重命名后 tile 名更新；删除后 tile 消失
 - 启动后第一次改动组树，图标没变的根组不改写 stub、Dock 不重启
+- 运行期间只改动预览之外的项（调整第 5 项之后的顺序、删除或追加预览之外的项、子组里的改动、别的根组的改动）：stub 不改写，tile 的 `GUID` 不变，Dock 不因此重启
+- 改动影响预览（前几项换序、增删预览里的项、预览数量使取到的项变化、切换外观）：stub 改写、tile 换新的 `GUID`、Dock 重启一次
+- 改名、stub 残缺（缺可执行文件、`Icon.icns` 或自定义图标）时改写 stub
 - 点击 tile 后 `DockGroupPresenter` 收到对应 id
 - 前后导出 Dock 偏好比对，除 Flotilla 的 tile 外没有其它改动
 - 测试用的组与 tile 全部清理干净
