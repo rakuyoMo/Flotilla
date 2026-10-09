@@ -141,6 +141,24 @@ extension GroupTreeCellViewTests {
         #expect(cell.locationText == nil)
     }
 
+    /// 网址里的中文按还原后的文字标出，与 “编辑…” 提示框里填的一致
+    @Test
+    func titledWebPageShowsDecodedAddress() throws {
+        let cell = try configuredCell(with: #require(URL(string: Self.wikiAddress)), title: "归帆")
+
+        #expect(cell.textField?.stringValue == "归帆")
+        #expect(cell.locationText == Self.decodedWikiAddress)
+    }
+
+    /// 没有标题时名称就是还原后的网址，标题恰好是它时同样：只显示一次
+    @Test(arguments: [nil, GroupTreeCellViewTests.decodedWikiAddress])
+    func webPageNamedByDecodedAddressShowsItOnce(title: String?) throws {
+        let cell = try configuredCell(with: #require(URL(string: Self.wikiAddress)), title: title)
+
+        #expect(cell.textField?.stringValue == Self.decodedWikiAddress)
+        #expect(cell.locationText == nil)
+    }
+
     /// 复用刚显示过网址的行视图去显示 App 或组时，网址不残留
     @Test
     func addressDoesNotRemainAfterReuse() throws {
@@ -184,6 +202,12 @@ extension GroupTreeCellViewTests {
 extension GroupTreeCellViewTests {
     /// 网页测试用的网址
     private nonisolated static let macAddress = "https://www.apple.com/mac/"
+
+    /// 网页测试用的、路径里有中文的网址：`url.absoluteString` 是百分号编码
+    private nonisolated static let wikiAddress = "https://zh.wikipedia.org/wiki/%E5%BD%92%E5%B8%86"
+
+    /// `wikiAddress` 里的中文还原后的网址
+    private nonisolated static let decodedWikiAddress = "https://zh.wikipedia.org/wiki/归帆"
 
     /// 把 URL 经分类后放进一行；网页带上 title 作标题
     private func configuredCell(with url: URL, title: String? = nil) throws -> GroupTreeCellView {

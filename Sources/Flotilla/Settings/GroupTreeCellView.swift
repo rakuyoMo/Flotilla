@@ -142,12 +142,12 @@ final class GroupTreeCellView: NSTableCellView {
 extension GroupTreeCellView {
     /// 名称后的灰色小字：访达文件夹所在的位置，或网页的网址
     ///
-    /// 位置是父目录的路径，家目录写成 `~`，例如 `~/Documents`；网址是 `url.absoluteString`
+    /// 位置是父目录的路径，家目录写成 `~`，例如 `~/Documents`；网址是显示的网址，中文等按还原后的文字显示
     /// - Returns: 组、App、文件、文件包、已删除的访达文件夹、没有父目录的 `/`，以及名称就是网址的网页为 nil
     private static func location(of item: GroupItem) -> String? {
         // 没有标题时名称就是网址，标题恰好与网址相同时同理：不再重复一遍
         if case .webPage(let webPage) = item {
-            let address = webPage.url.absoluteString
+            let address = webPage.displayAddress
 
             return webPage.displayName == address ? nil : address
         }
