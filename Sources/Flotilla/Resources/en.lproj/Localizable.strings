@@ -54,3 +54,4 @@
 /* 展开面板 */
 "panel.back" = "Back";
 "panel.openInFinder" = "Open in Finder";
+"panel.remove" = "Remove";

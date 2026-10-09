@@ -54,3 +54,4 @@
 /* 展开面板 */
 "panel.back" = "뒤로";
 "panel.openInFinder" = "Finder에서 열기";
+"panel.remove" = "제거";

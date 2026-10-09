@@ -128,15 +128,21 @@ final class FolderPanelController {
     ///   - content: 这一层展示的内容
     ///   - store: 保存新的顺序、删除这一项的数据源
     ///   - containsScreenPoint: 屏幕上的点是否在当前层级的轮廓之内
+    ///   - removeBoundaryContainsScreenPoint: 屏幕上的点是否在当前层级 “移除” 的边界之内
+    ///   - releaseHandler: 松开时执行：按鼠标当时的位置更新点击穿透
     static func dragActions(
         for content: FolderPanelLevelContent,
         in store: FolderStore,
-        containsScreenPoint: @escaping @MainActor (CGPoint) -> Bool
+        containsScreenPoint: @escaping @MainActor (CGPoint) -> Bool,
+        removeBoundaryContainsScreenPoint: @escaping @MainActor (CGPoint) -> Bool,
+        releaseHandler: @escaping @MainActor () -> Void
     ) -> FolderGridDragActions? {
         guard case .folder(let folder) = content else { return nil }
 
         return FolderGridDragActions(
             containsScreenPoint: containsScreenPoint,
+            removeBoundaryContainsScreenPoint: removeBoundaryContainsScreenPoint,
+            releaseHandler: releaseHandler,
             moveHandler: { item, targetIndex in
                 let sourceIndex = folder.items.firstIndex { $0.id == item.id }
 
@@ -426,6 +432,8 @@ extension FolderPanelController {
             id: content.id,
             view: view,
             screenFrame: screenFrame,
+            dockEdge: anchor.edge,
+            dockScreenFrame: anchor.screen.frame,
             scrollView: scrollView,
             gridView: scrollView?.documentView as? FolderGridView
         )
@@ -493,10 +501,21 @@ extension FolderPanelController {
             ? FileThumbnailLoader(scale: scale)
             : nil
 
-        // 文件夹的层级里各项可以拖动：鼠标是否在轮廓之内按当前层级判定
-        let dragActions = Self.dragActions(for: content, in: store) { [weak self] in
-            self?.currentLevel?.contains(screenPoint: $0) ?? false
-        }
+        // 文件夹的层级里各项可以拖动：鼠标是否在轮廓之内、是否在 “移除” 的边界之内，都按当前层级判定；
+        // 松开时按鼠标的位置更新点击穿透，不等鼠标下一次移动
+        let dragActions = Self.dragActions(
+            for: content,
+            in: store,
+            containsScreenPoint: { [weak self] in
+                self?.currentLevel?.contains(screenPoint: $0) ?? false
+            },
+            removeBoundaryContainsScreenPoint: { [weak self] in
+                self?.currentLevel?.removeBoundaryContains(screenPoint: $0) ?? false
+            },
+            releaseHandler: { [weak self] in
+                self?.updateMousePassthrough()
+            }
+        )
 
         // 隐藏的项只来自访达里的文件夹：本次展开读出的隐藏项按 id 交给网格，Flotilla 的文件夹里各项的 id 不在其中
         scrollView.documentView = FolderGridView(
@@ -644,7 +663,8 @@ extension FolderPanelController {
 extension FolderPanelController {
     /// 开始跟踪鼠标移动：窗口比轮廓大得多（阴影留白、盖住 tile 的锚点延伸），轮廓以外的点击要穿透到下面
     ///
-    /// 只在鼠标移动时更新，拖动期间保持不变，按下的格子才收得到抬起
+    /// 鼠标移动时更新，拖动期间保持不变，按下的格子才收得到抬起；
+    /// 拖动松开时由网格另外更新一次（`FolderGridDragActions.releaseHandler`）
     private func startTrackingMouse() {
         guard mouseMonitors.isEmpty else { return }
 

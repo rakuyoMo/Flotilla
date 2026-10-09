@@ -14,6 +14,12 @@ struct FolderPanelLevel {
     /// 视图在屏幕上的 frame（AppKit 屏幕坐标），包含轮廓与阴影留白
     let screenFrame: CGRect
 
+    /// Dock 所贴的屏幕边：尾巴长在主体朝向它的那条边上
+    let dockEdge: DockEdge
+
+    /// Dock 所在屏幕的 frame（AppKit 屏幕坐标）：“移除” 的边界在尾巴那一侧横贯这块屏幕
+    let dockScreenFrame: CGRect
+
     /// 网格所在的滚动视图；空的 Flotilla 文件夹没有
     let scrollView: NSScrollView?
 
@@ -36,6 +42,23 @@ struct FolderPanelLevel {
     /// 屏幕上的点是否落在这一层的轮廓之内
     func contains(screenPoint: CGPoint) -> Bool {
         view.contains(localPoint(fromScreen: screenPoint))
+    }
+
+    /// 屏幕上的点是否落在这一层 “移除” 的边界之内：
+    /// 尾巴那一侧是横贯屏幕的一条线，其余方向是面板主体向外扩出的圆角矩形
+    func removeBoundaryContains(screenPoint: CGPoint) -> Bool {
+        // 主体放在材质视图的内容里：先换算到这一层视图自身的坐标系，再平移到屏幕坐标
+        let bodyFrame = view
+            .convert(view.bodyView.bounds, from: view.bodyView)
+            .offsetBy(dx: screenFrame.minX, dy: screenFrame.minY)
+
+        let boundary = FolderPanelRemoveBoundary(
+            bodyFrame: bodyFrame,
+            edge: dockEdge,
+            screenFrame: dockScreenFrame
+        )
+
+        return boundary.contains(screenPoint)
     }
 
     /// 屏幕上的点换算到这一层视图自身的坐标系，也是视图图层的坐标系

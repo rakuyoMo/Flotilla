@@ -54,3 +54,4 @@
 /* 展开面板 */
 "panel.back" = "戻る";
 "panel.openInFinder" = "Finderで開く";
+"panel.remove" = "削除";

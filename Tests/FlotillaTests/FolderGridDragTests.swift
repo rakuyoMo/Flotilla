@@ -6,7 +6,9 @@ import Testing
 // MARK: - FolderGridDragTests
 
 /// 面板里拖动文件夹的项：移动不超过 5 pt 仍是点击，超过即开始拖动、不再算点击；
-/// 拖到别的格上其余各格让位，拖出轮廓其余各格补位；在轮廓之内松开落定后保存新的顺序，在轮廓之外松开删除这一项；
+/// 拖到别的格上其余各格让位，拖出轮廓其余各格补位；在轮廓之内松开落定后保存新的顺序；
+/// 开始拖动满 0.5 s、鼠标又在 “移除” 的边界之外时 “移除” 浮出，之后松开才删除这一项，浮出之前在轮廓之外松开这一项飞回原位；
+/// 松开的一刻就请面板按鼠标的位置更新点击穿透；
 /// 拖动途中层级被重建或面板收起时作废，数据不变，落定途中的保存照常进行；落定途中网格滚动时落点跟着目标格
 ///
 /// 窗口从不上屏：事件直接交给单元格，拖动图像只在面板显示时才排进屏幕
@@ -15,7 +17,7 @@ final class FolderGridDragTests {
     /// 6 个网页：3 列、2 行
     private let items: [FolderItem]
 
-    /// 网格所在的离屏窗口；当前层级的轮廓按它的 frame 算
+    /// 网格所在的离屏窗口；当前层级的轮廓按它的 frame 算，“移除” 的边界在它四周各扩 100 pt
     private let window = NSWindow(
         contentRect: CGRect(x: 200, y: 200, width: 600, height: 500),
         styleMask: .borderless,
@@ -31,6 +33,9 @@ final class FolderGridDragTests {
 
     /// 点击过的项
     private var selections: [UUID] = []
+
+    /// 松开时的回调被调用的次数
+    private var releaseCount = 0
 
     /// 准备 6 个网址各不相同的网页
     init() throws {
@@ -142,21 +147,7 @@ final class FolderGridDragTests {
 
     // MARK: 松开
 
-    /// 在轮廓之外松开：删除回调只调一次，拿到的是拖动的项；不保存，拖动图像消失
-    @Test
-    func releaseOutsideRemovesItem() throws {
-        let (_, grid) = makeGrid()
-        let itemView = try drag(item: 1, to: outsidePoint, in: grid)
-
-        try send(.leftMouseUp, to: itemView, at: outsidePoint)
-
-        #expect(removals == [items[1].id])
-        #expect(moves.isEmpty)
-        #expect(selections.isEmpty)
-        #expect(grid.dragImage == nil)
-    }
-
-    /// 在轮廓之内另一格松开：拖动图像落进目标格，落定期间网格不响应按下；
+    /// 在轮廓之内另一格松开：拖动图像按展开动画的时长落进目标格，落定期间网格不响应按下；
     /// 落定之后这一格显示出来，保存回调拿到拖动的项与目标格
     @Test
     func releaseOnAnotherCellSavesAfterLanding() async throws {
@@ -166,15 +157,18 @@ final class FolderGridDragTests {
 
         try send(.leftMouseUp, to: itemView, at: target)
 
+        let released = ContinuousClock.now
         let image = try #require(grid.dragImage)
         let targetInClipView = try #require(grid.superview).convert(target, from: nil)
 
         #expect(moves.isEmpty)
         #expect(image.iconCenter == screenIconCenter(ofCell: 4, in: grid))
+        #expect(image.landingDuration == FolderPanelMetrics.expandDuration)
         #expect(grid.hitTest(targetInClipView) == nil)
 
         try await waitUntil { grid.dragImage == nil }
 
+        #expect(ContinuousClock.now - released >= .seconds(FolderPanelMetrics.expandDuration))
         #expect(moves.map(\.itemID) == [items[1].id])
         #expect(moves.map(\.targetIndex) == [4])
         #expect(!itemView.isContentHidden)
@@ -218,6 +212,7 @@ final class FolderGridDragTests {
         #expect(moves.isEmpty)
         #expect(removals.isEmpty)
         #expect(selections.isEmpty)
+        #expect(releaseCount == 0)
     }
 
     /// 拖动中面板开始收起：网格恢复原来的样子，图像消失；之后在另一格抬起也不落定、不保存
@@ -298,6 +293,255 @@ final class FolderGridDragTests {
     }
 }
 
+// MARK: - Remove Label
+
+extension FolderGridDragTests {
+    /// 拖到 “移除” 的边界之外：开始拖动起计时没满时不浮出，满 0.5 s 才浮出；刚甩出面板就松手不该误删
+    @Test
+    func removeLabelAppearsAfterDelayBeyondBoundary() async throws {
+        let (_, grid) = makeGrid()
+        let began = ContinuousClock.now
+
+        try drag(item: 1, to: outsidePoint, in: grid)
+
+        let image = try #require(grid.dragImage)
+
+        #expect(!image.removeLabel.isShowing)
+
+        try await waitUntil { image.removeLabel.isShowing }
+
+        #expect(image.removeLabel.isShowing)
+        #expect(ContinuousClock.now - began >= .seconds(0.5))
+    }
+
+    /// “移除” 浮出之后松开：删除回调只调一次，拿到的是拖动的项，不保存；
+    /// 拖动到此结束，拖动图像不飞走，连同 “移除” 在原地按 0.26 s 淡出
+    @Test
+    func releaseAfterRemoveLabelRemovesItem() async throws {
+        let (_, grid) = makeGrid()
+        let itemView = try drag(item: 1, to: outsidePoint, in: grid)
+        let image = try #require(grid.dragImage)
+
+        try await waitUntil { image.removeLabel.isShowing }
+
+        #expect(image.removeLabel.isShowing)
+
+        let iconCenter = image.iconCenter
+
+        try send(.leftMouseUp, to: itemView, at: outsidePoint)
+
+        #expect(removals == [items[1].id])
+        #expect(moves.isEmpty)
+        #expect(selections.isEmpty)
+        #expect(grid.dragImage == nil)
+        #expect(image.iconCenter == iconCenter)
+        #expect(image.landingStart == nil)
+        #expect(image.fadeOutDuration == 0.26)
+    }
+
+    /// 计时已满、鼠标在轮廓与 “移除” 的边界之间：“移除” 不浮出；再拖到边界之外，立即浮出，不重新计时
+    @Test
+    func removeLabelWaitsForBoundary() async throws {
+        let (_, grid) = makeGrid()
+        let itemView = try drag(item: 1, to: nearbyPoint, in: grid)
+        let image = try #require(grid.dragImage)
+
+        // 等满全部轮数：总时长超过计时，这时计时早已满
+        try await waitUntil { image.removeLabel.isShowing }
+
+        #expect(!image.removeLabel.isShowing)
+
+        try send(.leftMouseDragged, to: itemView, at: outsidePoint)
+
+        #expect(image.removeLabel.isShowing)
+    }
+
+    /// “移除” 浮出之后退回轮廓与边界之间：“移除” 淡出；在这里松开不删除，这一项飞回原来的格，什么都不保存
+    @Test
+    func releaseInsideBoundaryReturnsItem() async throws {
+        let (_, grid) = makeGrid()
+        let itemView = try drag(item: 1, to: outsidePoint, in: grid)
+        let image = try #require(grid.dragImage)
+
+        try await waitUntil { image.removeLabel.isShowing }
+
+        #expect(image.removeLabel.isShowing)
+
+        try send(.leftMouseDragged, to: itemView, at: nearbyPoint)
+
+        #expect(!image.removeLabel.isShowing)
+
+        try send(.leftMouseUp, to: itemView, at: nearbyPoint)
+
+        #expect(removals.isEmpty)
+        #expect(image.iconCenter == screenIconCenter(ofCell: 1, in: grid))
+
+        try await waitUntil { grid.dragImage == nil }
+
+        #expect(try cellIndices(in: grid) == [0, 1, 2, 3, 4, 5])
+        #expect(!itemView.isContentHidden)
+        #expect(moves.isEmpty)
+        #expect(removals.isEmpty)
+    }
+
+    /// “移除” 浮出之后回到面板里：“移除” 淡出，表示此时松开不会删除；
+    /// 再拖到边界之外立即浮出，不重新计时，这时松开就删除
+    @Test
+    func leavingAgainShowsRemoveLabelAtOnce() async throws {
+        let (_, grid) = makeGrid()
+        let itemView = try drag(item: 1, to: outsidePoint, in: grid)
+        let image = try #require(grid.dragImage)
+
+        try await waitUntil { image.removeLabel.isShowing }
+
+        #expect(image.removeLabel.isShowing)
+
+        try send(.leftMouseDragged, to: itemView, at: windowPoint(ofCell: 4, in: grid))
+
+        #expect(!image.removeLabel.isShowing)
+
+        try send(.leftMouseDragged, to: itemView, at: outsidePoint)
+
+        #expect(image.removeLabel.isShowing)
+
+        try send(.leftMouseUp, to: itemView, at: outsidePoint)
+
+        #expect(removals == [items[1].id])
+        #expect(moves.isEmpty)
+    }
+
+    /// 计时没满就在 “移除” 的边界之外松开：多拖出一点就松手不该误删，这一项飞回原来的格；
+    /// 飞回照抄程序坞按 0.32 s 收尾，比落进目标格慢；落定期间网格不响应按下，落定之后各格回到拖动前的位置，
+    /// 什么都不保存；松开之后不再浮出 “移除”
+    @Test
+    func releaseBeforeRemoveLabelReturnsItem() async throws {
+        let (_, grid) = makeGrid()
+
+        // 先在另一格上让过位，再拖出面板
+        let itemView = try drag(item: 1, to: windowPoint(ofCell: 4, in: grid), in: grid)
+
+        try send(.leftMouseDragged, to: itemView, at: outsidePoint)
+
+        let image = try #require(grid.dragImage)
+
+        #expect(!image.removeLabel.isShowing)
+
+        try send(.leftMouseUp, to: itemView, at: outsidePoint)
+
+        let released = ContinuousClock.now
+
+        let originalCell = try #require(grid.superview).convert(
+            windowPoint(ofCell: 1, in: grid),
+            from: nil
+        )
+
+        #expect(removals.isEmpty)
+        #expect(grid.dragImage === image)
+        #expect(image.iconCenter == screenIconCenter(ofCell: 1, in: grid))
+        #expect(image.landingDuration == 0.32)
+        #expect(grid.hitTest(originalCell) == nil)
+
+        try await waitUntil { grid.dragImage == nil }
+
+        #expect(ContinuousClock.now - released >= .seconds(0.32))
+        #expect(try cellIndices(in: grid) == [0, 1, 2, 3, 4, 5])
+        #expect(!itemView.isContentHidden)
+        #expect(moves.isEmpty)
+        #expect(removals.isEmpty)
+        #expect(selections.isEmpty)
+
+        // 等满全部轮数：总时长超过计时
+        try await waitUntil { image.removeLabel.isShowing }
+
+        #expect(!image.removeLabel.isShowing)
+    }
+
+    /// 在轮廓与边界之间松开、这一项落回原位：松开的一刻就请面板按鼠标的位置更新点击穿透，落定之后不再请。
+    /// 落回原位不重建面板，等鼠标下一次移动才更新的话，鼠标停在轮廓之外直接点击，点击落在面板窗口里，
+    /// 既不穿透到下面的窗口，也不收起面板
+    @Test
+    func releaseOutsideUpdatesPassthroughAtOnce() async throws {
+        let (_, grid) = makeGrid()
+        let itemView = try drag(item: 1, to: nearbyPoint, in: grid)
+
+        #expect(releaseCount == 0)
+
+        try send(.leftMouseUp, to: itemView, at: nearbyPoint)
+
+        // 还在飞回原来的格，落定之前就已更新
+        #expect(grid.dragImage?.landingDuration == FolderPanelMetrics.returnDuration)
+        #expect(releaseCount == 1)
+
+        try await waitUntil { grid.dragImage == nil }
+
+        #expect(grid.dragImage == nil)
+        #expect(releaseCount == 1)
+        #expect(removals.isEmpty)
+    }
+
+    /// 计时中拖动作废（面板开始收起，或网格离开窗口）：之后不浮出 “移除”，不调任何回调
+    @Test(arguments: [false, true])
+    func interruptionKeepsRemoveLabelHidden(leavesWindow: Bool) async throws {
+        let (scrollView, grid) = makeGrid()
+        let itemView = try drag(item: 1, to: outsidePoint, in: grid)
+        let image = try #require(grid.dragImage)
+
+        if leavesWindow {
+            scrollView.removeFromSuperview()
+        } else {
+            grid.cancelDrag()
+        }
+
+        // 等满全部轮数：总时长超过计时，作废之前开始的计时若没有停掉，这时已经浮出
+        try await waitUntil { image.removeLabel.isShowing }
+
+        #expect(!image.removeLabel.isShowing)
+
+        try send(.leftMouseUp, to: itemView, at: outsidePoint)
+
+        #expect(moves.isEmpty)
+        #expect(removals.isEmpty)
+        #expect(selections.isEmpty)
+        #expect(releaseCount == 0)
+    }
+
+    /// 拖动中网格滚动过、原来的格滚出了可见区域：“移除” 浮出之前在轮廓之外松开，
+    /// 网格先滚到完整看见原来的格，拖动图像落进这一格滚动之后的屏幕位置，落回原位的过程看得见
+    @Test
+    func releaseOutsideAfterScrollingRevealsOriginalCell() async throws {
+        let (scrollView, grid) = makeGrid()
+
+        // 滚动视图只露出一行，拖动中网格向下滚一行，原来的格所在的第一行滚出可见区域
+        scrollView.setFrameSize(CGSize(
+            width: layout.gridSize.width,
+            height: FolderPanelMetrics.cellSize
+        ))
+
+        scrollView.layoutSubtreeIfNeeded()
+
+        let itemView = try drag(item: 0, to: windowPoint(ofCell: 1, in: grid), in: grid)
+        let clipView = scrollView.contentView
+
+        clipView.scroll(to: CGPoint(x: 0, y: FolderPanelMetrics.cellSize))
+        scrollView.reflectScrolledClipView(clipView)
+
+        #expect(!grid.visibleRect.intersects(layout.cellFrames[0]))
+
+        try send(.leftMouseDragged, to: itemView, at: outsidePoint)
+        try send(.leftMouseUp, to: itemView, at: outsidePoint)
+
+        let image = try #require(grid.dragImage)
+
+        #expect(grid.visibleRect.contains(layout.cellFrames[0]))
+        #expect(image.iconCenter == screenIconCenter(ofCell: 0, in: grid))
+
+        try await waitUntil { grid.dragImage == nil }
+
+        #expect(removals.isEmpty)
+        #expect(moves.isEmpty)
+    }
+}
+
 // MARK: - Private
 
 extension FolderGridDragTests {
@@ -309,9 +553,14 @@ extension FolderGridDragTests {
         )
     }
 
-    /// 窗口以外的一点，窗口坐标：在当前层级的轮廓之外
+    /// 窗口以外的一点，窗口坐标：在当前层级的轮廓与 “移除” 的边界之外
     private var outsidePoint: CGPoint {
-        CGPoint(x: -100, y: -100)
+        CGPoint(x: -300, y: -300)
+    }
+
+    /// 窗口以外的一点，窗口坐标：在当前层级的轮廓之外、“移除” 的边界之内
+    private var nearbyPoint: CGPoint {
+        CGPoint(x: -50, y: -50)
     }
 
     /// 放进离屏窗口的网格：网格作为滚动视图的文档视图，单元格在排版时建好
@@ -321,9 +570,12 @@ extension FolderGridDragTests {
     ) -> (scrollView: NSScrollView, grid: FolderGridView) {
         let layout = layout
         let outline = window.frame
+        let removeBoundary = outline.insetBy(dx: -100, dy: -100)
 
         let dragActions = FolderGridDragActions(
             containsScreenPoint: { outline.contains($0) },
+            removeBoundaryContainsScreenPoint: { removeBoundary.contains($0) },
+            releaseHandler: { [weak self] in self?.releaseCount += 1 },
             moveHandler: { [weak self] in self?.moves.append(($0.id, $1)) },
             removeHandler: { [weak self] in self?.removals.append($0.id) }
         )
@@ -448,7 +700,7 @@ extension FolderGridDragTests {
         CGPoint(x: point.x + dx, y: point.y + dy)
     }
 
-    /// 等到条件成立，最多等 100 轮、每轮至少 20 ms
+    /// 等到条件成立，最多等 100 轮、每轮至少 20 ms：总共至少 2 s，比落定与 “移除” 的计时都长
     ///
     /// 按轮数而不按时钟等：落定的收尾回到主线程时排在其它测试已经排着的任务之后，整套测试一起跑时会晚到几十秒；
     /// 每一轮也排在它之后，轮数够了它一定已经跑过

@@ -171,4 +171,49 @@ enum FolderPanelMetrics {
     /// Dock 按住约 0.5 秒即判为长按、弹出 App 菜单，之后抬起不再启动 stub；
     /// 取略小的值，落在两者之间的抬起由随后到达的 URL 按点击处理，Dock 弹出菜单时面板不会展开
     static let longPressDuration: TimeInterval = 0.45
+
+    // MARK: 拖出面板
+
+    /// 开始拖动起满这么久（秒），且鼠标在 “移除” 的边界之外，拖动图像的图标上方浮出 “移除”；
+    /// 整次拖动只计一次，满了之后一直算满。浮出之后松开才删除这一项，之前松开这一项落回原位
+    static let removeLabelDelay: TimeInterval = 0.5
+
+    /// “移除” 的边界与面板主体的距离：主体的圆角矩形向外扩这么多，圆角半径同样加这么多
+    ///
+    /// 程序坞里要拖到程序坞上沿之上 94 pt 以外 “移除” 才浮出，面板取同样的距离；尾巴整个在扩出的范围之内
+    static let removeBoundaryDistance: CGFloat = 94
+
+    /// “移除” 淡入、淡出的时长（秒），曲线是 ease-in-ease-out，只变不透明度
+    ///
+    /// 按不透明度从 2% 变到 98% 量，这条曲线占时长的约 80%，即约 0.2 s，与程序坞的 0.18–0.22 s 相同
+    static let removeLabelFadeDuration: CFTimeInterval = 0.25
+
+    /// “移除” 没有浮出时在轮廓之外松开，拖动图像飞回原来的格的时长（秒），曲线是 ease-in-ease-out
+    static let returnDuration: CFTimeInterval = 0.32
+
+    /// “移除” 浮出之后松开，拖动图像连同 “移除” 在原地淡出的时长（秒），匀速，只变不透明度
+    static let removeFadeOutDuration: CFTimeInterval = 0.26
+
+    /// “移除” 的字号，系统字体常规
+    static let removeLabelFontSize: CGFloat = 14
+
+    /// “移除” 主体的高度：主体是胶囊，圆角半径是高度的一半
+    static let removeLabelBodyHeight: CGFloat = 26
+
+    /// “移除” 的文字与主体左右两边的距离
+    static let removeLabelHorizontalPadding: CGFloat = 14
+
+    /// “移除” 主体底边中点向下的小尖的高度
+    static let removeLabelPointerHeight: CGFloat = 6
+
+    /// 玻璃的 “移除” 融进主体、做成小尖的小圆的直径：小圆的下沿就是小尖的尖端
+    static let removeLabelPointerDotDiameter: CGFloat = 10
+
+    /// 单层底板的 “移除”（没有玻璃的系统）里三角形小尖的底宽
+    static let removeLabelPointerWidth: CGFloat = 14
+
+    /// “移除” 的主体底边在图标画布顶边之上的距离
+    ///
+    /// 程序坞里主体底边在图标图稿顶边之上 15.5 pt；101 pt 的画布里，App 图标的图稿顶边约在画布顶边之下 10.5 pt
+    static let removeLabelSpacing: CGFloat = 5
 }
