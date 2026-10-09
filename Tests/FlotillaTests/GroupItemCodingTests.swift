@@ -66,7 +66,7 @@ struct GroupItemCodingTests {
     func itemsCarryExplicitTypeTag() throws {
         let items: [GroupItem] = [
             .app(makeApp("Chess")),
-            .group(Group(id: UUID(), name: "子文件夹", items: [])),
+            .group(Group(id: UUID(), name: "子组", items: [])),
             makeFile("/Users/Shared/报告.pdf", bookmark: nil),
             try makeWebPage("https://example.com/", title: "Example Domain"),
         ]
@@ -195,7 +195,7 @@ struct GroupItemCodingTests {
               {
                 "type": "folder",
                 "id": "\#(groupID.uuidString)",
-                "name": "子文件夹",
+                "name": "子组",
                 "items": []
               }
             ]
@@ -213,7 +213,7 @@ struct GroupItemCodingTests {
 
         #expect(decoded == [
             .app(chess),
-            .group(Group(id: groupID, name: "子文件夹", items: [])),
+            .group(Group(id: groupID, name: "子组", items: [])),
         ])
     }
 

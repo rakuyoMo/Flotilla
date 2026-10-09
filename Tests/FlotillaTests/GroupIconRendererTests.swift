@@ -127,7 +127,7 @@ struct GroupIconRendererTests {
     @Test(arguments: [GroupIconAppearance.dark, .light])
     func subgroupsAreSkipped(appearance: GroupIconAppearance) throws {
         let previewed = try [file, webPage()] + makeGroup(appCount: 1).items
-        let subgroup = GroupItem.group(Group(id: UUID(), name: "子文件夹", items: []))
+        let subgroup = GroupItem.group(Group(id: UUID(), name: "子组", items: []))
 
         let withSubgroup = try renderedPixels(
             of: Group(id: UUID(), name: "混排", items: [subgroup] + previewed),
@@ -136,7 +136,7 @@ struct GroupIconRendererTests {
         )
 
         let withoutSubgroup = try renderedPixels(
-            of: Group(id: UUID(), name: "无子文件夹", items: previewed),
+            of: Group(id: UUID(), name: "无子组", items: previewed),
             previewIconCount: 3,
             appearance: appearance
         )

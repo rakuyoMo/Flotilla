@@ -9,7 +9,7 @@ import Testing
 @MainActor
 struct GroupIconAppearanceTests {
     /// 空的子组：图标只有底板，深浅两种外观的画面必然不同
-    private let subgroup = Group(id: UUID(), name: "子文件夹", items: [])
+    private let subgroup = Group(id: UUID(), name: "子组", items: [])
 
     /// 基础外观与高对比度、vibrant 等变体都按最接近的深色或浅色取底板颜色
     @Test
