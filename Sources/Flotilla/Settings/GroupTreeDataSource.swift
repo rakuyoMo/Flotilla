@@ -2,8 +2,8 @@ import AppKit
 
 // MARK: - GroupTreeDataSource
 
-/// 设置窗口文件夹树的数据源：把 `GroupStore` 的树转换成行节点，
-/// 并处理树内拖动、从访达拖入 App、文件与访达里的文件夹、从浏览器拖入网页
+/// 设置窗口组树的数据源：把 `GroupStore` 的树转换成行节点，
+/// 并处理树内拖动、从访达拖入 App、文件与访达文件夹、从浏览器拖入网页
 @MainActor
 final class GroupTreeDataSource: NSObject {
     /// 树内拖动时写进剪贴板的类型，内容为被拖动项的 id
@@ -14,14 +14,14 @@ final class GroupTreeDataSource: NSObject {
     /// 浏览器拖出网址时，同一个剪贴板项里的网页标题
     static let urlNamePasteboardType = NSPasteboard.PasteboardType("public.url-name")
 
-    /// 根文件夹对应的节点
+    /// 根组对应的节点
     private(set) var rootNodes: [GroupTreeNode] = []
 
-    /// 文件夹树的唯一数据源
+    /// 组树的唯一数据源
     private let store: GroupStore
 
     /// 创建数据源并按 store 的当前内容建立节点
-    /// - Parameter store: 文件夹树的唯一数据源
+    /// - Parameter store: 组树的唯一数据源
     init(store: GroupStore) {
         self.store = store
         super.init()
@@ -59,7 +59,7 @@ final class GroupTreeDataSource: NSObject {
     ///   - itemID: 被拖动的项
     ///   - proposedParent: outline view 建议的父节点，nil 表示根层级
     ///   - childIndex: outline view 建议的下标，`NSOutlineViewDropOnItemIndex` 表示落在父节点这一行上
-    /// - Returns: 目标文件夹（nil 表示根层级）与目标下标；不允许放在这里时返回 nil
+    /// - Returns: 目标组（nil 表示根层级）与目标下标；不允许放在这里时返回 nil
     func moveDestination(
         for itemID: UUID,
         proposedParent: GroupTreeNode?,
@@ -73,7 +73,7 @@ final class GroupTreeDataSource: NSObject {
         let groupID = proposedParent?.group?.id
         guard store.canMove(itemID: itemID, to: groupID) else { return nil }
 
-        // 落在文件夹这一行上时追加到末尾
+        // 落在组这一行上时追加到末尾
         guard childIndex == NSOutlineViewDropOnItemIndex else {
             return (groupID, childIndex)
         }
@@ -95,7 +95,7 @@ extension GroupTreeDataSource: NSOutlineViewDataSource {
         children(of: item)[index]
     }
 
-    /// 只有文件夹可以展开
+    /// 只有组可以展开
     func outlineView(_: NSOutlineView, isItemExpandable item: Any) -> Bool {
         (item as? GroupTreeNode)?.group != nil
     }
@@ -113,7 +113,7 @@ extension GroupTreeDataSource: NSOutlineViewDataSource {
         return pasteboardItem
     }
 
-    /// 校验落点：树内拖动按移动规则判断；从外部拖入的 App、文件与网页只能落在文件夹上，
+    /// 校验落点：树内拖动按移动规则判断；从外部拖入的 App、文件与网页只能落在组上，
     /// 一个能加入的都没有时不接收
     func outlineView(
         _ outlineView: NSOutlineView,
@@ -141,13 +141,13 @@ extension GroupTreeDataSource: NSOutlineViewDataSource {
             return []
         }
 
-        // 拖入的项总是追加到文件夹末尾，因此高亮整个文件夹行，而不是显示插入线
+        // 拖入的项总是追加到组末尾，因此高亮整个组的行，而不是显示插入线
         outlineView.setDropItem(proposedParent, dropChildIndex: NSOutlineViewDropOnItemIndex)
 
         return .copy
     }
 
-    /// 执行放下：树内拖动执行移动，从外部拖入的 App、文件与网页加入目标文件夹
+    /// 执行放下：树内拖动执行移动，从外部拖入的 App、文件与网页加入目标组
     func outlineView(
         _: NSOutlineView,
         acceptDrop info: any NSDraggingInfo,
@@ -171,7 +171,7 @@ extension GroupTreeDataSource: NSOutlineViewDataSource {
             return true
         }
 
-        // 从外部拖入：能加入的项追加到目标文件夹末尾
+        // 从外部拖入：能加入的项追加到目标组末尾
         let items = Self.droppedItems(in: info.draggingPasteboard)
         guard let group = proposedParent?.group, !items.isEmpty else { return false }
 
@@ -191,7 +191,7 @@ extension GroupTreeDataSource {
             .flatMap(UUID.init(uuidString:))
     }
 
-    /// 剪贴板里能加入文件夹的项：每个剪贴板项先取文件 URL，没有再取网址；网址带上同一项里的网页标题
+    /// 剪贴板里能加入组的项：每个剪贴板项先取文件 URL，没有再取网址；网址带上同一项里的网页标题
     ///
     /// 分类交给 `GroupItem(url:title:)`，已不存在的文件与 `http`、`https` 以外的网址被略过
     private static func droppedItems(in pasteboard: NSPasteboard) -> [GroupItem] {

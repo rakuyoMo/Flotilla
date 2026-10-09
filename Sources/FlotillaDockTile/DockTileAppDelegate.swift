@@ -35,9 +35,9 @@ extension DockTileAppDelegate: NSApplicationDelegate {
         droppedURLs += urls
     }
 
-    /// 拼出 URL 并打开；缺少根文件夹 id 时以非零状态退出
+    /// 拼出 URL 并打开；缺少根组 id 时以非零状态退出
     func applicationDidFinishLaunching(_: Notification) {
-        // 根文件夹 id 由 Flotilla 生成 stub 时写进 Info.plist；
+        // 根组 id 由 Flotilla 生成 stub 时写进 Info.plist；
         // 键名沿用 `FlotillaFolderID`：Flotilla 写进 Info.plist 的就是它
         guard
             let groupID = Bundle.main.infoDictionary?["FlotillaFolderID"] as? String,

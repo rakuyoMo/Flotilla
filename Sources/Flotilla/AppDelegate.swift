@@ -15,7 +15,7 @@ final class AppDelegate: NSObject {
     /// 状态栏图标与菜单；启动完成后创建
     private var statusBarController: StatusBarController?
 
-    /// 让 Dock 上的 tile 与根文件夹保持一致；
+    /// 让 Dock 上的 tile 与根组保持一致；
     /// 在 `applicationWillFinishLaunching` 里创建
     private var dockTileSynchronizer: DockTileSynchronizer?
 
@@ -73,7 +73,7 @@ extension AppDelegate: NSApplicationDelegate {
         registerAsURLHandler()
     }
 
-    /// 处理 stub 发来的请求：展开或收起面板交给面板处理，拖到 tile 上的 App 与文件加入根文件夹；
+    /// 处理 stub 发来的请求：展开或收起面板交给面板处理，拖到 tile 上的 App 与文件加入根组；
     /// 整个过程不激活 Flotilla
     func application(_: NSApplication, open urls: [URL]) {
         for url in urls {
@@ -93,13 +93,13 @@ extension AppDelegate: NSApplicationDelegate {
 
             // 同一次拖放重复送达时由 `addItems` 去重
             case .addItems(let groupID, let fileURLs):
-                // stub 只代表根文件夹，指向其它文件夹的 URL 一律忽略
+                // stub 只代表根组，指向其它组的 URL 一律忽略
                 guard GroupStore.shared.rootGroups.contains(where: { $0.id == groupID }) else {
-                    Self.logger.notice("忽略不存在的根文件夹：\(groupID.uuidString, privacy: .public)")
+                    Self.logger.notice("忽略不存在的根组：\(groupID.uuidString, privacy: .public)")
                     continue
                 }
 
-                // 访达里的文件夹同样作为文件加入；已不存在的文件在分类时被略过
+                // 访达文件夹同样作为文件加入；已不存在的文件在分类时被略过
                 let items = fileURLs.compactMap {
                     GroupItem(url: $0, title: nil)
                 }

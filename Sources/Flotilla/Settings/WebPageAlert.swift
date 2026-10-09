@@ -3,7 +3,7 @@ import AppKit
 // MARK: - WebPageAlert
 
 /// 网页的提示框，“添加网页…” 与网页的 “编辑…” 共用：输入网址与可选的标题，
-/// 点 “添加” 后得到要加入文件夹的网页，点 “保存” 后得到改好的网页
+/// 点 “添加” 后得到要加入组的网页，点 “保存” 后得到改好的网页
 ///
 /// 输入不是可用的网址时 “添加” “保存” 禁用，随输入实时更新：确认之后不会再报错，也不必再弹第二个提示框。
 /// 网址改了、停顿一会儿不再变时自动获取网页的标题，填进空着的标题框；获取期间标题框照样可以输入，用户输入的内容不被覆盖
@@ -221,7 +221,7 @@ extension WebPageAlert {
             withTitle: editedWebPage == nil
                 ? String(
                     localized: "groups.webPageAlert.add",
-                    comment: "“添加网页…” 提示框的按钮：把输入的网页加入文件夹"
+                    comment: "“添加网页…” 提示框的按钮：把输入的网页加入组"
                 )
                 : String(
                     localized: "groups.webPageAlert.save",

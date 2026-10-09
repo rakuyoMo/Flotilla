@@ -17,7 +17,7 @@
 /* 设置窗口 */
 "settings.windowTitle" = "설정";
 
-/* 设置窗口的文件夹区 */
+/* 设置窗口的组区 */
 "groups.sectionTitle" = "그룹";
 "groups.newGroup" = "새로운 그룹";
 "groups.untitledGroup" = "제목 없는 그룹";

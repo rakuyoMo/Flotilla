@@ -3,19 +3,19 @@ import UniformTypeIdentifiers
 
 // MARK: - GroupTreeViewController
 
-/// 设置窗口的文件夹区：
-/// 展示完整的文件夹树；底部按钮行提供新建文件夹与添加 App、文件与网页，
+/// 设置窗口的组区：
+/// 展示完整的组树；底部按钮行提供新建组与添加 App、文件与网页，
 /// 右键菜单提供添加到 Dock、在访达中显示、在默认浏览器中打开、编辑网页与删除；另有重命名与拖放；
-/// 被拖出 Dock 的根文件夹标出 “不在 Dock 上”
+/// 被拖出 Dock 的根组标出 “不在 Dock 上”
 @MainActor
 final class GroupTreeViewController: NSViewController {
-    /// 新建文件夹的默认名称
+    /// 新建组的默认名称
     private static let untitledGroupName = String(
         localized: "groups.untitledGroup",
-        comment: "新建文件夹的默认名称，新建后立即进入重命名"
+        comment: "新建组的默认名称，新建后立即进入重命名"
     )
 
-    /// 文件夹树的唯一数据源
+    /// 组树的唯一数据源
     private let store: GroupStore
 
     /// Dock tile 同步器；Dock 集成不可用时为 nil，此时不显示 tile 的状态，也没有 “添加到 Dock”
@@ -24,16 +24,16 @@ final class GroupTreeViewController: NSViewController {
     /// outline view 的数据源，持有全部行节点
     private let dataSource: GroupTreeDataSource
 
-    /// 展示文件夹树
+    /// 展示组树
     private let outlineView = NSOutlineView()
 
     /// “添加…” 下拉按钮，菜单里是 “添加 App…” “添加文件…” “添加网页…”；无选中项时禁用
     private let addPopUpButton = NSPopUpButton(frame: .zero, pullsDown: true)
 
-    /// 最近一次读取到的、被拖出 Dock 的根文件夹；行的状态与右键菜单里 “添加到 Dock” 的可用状态都按它判断
+    /// 最近一次读取到的、被拖出 Dock 的根组；行的状态与右键菜单里 “添加到 Dock” 的可用状态都按它判断
     private var rootGroupIDsRemovedFromDock: Set<UUID> = []
 
-    /// 正在编辑文件夹名时取到的网页标题，连同取标题时那一份网页按先后记下，编辑结束时依次补上。
+    /// 正在编辑组名时取到的网页标题，连同取标题时那一份网页按先后记下，编辑结束时依次补上。
     /// 同一项先后记下的几条都留着：旧网址的标题可能晚到，不能把新网址的挤掉，补哪一条由数据源核对网址决定
     private var pendingWebPageTitles: [(title: String, webPage: WebPageReference)] = []
 
@@ -42,7 +42,7 @@ final class GroupTreeViewController: NSViewController {
         outlineView.item(atRow: outlineView.selectedRow) as? GroupTreeNode
     }
 
-    /// 是否正在编辑文件夹名：第一响应者是字段编辑器，且它正在编辑的文本框在树里
+    /// 是否正在编辑组名：第一响应者是字段编辑器，且它正在编辑的文本框在树里
     private var isEditingGroupName: Bool {
         guard
             let fieldEditor = outlineView.window?.firstResponder as? NSTextView,
@@ -55,9 +55,9 @@ final class GroupTreeViewController: NSViewController {
         return textField.isDescendant(of: outlineView)
     }
 
-    /// 创建文件夹区
+    /// 创建组区
     /// - Parameters:
-    ///   - store: 文件夹树的唯一数据源
+    ///   - store: 组树的唯一数据源
     ///   - dockTileSynchronizer: Dock tile 同步器；Dock 集成不可用时传 nil
     init(store: GroupStore, dockTileSynchronizer: DockTileSynchronizer?) {
         self.store = store
@@ -67,13 +67,13 @@ final class GroupTreeViewController: NSViewController {
         super.init(nibName: nil, bundle: nil)
     }
 
-    /// 文件夹区完全由代码构建，不支持从归档解码
+    /// 组区完全由代码构建，不支持从归档解码
     @available(*, unavailable)
     required init?(coder _: NSCoder) {
         fatalError("不支持从归档解码")
     }
 
-    /// 搭建界面；文件夹树变化时重建，每次同步 Dock tile 之后与 Dock 偏好里的 tile 变化时刷新 tile 的状态
+    /// 搭建界面；组树变化时重建，每次同步 Dock tile 之后与 Dock 偏好里的 tile 变化时刷新 tile 的状态
     override func loadView() {
         configureOutlineView()
         view = makeContentView()
@@ -105,9 +105,9 @@ final class GroupTreeViewController: NSViewController {
         )
     }
 
-    /// 重新读取被拖出 Dock 的根文件夹，原地更新各行的状态文字
+    /// 重新读取被拖出 Dock 的根组，原地更新各行的状态文字
     ///
-    /// 不重建树：新建的根文件夹正在重命名时，随后的同步会发出通知，
+    /// 不重建树：新建的根组正在重命名时，随后的同步会发出通知，
     /// 重建会结束编辑并提交输入到一半的名称
     @objc
     func refreshDockStatus() {
@@ -128,7 +128,7 @@ final class GroupTreeViewController: NSViewController {
 
     /// 按书签把整棵树里的 App 与文件跟到新位置
     ///
-    /// 正在编辑文件夹名时跳过：有变化就会重建树，重建会结束编辑并提交输入到一半的名称
+    /// 正在编辑组名时跳过：有变化就会重建树，重建会结束编辑并提交输入到一半的名称
     func updateItemLocations() {
         guard !isEditingGroupName else { return }
 
@@ -137,7 +137,7 @@ final class GroupTreeViewController: NSViewController {
 
     /// 给不带标题加入或保存的网页补上取到的标题；这一项的网址已不是取标题的那个时，由数据源丢掉
     ///
-    /// 正在编辑文件夹名时先记下，编辑结束再补：补上标题会重建树，重建会结束编辑并提交输入到一半的名称
+    /// 正在编辑组名时先记下，编辑结束再补：补上标题会重建树，重建会结束编辑并提交输入到一半的名称
     /// - Parameters:
     ///   - title: 取到的标题，已去掉首尾空白
     ///   - webPage: 不带标题交出的那一份网页：id 与取标题的网址
@@ -154,8 +154,8 @@ final class GroupTreeViewController: NSViewController {
 // MARK: NSOutlineViewDelegate
 
 extension GroupTreeViewController: NSOutlineViewDelegate {
-    /// 每一行显示图标、名称、访达里的文件夹的位置，
-    /// 以及被拖出 Dock 的根文件夹的 “不在 Dock 上”
+    /// 每一行显示图标、名称、访达文件夹的位置，
+    /// 以及被拖出 Dock 的根组的 “不在 Dock 上”
     func outlineView(
         _ outlineView: NSOutlineView,
         viewFor _: NSTableColumn?,
@@ -184,7 +184,7 @@ extension GroupTreeViewController: NSOutlineViewDelegate {
 // MARK: NSTextFieldDelegate
 
 extension GroupTreeViewController: NSTextFieldDelegate {
-    /// 结束编辑文件夹名时写回数据源；新建的根文件夹名称就此定下，解除搁置，tile 带着这个名称出现。
+    /// 结束编辑组名时写回数据源；新建的根组名称就此定下，解除搁置，tile 带着这个名称出现。
     /// 编辑期间取到的网页标题随后补上
     func controlTextDidEndEditing(_ notification: Notification) {
         guard let textField = notification.object as? NSTextField else { return }
@@ -264,7 +264,7 @@ extension GroupTreeViewController: NSMenuDelegate {
             NSMenuItem(
                 title: String(
                     localized: "groups.remove",
-                    comment: "文件夹树右键菜单的一项：删除右键点到的文件夹、App、文件或网页"
+                    comment: "组树右键菜单的一项：删除右键点到的组、App、文件或网页"
                 ),
                 action: #selector(removeClickedItem(_:)),
                 keyEquivalent: ""
@@ -281,9 +281,9 @@ extension GroupTreeViewController: NSMenuDelegate {
 // MARK: - Actions
 
 extension GroupTreeViewController {
-    /// 新建文件夹：有选中项时建在其所属文件夹内，否则建为根文件夹；建好后立即进入重命名
+    /// 新建组：有选中项时建在其所属组内，否则建为根组；建好后立即进入重命名
     ///
-    /// 新建的根文件夹在名称编辑结束之前搁置，不添加 tile：tile 带着最终名称出现，Dock 只重启一次
+    /// 新建的根组在名称编辑结束之前搁置，不添加 tile：tile 带着最终名称出现，Dock 只重启一次
     @objc
     private func addGroup() {
         if let parentID = selectedNode?.containingGroupID {
@@ -305,7 +305,7 @@ extension GroupTreeViewController {
         beginRenaming(groupID: group.id)
     }
 
-    /// 选择 App 并加入选中项所属的文件夹
+    /// 选择 App 并加入选中项所属的组
     @objc
     private func addApps() {
         let panel = NSOpenPanel()
@@ -317,7 +317,7 @@ extension GroupTreeViewController {
         addItems(chosenIn: panel)
     }
 
-    /// 选择文件与访达里的文件夹，加入选中项所属的文件夹；不限类型，选到的 App 按分类规则成为 App
+    /// 选择文件与访达文件夹，加入选中项所属的组；不限类型，选到的 App 按分类规则成为 App
     @objc
     private func addFiles() {
         let panel = NSOpenPanel()
@@ -328,10 +328,10 @@ extension GroupTreeViewController {
         addItems(chosenIn: panel)
     }
 
-    /// 输入网址与可选的标题，把网页加入弹出时选中项所属的文件夹；
+    /// 输入网址与可选的标题，把网页加入弹出时选中项所属的组；
     /// 不带标题加入的网页，取到标题后补上
     ///
-    /// 弹出期间这个文件夹被删掉时，`addItems` 找不到它，什么都不做；之后取到的标题同样找不到这一项
+    /// 弹出期间这个组被删掉时，`addItems` 找不到它，什么都不做；之后取到的标题同样找不到这一项
     @objc
     private func addWebPage() {
         guard
@@ -352,7 +352,7 @@ extension GroupTreeViewController {
         )
     }
 
-    /// 把右键点到的根文件夹重新添加到 Dock；记为待添加后它就不再算被拖出，状态随即刷新
+    /// 把右键点到的根组重新添加到 Dock；记为待添加后它就不再算被拖出，状态随即刷新
     @objc
     private func addClickedGroupToDock(_ sender: NSMenuItem) {
         guard let group = clickedNode(of: sender)?.group else { return }
@@ -361,7 +361,7 @@ extension GroupTreeViewController {
         refreshDockStatus()
     }
 
-    /// 访达打开右键点到的 App 或文件所在的位置并选中它；访达里的文件夹同样是选中，不是打开
+    /// 访达打开右键点到的 App 或文件所在的位置并选中它；访达文件夹同样是选中，不是打开
     ///
     /// 先按书签找到当前位置，找不到时用记录的位置；只读，不改数据源：
     /// 右键点后台窗口不会让设置窗口成为 key，按书签更新数据源的时机赶不上
@@ -426,7 +426,7 @@ extension GroupTreeViewController {
         )
     }
 
-    /// 删除右键点到的那一项；文件夹连同内容一起删除。选中项不变：重建树时按 id 恢复选中
+    /// 删除右键点到的那一项；组连同内容一起删除。选中项不变：重建树时按 id 恢复选中
     @objc
     private func removeClickedItem(_ sender: NSMenuItem) {
         guard let node = clickedNode(of: sender) else { return }
@@ -434,7 +434,7 @@ extension GroupTreeViewController {
         store.remove(itemID: node.item.id)
     }
 
-    /// 双击文件夹行时进入重命名；App、文件与网页的名称不可编辑
+    /// 双击组这一行时进入重命名；App、文件与网页的名称不可编辑
     @objc
     private func renameClickedGroup() {
         let row = outlineView.clickedRow
@@ -445,10 +445,10 @@ extension GroupTreeViewController {
         outlineView.editColumn(0, row: row, with: nil, select: true)
     }
 
-    /// 按数据源的最新内容重建整棵树，尽量保留展开状态与选中项；重建时重新读取被拖出 Dock 的根文件夹
+    /// 按数据源的最新内容重建整棵树，尽量保留展开状态与选中项；重建时重新读取被拖出 Dock 的根组
     @objc
     private func reloadTree() {
-        // 节点会整体重建，先按 id 记下展开的文件夹与选中项
+        // 节点会整体重建，先按 id 记下展开的组与选中项
         let expandedIDs = expandedGroupIDs(in: dataSource.rootNodes)
         let selectedID = selectedNode?.item.id
 
@@ -516,7 +516,7 @@ extension GroupTreeViewController {
         let titleLabel = NSTextField(
             labelWithString: String(
                 localized: "groups.sectionTitle",
-                comment: "设置窗口文件夹区的区块标题"
+                comment: "设置窗口组区的区块标题"
             )
         )
         titleLabel.font = .boldSystemFont(ofSize: NSFont.systemFontSize)
@@ -527,11 +527,11 @@ extension GroupTreeViewController {
         scrollView.autohidesScrollers = true
         scrollView.borderType = .bezelBorder
 
-        // 底部按钮：新建文件夹与 “添加…”，靠左
+        // 底部按钮：新建组与 “添加…”，靠左
         let newGroupButton = NSButton(
             title: String(
                 localized: "groups.newGroup",
-                comment: "文件夹区的按钮：新建文件夹"
+                comment: "组区的按钮：新建组"
             ),
             target: self,
             action: #selector(addGroup)
@@ -562,7 +562,7 @@ extension GroupTreeViewController {
         addPopUpButton.addItem(
             withTitle: String(
                 localized: "groups.add",
-                comment: "文件夹区的下拉按钮：点击后弹出菜单，选择添加 App、文件或网页"
+                comment: "组区的下拉按钮：点击后弹出菜单，选择添加 App、文件或网页"
             )
         )
 
@@ -570,7 +570,7 @@ extension GroupTreeViewController {
             NSMenuItem(
                 title: String(
                     localized: "groups.addApps",
-                    comment: "“添加…” 菜单的一项：选择 App 加入选中项所属的文件夹"
+                    comment: "“添加…” 菜单的一项：选择 App 加入选中项所属的组"
                 ),
                 action: #selector(addApps),
                 keyEquivalent: ""
@@ -579,7 +579,7 @@ extension GroupTreeViewController {
             NSMenuItem(
                 title: String(
                     localized: "groups.addFiles",
-                    comment: "“添加…” 菜单的一项：选择文件或访达里的文件夹，加入选中项所属的文件夹"
+                    comment: "“添加…” 菜单的一项：选择文件或访达文件夹，加入选中项所属的组"
                 ),
                 action: #selector(addFiles),
                 keyEquivalent: ""
@@ -588,7 +588,7 @@ extension GroupTreeViewController {
             NSMenuItem(
                 title: String(
                     localized: "groups.addWebPage",
-                    comment: "“添加…” 菜单的一项：输入网址，把网页加入选中项所属的文件夹"
+                    comment: "“添加…” 菜单的一项：输入网址，把网页加入选中项所属的组"
                 ),
                 action: #selector(addWebPage),
                 keyEquivalent: ""
@@ -608,17 +608,17 @@ extension GroupTreeViewController {
     }
 
     /// 右键菜单里 “删除” 之前的各项，按右键点到的那一行的类型给出：
-    /// 文件夹是 “添加到 Dock”，App 与文件是 “在访达中显示”，网页是 “在默认浏览器中打开” 与 “编辑…”
+    /// 组是 “添加到 Dock”，App 与文件是 “在访达中显示”，网页是 “在默认浏览器中打开” 与 “编辑…”
     private func contextMenuItems(for node: GroupTreeNode) -> [NSMenuItem] {
         switch node.item {
-        // Dock 集成不可用时没有 “添加到 Dock”；只有被拖出 Dock 的根文件夹可用，其余文件夹置灰
+        // Dock 集成不可用时没有 “添加到 Dock”；只有被拖出 Dock 的根组可用，其余组置灰
         case .group:
             guard dockTileSynchronizer != nil else { return [] }
 
             let addToDockItem = NSMenuItem(
                 title: String(
                     localized: "groups.addToDock",
-                    comment: "文件夹行右键菜单的一项：把 tile 不在 Dock 上的根文件夹重新添加到 Dock"
+                    comment: "组这一行右键菜单的一项：把 tile 不在 Dock 上的根组重新添加到 Dock"
                 ),
                 action: #selector(addClickedGroupToDock(_:)),
                 keyEquivalent: ""
@@ -633,7 +633,7 @@ extension GroupTreeViewController {
                 NSMenuItem(
                     title: String(
                         localized: "groups.showInFinder",
-                        comment: "App、文件与访达里的文件夹这一行右键菜单的一项：在访达里选中它"
+                        comment: "App、文件与访达文件夹这一行右键菜单的一项：在访达里选中它"
                     ),
                     action: #selector(showClickedItemInFinder(_:)),
                     keyEquivalent: ""
@@ -670,7 +670,7 @@ extension GroupTreeViewController {
         return dataSource.node(withID: itemID)
     }
 
-    /// 以 sheet 弹出选择面板，把选中的 URL 分类后加入选中项所属的文件夹
+    /// 以 sheet 弹出选择面板，把选中的 URL 分类后加入选中项所属的组
     private func addItems(chosenIn panel: NSOpenPanel) {
         guard
             let groupID = selectedNode?.containingGroupID,
@@ -691,14 +691,14 @@ extension GroupTreeViewController {
         }
     }
 
-    /// 这一行是否为被拖出 Dock 的根文件夹；Dock 集成不可用时一律为否
+    /// 这一行是否为被拖出 Dock 的根组；Dock 集成不可用时一律为否
     private func isRemovedFromDock(_ node: GroupTreeNode) -> Bool {
         guard let group = node.group else { return false }
 
         return rootGroupIDsRemovedFromDock.contains(group.id)
     }
 
-    /// 选中新建的文件夹并进入名称编辑
+    /// 选中新建的组并进入名称编辑
     private func beginRenaming(groupID: UUID) {
         guard let node = dataSource.node(withID: groupID) else { return }
 
@@ -722,7 +722,7 @@ extension GroupTreeViewController {
         outlineView.editColumn(0, row: row, with: nil, select: true)
     }
 
-    /// 按记下的先后，补上编辑文件夹名期间取到的网页标题
+    /// 按记下的先后，补上编辑组名期间取到的网页标题
     private func fillPendingWebPageTitles() {
         let titles = pendingWebPageTitles
         pendingWebPageTitles = []
@@ -732,7 +732,7 @@ extension GroupTreeViewController {
         }
     }
 
-    /// 收集当前展开的文件夹 id；收起的文件夹不再深入
+    /// 收集当前展开的组 id；收起的组不再深入
     private func expandedGroupIDs(in nodes: [GroupTreeNode]) -> Set<UUID> {
         nodes
             .filter { outlineView.isItemExpanded($0) }
@@ -742,7 +742,7 @@ extension GroupTreeViewController {
             }
     }
 
-    /// 自上而下展开 id 在 expandedIDs 中的文件夹
+    /// 自上而下展开 id 在 expandedIDs 中的组
     private func restoreExpansion(of nodes: [GroupTreeNode], expandedIDs: Set<UUID>) {
         for node in nodes where expandedIDs.contains(node.item.id) {
             outlineView.expandItem(node)

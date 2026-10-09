@@ -8,13 +8,13 @@ final class SettingsWindowController: NSWindowController {
     /// 内容区四边的边距
     static let contentInset: CGFloat = 20
 
-    /// 内容区的最小尺寸：宽度扣除左右边距后，五种语言的文件夹区按钮行都能完整显示
+    /// 内容区的最小尺寸：宽度扣除左右边距后，五种语言的组区按钮行都能完整显示
     static let minimumContentSize = NSSize(width: 570, height: 480)
 
-    /// 文件夹区，在窗口上部，随窗口高度伸缩
+    /// 组区，在窗口上部，随窗口高度伸缩
     private let groupTreeViewController: GroupTreeViewController
 
-    /// 通用区，在文件夹区下方，以分隔线隔开
+    /// 通用区，在组区下方，以分隔线隔开
     private let generalSettingsViewController = GeneralSettingsViewController(
         preferences: .shared
     )
@@ -105,7 +105,7 @@ extension SettingsWindowController {
         window?.makeKeyAndOrderFront(nil)
     }
 
-    /// 文件夹区在上、通用区在下，中间以分隔线隔开；文件夹区随窗口高度伸缩
+    /// 组区在上、通用区在下，中间以分隔线隔开；组区随窗口高度伸缩
     private func makeContentView() -> NSView {
         let groupTreeView = groupTreeViewController.view
         let generalSettingsView = generalSettingsViewController.view
@@ -124,7 +124,7 @@ extension SettingsWindowController {
             right: Self.contentInset
         )
 
-        // 文件夹区与分隔线扣除左右边距后占满宽度
+        // 组区与分隔线扣除左右边距后占满宽度
         NSLayoutConstraint.activate([
             groupTreeView.widthAnchor.constraint(
                 equalTo: stackView.widthAnchor,

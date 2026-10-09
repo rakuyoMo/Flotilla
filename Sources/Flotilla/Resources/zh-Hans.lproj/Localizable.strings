@@ -17,7 +17,7 @@
 /* 设置窗口 */
 "settings.windowTitle" = "设置";
 
-/* 设置窗口的文件夹区 */
+/* 设置窗口的组区 */
 "groups.sectionTitle" = "组";
 "groups.newGroup" = "新建组";
 "groups.untitledGroup" = "未命名组";

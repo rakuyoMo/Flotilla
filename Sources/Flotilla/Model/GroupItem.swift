@@ -2,15 +2,15 @@ import Foundation
 
 // MARK: - GroupItem
 
-/// 文件夹内的一项：App、子文件夹、文件或网页
+/// 组内的一项：App、子组、文件或网页
 enum GroupItem: Hashable, Identifiable {
     /// 一个 App：内容类型符合 `.applicationBundle` 的 App bundle
     case app(AppReference)
 
-    /// 一个子文件夹：Flotilla 管理的分组，可继续嵌套，不对应磁盘目录
+    /// 一个子组：Flotilla 管理的分组，可继续嵌套，不对应磁盘目录
     case group(Group)
 
-    /// 一个文件：App 以外的一切，包括文件包、访达里的文件夹与卷
+    /// 一个文件：App 以外的一切，包括文件包、访达文件夹与卷
     case file(FileReference)
 
     /// 一个网页：`http` 或 `https` 网址
@@ -37,7 +37,7 @@ enum GroupItem: Hashable, Identifiable {
 // MARK: - Classification
 
 extension GroupItem {
-    /// 为要加入文件夹的 URL 建一个新项：App bundle 为 App，其余存在的一切为文件，包括文件包、访达里的文件夹与卷；
+    /// 为要加入组的 URL 建一个新项：App bundle 为 App，其余存在的一切为文件，包括文件包、访达文件夹与卷；
     /// `http`、`https` 网址为网页；不存在的文件与其它网址返回 nil
     ///
     /// 设置窗口的拖入、“添加 App…” “添加文件…”、网页提示框（“添加网页…” 与 “编辑…”）与拖到 Dock 上的 tile 都经这里分类；
@@ -60,7 +60,7 @@ extension GroupItem {
 
 extension GroupItem: Codable {
     /// 先读类型标签，再把同一层级的其余字段交给对应类型解码；
-    /// 子文件夹会继续递归解码，因此支持任意嵌套深度；
+    /// 子组会继续递归解码，因此支持任意嵌套深度；
     /// 类型标签缺失或取值未知、字段解码失败时抛出解码错误
     init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: GroupItemCodingKey.self)

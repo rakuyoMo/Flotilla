@@ -3,10 +3,10 @@ import os
 
 // MARK: - GroupStore
 
-/// 文件夹树的唯一数据源：负责增删改查与持久化，并在每次变更后发出通知
+/// 组树的唯一数据源：负责增删改查与持久化，并在每次变更后发出通知
 @MainActor
 final class GroupStore {
-    /// 文件夹树发生变更后在主线程发出的通知，`object` 为发生变更的 `GroupStore`
+    /// 组树发生变更后在主线程发出的通知，`object` 为发生变更的 `GroupStore`
     nonisolated static let didChangeNotification = Notification.Name("GroupStore.didChange")
 
     /// 默认持久化位置：`~/Library/Application Support/Flotilla/folders.json`；
@@ -23,13 +23,13 @@ final class GroupStore {
         category: "GroupStore"
     )
 
-    /// 根文件夹，每个对应一个 Dock tile
+    /// 根组，每个对应一个 Dock tile
     private(set) var rootGroups: [Group]
 
     /// 持久化文件的位置
     private let fileURL: URL
 
-    /// 以 `[GroupItem]` 的形式读写根层级，让根层级与文件夹内部共用同一套递归操作；根层级只放文件夹
+    /// 以 `[GroupItem]` 的形式读写根层级，让根层级与组内部共用同一套递归操作；根层级只放组
     private var rootItems: [GroupItem] {
         get {
             rootGroups.map { .group($0) }
@@ -53,7 +53,7 @@ final class GroupStore {
 // MARK: - Query
 
 extension GroupStore {
-    /// 在任意层级中查找文件夹；找不到时为 nil
+    /// 在任意层级中查找组；找不到时为 nil
     func group(id: UUID) -> Group? {
         guard case .group(let group) = Self.findItem(id: id, in: rootItems) else {
             return nil
@@ -62,25 +62,25 @@ extension GroupStore {
         return group
     }
 
-    /// 返回直接包含该项的文件夹；根文件夹或找不到该项时返回 nil
+    /// 返回直接包含该项的组；根组或找不到该项时返回 nil
     func parentGroup(of itemID: UUID) -> Group? {
         Self.findParent(of: itemID, in: rootItems)
     }
 
-    /// 判断能否把一项移入某个文件夹：App、文件与网页只能放进文件夹，文件夹不能移入自身或自己的子孙
+    /// 判断能否把一项移入某个组：App、文件与网页只能放进组，组不能移入自身或自己的子孙
     /// - Parameters:
     ///   - itemID: 要移动的项
-    ///   - groupID: 目标文件夹，nil 表示根层级
+    ///   - groupID: 目标组，nil 表示根层级
     func canMove(itemID: UUID, to groupID: UUID?) -> Bool {
         guard let item = Self.findItem(id: itemID, in: rootItems) else { return false }
 
-        // 根层级只放文件夹
+        // 根层级只放组
         guard let groupID else {
             guard case .group = item else { return false }
             return true
         }
 
-        // 目标是被移动的文件夹自身或它的子孙时，移动会让文件夹脱离整棵树
+        // 目标是被移动的组自身或它的子孙时，移动会让组脱离整棵树
         if
             case .group(let moved) = item,
             moved.id == groupID || Self.findItem(id: groupID, in: moved.items) != nil
@@ -95,7 +95,7 @@ extension GroupStore {
 // MARK: - Mutation
 
 extension GroupStore {
-    /// 在根层级末尾新建文件夹，返回新建的文件夹
+    /// 在根层级末尾新建组，返回新建的组
     func addRootGroup(named name: String) -> Group {
         let group = Group(id: UUID(), name: name, items: [])
         rootGroups.append(group)
@@ -104,7 +104,7 @@ extension GroupStore {
         return group
     }
 
-    /// 在指定文件夹末尾新建子文件夹；找不到父文件夹时返回 nil
+    /// 在指定组末尾新建子组；找不到父组时返回 nil
     func addSubgroup(named name: String, to parentID: UUID) -> Group? {
         let group = Group(id: UUID(), name: name, items: [])
 
@@ -121,29 +121,29 @@ extension GroupStore {
         return group
     }
 
-    /// 把 App、文件与网页追加到文件夹末尾，一次提交、只发一次变更通知
+    /// 把 App、文件与网页追加到组末尾，一次提交、只发一次变更通知
     ///
-    /// 与该文件夹已有的项、以及本批已加入的项同类且 URL 相同时跳过；子文件夹不经这里添加，传进来就忽略。
-    /// 比对之前先按书签把该文件夹里的 App 与文件跟到新位置，与加入合成一次提交
+    /// 与该组已有的项、以及本批已加入的项同类且 URL 相同时跳过；子组不经这里添加，传进来就忽略。
+    /// 比对之前先按书签把该组里的 App 与文件跟到新位置，与加入合成一次提交
     /// - Parameters:
     ///   - items: 由 `GroupItem(url:title:)` 新建的项，id 不与树里已有的项重复
-    ///   - groupID: 目标文件夹
+    ///   - groupID: 目标组
     func addItems(_ items: [GroupItem], to groupID: UUID) {
         var tree = rootItems
         var added = false
         var relocated = false
 
         let found = Self.modifyGroup(id: groupID, in: &tree) { group in
-            // App 或文件改名后再把它拖进同一个文件夹时，已有的那一项先换成新路径，下面才认得出是同一个
+            // App 或文件改名后再把它拖进同一个组时，已有的那一项先换成新路径，下面才认得出是同一个
             relocated = Self.updateItemLocations(in: &group.items)
 
             for item in items {
-                // 子文件夹只由 `addSubgroup(named:to:)` 新建
+                // 子组只由 `addSubgroup(named:to:)` 新建
                 if case .group = item {
                     continue
                 }
 
-                // 与已有的项以及本批已加入的项比对，同一个 App、文件或网页在一个文件夹里只出现一次
+                // 与已有的项以及本批已加入的项比对，同一个 App、文件或网页在一个组里只出现一次
                 let exists = group.items.contains {
                     Self.isDuplicate($0, of: item)
                 }
@@ -184,7 +184,7 @@ extension GroupStore {
     /// 把网页换成给定的网址与标题，位置与 id 不变
     ///
     /// 按 id 找到这一项；它已不在、不是网页、网址与标题都没变时什么都不做，改了就提交并发一次变更通知。
-    /// 不按网址去重：去重只在加入时进行，改成与同一文件夹里另一个网页相同的网址时两项都保留
+    /// 不按网址去重：去重只在加入时进行，改成与同一个组里另一个网页相同的网址时两项都保留
     /// - Parameter webPage: 改好的网页，id 与要改的那一项相同
     func updateWebPage(_ webPage: WebPageReference) {
         guard
@@ -195,7 +195,7 @@ extension GroupStore {
             return
         }
 
-        // 网页只放在文件夹里：在所在的文件夹里原地换成新的那一份
+        // 网页只放在组里：在所在的组里原地换成新的那一份
         var tree = rootItems
 
         _ = Self.modifyGroup(id: parent.id, in: &tree) { group in
@@ -212,12 +212,12 @@ extension GroupStore {
     /// App 更新之后书签找不到装好的那一份时，按 bundle id 找回
     ///
     /// 有变化时一次提交；没有变化时不提交、不发通知。找不到的 App 与文件保持原样
-    /// - Parameter groupID: 只更新这个文件夹及其子孙；nil 表示整棵树
+    /// - Parameter groupID: 只更新这个组及其子孙；nil 表示整棵树
     func updateItemLocations(in groupID: UUID? = nil) {
         var tree = rootItems
         var changed = false
 
-        // 限定文件夹时只遍历它的子树；找不到这个文件夹时什么都不变
+        // 限定组时只遍历它的子树；找不到这个组时什么都不变
         if let groupID {
             _ = Self.modifyGroup(id: groupID, in: &tree) {
                 changed = Self.updateItemLocations(in: &$0.items)
@@ -232,7 +232,7 @@ extension GroupStore {
         commit()
     }
 
-    /// 重命名文件夹；名称未变化时不产生变更
+    /// 重命名组；名称未变化时不产生变更
     func rename(groupID: UUID, to name: String) {
         guard let group = group(id: groupID), group.name != name else { return }
 
@@ -245,7 +245,7 @@ extension GroupStore {
         commit()
     }
 
-    /// 删除一项；删除文件夹时连同其内容一起删除
+    /// 删除一项；删除组时连同其内容一起删除
     func remove(itemID: UUID) {
         var items = rootItems
         guard Self.removeItem(id: itemID, from: &items) != nil else { return }
@@ -254,10 +254,10 @@ extension GroupStore {
         commit()
     }
 
-    /// 把一项移动到目标文件夹的指定位置；不满足 `canMove(itemID:to:)` 时不做任何改动
+    /// 把一项移动到目标组的指定位置；不满足 `canMove(itemID:to:)` 时不做任何改动
     /// - Parameters:
     ///   - itemID: 要移动的项
-    ///   - groupID: 目标文件夹，nil 表示根层级
+    ///   - groupID: 目标组，nil 表示根层级
     ///   - index: 目标位置，按移动前目标层级的下标计算，超出范围时夹到两端
     func move(itemID: UUID, to groupID: UUID?, at index: Int) {
         guard canMove(itemID: itemID, to: groupID) else { return }
@@ -298,7 +298,7 @@ extension GroupStore {
             let data = try Data(contentsOf: fileURL)
             return try JSONDecoder().decode([Group].self, from: data)
         } catch {
-            logger.error("解析文件夹数据失败：\(error.localizedDescription, privacy: .public)")
+            logger.error("解析组数据失败：\(error.localizedDescription, privacy: .public)")
             preserveBrokenFile(at: fileURL)
             return []
         }
@@ -336,7 +336,7 @@ extension GroupStore {
             )
             try encoder.encode(rootGroups).write(to: fileURL, options: .atomic)
         } catch {
-            Self.logger.error("写入文件夹数据失败：\(error.localizedDescription, privacy: .public)")
+            Self.logger.error("写入组数据失败：\(error.localizedDescription, privacy: .public)")
         }
     }
 }
@@ -362,7 +362,7 @@ extension GroupStore {
         return nil
     }
 
-    /// 在 items 的子孙中查找直接包含 itemID 的文件夹；items 这一层自身的项没有父文件夹
+    /// 在 items 的子孙中查找直接包含 itemID 的组；items 这一层自身的项没有父组
     private static func findParent(of itemID: UUID, in items: [GroupItem]) -> Group? {
         for case .group(let group) in items {
             if group.items.contains(where: { $0.id == itemID }) {
@@ -377,7 +377,7 @@ extension GroupStore {
         return nil
     }
 
-    /// 在 items 及其子孙中找到文件夹并原地修改；找到时返回 true
+    /// 在 items 及其子孙中找到组并原地修改；找到时返回 true
     private static func modifyGroup(
         id: UUID,
         in items: inout [GroupItem],
@@ -417,7 +417,7 @@ extension GroupStore {
         return nil
     }
 
-    /// 把一项插入目标文件夹（nil 表示 items 这一层），下标夹到有效范围内
+    /// 把一项插入目标组（nil 表示 items 这一层），下标夹到有效范围内
     private static func insert(
         _ item: GroupItem,
         into groupID: UUID?,
@@ -453,7 +453,7 @@ extension GroupStore {
                 items[index] = .file(relocated)
                 changed = true
 
-            // 子文件夹里有变化时，把修改后的子文件夹写回这一层
+            // 子组里有变化时，把修改后的子组写回这一层
             case .group(var group):
                 guard updateItemLocations(in: &group.items) else { continue }
 
@@ -469,7 +469,7 @@ extension GroupStore {
         return changed
     }
 
-    /// 两项是否同类且 URL 相同；子文件夹之间不算重复
+    /// 两项是否同类且 URL 相同；子组之间不算重复
     private static func isDuplicate(_ lhs: GroupItem, of rhs: GroupItem) -> Bool {
         switch (lhs, rhs) {
         case (.app(let lhs), .app(let rhs)):

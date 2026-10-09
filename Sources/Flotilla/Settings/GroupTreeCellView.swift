@@ -3,7 +3,7 @@ import UniformTypeIdentifiers
 
 // MARK: - GroupTreeCellView
 
-/// 文件夹树的一行：图标、名称、访达里的文件夹所在的位置与状态文字；文件夹名可编辑，App、文件与网页的名称只读
+/// 组树的一行：图标、名称、访达文件夹所在的位置与状态文字；组名可编辑，App、文件与网页的名称只读
 final class GroupTreeCellView: NSTableCellView {
     /// 行视图的复用标识
     static let reuseIdentifier = NSUserInterfaceItemIdentifier("GroupTreeCell")
@@ -11,20 +11,20 @@ final class GroupTreeCellView: NSTableCellView {
     /// 行首图标的边长（pt）
     private static let iconSize: CGFloat = 20
 
-    /// 访达里的文件夹名称后的位置文字，与 “不在 Dock 上” 同样的灰色小字；其余各行隐藏
+    /// 访达文件夹名称后的位置文字，与 “不在 Dock 上” 同样的灰色小字；其余各行隐藏
     ///
-    /// 设置窗口里访达里的文件夹与 Flotilla 的文件夹图标相同，靠它区分
+    /// 设置窗口里访达文件夹与组的图标相同，靠它区分
     private let locationLabel = NSTextField(labelWithString: "")
 
     /// 名称右侧的状态文字 “不在 Dock 上”，默认隐藏
     private let notOnDockLabel = NSTextField(
         labelWithString: String(
             localized: "groups.notOnDock",
-            comment: "文件夹树里 tile 不在 Dock 上的根文件夹，名称右侧的状态文字"
+            comment: "组树里 tile 不在 Dock 上的根组，名称右侧的状态文字"
         )
     )
 
-    /// 是否显示 “不在 Dock 上”；只有被拖出 Dock 的根文件夹这一行显示
+    /// 是否显示 “不在 Dock 上”；只有被拖出 Dock 的根组这一行显示
     var showsNotOnDockLabel: Bool {
         get { !notOnDockLabel.isHidden }
         set { notOnDockLabel.isHidden = !newValue }
@@ -105,10 +105,10 @@ final class GroupTreeCellView: NSTableCellView {
     /// 用节点内容填充这一行
     /// - Parameter node: 这一行对应的节点
     func configure(with node: GroupTreeNode) {
-        // 只有文件夹名可编辑：App、文件与网页的名称来自访达或浏览器
+        // 只有组名可编辑：App、文件与网页的名称来自访达或浏览器
         textField?.isEditable = node.group != nil
 
-        // 只有访达里的文件夹这一行显示位置，行视图复用时其余各行要隐藏
+        // 只有访达文件夹这一行显示位置，行视图复用时其余各行要隐藏
         let location = Self.location(of: node.item)
 
         locationLabel.stringValue = location ?? ""
@@ -119,7 +119,7 @@ final class GroupTreeCellView: NSTableCellView {
             imageView?.image = app.icon
             textField?.stringValue = app.displayName
 
-        // 根文件夹与子文件夹都用系统的通用文件夹图标：设置窗口里不渲染文件夹的预览
+        // 根组与子组都用系统的通用文件夹图标：设置窗口里不渲染组的预览
         case .group(let group):
             imageView?.image = NSWorkspace.shared.icon(for: .folder)
             textField?.stringValue = group.name
@@ -138,8 +138,8 @@ final class GroupTreeCellView: NSTableCellView {
 // MARK: - Private
 
 extension GroupTreeCellView {
-    /// 访达里的文件夹所在的位置：父目录的路径，家目录写成 `~`，例如 `~/Documents`
-    /// - Returns: 不是访达里的文件夹（Flotilla 的文件夹、App、文件、文件包、网页、已删除的），或是没有父目录的 `/` 时为 nil
+    /// 访达文件夹所在的位置：父目录的路径，家目录写成 `~`，例如 `~/Documents`
+    /// - Returns: 不是访达文件夹（组、App、文件、文件包、网页、已删除的），或是没有父目录的 `/` 时为 nil
     private static func location(of item: GroupItem) -> String? {
         guard
             case .file(let file) = item,

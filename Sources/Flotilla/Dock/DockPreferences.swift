@@ -106,12 +106,12 @@ final class DockPreferences {
 // MARK: - Query
 
 extension DockPreferences {
-    /// Dock 上是否已有该 stub 所属根文件夹的 tile，按 stub 所在的目录匹配
+    /// Dock 上是否已有该 stub 所属根组的 tile，按 stub 所在的目录匹配
     func contains(tileURL: URL) -> Bool {
         index(ofDirectory: tileURL.deletingLastPathComponent(), in: tiles) != nil
     }
 
-    /// Dock 上 stub 位于该目录下某个 `<id>` 子目录的 tile 所属的根文件夹 id；子目录名解析不成 UUID 的条目忽略
+    /// Dock 上 stub 位于该目录下某个 `<id>` 子目录的 tile 所属的根组 id；子目录名解析不成 UUID 的条目忽略
     ///
     /// 只比对条目里记录的 URL，不访问磁盘：stub 连同它独占的 `<id>` 目录都已不存在时，Dock 上残留的 tile 仍能据此找出
     /// - Parameter stubsDirectory: 存放所有 stub 的目录
@@ -126,7 +126,7 @@ extension DockPreferences {
                 continue
             }
 
-            // 条目记录的是 `<stubsDirectory>/<id>/<文件夹名>.app/`：stub 所在目录的上一级必须正好是存放 stub 的目录，
+            // 条目记录的是 `<stubsDirectory>/<id>/<组名>.app/`：stub 所在目录的上一级必须正好是存放 stub 的目录，
             // 用户自己的 tile 与其它位置的条目一律不认
             let parentPath = tileDirectory
                 .deletingLastPathComponent()
@@ -152,7 +152,7 @@ extension DockPreferences {
     /// 同步时的第一次写入与 Dock 重启后的核对共用这一步：被终止的 Dock 写回的旧条目
     /// （条目丢失、名称或位置回退、GUID 不是写入的值）在这里被改回期望的样子
     /// - Parameters:
-    ///   - expectedTiles: 各根文件夹的 tile 应有的样子
+    ///   - expectedTiles: 各根组的 tile 应有的样子
     ///   - rewrittenTileURLs: stub 刚被改写过的 tile，条目换新的 GUID
     ///   - staleDirectories: 要删除 tile 的 stub 目录
     /// - Returns: 是否改动了偏好
@@ -203,10 +203,10 @@ extension DockPreferences {
         writtenGUIDs[Self.directoryKey(of: tileURL)] = guid
     }
 
-    /// 删除根文件夹的 tile：条目记录的 stub 位于该目录即匹配
+    /// 删除根组的 tile：条目记录的 stub 位于该目录即匹配
     ///
     /// 只比对条目里记录的 URL，不访问磁盘：用户在访达里删掉了 stub bundle 时同样能删除
-    /// - Parameter tileDirectory: 根文件夹的 stub 独占的目录
+    /// - Parameter tileDirectory: 根组的 stub 独占的目录
     /// - Returns: 是否确实删除了条目
     /// - Throws: 本次运行首次写入前备份 Dock 偏好失败时抛出，偏好不改动
     func remove(tileDirectory: URL) throws -> Bool {
@@ -221,10 +221,10 @@ extension DockPreferences {
         return true
     }
 
-    /// 让 tile 指向 stub 的当前位置、显示文件夹的当前名称；
+    /// 让 tile 指向 stub 的当前位置、显示组的当前名称；
     /// 条目原地替换，Dock 里用户拖动排好的顺序保持不变
     ///
-    /// 文件夹重命名后 stub 随之改名，URL 变化时一并删掉 Dock 按旧位置生成的书签 `book`，
+    /// 组重命名后 stub 随之改名，URL 变化时一并删掉 Dock 按旧位置生成的书签 `book`，
     /// 由 Dock 重启后按新 URL 重新生成
     ///
     /// 实测（macOS 27）Dock 按条目的 `GUID` 缓存 tile 图标，GUID 不变时重启后仍显示旧图标；stub 改写过就换一个新的 GUID。
@@ -463,10 +463,10 @@ extension DockPreferences {
 
     /// 在条目中查找 stub 位于该目录的 tile，不按名称匹配
     ///
-    /// 每个根文件夹的 stub 独占一个目录，文件夹重命名时 stub 在目录里改名，
+    /// 每个根组的 stub 独占一个目录，组重命名时 stub 在目录里改名，
     /// 按目录匹配才能找到改名前的 tile
     /// - Parameters:
-    ///   - directory: 根文件夹的 stub 独占的目录
+    ///   - directory: 根组的 stub 独占的目录
     ///   - tiles: 区域内的条目
     private func index(ofDirectory directory: URL, in tiles: [[String: Any]]) -> Int? {
         let target = Self.normalized(directory).path(percentEncoded: false)

@@ -3,9 +3,9 @@ import os
 
 // MARK: - DockTileSynchronizer
 
-/// 让 Dock 上的 tile 与根文件夹保持一致：每个根文件夹对应一个 stub 与一个 tile，名称与图标随文件夹实时更新
+/// 让 Dock 上的 tile 与根组保持一致：每个根组对应一个 stub 与一个 tile，名称与图标随组实时更新
 ///
-/// 用户把 tile 拖出 Dock 后不自动加回，只在根文件夹新出现或用户要求添加时添加 tile
+/// 用户把 tile 拖出 Dock 后不自动加回，只在根组新出现或用户要求添加时添加 tile
 @MainActor
 final class DockTileSynchronizer: NSObject {
     /// 每次同步结束后发出，`object` 为同步器；设置窗口据此刷新 tile 是否在 Dock 上
@@ -34,7 +34,7 @@ final class DockTileSynchronizer: NSObject {
         category: "DockTileSynchronizer"
     )
 
-    /// 文件夹树的唯一数据源
+    /// 组树的唯一数据源
     private let store: GroupStore
 
     /// 用户设置，决定图标里的预览数量
@@ -46,7 +46,7 @@ final class DockTileSynchronizer: NSObject {
     /// 读写 Dock 偏好
     private let dockPreferences: DockPreferences
 
-    /// 决定哪些根文件夹要添加 tile
+    /// 决定哪些根组要添加 tile
     private var additionTracker: DockTileAdditionTracker
 
     /// 等待执行的同步；新的变更到来时取消并替换它
@@ -57,7 +57,7 @@ final class DockTileSynchronizer: NSObject {
 
     /// 创建同步器
     /// - Parameters:
-    ///   - store: 文件夹树的唯一数据源
+    ///   - store: 组树的唯一数据源
     ///   - preferences: 用户设置，决定图标里的预览数量
     ///   - builder: 生成、更新、删除 stub
     ///   - dockPreferences: 读写 Dock 偏好
@@ -72,13 +72,13 @@ final class DockTileSynchronizer: NSObject {
         self.builder = builder
         self.dockPreferences = dockPreferences
 
-        // 创建时就有的根文件夹都视为已同步过：其中缺少 tile 的，是用户在 Flotilla 没运行时拖出去的
+        // 创建时就有的根组都视为已同步过：其中缺少 tile 的，是用户在 Flotilla 没运行时拖出去的
         additionTracker = DockTileAdditionTracker(
             rootGroupIDs: Set(store.rootGroups.map(\.id))
         )
     }
 
-    /// 先同步一次，再订阅文件夹树、设置、系统外观与 Dock 偏好的变更
+    /// 先同步一次，再订阅组树、设置、系统外观与 Dock 偏好的变更
     func start() {
         synchronize()
 
@@ -117,9 +117,9 @@ final class DockTileSynchronizer: NSObject {
         }
     }
 
-    /// 被用户拖出 Dock 的根文件夹：tile 不在 Dock 上，下一次同步也不会添加；设置窗口据此显示状态
+    /// 被用户拖出 Dock 的根组：tile 不在 Dock 上，下一次同步也不会添加；设置窗口据此显示状态
     ///
-    /// 刚新建、还没同步的根文件夹，搁置中的根文件夹，以及已经要求添加的根文件夹都不算
+    /// 刚新建、还没同步的根组，搁置中的根组，以及已经要求添加的根组都不算
     func rootGroupIDsRemovedFromDock() -> Set<UUID> {
         additionTracker.removedGroupIDs(
             rootGroupIDs: Set(store.rootGroups.map(\.id)),
@@ -127,19 +127,19 @@ final class DockTileSynchronizer: NSObject {
         )
     }
 
-    /// 把根文件夹记为待添加，并安排一次同步；用于把被拖出 Dock 的 tile 重新添加回去
+    /// 把根组记为待添加，并安排一次同步；用于把被拖出 Dock 的 tile 重新添加回去
     func addTile(for groupID: UUID) {
         additionTracker.request(groupID: groupID)
         scheduleSynchronization()
     }
 
-    /// 新建的根文件夹开始输入名称：
+    /// 新建的根组开始输入名称：
     /// 名称定下来之前不添加 tile，免得 tile 先以默认名出现、重命名后 Dock 再重启一次
     func holdTile(for groupID: UUID) {
         additionTracker.hold(groupID: groupID)
     }
 
-    /// 名称编辑结束：解除搁置并安排一次同步，tile 带着最终名称出现；不在搁置中的文件夹忽略
+    /// 名称编辑结束：解除搁置并安排一次同步，tile 带着最终名称出现；不在搁置中的组忽略
     func releaseTile(for groupID: UUID) {
         guard additionTracker.release(groupID: groupID) else { return }
 
@@ -162,13 +162,13 @@ extension DockTileSynchronizer {
         }
     }
 
-    /// 按当前的根文件夹同步：更新 stub，把 tile 的期望状态写进 Dock 偏好；
+    /// 按当前的根组同步：更新 stub，把 tile 的期望状态写进 Dock 偏好；
     /// 偏好有改动时重启 Dock，等新 Dock 读到期望状态后才算同步结束；
     /// 结束时清理多余的 stub 并发出 `didSynchronizeNotification`
     private func synchronize() {
         let rootGroups = store.rootGroups
 
-        // 缺少 tile 的根文件夹里，只有新出现的与用户要求添加的才添加；其余是被用户拖出 Dock 的
+        // 缺少 tile 的根组里，只有新出现的与用户要求添加的才添加；其余是被用户拖出 Dock 的
         let groupIDsToAdd = additionTracker.groupIDsToAdd(
             rootGroupIDs: Set(rootGroups.map(\.id)),
             onDockGroupIDs: rootGroupIDsOnDock()
@@ -176,7 +176,7 @@ extension DockTileSynchronizer {
 
         let stubs = writeStubs(of: rootGroups, groupIDsToAdd: groupIDsToAdd)
 
-        // 已删除或被拖成子文件夹的根文件夹：先删 tile，新 Dock 不再引用后才删 stub。
+        // 已删除或被拖成子组的根组：先删 tile，新 Dock 不再引用后才删 stub。
         // 候选既取磁盘上现存的 stub 目录，也取 Dock 上指向 stub 目录的 tile：
         // 整个 `<id>` 目录已不存在时，Dock 上残留的 tile 同样要删
         let staleIDs = builder.existingGroupIDs()
@@ -212,7 +212,7 @@ extension DockTileSynchronizer {
     /// 重启 Dock，旧 Dock 退出后核对新 Dock 读到的偏好
     /// - Parameters:
     ///   - expectedTiles: 本次同步写入的 tile 期望状态
-    ///   - staleIDs: 本次同步删除 tile 的根文件夹
+    ///   - staleIDs: 本次同步删除 tile 的根组
     ///   - restartCount: 这是本次同步第几次重启 Dock
     private func restartDock(
         verifying expectedTiles: [ExpectedDockTile],
@@ -232,7 +232,7 @@ extension DockTileSynchronizer {
     /// 按同一份期望再写一次，补写赶在新 Dock 读取偏好之前才算新 Dock 读到了，否则再重启一次
     /// - Parameters:
     ///   - expectedTiles: 本次同步写入的 tile 期望状态
-    ///   - staleIDs: 本次同步删除 tile 的根文件夹
+    ///   - staleIDs: 本次同步删除 tile 的根组
     ///   - restartCount: 这是本次同步第几次重启 Dock
     private func verifyRelaunchedDock(
         expectedTiles: [ExpectedDockTile],
@@ -292,14 +292,14 @@ extension DockTileSynchronizer {
     }
 
     /// 同步结束：删掉 tile 已从偏好里删除的 stub，通知设置窗口刷新状态
-    /// - Parameter staleIDs: 本次同步删除 tile 的根文件夹
+    /// - Parameter staleIDs: 本次同步删除 tile 的根组
     private func finishSynchronization(removingStubsOf staleIDs: Set<UUID>) {
         removeStubs(of: staleIDs)
 
         NotificationCenter.default.post(name: Self.didSynchronizeNotification, object: self)
     }
 
-    /// Dock 上现有 tile 对应的根文件夹 id
+    /// Dock 上现有 tile 对应的根组 id
     private func rootGroupIDsOnDock() -> Set<UUID> {
         dockPreferences.groupIDs(ofTilesIn: builder.directory)
     }
@@ -308,11 +308,11 @@ extension DockTileSynchronizer {
 // MARK: - Stubs
 
 extension DockTileSynchronizer {
-    /// 逐个更新全部根文件夹的 stub，给出它们的 tile 应有的样子；stub 写入失败的根文件夹不动它的 tile，
+    /// 逐个更新全部根组的 stub，给出它们的 tile 应有的样子；stub 写入失败的根组不动它的 tile，
     /// 避免 Dock 上出现指向残缺 stub 的图标
     /// - Parameters:
-    ///   - rootGroups: 本次同步时的根文件夹
-    ///   - groupIDsToAdd: tile 不在 Dock 上时要添加的根文件夹
+    ///   - rootGroups: 本次同步时的根组
+    ///   - groupIDsToAdd: tile 不在 Dock 上时要添加的根组
     /// - Returns: 各 tile 的期望状态，以及 stub 被改写过、条目要换新 GUID 的 tile
     private func writeStubs(
         of rootGroups: [Group],
@@ -349,9 +349,9 @@ extension DockTileSynchronizer {
         return (expectedTiles, rewrittenTileURLs)
     }
 
-    /// 按当前外观渲染根文件夹的图标，内容有变化时改写它的 stub
+    /// 按当前外观渲染根组的图标，内容有变化时改写它的 stub
     /// - Parameters:
-    ///   - group: 根文件夹
+    ///   - group: 根组
     ///   - previewIconCount: 图标里叠加的预览图标数量
     /// - Returns: stub 是否被改写；写入失败时为 nil
     private func writeStub(of group: Group, previewIconCount: Int) -> Bool? {
@@ -374,7 +374,7 @@ extension DockTileSynchronizer {
         }
     }
 
-    /// 删除这些根文件夹的 stub
+    /// 删除这些根组的 stub
     private func removeStubs(of groupIDs: Set<UUID>) {
         for groupID in groupIDs {
             do {

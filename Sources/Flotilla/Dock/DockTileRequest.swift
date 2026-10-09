@@ -4,14 +4,14 @@ import Foundation
 
 /// stub 通过 `flotilla://` URL 向 Flotilla 发出的请求
 ///
-/// - 点击 tile：`flotilla://folder/<根文件夹 id>`
-/// - 把 App 或文件拖到 tile 上：`flotilla://folder/<根文件夹 id>/items?path=<路径>&path=<路径>`，
+/// - 点击 tile：`flotilla://folder/<根组 id>`
+/// - 把 App 或文件拖到 tile 上：`flotilla://folder/<根组 id>/items?path=<路径>&path=<路径>`，
 ///   每个被拖的项一个 `path`，取值为 POSIX 路径
 enum DockTileRequest: Equatable {
-    /// 展开或收起根文件夹的面板
+    /// 展开或收起根组的面板
     case toggleGroup(UUID)
 
-    /// 把拖到 tile 上的这些项加入根文件夹，是否接收由 `GroupItem(url:title:)` 分类决定
+    /// 把拖到 tile 上的这些项加入根组，是否接收由 `GroupItem(url:title:)` 分类决定
     case addItems(groupID: UUID, fileURLs: [URL])
 
     /// Flotilla 处理的 URL scheme，与 Info.plist 的 `CFBundleURLTypes` 一致

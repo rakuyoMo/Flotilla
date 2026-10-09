@@ -2,7 +2,7 @@ import AppKit
 
 // MARK: - GroupIconRenderer
 
-/// 把文件夹渲染成图标（需求 2）：磨砂的圆角方形底板上，按 2 × 2 网格放前几个 App、文件或网页的图标
+/// 把组渲染成图标（需求 2）：磨砂的圆角方形底板上，按 2 × 2 网格放前几个 App、文件或网页的图标
 ///
 /// 底板的位置、大小与圆角和 macOS 26 起系统 App 图标的底板一致，放进 Dock 后与相邻的 App 图标对齐；
 /// 底板颜色随外观分深浅，取值见 `GroupIconAppearance`
@@ -37,11 +37,11 @@ enum GroupIconRenderer {
     /// 预览图标投影向下的偏移，以画布边长为 1
     private static let previewShadowOffset: CGFloat = 5 / 1024
 
-    /// 渲染文件夹图标
+    /// 渲染组图标
     ///
     /// 在主线程执行：网页的图标只在主线程读取
     /// - Parameters:
-    ///   - group: 要渲染的文件夹
+    ///   - group: 要渲染的组
     ///   - previewIconCount: 叠加的图标数量上限，超出 `0...Preferences.maximumPreviewIconCount` 时夹取
     ///   - pointSize: 输出图像的边长（pt）
     ///   - appearance: 底板按哪种外观取色
@@ -56,7 +56,7 @@ enum GroupIconRenderer {
     ) -> NSImage {
         let count = min(max(previewIconCount, 0), Preferences.maximumPreviewIconCount)
 
-        // 按顺序取前几项，跳过子文件夹；惰性求值，只读取用得上的图标
+        // 按顺序取前几项，跳过子组；惰性求值，只读取用得上的图标
         let previewIcons = Array(
             group.items
                 .lazy
@@ -174,7 +174,7 @@ extension GroupIconRenderer {
         context.strokePath()
     }
 
-    /// 一项在预览里的图标：App、文件与网页用各自的图标；子文件夹不参与预览，为 nil
+    /// 一项在预览里的图标：App、文件与网页用各自的图标；子组不参与预览，为 nil
     @MainActor
     private static func previewIcon(of item: GroupItem) -> NSImage? {
         switch item {
