@@ -5,8 +5,8 @@ import Testing
 
 // MARK: - GroupGridThumbnailTests
 
-/// 访达里的文件夹的层级里，文件按原生叠放显示内容缩略图，一眼看得出是哪份文件，而不是一排相同的通用图标；
-/// Flotilla 的文件夹显示图标。缩略图晚到时，不能落到已经离开的层级上；
+/// 访达文件夹的层级里，文件按原生叠放显示内容缩略图，一眼看得出是哪份文件，而不是一排相同的通用图标；
+/// 组里的文件显示图标。缩略图晚到时，不能落到已经离开的层级上；
 /// 请求只为看得见附近的格保留，快速滚过上千项后，看得见的格不必排在滚过的格后面等
 @MainActor
 struct GroupGridThumbnailTests {
@@ -22,7 +22,7 @@ struct GroupGridThumbnailTests {
         )
     }
 
-    /// 访达里的文件夹
+    /// 访达文件夹
     private let finderFolder = FileReference(
         id: UUID(),
         url: URL(filePath: "/Users/Shared/", directoryHint: .isDirectory),
@@ -32,7 +32,7 @@ struct GroupGridThumbnailTests {
     /// 生成出的缩略图
     private let thumbnail = NSImage(size: CGSize(width: 101, height: 101))
 
-    /// 访达里的文件夹的层级：文件先显示图标，缩略图生成后换上，各自落在发起请求的那一格
+    /// 访达文件夹的层级：文件先显示图标，缩略图生成后换上，各自落在发起请求的那一格
     @Test
     func finderFolderFilesShowThumbnails() async {
         let report = makeFile("报告.txt")
@@ -62,7 +62,7 @@ struct GroupGridThumbnailTests {
         #expect(icon(at: 1, in: grid) === notesThumbnail)
     }
 
-    /// Flotilla 的文件夹的层级：同一个文件仍是图标，不请求缩略图
+    /// 组的层级：同一个文件仍是图标，不请求缩略图
     @Test
     func flotillaGroupFilesKeepIcons() async {
         let report = makeFile("报告.txt")
@@ -78,7 +78,7 @@ struct GroupGridThumbnailTests {
         #expect(icon(at: 0, in: grid) === reportIcon)
     }
 
-    /// 访达里的文件夹与生成不出缩略图的文件保持图标；
+    /// 访达文件夹与生成不出缩略图的文件保持图标；
     /// App 不请求缩略图
     @Test
     func itemsWithoutThumbnailsKeepIcons() async {
@@ -253,8 +253,8 @@ struct GroupGridThumbnailTests {
 // MARK: - Private
 
 extension GroupGridThumbnailTests {
-    /// 访达里的文件夹里的一个文件；
-    /// 名称以 `/` 结尾时是访达里的文件夹
+    /// 访达文件夹里的一个文件；
+    /// 名称以 `/` 结尾时是访达文件夹
     private func makeFile(_ name: String) -> FileReference {
         let isDirectory = name.hasSuffix("/")
 
@@ -277,7 +277,7 @@ extension GroupGridThumbnailTests {
         return grid
     }
 
-    /// 与面板相同的摆法：100 个文件的访达里的文件夹，网格作为滚动视图的文档视图，滚动视图高度正好是显示的行数
+    /// 与面板相同的摆法：100 个文件的访达文件夹，网格作为滚动视图的文档视图，滚动视图高度正好是显示的行数
     private func makeScrolledGrid() -> (scrollView: NSScrollView, grid: GroupGridView) {
         let grid = makeGridView(for: .finderFolder(
             finderFolder,
@@ -296,7 +296,7 @@ extension GroupGridThumbnailTests {
         return (scrollView, grid)
     }
 
-    /// 与面板相同的建法：只有访达里的文件夹的层级有缩略图加载器与 “在访达中打开”；还没排版，一格也没建
+    /// 与面板相同的建法：只有访达文件夹的层级有缩略图加载器与 “在访达中打开”；还没排版，一格也没建
     private func makeGridView(for content: GroupPanelLevelContent) -> GroupGridView {
         let layout = GroupGridLayout(
             itemCount: content.cellCount,

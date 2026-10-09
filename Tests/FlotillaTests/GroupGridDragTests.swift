@@ -5,7 +5,7 @@ import Testing
 
 // MARK: - GroupGridDragTests
 
-/// 面板里拖动文件夹的项：移动不超过 5 pt 仍是点击，超过即开始拖动、不再算点击；
+/// 面板里拖动组的项：移动不超过 5 pt 仍是点击，超过即开始拖动、不再算点击；
 /// 拖到别的格上其余各格让位，拖出轮廓其余各格补位；在轮廓之内松开落定后保存新的顺序；
 /// 开始拖动满 0.5 s、鼠标又在 “移除” 的边界之外时 “移除” 浮出，之后松开才删除这一项，浮出之前在轮廓之外松开这一项飞回原位；
 /// 松开的一刻就请面板按鼠标的位置更新点击穿透；
@@ -102,7 +102,7 @@ final class GroupGridDragTests {
         #expect(selections.isEmpty)
     }
 
-    /// 访达里的文件夹的层级（没有拖动的动作）：移动超过 5 pt 不开始拖动，在格里抬起照旧是点击
+    /// 访达文件夹的层级（没有拖动的动作）：移动超过 5 pt 不开始拖动，在格里抬起照旧是点击
     @Test
     func gridWithoutDragActionsDoesNotDrag() throws {
         let (_, grid) = makeGrid(isDraggable: false)
@@ -564,7 +564,7 @@ extension GroupGridDragTests {
     }
 
     /// 放进离屏窗口的网格：网格作为滚动视图的文档视图，单元格在排版时建好
-    /// - Parameter isDraggable: 是否像文件夹的层级那样交给网格拖动的动作
+    /// - Parameter isDraggable: 是否像组的层级那样交给网格拖动的动作
     private func makeGrid(
         isDraggable: Bool = true
     ) -> (scrollView: NSScrollView, grid: GroupGridView) {

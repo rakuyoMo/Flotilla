@@ -55,7 +55,7 @@ final class DockTileBundleBuilderTests {
         try? FileManager.default.removeItem(at: directory)
     }
 
-    /// stub 位于 `<目录>/<id>/<文件夹名>.app`，包含 Info.plist、可执行文件、图标与自定义图标，并且签名有效
+    /// stub 位于 `<目录>/<id>/<组名>.app`，包含 Info.plist、可执行文件、图标与自定义图标，并且签名有效
     @Test
     func writeCreatesSignedBundle() throws {
         let group = makeGroup(name: "工作")
@@ -87,7 +87,7 @@ final class DockTileBundleBuilderTests {
         )
     }
 
-    /// Info.plist 让 stub 成为不出现在 Dock 与切换器里的后台 App，并带上 stub 拼 URL 所需的根文件夹 id
+    /// Info.plist 让 stub 成为不出现在 Dock 与切换器里的后台 App，并带上 stub 拼 URL 所需的根组 id
     @Test
     func infoDescribesBackgroundStub() throws {
         let group = makeGroup(name: "工作")
@@ -262,7 +262,7 @@ final class DockTileBundleBuilderTests {
         #expect(try Data(contentsOf: iconURL) != original)
     }
 
-    /// 只列出以根文件夹 id 命名的目录；删除后连同目录一起消失，目录已不存在时再删不报错
+    /// 只列出以根组 id 命名的目录；删除后连同目录一起消失，目录已不存在时再删不报错
     @Test
     func existingGroupIDsTracksWritesAndRemovals() throws {
         let first = makeGroup(name: "工作")
@@ -290,13 +290,13 @@ final class DockTileBundleBuilderTests {
         #expect(builder.existingBundleURL(for: first.id) == nil)
         #expect(!FileManager.default.fileExists(atPath: removedPath))
 
-        // 同步时删掉 Dock 上残留的 tile 后，会对目录早已不存在的根文件夹再删一次 stub，不能报错
+        // 同步时删掉 Dock 上残留的 tile 后，会对目录早已不存在的根组再删一次 stub，不能报错
         #expect(throws: Never.self) {
             try builder.remove(groupID: first.id)
         }
     }
 
-    /// AX 给出的 tile URL 以 `/` 结尾：解析出所属根文件夹；不在 stub 目录结构里的 URL 一律不认
+    /// AX 给出的 tile URL 以 `/` 结尾：解析出所属根组；不在 stub 目录结构里的 URL 一律不认
     @Test
     func groupIDIsParsedFromBundleURL() {
         let groupID = UUID()
@@ -318,12 +318,12 @@ final class DockTileBundleBuilderTests {
         }
     }
 
-    /// 构造包含两个 App 的根文件夹
+    /// 构造包含两个 App 的根组
     private func makeGroup(name: String) -> Group {
         Group(id: UUID(), name: name, items: apps)
     }
 
-    /// 读取文件夹对应 stub 的 Info.plist
+    /// 读取组对应 stub 的 Info.plist
     private func readInfo(of group: Group) throws -> [String: Any] {
         let infoURL = builder.bundleURL(for: group).appending(path: "Contents/Info.plist")
 
@@ -335,7 +335,7 @@ final class DockTileBundleBuilderTests {
         return try #require(plist as? [String: Any])
     }
 
-    /// 按需求 2 渲染文件夹图标
+    /// 按需求 2 渲染组图标
     private func makeIcon(for group: Group, previewIconCount: Int = 4) -> NSImage {
         GroupIconRenderer.render(
             group: group,
@@ -387,7 +387,7 @@ extension DockTileBundleBuilderTests {
 // MARK: - Private
 
 extension DockTileBundleBuilderTests {
-    /// 注销根文件夹目录里的 stub 在 Launch Services 里的注册
+    /// 注销根组目录里的 stub 在 Launch Services 里的注册
     private nonisolated static func unregisterStubs(in groupDirectory: URL) {
         let urls = (try? FileManager.default.contentsOfDirectory(
             at: groupDirectory,

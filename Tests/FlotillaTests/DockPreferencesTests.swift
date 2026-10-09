@@ -24,7 +24,7 @@ final class DockPreferencesTests {
     /// 被测对象
     private let preferences: DockPreferences
 
-    /// 本用例的 stub 所在的目录，每个根文件夹独占一个
+    /// 本用例的 stub 所在的目录，每个根组独占一个
     private let stubDirectory: URL
 
     /// 本用例的 stub 位置，路径里带空格，检验 URL 编码与标准化

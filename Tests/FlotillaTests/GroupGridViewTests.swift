@@ -5,7 +5,7 @@ import Testing
 
 // MARK: - GroupGridViewTests
 
-/// 网格只为看得见的行建单元格：访达里的文件夹有上千项时，一次建齐会让展开卡上几秒；
+/// 网格只为看得见的行建单元格：访达文件夹有上千项时，一次建齐会让展开卡上几秒；
 /// 同时滚动到哪里都不能露出空白格，缩回动画也要在目标格还没建时找得到它
 @MainActor
 struct GroupGridViewTests {

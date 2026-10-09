@@ -5,7 +5,7 @@ import Testing
 
 // MARK: - AppReferenceTests
 
-/// 要加入文件夹的 URL 据此分出 App：只有 App bundle 是 App
+/// 要加入组的 URL 据此分出 App：只有 App bundle 是 App
 struct AppReferenceTests {
     /// App bundle 被识别为 App
     @Test

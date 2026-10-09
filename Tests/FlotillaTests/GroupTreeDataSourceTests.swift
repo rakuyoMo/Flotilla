@@ -5,8 +5,8 @@ import Testing
 
 // MARK: - GroupTreeDataSourceTests
 
-/// 设置窗口文件夹树的拖放：outline view 给出的建议位置要换算成 `GroupStore.move` 能接受的目标；
-/// 从访达、浏览器拖入的东西只有能加入文件夹的才被接收
+/// 设置窗口组树的拖放：outline view 给出的建议位置要换算成 `GroupStore.move` 能接受的目标；
+/// 从访达、浏览器拖入的东西只有能加入组的才被接收
 @MainActor
 final class GroupTreeDataSourceTests {
     /// 本用例独占的临时目录
@@ -16,10 +16,10 @@ final class GroupTreeDataSourceTests {
     /// 本用例使用的 `GroupStore`
     private let store: GroupStore
 
-    /// 根文件夹 “工作”
+    /// 根组 “工作”
     private let work: Group
 
-    /// “工作” 下的子文件夹 “开发”
+    /// “工作” 下的子组 “开发”
     private let development: Group
 
     /// “工作” 下 App 项的 id
@@ -28,7 +28,7 @@ final class GroupTreeDataSourceTests {
     /// 被测数据源
     private let dataSource: GroupTreeDataSource
 
-    /// 建立根文件夹 “工作”，其下依次是子文件夹 “开发” 与 Chess.app
+    /// 建立根组 “工作”，其下依次是子组 “开发” 与 Chess.app
     init() throws {
         store = GroupStore(fileURL: directory.appending(path: "folders.json"))
 
@@ -50,7 +50,7 @@ final class GroupTreeDataSourceTests {
         try? FileManager.default.removeItem(at: directory)
     }
 
-    /// 节点记住父节点，App 行所属的文件夹是它的父文件夹
+    /// 节点记住父节点，App 行所属的组是它的父组
     @Test
     func nodesKnowTheirContainingGroup() throws {
         let appNode = try #require(dataSource.node(withID: appID))
@@ -61,7 +61,7 @@ final class GroupTreeDataSourceTests {
         #expect(developmentNode.containingGroupID == development.id)
     }
 
-    /// 落在文件夹行上时追加到该文件夹末尾
+    /// 落在组的行上时追加到该组末尾
     @Test
     func dropOnGroupAppendsToEnd() throws {
         let workNode = try #require(dataSource.node(withID: work.id))
@@ -105,7 +105,7 @@ final class GroupTreeDataSourceTests {
         #expect(destination == nil)
     }
 
-    /// 根层级只接受文件夹
+    /// 根层级只接受组
     @Test
     func rootAcceptsGroupsOnly() {
         let appDestination = dataSource.moveDestination(
@@ -126,7 +126,7 @@ final class GroupTreeDataSourceTests {
         #expect(groupDestination?.index == 1)
     }
 
-    /// 文件夹不能拖进自己的子孙
+    /// 组不能拖进自己的子孙
     @Test
     func rejectsDropIntoDescendant() throws {
         let developmentNode = try #require(dataSource.node(withID: development.id))
@@ -142,7 +142,7 @@ final class GroupTreeDataSourceTests {
 
     // MARK: 从外部拖入
 
-    /// 浏览器拖出的网址落在文件夹行上，加入带标题的网页
+    /// 浏览器拖出的网址落在组的行上，加入带标题的网页
     @Test
     func dropsWebPageWithTitleOntoGroup() throws {
         let pasteboardItem = NSPasteboardItem()
@@ -158,7 +158,7 @@ final class GroupTreeDataSourceTests {
         #expect(result.accepted)
 
         guard case .webPage(let webPage) = try #require(store.group(id: work.id)).items.last else {
-            Issue.record("文件夹末尾应当是网页")
+            Issue.record("组末尾应当是网页")
             return
         }
 
@@ -166,7 +166,7 @@ final class GroupTreeDataSourceTests {
         #expect(webPage.title == "Example Domain")
     }
 
-    /// 访达拖出的文件落在文件夹行上，加入文件
+    /// 访达拖出的文件落在组的行上，加入文件
     @Test
     func dropsFileOntoGroup() throws {
         let fileURL = directory.appending(path: "报告.txt")
@@ -181,14 +181,14 @@ final class GroupTreeDataSourceTests {
         #expect(result.accepted)
 
         guard case .file(let file) = try #require(store.group(id: work.id)).items.last else {
-            Issue.record("文件夹末尾应当是文件")
+            Issue.record("组末尾应当是文件")
             return
         }
 
         #expect(file.url.path(percentEncoded: false) == fileURL.path(percentEncoded: false))
     }
 
-    /// 访达里的文件夹落在文件夹行上，作为文件加入，按目录 URL 记录
+    /// 访达文件夹落在组的行上，作为文件加入，按目录 URL 记录
     @Test
     func dropsFinderFolderOntoGroup() throws {
         let folderURL = directory.appending(path: "资料", directoryHint: .isDirectory)
@@ -203,7 +203,7 @@ final class GroupTreeDataSourceTests {
         #expect(result.accepted)
 
         guard case .file(let file) = try #require(store.group(id: work.id)).items.last else {
-            Issue.record("文件夹末尾应当是访达里的文件夹")
+            Issue.record("组末尾应当是访达文件夹")
             return
         }
 
@@ -273,7 +273,7 @@ final class GroupTreeDataSourceTests {
         let info = DraggingInfoStub(pasteboard: pasteboard)
         let node = try #require(dataSource.node(withID: itemID))
 
-        // 校验时数据源会把落点改到文件夹行上，需要一个显示这棵树的 outline view
+        // 校验时数据源会把落点改到组的行上，需要一个显示这棵树的 outline view
         let outlineView = NSOutlineView()
         outlineView.dataSource = dataSource
         outlineView.reloadData()

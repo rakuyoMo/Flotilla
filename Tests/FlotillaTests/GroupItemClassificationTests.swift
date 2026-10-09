@@ -5,13 +5,13 @@ import Testing
 
 // MARK: - GroupItemClassificationTests
 
-/// `GroupItem(url:title:)` 决定拖进来的东西能否加入文件夹、以什么身份加入：身份错了，点击时就会用错误的方式打开
+/// `GroupItem(url:title:)` 决定拖进来的东西能否加入组、以什么身份加入：身份错了，点击时就会用错误的方式打开
 final class GroupItemClassificationTests {
     /// 本用例独占的临时目录
     private let directory = FileManager.default.temporaryDirectory
         .appending(path: "FlotillaTests-\(UUID().uuidString)")
 
-    /// 在临时目录里建好普通文件、访达里的文件夹、文件包与 App bundle
+    /// 在临时目录里建好普通文件、访达文件夹、文件包与 App bundle
     init() throws {
         for name in ["资料", "笔记.rtfd", "Tool.app"] {
             try FileManager.default.createDirectory(
@@ -90,13 +90,13 @@ final class GroupItemClassificationTests {
         #expect(urls == [chess, chess])
     }
 
-    /// 访达里的文件夹是文件，按目录 URL 记录：点击时在面板里展开它的内容
+    /// 访达文件夹是文件，按目录 URL 记录：点击时在面板里展开它的内容
     @Test
     func finderFolderIsFile() {
         let item = GroupItem(url: URL(filePath: path(of: "资料")), title: nil)
 
         guard case .file(let file) = item else {
-            Issue.record("访达里的文件夹应当是文件：\(String(describing: item))")
+            Issue.record("访达文件夹应当是文件：\(String(describing: item))")
             return
         }
 

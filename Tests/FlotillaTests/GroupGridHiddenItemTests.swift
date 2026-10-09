@@ -5,7 +5,7 @@ import Testing
 
 // MARK: - GroupGridHiddenItemTests
 
-/// 访达里的文件夹显示隐藏文件时，隐藏的项与访达的 ⌘⇧. 一样半透明，一眼分得出哪些平时看不见；
+/// 访达文件夹显示隐藏文件时，隐藏的项与访达的 ⌘⇧. 一样半透明，一眼分得出哪些平时看不见；
 /// 按下时照样压暗，点击的反馈不因半透明而消失
 @MainActor
 struct GroupGridHiddenItemTests {

@@ -133,7 +133,7 @@ struct GroupGridLayoutTests {
         #expect(layout.needsScrolling)
     }
 
-    /// 空文件夹按 1 格的尺寸显示，与原生只有一格 “在访达中打开” 时相同，格内为空
+    /// 空组按 1 格的尺寸显示，与原生只有一格 “在访达中打开” 时相同，格内为空
     @Test
     func emptyGroupHasOneEmptyCell() {
         let layout = GroupGridLayout(itemCount: 0, availableSize: roomySize)

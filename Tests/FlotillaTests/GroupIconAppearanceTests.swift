@@ -5,10 +5,10 @@ import Testing
 
 // MARK: - GroupIconAppearanceTests
 
-/// 文件夹图标跟随系统外观：外观归类为深浅两种，面板网格里的文件夹图标在外观变化时立即换成对应外观的底板
+/// 组图标跟随系统外观：外观归类为深浅两种，面板网格里的组图标在外观变化时立即换成对应外观的底板
 @MainActor
 struct GroupIconAppearanceTests {
-    /// 空的子文件夹：图标只有底板，深浅两种外观的画面必然不同
+    /// 空的子组：图标只有底板，深浅两种外观的画面必然不同
     private let subgroup = Group(id: UUID(), name: "子文件夹", items: [])
 
     /// 基础外观与高对比度、vibrant 等变体都按最接近的深色或浅色取底板颜色
@@ -30,7 +30,7 @@ struct GroupIconAppearanceTests {
         }
     }
 
-    /// 面板网格里子文件夹的图标随网格的外观切换，来回切换都立即生效
+    /// 面板网格里子组的图标随网格的外观切换，来回切换都立即生效
     @Test
     func gridGroupIconFollowsAppearance() throws {
         let layout = GroupGridLayout(
@@ -64,7 +64,7 @@ struct GroupIconAppearanceTests {
         }
     }
 
-    /// 滚动时才建的子文件夹单元格按建的时候的外观渲染：外观在它建出之前变过，也不会留着旧外观的底板
+    /// 滚动时才建的子组单元格按建的时候的外观渲染：外观在它建出之前变过，也不会留着旧外观的底板
     @Test
     func laterBuiltGroupIconUsesCurrentAppearance() throws {
         // 7 列 8 行，面板显示 5 行：最后两行起初不建
@@ -129,7 +129,7 @@ extension GroupIconAppearanceTests {
         (.darkAqua, .dark),
     ]
 
-    /// 直接按指定外观渲染的空子文件夹图标，作为视图里图标的期望画面
+    /// 直接按指定外观渲染的空子组的图标，作为视图里图标的期望画面
     private func expectedIcon(appearance: GroupIconAppearance, pointSize: CGFloat) -> Data? {
         GroupIconRenderer.render(
             group: subgroup,

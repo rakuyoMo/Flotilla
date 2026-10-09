@@ -5,7 +5,7 @@ import Testing
 
 // MARK: - GeneralSettingsViewControllerTests
 
-/// 设置窗口的通用区：显示隐藏文件的复选框要反映当前的设置、点了要写回，否则面板展开访达里的文件夹时与用户看到的不符；
+/// 设置窗口的通用区：显示隐藏文件的复选框要反映当前的设置、点了要写回，否则面板展开访达文件夹时与用户看到的不符；
 /// 窗口缩到最窄时，每种语言的各行都完整显示
 @MainActor
 final class GeneralSettingsViewControllerTests {

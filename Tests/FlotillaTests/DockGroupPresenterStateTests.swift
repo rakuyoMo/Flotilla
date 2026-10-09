@@ -12,10 +12,10 @@ struct DockGroupPresenterStateTests {
     /// 一次普通点击从按下到抬起的时长
     private static let clickDuration: TimeInterval = 0.1
 
-    /// 根文件夹 A
+    /// 根组 A
     private let groupA = UUID()
 
-    /// 根文件夹 B
+    /// 根组 B
     private let groupB = UUID()
 
     /// tile 上的一个按下位置
@@ -151,7 +151,7 @@ struct DockGroupPresenterStateTests {
         #expect(state.mouseUp(time: release) == .expand(groupA))
     }
 
-    /// 展开时长按同一 tile：视同面板以外的点击而收起，随后到达的同一文件夹 URL 不会再展开
+    /// 展开时长按同一 tile：视同面板以外的点击而收起，随后到达的同一个组的 URL 不会再展开
     @Test
     func longPressOnPresentedTileCollapses() {
         var state = DockGroupPresenterState()
@@ -166,7 +166,7 @@ struct DockGroupPresenterStateTests {
         #expect(state.presentedGroupID == nil)
     }
 
-    /// 展开时长按另一个 tile：收起，不切换到那个文件夹
+    /// 展开时长按另一个 tile：收起，不切换到那个组
     @Test
     func longPressOnOtherTileCollapsesWithoutSwitching() {
         var state = DockGroupPresenterState()
@@ -266,7 +266,7 @@ struct DockGroupPresenterStateTests {
 
     // MARK: URL 路径（无辅助功能权限）
 
-    /// URL 依次到达：展开、收起；展开时到达另一个文件夹的 URL 则切换
+    /// URL 依次到达：展开、收起；展开时到达另一个组的 URL 则切换
     @Test
     func urlTogglesAndSwitches() {
         var state = DockGroupPresenterState()
@@ -277,7 +277,7 @@ struct DockGroupPresenterStateTests {
         #expect(state.receiveURL(groupID: groupA, time: 15) == .expand(groupA))
     }
 
-    /// 再次点击 tile 先被当作点击 Dock 区域而收起，1 秒内到达的同一文件夹 URL 属于这次点击，不再展开
+    /// 再次点击 tile 先被当作点击 Dock 区域而收起，1 秒内到达的同一个组的 URL 属于这次点击，不再展开
     @Test
     func urlAfterDockAreaDismissalIsIgnored() {
         var state = DockGroupPresenterState()

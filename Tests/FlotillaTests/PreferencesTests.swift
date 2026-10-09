@@ -79,7 +79,7 @@ final class PreferencesTests {
         #expect(Preferences(defaults: defaults).previewIconCount == 2)
     }
 
-    /// 访达里的文件夹默认不显示隐藏文件；切换后写入存储，但不发变更通知：
+    /// 访达文件夹默认不显示隐藏文件；切换后写入存储，但不发变更通知：
     /// Dock 同步监听这个通知，收到就重画 stub 图标，可能改写 stub、重启 Dock，而这个开关与 tile 的图标无关
     @Test
     func showsHiddenFilesDefaultsOffAndDoesNotNotify() async {

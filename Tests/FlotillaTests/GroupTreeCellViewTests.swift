@@ -5,15 +5,15 @@ import Testing
 
 // MARK: - GroupTreeCellViewTests
 
-/// 设置窗口里访达里的文件夹与 Flotilla 的文件夹图标相同，只靠名称后的位置文字区分：
-/// 只有访达里的文件夹这一行显示，行视图复用后其余各行不能残留；宽度不够时先让出位置、在中间省略，名称尽量完整
+/// 设置窗口里访达文件夹与组的图标相同，只靠名称后的位置文字区分：
+/// 只有访达文件夹这一行显示，行视图复用后其余各行不能残留；宽度不够时先让出位置、在中间省略，名称尽量完整
 @MainActor
 final class GroupTreeCellViewTests {
     /// 本用例独占的临时目录
     private let directory = FileManager.default.temporaryDirectory
         .appending(path: "FlotillaTests-\(UUID().uuidString)")
 
-    /// 在临时目录里建好访达里的文件夹、文件包与普通文件
+    /// 在临时目录里建好访达文件夹、文件包与普通文件
     init() throws {
         for name in ["资料", "笔记.rtfd"] {
             try FileManager.default.createDirectory(
@@ -30,7 +30,7 @@ final class GroupTreeCellViewTests {
         try? FileManager.default.removeItem(at: directory)
     }
 
-    /// 家目录之内的访达里的文件夹：位置是父目录，家目录写成 `~`
+    /// 家目录之内的访达文件夹：位置是父目录，家目录写成 `~`
     @Test
     func finderFolderInHomeShowsTildeLocation() throws {
         let caches = URL.homeDirectory.appending(path: "Library/Caches")
@@ -39,7 +39,7 @@ final class GroupTreeCellViewTests {
         #expect(cell.locationText == "~/Library")
     }
 
-    /// 家目录以外的访达里的文件夹：位置是父目录的完整路径
+    /// 家目录以外的访达文件夹：位置是父目录的完整路径
     @Test
     func finderFolderOutsideHomeShowsFullLocation() throws {
         let cell = try configuredCell(with: directory.appending(path: "资料"))
@@ -63,7 +63,7 @@ final class GroupTreeCellViewTests {
         #expect(cell.locationText == nil)
     }
 
-    /// 已删除的访达里的文件夹读不到属性，不显示位置
+    /// 已删除的访达文件夹读不到属性，不显示位置
     @Test
     func deletedFinderFolderShowsNoLocation() {
         let deleted = FileReference(
@@ -78,7 +78,7 @@ final class GroupTreeCellViewTests {
         #expect(cell.locationText == nil)
     }
 
-    /// Flotilla 的文件夹不显示位置；复用刚显示过位置的行视图时不残留
+    /// 组不显示位置；复用刚显示过位置的行视图时不残留
     @Test
     func flotillaGroupShowsNoLocationAfterReuse() throws {
         let cell = try configuredCell(with: directory.appending(path: "资料"))

@@ -16,10 +16,10 @@ final class GroupStoreItemLocationTests {
     /// 本用例使用的数据源
     private let store: GroupStore
 
-    /// 根文件夹 “工作”
+    /// 根组 “工作”
     private let work: Group
 
-    /// 建好临时目录与只有一个根文件夹 “工作” 的数据源
+    /// 建好临时目录与只有一个根组 “工作” 的数据源
     init() throws {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
 
@@ -69,7 +69,7 @@ final class GroupStoreItemLocationTests {
         #expect(file.url == fileURL(of: "归档/报告.txt"))
     }
 
-    /// 访达里的文件夹改名后同样跟上，仍按目录 URL 记录
+    /// 访达文件夹改名后同样跟上，仍按目录 URL 记录
     @Test
     func renamedFinderFolderFollows() async throws {
         try createDirectory("资料")
@@ -88,7 +88,7 @@ final class GroupStoreItemLocationTests {
         #expect(file.url == directoryURL(of: "旧资料"))
     }
 
-    /// 只更新指定文件夹及其子孙，其它根文件夹里改了名的文件保持原样
+    /// 只更新指定组及其子孙，其它根组里改了名的文件保持原样
     @Test
     func updatesOnlyGivenGroupSubtree() throws {
         let archive = try #require(store.addSubgroup(named: "归档", to: work.id))
@@ -291,7 +291,7 @@ final class GroupStoreItemLocationTests {
 
     // MARK: 加入
 
-    /// 文件改名后把新路径加入同一个文件夹：已有的那一项跟到新路径，不重复加入，只发一次变更通知
+    /// 文件改名后把新路径加入同一个组：已有的那一项跟到新路径，不重复加入，只发一次变更通知
     @Test
     func addingRenamedFileDoesNotDuplicate() async throws {
         let original = try addFile(named: "报告.txt")
@@ -312,7 +312,7 @@ final class GroupStoreItemLocationTests {
         #expect(file.url == fileURL(of: "年度报告.txt"))
     }
 
-    /// App 改名后把新路径加入同一个文件夹：已有的那一项跟到新路径，不重复加入，只发一次变更通知
+    /// App 改名后把新路径加入同一个组：已有的那一项跟到新路径，不重复加入，只发一次变更通知
     @Test
     func addingRenamedAppDoesNotDuplicate() async throws {
         let original = try addApp(named: "Tool.app")
@@ -351,17 +351,17 @@ extension GroupStoreItemLocationTests {
         return file
     }
 
-    /// 在临时目录里新建文件，经分类后加入文件夹，返回加入的文件项
+    /// 在临时目录里新建文件，经分类后加入组，返回加入的文件项
     /// - Parameters:
     ///   - name: 文件名
-    ///   - groupID: 目标文件夹，默认是 “工作”
+    ///   - groupID: 目标组，默认是 “工作”
     private func addFile(named name: String, to groupID: UUID? = nil) throws -> FileReference {
         try Data(name.utf8).write(to: directory.appending(path: name))
 
         return try add(directory.appending(path: name), to: groupID)
     }
 
-    /// 把本地 URL 经分类后加入文件夹（默认是 “工作”），返回加入的文件项
+    /// 把本地 URL 经分类后加入组（默认是 “工作”），返回加入的文件项
     private func add(_ url: URL, to groupID: UUID? = nil) throws -> FileReference {
         let item = try #require(GroupItem(url: url, title: nil))
         let file = try #require(Self.fileReference(of: item), "应当是文件")
@@ -399,20 +399,20 @@ extension GroupStoreItemLocationTests {
         )
     }
 
-    /// 文件夹里唯一的一项，它必须是文件
+    /// 组里唯一的一项，它必须是文件
     private func onlyFile(in groupID: UUID) throws -> FileReference {
         let items = try #require(store.group(id: groupID)).items
 
-        try #require(items.count == 1, "文件夹里应当只有一项：\(items)")
+        try #require(items.count == 1, "组里应当只有一项：\(items)")
 
         return try #require(Self.fileReference(of: items[0]), "应当是文件")
     }
 
-    /// 文件夹里唯一的一项，它必须是 App
+    /// 组里唯一的一项，它必须是 App
     private func onlyApp(in groupID: UUID) throws -> AppReference {
         let items = try #require(store.group(id: groupID)).items
 
-        try #require(items.count == 1, "文件夹里应当只有一项：\(items)")
+        try #require(items.count == 1, "组里应当只有一项：\(items)")
 
         return try #require(Self.appReference(of: items[0]), "应当是 App")
     }

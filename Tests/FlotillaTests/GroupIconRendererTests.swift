@@ -5,7 +5,7 @@ import Testing
 
 // MARK: - GroupIconRendererTests
 
-/// 文件夹图标渲染（需求 2、17）：底板的形状、预览网格的几何、不同预览数量与不同种类的项下的输出，
+/// 组图标渲染（需求 2、17）：底板的形状、预览网格的几何、不同预览数量与不同种类的项下的输出，
 /// 以及深浅两种外观的底板
 ///
 /// 放在主线程串行执行：并发栅格化同一个 App 图标时，偶尔会画出不同的像素
@@ -37,7 +37,7 @@ struct GroupIconRendererTests {
     }
 
     /// App 图标四边各有 100 / 1024 的透明边；扣掉之后，四个预览的可见底板合起来在画布上居中，
-    /// 范围约为 [0.186, 0.814]，相邻两个之间约隔 0.064，整体落在文件夹底板 [100 / 1024, 924 / 1024] 之内
+    /// 范围约为 [0.186, 0.814]，相邻两个之间约隔 0.064，整体落在组图标的底板 [100 / 1024, 924 / 1024] 之内
     @Test
     func visiblePreviewPlatesAreCentered() {
         let canvas = CGRect(x: 0, y: 0, width: 1, height: 1)
@@ -123,7 +123,7 @@ struct GroupIconRendererTests {
         #expect(requestedFour == requestedTwo)
     }
 
-    /// 子文件夹不参与预览，跳过它继续取后面的文件、网页与 App
+    /// 子组不参与预览，跳过它继续取后面的文件、网页与 App
     @Test(arguments: [GroupIconAppearance.dark, .light])
     func subgroupsAreSkipped(appearance: GroupIconAppearance) throws {
         let previewed = try [file, webPage()] + makeGroup(appCount: 1).items
@@ -144,7 +144,7 @@ struct GroupIconRendererTests {
         #expect(withSubgroup == withoutSubgroup)
     }
 
-    /// 文件与网页和 App 一样进入预览，按文件夹里的顺序排进单元格
+    /// 文件与网页和 App 一样进入预览，按组里的顺序排进单元格
     @Test(arguments: [GroupIconAppearance.dark, .light])
     func filesAndWebPagesArePreviewedInOrder(appearance: GroupIconAppearance) throws {
         let fileFirst = try renderedPixels(
@@ -190,7 +190,7 @@ struct GroupIconRendererTests {
         #expect(allItems == firstFour)
     }
 
-    /// 预览数量为 0 与文件夹里没有任何项时都只画底板，两者画面相同
+    /// 预览数量为 0 与组里没有任何项时都只画底板，两者画面相同
     @Test(arguments: [GroupIconAppearance.dark, .light])
     func emptyPreviewDrawsPlateOnly(appearance: GroupIconAppearance) throws {
         let countZero = try renderedPixels(
@@ -332,7 +332,7 @@ extension GroupIconRendererTests {
         return .webPage(WebPageReference(id: UUID(), url: url, title: nil))
     }
 
-    /// 构造包含前 `appCount` 个系统 App 的文件夹
+    /// 构造包含前 `appCount` 个系统 App 的组
     private func makeGroup(appCount: Int) -> Group {
         Group(
             id: UUID(),
@@ -358,7 +358,7 @@ extension GroupIconRendererTests {
             && abs(lhs.height - rhs.height) < tolerance
     }
 
-    /// 以 64 pt 渲染文件夹图标，再按 2 倍像素栅格化，返回像素数据用于比较
+    /// 以 64 pt 渲染组图标，再按 2 倍像素栅格化，返回像素数据用于比较
     private func renderedPixels(
         of group: Group,
         previewIconCount: Int,
@@ -376,7 +376,7 @@ extension GroupIconRendererTests {
         return try #require(bitmap.tiffRepresentation)
     }
 
-    /// 只有底板的文件夹图标，以 1024 pt 渲染、按 1024 像素栅格化
+    /// 只有底板的组图标，以 1024 pt 渲染、按 1024 像素栅格化
     private func rasterizedPlate(appearance: GroupIconAppearance) throws -> NSBitmapImageRep {
         let image = GroupIconRenderer.render(
             group: makeGroup(appCount: 0),

@@ -56,7 +56,7 @@ final class IconFileWriterTests {
         #expect(try Data(contentsOf: firstURL) == Data(contentsOf: secondURL))
     }
 
-    /// 渲染一个带两个 App 预览的文件夹图标
+    /// 渲染一个带两个 App 预览的组图标
     private func makeIcon() -> NSImage {
         let apps = ["Calculator", "Chess"].map {
             GroupItem.app(AppReference(

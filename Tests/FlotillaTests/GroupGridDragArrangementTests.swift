@@ -139,7 +139,7 @@ final class GroupGridDragArrangementTests {
 
     // MARK: 交给 `GroupStore` 的下标
 
-    /// 向前、向后与原地松开：按换算出的下标移动之后，文件夹里的顺序与松开前网格显示的顺序相同
+    /// 向前、向后与原地松开：按换算出的下标移动之后，组里的顺序与松开前网格显示的顺序相同
     @Test
     func storeOrderMatchesDisplayedOrder() throws {
         let cases = [(1, 4), (0, 5), (2, 3), (4, 1), (5, 0), (3, 2), (2, 2)]
@@ -209,7 +209,7 @@ extension GroupGridDragArrangementTests {
             .map(\.id)
     }
 
-    /// 网址各不相同的网页：同一文件夹里按网址去重，网址相同的不会都加进去
+    /// 网址各不相同的网页：同一个组里按网址去重，网址相同的不会都加进去
     private func webPages(count: Int) throws -> [GroupItem] {
         try (0 ..< count).map {
             .webPage(WebPageReference(

@@ -5,24 +5,24 @@ import Testing
 
 // MARK: - GroupPanelNavigationTests
 
-/// 导航路径的解析：展示期间文件夹树变化时，当前层级还在就保留，当前层级不在该根文件夹之下、或读不出来就收起；
-/// 访达里的文件夹的层级每次解析都重新读目录，返回时父层级才与磁盘一致
+/// 导航路径的解析：展示期间组树变化时，当前层级还在就保留，当前层级不在该根组之下、或读不出来就收起；
+/// 访达文件夹的层级每次解析都重新读目录，返回时父层级才与磁盘一致
 @MainActor
 final class GroupPanelNavigationTests {
     /// 本用例独占的临时目录
     private let directory = FileManager.default.temporaryDirectory
         .appending(path: "FlotillaTests-\(UUID().uuidString)")
 
-    /// 根文件夹 “根” 的 id：每条导航路径的第一段
+    /// 根组 “根” 的 id：每条导航路径的第一段
     private let rootID = UUID()
 
-    /// 子文件夹 “子” 的 id：每次取 `child` 都按它重建，内容变了仍是同一层级
+    /// 子组 “子” 的 id：每次取 `child` 都按它重建，内容变了仍是同一层级
     private let childID = UUID()
 
-    /// 最深一层的子文件夹
+    /// 最深一层的子组
     private let grandchild = Group(id: UUID(), name: "孙", items: [])
 
-    /// 根文件夹里与子文件夹并列的 App 项
+    /// 根组里与子组并列的 App 项
     private let app = GroupItem.app(AppReference(
         id: UUID(),
         url: URL(filePath: "/System/Applications/Chess.app"),
@@ -30,10 +30,10 @@ final class GroupPanelNavigationTests {
         bundleIdentifier: nil
     ))
 
-    /// 本用例里读访达里的文件夹用的内容，模拟一次展开
+    /// 本用例里读访达文件夹用的内容，模拟一次展开
     private var finderFolderContents = FinderFolderContents()
 
-    /// 根文件夹下的子文件夹
+    /// 根组下的子组
     private var child: Group {
         Group(id: childID, name: "子", items: [.group(grandchild)])
     }
@@ -43,7 +43,7 @@ final class GroupPanelNavigationTests {
         Group(id: rootID, name: "根", items: [app, .group(child)])
     }
 
-    /// 建好临时目录：访达里的文件夹 “资料”，其中有子目录 “2024” 与文件 “说明.txt”，“2024” 里有 “报告.txt”
+    /// 建好临时目录：访达文件夹 “资料”，其中有子目录 “2024” 与文件 “说明.txt”，“2024” 里有 “报告.txt”
     init() throws {
         try FileManager.default.createDirectory(
             at: directory.appending(path: "资料/2024"),
@@ -59,7 +59,7 @@ final class GroupPanelNavigationTests {
         try? FileManager.default.removeItem(at: directory)
     }
 
-    // MARK: Flotilla 的文件夹
+    // MARK: 组
 
     /// 沿路径逐层找到当前层级
     @Test
@@ -72,7 +72,7 @@ final class GroupPanelNavigationTests {
         #expect(resolve(grandchildPath, in: rootGroups) == .group(grandchild))
     }
 
-    /// 当前层级的内容变化后，解析出的是变化后的文件夹，层级保持不变
+    /// 当前层级的内容变化后，解析出的是变化后的组，层级保持不变
     @Test
     func keepsLevelWhenContentChanges() {
         var renamedChild = child
@@ -84,7 +84,7 @@ final class GroupPanelNavigationTests {
         #expect(resolve([rootID, childID], in: [changedRoot]) == .group(renamedChild))
     }
 
-    /// 当前文件夹被删除：无法解析，面板收起
+    /// 当前组被删除：无法解析，面板收起
     @Test
     func deletedCurrentGroupResolvesToNil() {
         let prunedRoot = Group(id: rootID, name: "根", items: [app])
@@ -92,7 +92,7 @@ final class GroupPanelNavigationTests {
         #expect(resolve([rootID, childID], in: [prunedRoot]) == nil)
     }
 
-    /// 当前文件夹被移到别处，不再位于这个根文件夹之下：无法解析
+    /// 当前组被移到别处，不再位于这个根组之下：无法解析
     @Test
     func movedCurrentGroupResolvesToNil() {
         let prunedRoot = Group(id: rootID, name: "根", items: [app])
@@ -101,7 +101,7 @@ final class GroupPanelNavigationTests {
         #expect(resolve([rootID, childID], in: [prunedRoot, otherRoot]) == nil)
     }
 
-    /// 根文件夹被删除或拖成子文件夹，或路径为空：无法解析
+    /// 根组被删除或拖成子组，或路径为空：无法解析
     @Test
     func missingRootResolvesToNil() {
         let otherRoot = Group(id: UUID(), name: "别处", items: [.group(root)])
@@ -110,9 +110,9 @@ final class GroupPanelNavigationTests {
         #expect(resolve([], in: [root]) == nil)
     }
 
-    // MARK: 访达里的文件夹
+    // MARK: 访达文件夹
 
-    /// Flotilla 文件夹 → 访达里的文件夹 → 其中的访达里的文件夹逐层解析，每一层读出的是那个目录的内容
+    /// 组 → 访达文件夹 → 其中的访达文件夹逐层解析，每一层读出的是那个目录的内容
     @Test
     func resolvesFinderFolderLevels() throws {
         let finderFolder = try finderFolderReference("资料")
@@ -134,7 +134,7 @@ final class GroupPanelNavigationTests {
         #expect(second.finderFolderURL?.lastPathComponent == "2024")
     }
 
-    /// 访达里的文件夹这一项已从所在的文件夹里删除：无法解析
+    /// 访达文件夹这一项已从所在的组里删除：无法解析
     @Test
     func removedFinderFolderItemResolvesToNil() throws {
         let finderFolder = try finderFolderReference("资料")
@@ -142,7 +142,7 @@ final class GroupPanelNavigationTests {
         #expect(resolve([rootID, finderFolder.id], in: [root]) == nil)
     }
 
-    /// 访达里的文件夹在磁盘上被删除：无法解析
+    /// 访达文件夹在磁盘上被删除：无法解析
     @Test
     func deletedFinderFolderResolvesToNil() throws {
         let finderFolder = try finderFolderReference("资料")
@@ -152,7 +152,7 @@ final class GroupPanelNavigationTests {
         #expect(resolve([rootID, finderFolder.id], in: [rootWith(finderFolder)]) == nil)
     }
 
-    /// 访达里的文件夹读不出内容（没有权限）：无法解析
+    /// 访达文件夹读不出内容（没有权限）：无法解析
     @Test
     func unreadableFinderFolderResolvesToNil() throws {
         let finderFolder = try finderFolderReference("资料")
@@ -167,7 +167,7 @@ final class GroupPanelNavigationTests {
         #expect(resolve([rootID, finderFolder.id], in: [rootWith(finderFolder)]) == nil)
     }
 
-    /// 访达里的文件夹按书签跟到了新位置：按新 URL 读，其中各项的 id 不变，深处的层级照常解析
+    /// 访达文件夹按书签跟到了新位置：按新 URL 读，其中各项的 id 不变，深处的层级照常解析
     @Test
     func finderFolderWithNewURLIsReadFromNewLocation() throws {
         let finderFolder = try finderFolderReference("资料")
@@ -210,10 +210,10 @@ extension GroupPanelNavigationTests {
         let item = GroupItem(url: directory.appending(path: name), title: nil)
         let file: FileReference? = if case .file(let file) = item { file } else { nil }
 
-        return try #require(file, "访达里的文件夹应当是文件：\(String(describing: item))")
+        return try #require(file, "访达文件夹应当是文件：\(String(describing: item))")
     }
 
-    /// 根文件夹里放着 App、子文件夹与给定的访达里的文件夹
+    /// 根组里放着 App、子组与给定的访达文件夹
     private func rootWith(_ finderFolder: FileReference) -> Group {
         Group(id: rootID, name: "根", items: [app, .group(child), .file(finderFolder)])
     }

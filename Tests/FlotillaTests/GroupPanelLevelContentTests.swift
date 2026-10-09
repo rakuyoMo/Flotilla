@@ -5,18 +5,18 @@ import Testing
 
 // MARK: - GroupPanelLevelContentTests
 
-/// 网格的格数决定面板尺寸：访达里的文件夹末尾另有 “在访达中打开”，与原生叠放一致；
-/// Flotilla 的文件夹没有这一格（需求 4）
+/// 网格的格数决定面板尺寸：访达文件夹末尾另有 “在访达中打开”，与原生叠放一致；
+/// 组没有这一格（需求 4）
 @MainActor
 struct GroupPanelLevelContentTests {
-    /// 被展开的访达里的文件夹：内容由测试直接给出，不读磁盘
+    /// 被展开的访达文件夹：内容由测试直接给出，不读磁盘
     private let finderFolder = FileReference(
         id: UUID(),
         url: URL(filePath: "/Users/Shared/", directoryHint: .isDirectory),
         bookmark: nil
     )
 
-    /// 访达里的文件夹的格数是目录项数 + 1
+    /// 访达文件夹的格数是目录项数 + 1
     @Test
     func finderFolderHasOpenInFinderCell() {
         let content = GroupPanelLevelContent.finderFolder(finderFolder, items: makeFiles(3))
@@ -25,7 +25,7 @@ struct GroupPanelLevelContentTests {
         #expect(content.finderFolderURL == finderFolder.url)
     }
 
-    /// 空的访达里的文件夹只有 “在访达中打开” 一格
+    /// 空的访达文件夹只有 “在访达中打开” 一格
     @Test
     func emptyFinderFolderHasOneCell() {
         let content = GroupPanelLevelContent.finderFolder(finderFolder, items: [])
@@ -33,7 +33,7 @@ struct GroupPanelLevelContentTests {
         #expect(content.cellCount == 1)
     }
 
-    /// Flotilla 的文件夹格数就是项数，空文件夹为 0
+    /// 组的格数就是项数，空组为 0
     @Test
     func flotillaGroupHasNoOpenInFinderCell() {
         let group = Group(id: UUID(), name: "工作", items: makeFiles(3))
@@ -44,7 +44,7 @@ struct GroupPanelLevelContentTests {
         #expect(GroupPanelLevelContent.group(empty).cellCount == 0)
     }
 
-    /// 只有访达里的文件夹的层级里，文件显示内容缩略图：与原生叠放一致；Flotilla 的文件夹显示图标
+    /// 只有访达文件夹的层级里，文件显示内容缩略图：与原生叠放一致；组里的文件显示图标
     @Test
     func onlyFinderFolderShowsFileThumbnails() {
         let group = Group(id: UUID(), name: "工作", items: makeFiles(3))
@@ -59,7 +59,7 @@ struct GroupPanelLevelContentTests {
         #expect(!groupContent.showsFileThumbnails)
     }
 
-    /// 网格按格数摆出单元格：访达里的文件夹多出末尾那一格
+    /// 网格按格数摆出单元格：访达文件夹多出末尾那一格
     @Test
     func gridViewAddsOpenInFinderCell() {
         let items = makeFiles(2)

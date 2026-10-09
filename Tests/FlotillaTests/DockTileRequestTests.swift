@@ -5,15 +5,15 @@ import Testing
 
 // MARK: - DockTileRequestTests
 
-/// stub 通过 `flotilla://` URL 发来请求：点击 tile 展开或收起面板，把 App 或文件拖到 tile 上则加入文件夹；
+/// stub 通过 `flotilla://` URL 发来请求：点击 tile 展开或收起面板，把 App 或文件拖到 tile 上则加入组；
 /// 只有约定的两种形式会被执行，路径里的特殊字符要原样还原，否则加入的是另一个文件
 struct DockTileRequestTests {
-    /// 请求里的根文件夹
+    /// 请求里的根组
     private let groupID = UUID()
 
     // MARK: 展开或收起
 
-    /// `flotilla://folder/<uuid>`：展开或收起该根文件夹的面板
+    /// `flotilla://folder/<uuid>`：展开或收起该根组的面板
     @Test
     func parsesToggleGroup() throws {
         let url = try #require(URL(string: "flotilla://folder/\(groupID.uuidString)"))

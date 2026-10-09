@@ -876,7 +876,7 @@ extension WebPageAlertTests {
         WebPageReference(id: UUID(), url: try url("https://example.com/"), title: title)
     }
 
-    /// 数据源里第一个根文件夹的第一项：是网页时给出它，否则为 nil
+    /// 数据源里第一个根组的第一项：是网页时给出它，否则为 nil
     private func firstWebPage(in store: GroupStore) -> WebPageReference? {
         guard case .webPage(let webPage) = store.rootGroups.first?.items.first else { return nil }
 

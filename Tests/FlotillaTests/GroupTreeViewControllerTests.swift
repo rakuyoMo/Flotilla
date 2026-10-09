@@ -5,13 +5,13 @@ import Testing
 
 // MARK: - GroupTreeViewControllerTests
 
-/// 设置窗口的文件夹区：树的宽度必须始终与滚动区一致，行尾的 “不在 Dock 上” 才不会被右缘裁掉；
+/// 设置窗口的组区：树的宽度必须始终与滚动区一致，行尾的 “不在 Dock 上” 才不会被右缘裁掉；
 /// 添加 App、文件与网页都从 “添加…” 的菜单进入；窗口缩到最窄时，底部按钮行在每种语言下都完整显示；
 /// 右键菜单按点到的那一行给出各项，作用于点到的那一项，不论之后选中项与树怎样变；
-/// 网页的标题晚到时补上，但不打断正在编辑的文件夹名
+/// 网页的标题晚到时补上，但不打断正在编辑的组名
 @MainActor
 final class GroupTreeViewControllerTests {
-    /// 设置窗口缩到最窄时文件夹区的宽度：内容区最小宽度扣除左右边距
+    /// 设置窗口缩到最窄时组区的宽度：内容区最小宽度扣除左右边距
     private static let minimumWidth = SettingsWindowController.minimumContentSize.width
         - 2 * SettingsWindowController.contentInset
 
@@ -19,10 +19,10 @@ final class GroupTreeViewControllerTests {
     private let directory = FileManager.default.temporaryDirectory
         .appending(path: "FlotillaTests-\(UUID().uuidString)")
 
-    /// 本用例使用的数据源：根文件夹 “工作” 下有子文件夹 “开发” 与一个 App
+    /// 本用例使用的数据源：根组 “工作” 下有子组 “开发” 与一个 App
     private let store: GroupStore
 
-    /// 建立根文件夹 “工作”，其下依次是子文件夹 “开发” 与 Chess.app
+    /// 建立根组 “工作”，其下依次是子组 “开发” 与 Chess.app
     init() throws {
         store = GroupStore(fileURL: directory.appending(path: "folders.json"))
 
@@ -41,7 +41,7 @@ final class GroupTreeViewControllerTests {
         try? FileManager.default.removeItem(at: directory)
     }
 
-    /// 展开文件夹后树不得比滚动区宽：outline view 默认会随展开的子层级加宽大纲列，超出的部分被滚动区裁掉
+    /// 展开组后树不得比滚动区宽：outline view 默认会随展开的子层级加宽大纲列，超出的部分被滚动区裁掉
     @Test
     func expandingGroupKeepsOutlineWithinScrollView() throws {
         let controller = GroupTreeViewController(store: store, dockTileSynchronizer: nil)
@@ -59,8 +59,8 @@ final class GroupTreeViewControllerTests {
         #expect(outlineView.frame.width <= scrollView.contentView.bounds.width)
     }
 
-    /// 窗口缩到最窄时，每种语言的按钮都按完整标题的宽度排开，互不重叠，也不超出文件夹区：
-    /// 按钮行放不下时，按钮保持完整宽度，把文件夹区撑宽，最右边的按钮越出最窄时的文件夹区
+    /// 窗口缩到最窄时，每种语言的按钮都按完整标题的宽度排开，互不重叠，也不超出组区：
+    /// 按钮行放不下时，按钮保持完整宽度，把组区撑宽，最右边的按钮越出最窄时的组区
     @Test(arguments: LocalizationTests.languages)
     func buttonRowFitsMinimumWidth(language: String) throws {
         let table = try LocalizationTests.table(for: language)
@@ -93,7 +93,7 @@ final class GroupTreeViewControllerTests {
         window.contentView = controller.view
         controller.view.layoutSubtreeIfNeeded()
 
-        // 按从左到右的顺序排好，坐标换算到文件夹区
+        // 按从左到右的顺序排好，坐标换算到组区
         let placed = buttons
             .map { (button: $0, frame: row.convert($0.frame, to: controller.view)) }
             .sorted { $0.frame.minX < $1.frame.minX }
@@ -103,7 +103,7 @@ final class GroupTreeViewControllerTests {
             #expect(frame.width >= button.intrinsicContentSize.width, "\(button.title) 被压窄")
         }
 
-        // 相邻按钮不重叠，最右边的不越出文件夹区
+        // 相邻按钮不重叠，最右边的不越出组区
         for (left, right) in zip(placed, placed.dropFirst()) {
             #expect(left.frame.maxX <= right.frame.minX)
         }
@@ -111,7 +111,7 @@ final class GroupTreeViewControllerTests {
         #expect(try #require(placed.last).frame.maxX <= Self.minimumWidth)
     }
 
-    /// 按钮行从左到右是 新建文件夹、添加…；“添加…” 是点击后在下方弹出菜单的 pull-down。
+    /// 按钮行从左到右是 新建组、添加…；“添加…” 是点击后在下方弹出菜单的 pull-down。
     /// “添加到 Dock” 与 “删除” 在右键菜单里，不在按钮行
     @Test
     func buttonRowListsNewGroupAndAdd() throws {
@@ -151,7 +151,7 @@ final class GroupTreeViewControllerTests {
         #expect(menuItems.allSatisfy { $0.target === controller })
     }
 
-    /// 三项都加入选中项所属的文件夹：没有选中项时 “添加…” 禁用，选中一行后可用
+    /// 三项都加入选中项所属的组：没有选中项时 “添加…” 禁用，选中一行后可用
     @Test
     func addIsEnabledOnlyWithSelection() throws {
         let controller = GroupTreeViewController(store: store, dockTileSynchronizer: nil)
@@ -171,7 +171,7 @@ final class GroupTreeViewControllerTests {
 
     // MARK: 补标题
 
-    /// 没在编辑文件夹名时，取到的网页标题立刻补上
+    /// 没在编辑组名时，取到的网页标题立刻补上
     @Test
     func fillTitleAppliesImmediatelyWhenNotEditing() throws {
         let controller = GroupTreeViewController(store: store, dockTileSynchronizer: nil)
@@ -187,7 +187,7 @@ final class GroupTreeViewControllerTests {
         #expect(try lastItemOfWork() == titled(webPage, "Apple"))
     }
 
-    /// 正在编辑文件夹名时取到的标题先不补：补标题会重建树，重建会结束编辑并提交输入到一半的名称；
+    /// 正在编辑组名时取到的标题先不补：补标题会重建树，重建会结束编辑并提交输入到一半的名称；
     /// 编辑结束、名称定下来之后补上
     @Test
     func fillTitleWaitsUntilGroupNameEditingEnds() throws {
@@ -242,7 +242,7 @@ final class GroupTreeViewControllerTests {
         #expect(try lastItemOfWork() == titled(webPage, "Apple"))
     }
 
-    /// 编辑文件夹名期间同一网页先后取到两个标题：先到的是这一项现在的网址的，后到的是保存之前旧网址的。
+    /// 编辑组名期间同一网页先后取到两个标题：先到的是这一项现在的网址的，后到的是保存之前旧网址的。
     /// 两条都记下，后到的不挤掉先到的；编辑结束后补上的是网址相符的那一条
     @Test
     func pendingTitlesOfSameWebPageAreAllKept() throws {
@@ -273,8 +273,8 @@ final class GroupTreeViewControllerTests {
 // MARK: - Context Menu
 
 extension GroupTreeViewControllerTests {
-    /// 右键菜单按点到的那一行的类型给出各项，“删除” 隔开放在最后；各项接到文件夹区的方法，记下点到的那一项。
-    /// 没有 Dock 集成时没有 “添加到 Dock”，文件夹的菜单只有 “删除”，也没有分隔线
+    /// 右键菜单按点到的那一行的类型给出各项，“删除” 隔开放在最后；各项接到组区的方法，记下点到的那一项。
+    /// 没有 Dock 集成时没有 “添加到 Dock”，组的菜单只有 “删除”，也没有分隔线
     @Test
     func contextMenuFollowsClickedRowKind() throws {
         let controller = GroupTreeViewController(store: store, dockTileSynchronizer: nil)
@@ -298,7 +298,7 @@ extension GroupTreeViewControllerTests {
             "groups.remove",
         ]
 
-        // 行依次是 工作、开发、Chess、网页、文件、访达里的文件夹
+        // 行依次是 工作、开发、Chess、网页、文件、访达文件夹
         let expectations: [(row: Int, itemID: UUID, titles: [String])] = [
             (0, work.id, ["groups.remove"]),
             (1, work.items[0].id, ["groups.remove"]),
@@ -342,8 +342,8 @@ extension GroupTreeViewControllerTests {
         #expect(menu.items.isEmpty)
     }
 
-    /// 有 Dock 集成时文件夹的菜单是 “添加到 Dock” 与 “删除”：只有被拖出 Dock 的根文件夹能添加，
-    /// 在 Dock 上的根文件夹与子文件夹置灰
+    /// 有 Dock 集成时组的菜单是 “添加到 Dock” 与 “删除”：只有被拖出 Dock 的根组能添加，
+    /// 在 Dock 上的根组与子组置灰
     ///
     /// 同步器只读、不启动，也不点 “添加到 Dock”：添加会安排同步，同步会重启真实的 Dock
     @Test
@@ -364,7 +364,7 @@ extension GroupTreeViewControllerTests {
 
         #expect(synchronizer.rootGroupIDsRemovedFromDock() == [life.id])
 
-        // 行依次是 工作（在 Dock 上）、开发（子文件夹）、Chess、生活（被拖出 Dock）
+        // 行依次是 工作（在 Dock 上）、开发（子组）、Chess、生活（被拖出 Dock）
         let expectations = [
             (row: 0, canAddToDock: false),
             (row: 1, canAddToDock: false),
@@ -529,7 +529,7 @@ extension GroupTreeViewControllerTests {
         return actionNames[title].map(NSSelectorFromString)
     }
 
-    /// 文件夹区里的文件夹树
+    /// 组区里的组树
     private func groupTreeView(of controller: GroupTreeViewController) throws -> NSOutlineView {
         let scrollView = try #require(
             controller.view.subviews.compactMap { $0 as? NSScrollView }.first
@@ -538,7 +538,7 @@ extension GroupTreeViewControllerTests {
         return try #require(scrollView.documentView as? NSOutlineView)
     }
 
-    /// 文件夹区底部的按钮行
+    /// 组区底部的按钮行
     private func buttonRow(of controller: GroupTreeViewController) throws -> NSStackView {
         try #require(
             (controller.view as? NSStackView)?.arrangedSubviews.last as? NSStackView
@@ -585,7 +585,7 @@ extension GroupTreeViewControllerTests {
     /// 像在某一行上按右键那样取得右键菜单：把合成的右键事件交给 outline view，它记下点到的那一行；
     /// 再像菜单弹出之前那样让 delegate 重建
     /// - Parameters:
-    ///   - outlineView: 文件夹树，已放进窗口并排好布局
+    ///   - outlineView: 组树，已放进窗口并排好布局
     ///   - row: 右键点到的行；nil 表示点在最后一行下方的空白处
     private func contextMenu(of outlineView: NSOutlineView, clickingRow row: Int?) throws -> NSMenu {
         let lastRowRect = outlineView.rect(ofRow: outlineView.numberOfRows - 1)
@@ -620,7 +620,7 @@ extension GroupTreeViewControllerTests {
         return menu
     }
 
-    /// 在 “工作” 末尾依次加入网页、文件与访达里的文件夹，返回它们的 id；文件与访达里的文件夹建在临时目录里
+    /// 在 “工作” 末尾依次加入网页、文件与访达文件夹，返回它们的 id；文件与访达文件夹建在临时目录里
     private func addWebPageFileAndFinderFolder() throws -> [UUID] {
         let work = try #require(store.rootGroups.first)
         let fileURL = directory.appending(path: "报告.txt")
@@ -644,7 +644,7 @@ extension GroupTreeViewControllerTests {
 
     /// 只读的 Dock tile 同步器：Dock 偏好与 stub 目录都在本用例的临时目录里，不碰真实的 Dock；
     /// 不调用 `start()`，不会同步
-    /// - Parameter groupIDs: Dock 偏好里有 tile 的根文件夹
+    /// - Parameter groupIDs: Dock 偏好里有 tile 的根组
     private func makeSynchronizer(tilesOnDock groupIDs: [UUID]) throws -> DockTileSynchronizer {
         let builder = DockTileBundleBuilder(
             directory: directory.appending(path: "DockTiles", directoryHint: .isDirectory),
@@ -682,8 +682,8 @@ extension GroupTreeViewControllerTests {
         )
     }
 
-    /// 把文件夹区放进窗口，在 “工作” 末尾加入网页、文件与访达里的文件夹并展开 “工作”：
-    /// 行依次是 工作、开发、Chess、网页、文件、访达里的文件夹
+    /// 把组区放进窗口，在 “工作” 末尾加入网页、文件与访达文件夹并展开 “工作”：
+    /// 行依次是 工作、开发、Chess、网页、文件、访达文件夹
     private func showWebPageFixtures() throws -> (controller: GroupTreeViewController, window: NSWindow) {
         let controller = GroupTreeViewController(store: store, dockTileSynchronizer: nil)
         let window = makeWindow(width: Self.minimumWidth)
@@ -754,7 +754,7 @@ extension GroupTreeViewControllerTests {
         return subviews + subviews.flatMap { descendants(of: $0) }
     }
 
-    /// 放文件夹区的窗口，内容区宽 `width`；放在所有屏幕之外：弹出 sheet 时它会被放上屏幕
+    /// 放组区的窗口，内容区宽 `width`；放在所有屏幕之外：弹出 sheet 时它会被放上屏幕
     private func makeWindow(width: CGFloat) -> NSWindow {
         NSWindow(
             contentRect: NSRect(x: -20_000, y: -20_000, width: width, height: 400),

@@ -5,7 +5,7 @@ import Testing
 
 // MARK: - GroupStoreTests
 
-/// `GroupStore` 是文件夹树的唯一数据源：增删改查、移动规则与持久化都必须可靠
+/// `GroupStore` 是组树的唯一数据源：增删改查、移动规则与持久化都必须可靠
 @MainActor
 final class GroupStoreTests {
     /// 本用例独占的临时目录
@@ -24,7 +24,7 @@ final class GroupStoreTests {
 
     // MARK: 增删改查
 
-    /// 新建的根文件夹与子文件夹都能按 id 查到，子文件夹的父文件夹正确
+    /// 新建的根组与子组都能按 id 查到，子组的父组正确
     @Test
     func addsNestedGroups() throws {
         let store = GroupStore(fileURL: fileURL)
@@ -40,7 +40,7 @@ final class GroupStoreTests {
         #expect(store.parentGroup(of: root.id) == nil)
     }
 
-    /// 父文件夹不存在时不新建子文件夹
+    /// 父组不存在时不新建子组
     @Test
     func addSubgroupRequiresExistingParent() {
         let store = GroupStore(fileURL: fileURL)
@@ -49,7 +49,7 @@ final class GroupStoreTests {
         #expect(store.rootGroups.isEmpty)
     }
 
-    /// 同一文件夹内相同 URL 的 App 只保留一份，其它文件夹不受影响
+    /// 同一个组内相同 URL 的 App 只保留一份，其它组不受影响
     @Test
     func addItemsSkipsDuplicateAppsWithinGroup() throws {
         let store = GroupStore(fileURL: fileURL)
@@ -118,7 +118,7 @@ final class GroupStoreTests {
         #expect(try items(in: root.id, of: store) == batch)
     }
 
-    /// 子文件夹不经 `addItems` 加入，混在批里时被忽略
+    /// 子组不经 `addItems` 加入，混在批里时被忽略
     @Test
     func addItemsIgnoresSubgroups() throws {
         let store = GroupStore(fileURL: fileURL)
@@ -133,7 +133,7 @@ final class GroupStoreTests {
         #expect(store.group(id: subgroup.id) == nil)
     }
 
-    /// 任意层级的文件夹都能按 id 重命名：设置窗口里每一层的文件夹名都能双击编辑
+    /// 任意层级的组都能按 id 重命名：设置窗口里每一层的组名都能双击编辑
     @Test
     func renamesNestedGroup() throws {
         let store = GroupStore(fileURL: fileURL)
@@ -145,7 +145,7 @@ final class GroupStoreTests {
         #expect(store.group(id: child.id)?.name == "新名")
     }
 
-    /// 删除文件夹时连同其中的 App 与子文件夹一起删除
+    /// 删除组时连同其中的 App 与子组一起删除
     @Test
     func removesGroupWithContents() throws {
         let store = GroupStore(fileURL: fileURL)
@@ -162,7 +162,7 @@ final class GroupStoreTests {
         #expect(try #require(store.group(id: root.id)).items.isEmpty)
     }
 
-    /// 删除单个 App 只移除这一项，同一文件夹里的其它 App 保留
+    /// 删除单个 App 只移除这一项，同一个组里的其它 App 保留
     @Test
     func removesApp() throws {
         let store = GroupStore(fileURL: fileURL)
@@ -206,7 +206,7 @@ final class GroupStoreTests {
         #expect(try appURLs(in: root.id, of: store) == [calculator, chess, calendar])
     }
 
-    /// App 可以移到其它文件夹：插在目标文件夹的给定下标处，并从原文件夹移除
+    /// App 可以移到其它组：插在目标组的给定下标处，并从原组移除
     @Test
     func movesAppAcrossGroups() throws {
         let store = GroupStore(fileURL: fileURL)
@@ -223,7 +223,7 @@ final class GroupStoreTests {
         #expect(try appURLs(in: target.id, of: store) == [chess, calendar])
     }
 
-    /// 子文件夹可以移到根层级，成为新的根文件夹
+    /// 子组可以移到根层级，成为新的根组
     @Test
     func movesSubgroupToRoot() throws {
         let store = GroupStore(fileURL: fileURL)
@@ -253,7 +253,7 @@ final class GroupStoreTests {
         #expect(try appURLs(in: root.id, of: store) == [chess])
     }
 
-    /// 文件与网页和 App 一样只能放在文件夹里：不能移到根层级，能在文件夹之间移动
+    /// 文件与网页和 App 一样只能放在组里：不能移到根层级，能在组之间移动
     @Test
     func filesAndWebPagesStayInsideGroups() throws {
         let store = GroupStore(fileURL: fileURL)
@@ -277,7 +277,7 @@ final class GroupStoreTests {
         #expect(try items(in: target.id, of: store) == [example, report])
     }
 
-    /// 文件夹不能移入自身或自己的子孙，否则整棵子树会从数据中消失
+    /// 组不能移入自身或自己的子孙，否则整棵子树会从数据中消失
     @Test
     func rejectsMovingGroupIntoItselfOrDescendant() throws {
         let store = GroupStore(fileURL: fileURL)
@@ -360,7 +360,7 @@ final class GroupStoreTests {
 
             defer { NotificationCenter.default.removeObserver(observer) }
 
-            // 新建根文件夹、改成不同的名字、新建子文件夹各发一次；
+            // 新建根组、改成不同的名字、新建子组各发一次；
             // 改成同名、加入空列表、删除不存在的 id 都没有改动，不发
             let root = store.addRootGroup(named: "根")
             store.rename(groupID: root.id, to: "根")
@@ -571,7 +571,7 @@ extension GroupStoreTests {
         #expect(store.rootGroups == before)
     }
 
-    /// 编辑不按网址去重：改成同一文件夹里另一个网页的网址时两项都在，去重只在加入时
+    /// 编辑不按网址去重：改成同一个组里另一个网页的网址时两项都在，去重只在加入时
     @Test
     func updateWebPageKeepsDuplicateAddress() throws {
         let store = GroupStore(fileURL: fileURL)
@@ -633,12 +633,12 @@ extension GroupStoreTests {
         return .webPage(WebPageReference(id: UUID(), url: url, title: title))
     }
 
-    /// 按顺序列出文件夹里的项
+    /// 按顺序列出组里的项
     private func items(in groupID: UUID, of store: GroupStore) throws -> [GroupItem] {
         try #require(store.group(id: groupID)).items
     }
 
-    /// 按顺序列出文件夹里 App 的 URL
+    /// 按顺序列出组里 App 的 URL
     private func appURLs(in groupID: UUID, of store: GroupStore) throws -> [URL] {
         let group = try #require(store.group(id: groupID))
 

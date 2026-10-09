@@ -5,9 +5,9 @@ import Testing
 
 // MARK: - GroupItemCodingTests
 
-/// 文件夹树的 JSON 编解码：持久化文件要能完整还原任意深度的嵌套结构
+/// 组树的 JSON 编解码：持久化文件要能完整还原任意深度的嵌套结构
 struct GroupItemCodingTests {
-    /// 三层嵌套、App 与子文件夹混排的结构，编码后再解码必须与原值一致
+    /// 三层嵌套、App 与子组混排的结构，编码后再解码必须与原值一致
     @Test
     func nestedTreeRoundTrips() throws {
         let innermost = Group(
@@ -61,7 +61,7 @@ struct GroupItemCodingTests {
         #expect(decoded == [root])
     }
 
-    /// 每一项都带显式的类型标签，读者不看代码也能分辨 App、子文件夹、文件与网页
+    /// 每一项都带显式的类型标签，读者不看代码也能分辨 App、子组、文件与网页
     @Test
     func itemsCarryExplicitTypeTag() throws {
         let items: [GroupItem] = [
@@ -178,7 +178,7 @@ struct GroupItemCodingTests {
         #expect(!objects[1].keys.contains("title"))
     }
 
-    /// 只有 App 与子文件夹、App 没有书签与 bundle id 的旧数据照常解码，升级后用户的文件夹不会丢失
+    /// 只有 App 与子组、App 没有书签与 bundle id 的旧数据照常解码，升级后用户的组不会丢失
     @Test
     func legacyDataDecodes() throws {
         let appID = UUID()

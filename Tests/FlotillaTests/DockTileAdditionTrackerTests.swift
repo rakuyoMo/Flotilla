@@ -5,18 +5,18 @@ import Testing
 
 // MARK: - DockTileAdditionTrackerTests
 
-/// 添加 tile 的条件：用户拖出 Dock 的 tile 不能被自动加回，新出现的与用户要求添加的根文件夹却必须出现在 Dock 上，
-/// 在确认新 Dock 读到 tile 之前还要保持待添加；新建的根文件夹在名称定下来之前不能出现在 Dock 上
+/// 添加 tile 的条件：用户拖出 Dock 的 tile 不能被自动加回，新出现的与用户要求添加的根组却必须出现在 Dock 上，
+/// 在确认新 Dock 读到 tile 之前还要保持待添加；新建的根组在名称定下来之前不能出现在 Dock 上
 struct DockTileAdditionTrackerTests {
-    /// 启动时就在的根文件夹
+    /// 启动时就在的根组
     private let existingID = UUID()
 
-    /// 启动后新出现的根文件夹
+    /// 启动后新出现的根组
     private let newID = UUID()
 
     // MARK: 启动
 
-    /// 启动时缺少 tile 的根文件夹：是用户在 Flotilla 没运行时拖出去的，不添加
+    /// 启动时缺少 tile 的根组：是用户在 Flotilla 没运行时拖出去的，不添加
     @Test
     func missingTileAtLaunchIsNotAdded() {
         var tracker = DockTileAdditionTracker(rootGroupIDs: [existingID])
@@ -29,9 +29,9 @@ struct DockTileAdditionTrackerTests {
         #expect(groupIDs.isEmpty)
     }
 
-    // MARK: 新出现的根文件夹
+    // MARK: 新出现的根组
 
-    /// 新建的根文件夹、被拖成根文件夹的子文件夹：上一次同步时还不是根文件夹，添加
+    /// 新建的根组、被拖成根组的子组：上一次同步时还不是根组，添加
     @Test
     func newRootGroupIsAdded() {
         var tracker = DockTileAdditionTracker(rootGroupIDs: [existingID])
@@ -112,7 +112,7 @@ struct DockTileAdditionTrackerTests {
 
     // MARK: 用户请求
 
-    /// 用户在设置窗口要求添加：tile 不在 Dock 上的根文件夹重新添加，并同样保持待添加直到看到 tile
+    /// 用户在设置窗口要求添加：tile 不在 Dock 上的根组重新添加，并同样保持待添加直到看到 tile
     @Test
     func requestedGroupIsAddedUntilTileIsSeen() {
         var tracker = DockTileAdditionTracker(rootGroupIDs: [existingID])
@@ -130,7 +130,7 @@ struct DockTileAdditionTrackerTests {
         #expect(seenIDs.isEmpty)
     }
 
-    /// 要求添加的根文件夹 tile 已在 Dock 上：不再添加，也不留作待添加
+    /// 要求添加的根组 tile 已在 Dock 上：不再添加，也不留作待添加
     @Test
     func requestedGroupAlreadyOnDockIsNotAdded() {
         var tracker = DockTileAdditionTracker(rootGroupIDs: [existingID])
@@ -151,8 +151,8 @@ struct DockTileAdditionTrackerTests {
 
     // MARK: 搁置
 
-    /// 新建后正在输入名称的根文件夹：搁置期间的同步不添加 tile，也不算被拖出；
-    /// 名称定下来解除搁置后，下一次同步把它当作新出现的根文件夹添加
+    /// 新建后正在输入名称的根组：搁置期间的同步不添加 tile，也不算被拖出；
+    /// 名称定下来解除搁置后，下一次同步把它当作新出现的根组添加
     @Test
     func heldGroupIsAddedOnlyAfterRelease() {
         var tracker = DockTileAdditionTracker(rootGroupIDs: [existingID])
@@ -177,7 +177,7 @@ struct DockTileAdditionTrackerTests {
         #expect(releasedIDs == [newID])
     }
 
-    /// 解除搁置时告知它是否在搁置中：只有搁置过的根文件夹才需要为它再同步一次
+    /// 解除搁置时告知它是否在搁置中：只有搁置过的根组才需要为它再同步一次
     @Test
     func releaseReportsWhetherGroupWasHeld() {
         var tracker = DockTileAdditionTracker(rootGroupIDs: [existingID])
@@ -192,7 +192,7 @@ struct DockTileAdditionTrackerTests {
         #expect(!isExistingHeld)
     }
 
-    /// 搁置期间被删除或被拖成子文件夹的根文件夹：解除搁置后不添加
+    /// 搁置期间被删除或被拖成子组的根组：解除搁置后不添加
     @Test
     func heldGroupNoLongerRootIsNotAdded() {
         var tracker = DockTileAdditionTracker(rootGroupIDs: [])
@@ -206,9 +206,9 @@ struct DockTileAdditionTrackerTests {
         #expect(groupIDs.isEmpty)
     }
 
-    // MARK: 不再是根文件夹
+    // MARK: 不再是根组
 
-    /// 新出现、还没看到 tile 的根文件夹被删除或被拖成子文件夹：不再添加
+    /// 新出现、还没看到 tile 的根组被删除或被拖成子组：不再添加
     @Test
     func pendingGroupNoLongerRootIsNotAdded() {
         var tracker = DockTileAdditionTracker(rootGroupIDs: [])
@@ -220,7 +220,7 @@ struct DockTileAdditionTrackerTests {
         #expect(removedIDs.isEmpty)
     }
 
-    /// 要求添加之后、同步之前，该根文件夹被删除或被拖成子文件夹：不添加
+    /// 要求添加之后、同步之前，该根组被删除或被拖成子组：不添加
     @Test
     func requestedGroupNoLongerRootIsNotAdded() {
         var tracker = DockTileAdditionTracker(rootGroupIDs: [existingID])
@@ -231,7 +231,7 @@ struct DockTileAdditionTrackerTests {
         #expect(groupIDs.isEmpty)
     }
 
-    /// 被拖成子文件夹的根文件夹再被拖回根层级：又是新出现的根文件夹，添加
+    /// 被拖成子组的根组再被拖回根层级：又是新出现的根组，添加
     @Test
     func groupBecomingRootAgainIsAdded() {
         var tracker = DockTileAdditionTracker(rootGroupIDs: [existingID])
@@ -244,7 +244,7 @@ struct DockTileAdditionTrackerTests {
 
     // MARK: 被拖出 Dock 的判定
 
-    /// 启动时就缺少 tile 的根文件夹算被拖出：设置窗口要显示 “不在 Dock 上”
+    /// 启动时就缺少 tile 的根组算被拖出：设置窗口要显示 “不在 Dock 上”
     @Test
     func missingTileAtLaunchIsRemoved() {
         let tracker = DockTileAdditionTracker(rootGroupIDs: [existingID])
@@ -257,7 +257,7 @@ struct DockTileAdditionTrackerTests {
         #expect(removedIDs == [existingID])
     }
 
-    /// 新建后还没同步的根文件夹不算被拖出：tile 只是还没加上，状态文字不该闪现
+    /// 新建后还没同步的根组不算被拖出：tile 只是还没加上，状态文字不该闪现
     @Test
     func newRootGroupBeforeSyncIsNotRemoved() {
         let tracker = DockTileAdditionTracker(rootGroupIDs: [existingID])
@@ -270,7 +270,7 @@ struct DockTileAdditionTrackerTests {
         #expect(removedIDs.isEmpty)
     }
 
-    /// 添加过、还没看到 tile 的根文件夹不算被拖出；看到之后 tile 又不在了才算
+    /// 添加过、还没看到 tile 的根组不算被拖出；看到之后 tile 又不在了才算
     @Test
     func pendingGroupIsNotRemovedUntilTileDisappearsAfterBeingSeen() {
         var tracker = DockTileAdditionTracker(rootGroupIDs: [])
