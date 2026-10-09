@@ -52,6 +52,7 @@
    - 只看开头：查询参数里的 `://` 不算，`apple.com/?u=https://x.com` → `https://apple.com/?u=https://x.com`，`localhost:8080/?next=http://x` → `https://localhost:8080/?next=http://x`
    - 开头已有 scheme 的不补：`ftp://example.com` 保持原样，到第 6 条被判为不可用
 4. `URL(string:)` 解析失败，或解析出的网址没有主机名（如只输入了 `https://`）→ 不可用
+   - 交给 `URL(string:)` 之前，主机名之后的中文等非 ASCII 字符先按 UTF-8 编码，已有的百分号编码照原样（见 [12](12-groups.md) 的需求 34）
 5. 文件 URL → 不可用：在交给分类之前就挡下，不让它去碰文件系统
 6. 是不是网页交给 `GroupItem(url:title:)`，标题传标题框里的文字：它只收 `http`、`https`（不区分大小写），标题去掉首尾空白、空串视为没有
 7. 除以上之外不做任何规整：大小写、末尾斜杠、`www.` 都保持用户输入的样子
@@ -273,6 +274,7 @@
   - 路径里的空格与中文被百分号编码，不会解析失败：`hello world` 解析成没有 scheme、没有主机名的 `hello%20world`；`https://apple.com/中文` 的路径成为 `%E4%B8%AD%E6%96%87`
   - 主机名里有空格、末尾带换行时解析失败：`https://a b.com`、`https://apple.com\n` 都为 nil
   - 中文域名转成 punycode：`https://例子.中国/路径` 解析成 `https://xn--fsqu00a.xn--fiqs8s/%E8%B7%AF%E5%BE%84`
+  - 替网址的一部分编码非 ASCII 字符或 `{`、`|` 等不合法的字符时，这部分里已有的 `%` 也再编码一次，其余部分不动：`https://example.com/归%20?q=%20` 解析成 `https://example.com/%E5%BD%92%2520?q=%20`
   - `localhost:8080` 解析成 scheme 为 `localhost`、没有主机名的网址
   - `https://` 没有主机名；`file:///Applications` 没有主机名，`file://localhost/Applications` 的主机名是 `localhost`，两者 `isFileURL` 都为真
   - `HTTPS://EXAMPLE.COM` 保留原样的大小写

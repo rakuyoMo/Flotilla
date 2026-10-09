@@ -70,7 +70,7 @@ final class WebPageAlert: NSObject {
 
     /// 配好提示框的文字、按钮与输入框
     ///
-    /// 添加时输入为空，“添加” 禁用；编辑时两个框填着这个网页的网址与标题，“保存” 的可用状态按填进去的网址判断
+    /// 添加时输入为空，“添加” 禁用；编辑时两个框填着这个网页显示的网址与标题，“保存” 的可用状态按填进去的网址判断
     /// - Parameters:
     ///   - webPage: 要编辑的网页；添加时传 nil
     ///   - fetchTitle: 开始取一个网址的标题，在主线程把结果交给回调，取不到时为 nil；返回取消这一次的闭包。测试里传入假实现
@@ -107,9 +107,10 @@ final class WebPageAlert: NSObject {
         configureButtons()
         configureTextFields()
 
-        // 编辑时填上这个网页的网址与标题；填进去的原标题算用户的内容：换网址时不清空，取到的标题也不覆盖它
+        // 编辑时填上这个网页的网址与标题；填进去的原标题算用户的内容：换网址时不清空，取到的标题也不覆盖它。
+        // 网址填显示的网址，中文等按还原后的文字填；保存时照常解析，这些字符重新编码
         if let webPage {
-            addressField.stringValue = webPage.url.absoluteString
+            addressField.stringValue = webPage.displayAddress
             titleField.stringValue = webPage.title ?? ""
         }
 
@@ -121,7 +122,7 @@ final class WebPageAlert: NSObject {
 
     /// 把输入的网址与标题变成网页，没写 scheme 时像浏览器地址栏那样补上 `https://`；不是可用的网址时为 nil
     ///
-    /// 除此之外保持输入的样子：大小写、末尾斜杠、`www.` 都不改
+    /// 除此之外保持输入的样子：大小写、末尾斜杠、`www.` 都不改，已有的百分号编码照原样；中文等非 ASCII 字符按 UTF-8 编码
     /// - Parameters:
     ///   - input: 网址框里的文字
     ///   - title: 标题框里的文字；首尾空白会被去掉，空串视为没有标题
@@ -144,7 +145,7 @@ final class WebPageAlert: NSObject {
         // 文件 URL 不交给分类，免得它去读文件系统、把存在的目录当成文件加入；
         // 没有主机名的也不算网页，例如只输入了 `https://`
         guard
-            let url = URL(string: address),
+            let url = URL(string: Self.encodingNonASCIICharacters(afterHostIn: address)),
             !url.isFileURL,
             let host = url.host(),
             !host.isEmpty
@@ -489,6 +490,28 @@ extension WebPageAlert {
 // MARK: - Helpers
 
 extension WebPageAlert {
+    /// 网址里主机名之后的非 ASCII 字符按 UTF-8 编码成百分号编码，其余照原样
+    ///
+    /// 不能全交给 `URL(string:)`：实测（macOS 27）它替网址的一部分编码非 ASCII 字符时，这部分里已有的 `%` 也会再编码一次，
+    /// `%20` 成了 `%2520`。编辑时网址框里的中文与照原样的编码可能就在同一部分里（需求 34）。
+    /// 主机名仍交给 `URL(string:)`，转成 `xn--` 开头的写法
+    /// - Parameter address: 以 `scheme://` 开头的网址
+    private static func encodingNonASCIICharacters(afterHostIn address: String) -> String {
+        // 开头的 `scheme://` 连同其后的主机名与端口，到第一个 `/`、`?` 或 `#` 为止
+        let hostEnd = address
+            .prefixMatch(of: /[A-Za-z][A-Za-z0-9+.\-]*:\/\/[^\/?#]*/)?
+            .range
+            .upperBound ?? address.startIndex
+
+        let rest = address[hostEnd...]
+
+        let encodedRest = rest.addingPercentEncoding(
+            withAllowedCharacters: CharacterSet(charactersIn: "\u{0}" ... "\u{7F}")
+        ) ?? String(rest)
+
+        return address[..<hostEnd] + encodedRest
+    }
+
     /// 等一段时间、再在主线程执行给它的闭包的方法：App 里的停顿与时限都这样等
     /// - Parameter duration: 等多久
     private static func waiting(

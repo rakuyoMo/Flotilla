@@ -79,6 +79,33 @@ struct WebPageAlertTests {
         #expect(webPage.url.absoluteString == expected)
     }
 
+    /// 中文等非 ASCII 字符按 UTF-8 编码，同一部分里已有的百分号编码照原样、不再编码一次：
+    /// 编辑时网址框里两者可能混在一起；主机名里的中文转成 `xn--` 开头的写法
+    @Test(arguments: [
+        (
+            "https://example.com/归%20帆",
+            "https://example.com/%E5%BD%92%20%E5%B8%86"
+        ),
+        (
+            "apple.com/search?q=归%26帆#归%20",
+            "https://apple.com/search?q=%E5%BD%92%26%E5%B8%86#%E5%BD%92%20"
+        ),
+        (
+            "https://例子.测试/归",
+            "https://xn--fsqu00a.xn--0zwm56d/%E5%BD%92"
+        ),
+    ])
+    func nonASCIICharactersAreEncodedOnce(input: String, expected: String) {
+        let item = WebPageAlert.webPage(from: input)
+
+        guard case .webPage(let webPage) = item else {
+            Issue.record("\(input) 应当是网页：\(String(describing: item))")
+            return
+        }
+
+        #expect(webPage.url.absoluteString == expected)
+    }
+
     /// 空输入、一句话、没有主机名的网址与 `http`、`https` 以外的网址都不可用
     @Test(arguments: [
         "",
@@ -685,6 +712,43 @@ extension WebPageAlertTests {
         )
 
         #expect(try onlyConfirmedWebPage() == expected)
+    }
+
+    /// 网址里的中文按还原后的文字填进网址框，与设置窗口里标出的一致；
+    /// 不改动直接保存，中文重新编码，照原样的编码不变：交出的网页与原来的相同
+    @Test(arguments: [
+        (
+            "https://zh.wikipedia.org/wiki/%E5%BD%92%E5%B8%86",
+            "https://zh.wikipedia.org/wiki/归帆"
+        ),
+        (
+            "https://www.google.com/search?q=%E5%BD%92%E5%B8%86&hl=zh-CN",
+            "https://www.google.com/search?q=归帆&hl=zh-CN"
+        ),
+        (
+            "https://example.com/#%E5%BD%92%E5%B8%86",
+            "https://example.com/#归帆"
+        ),
+        (
+            "https://example.com/%F0%9F%98%80%20%B9%E9%E5%BD%92%E3%80%80",
+            "https://example.com/😀%20%B9%E9归%E3%80%80"
+        ),
+    ])
+    func editFillsDecodedAddressAndSavesSameURL(address: String, expected: String) throws {
+        let original = WebPageReference(id: UUID(), url: try url(address), title: "归帆")
+        let editAlert = stub.makeAlert(editing: original)
+        let fields = try textFields(of: editAlert)
+
+        let window = makeSheetParentWindow()
+        defer { window.orderOut(nil) }
+
+        #expect(fields.address.stringValue == expected)
+
+        stub.beginSheet(of: editAlert, on: window)
+
+        try clickFirstButton(of: editAlert)
+
+        #expect(try onlyConfirmedWebPage() == original)
     }
 
     /// 弹出时不获取，网址改了、停顿之后才获取；原来的标题算用户的内容：换网址时不清空，取到的标题也不覆盖
