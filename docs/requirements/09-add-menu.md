@@ -109,7 +109,7 @@
   - 按回车或点别处结束编辑：在 `controlTextDidEndEditing(_:)` 里改名之后补
   - 按 Esc 取消编辑：outline view 不发 `controlTextDidEndEditing(_:)`；在 `control(_:textView:doCommandBy:)` 里排一个主线程任务，outline view 结束编辑之后补
 - 补标题不改写 stub、不重启 Dock：
-  - stub 改写与否看 Info.plist 与图标是否逐字节变化（`DockTileBundleBuilder.write(group:icon:)`）：Info.plist 里随组变化的只有根组的名称与 id；网页在图标里用所有网页共用的地球图标，与标题无关
+  - stub 改写与否看 Info.plist 是否逐字节变化、图标是否按像素变化（见 02，`DockTileBundleBuilder.write(group:icon:)`）：Info.plist 里随组变化的只有根组的名称与 id；网页在图标里用所有网页共用的地球图标，与标题无关
   - Dock 偏好改动与否看各 tile 的条目（`DockPreferences.apply`）：标签是根组的名称，stub 没改写就不换 GUID
   - 变更通知仍会让 `DockTileSynchronizer` 同步一次：重新渲染图标、比对一致，不写文件
 
