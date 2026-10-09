@@ -18,9 +18,9 @@
 "settings.windowTitle" = "Settings";
 
 /* 设置窗口的文件夹区 */
-"groups.sectionTitle" = "Folders";
-"groups.newGroup" = "New Folder";
-"groups.untitledGroup" = "Untitled Folder";
+"groups.sectionTitle" = "Groups";
+"groups.newGroup" = "New Group";
+"groups.untitledGroup" = "Untitled Group";
 "groups.add" = "Add…";
 "groups.addApps" = "Add Apps…";
 "groups.addFiles" = "Add Files…";
@@ -43,7 +43,7 @@
 
 /* 设置窗口的通用区 */
 "general.sectionTitle" = "General";
-"general.previewIconCount" = "Icons shown in folder icon:";
+"general.previewIconCount" = "Icons shown in group icon:";
 "general.finderFolders" = "Finder folders:";
 "general.showHiddenFiles" = "Show hidden files";
 "general.accessibility" = "Accessibility permission:";

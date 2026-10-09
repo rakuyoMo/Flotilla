@@ -18,9 +18,9 @@
 "settings.windowTitle" = "设置";
 
 /* 设置窗口的文件夹区 */
-"groups.sectionTitle" = "文件夹";
-"groups.newGroup" = "新建文件夹";
-"groups.untitledGroup" = "未命名文件夹";
+"groups.sectionTitle" = "组";
+"groups.newGroup" = "新建组";
+"groups.untitledGroup" = "未命名组";
 "groups.add" = "添加…";
 "groups.addApps" = "添加 App…";
 "groups.addFiles" = "添加文件…";
@@ -43,8 +43,8 @@
 
 /* 设置窗口的通用区 */
 "general.sectionTitle" = "通用";
-"general.previewIconCount" = "文件夹图标内显示的图标数量：";
-"general.finderFolders" = "访达里的文件夹：";
+"general.previewIconCount" = "组图标内显示的图标数量：";
+"general.finderFolders" = "访达文件夹：";
 "general.showHiddenFiles" = "显示隐藏文件";
 "general.accessibility" = "辅助功能权限：";
 "general.accessibilityGranted" = "已授权";

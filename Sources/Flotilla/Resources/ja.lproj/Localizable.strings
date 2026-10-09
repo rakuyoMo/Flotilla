@@ -18,9 +18,9 @@
 "settings.windowTitle" = "設定";
 
 /* 设置窗口的文件夹区 */
-"groups.sectionTitle" = "フォルダ";
-"groups.newGroup" = "新規フォルダ";
-"groups.untitledGroup" = "名称未設定フォルダ";
+"groups.sectionTitle" = "グループ";
+"groups.newGroup" = "新規グループ";
+"groups.untitledGroup" = "名称未設定グループ";
 "groups.add" = "追加…";
 "groups.addApps" = "アプリを追加…";
 "groups.addFiles" = "ファイルを追加…";
@@ -43,7 +43,7 @@
 
 /* 设置窗口的通用区 */
 "general.sectionTitle" = "一般";
-"general.previewIconCount" = "フォルダアイコンに表示するアイコンの数：";
+"general.previewIconCount" = "グループアイコンに表示するアイコンの数：";
 "general.finderFolders" = "Finderのフォルダ：";
 "general.showHiddenFiles" = "不可視ファイルを表示";
 "general.accessibility" = "アクセシビリティの権限：";
