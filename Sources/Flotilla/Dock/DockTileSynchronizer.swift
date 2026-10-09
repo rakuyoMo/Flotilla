@@ -49,6 +49,12 @@ final class DockTileSynchronizer: NSObject {
     /// 决定哪些根组要添加 tile
     private var additionTracker: DockTileAdditionTracker
 
+    /// 各根组的 stub 图标最近一次写入或核对时的输入；只在内存里，只留当前的根组
+    ///
+    /// 输入没变的根组不再渲染图标：预览里的 App 图标在系统缓存换代后像素会差几级，
+    /// 重新渲染、比对可能把没变的图标判为变了，让 stub 白白改写、Dock 白白重启
+    private var verifiedIconInputs: [UUID: GroupIconInputs] = [:]
+
     /// 等待执行的同步；新的变更到来时取消并替换它
     private var pendingSynchronization: Task<Void, Never>?
 
@@ -323,6 +329,10 @@ extension DockTileSynchronizer {
         var expectedTiles: [ExpectedDockTile] = []
         var rewrittenTileURLs: Set<URL> = []
 
+        // 不再是根组的组，stub 会被删掉；它再成为根组时，要重新核对图标
+        let rootGroupIDs = Set(rootGroups.map(\.id))
+        verifiedIconInputs = verifiedIconInputs.filter { rootGroupIDs.contains($0.key) }
+
         for group in rootGroups {
             guard
                 let isRewritten = writeStub(of: group, previewIconCount: previewIconCount)
@@ -349,23 +359,42 @@ extension DockTileSynchronizer {
         return (expectedTiles, rewrittenTileURLs)
     }
 
-    /// 按当前外观渲染根组的图标，内容有变化时改写它的 stub
+    /// 内容有变化时改写根组的 stub；图标的输入与上次写入或核对时相同就不重新渲染图标
     /// - Parameters:
     ///   - group: 根组
     ///   - previewIconCount: 图标里叠加的预览图标数量
     /// - Returns: stub 是否被改写；写入失败时为 nil
     private func writeStub(of group: Group, previewIconCount: Int) -> Bool? {
         // stub 图标没有所在的视图，按 App 当前的外观取底板颜色
-        let icon = GroupIconRenderer.render(
+        let appearance = GroupIconAppearance(NSApp.effectiveAppearance)
+
+        let iconInputs = GroupIconInputs(
             group: group,
             previewIconCount: previewIconCount,
-            pointSize: Self.iconPointSize,
-            appearance: GroupIconAppearance(NSApp.effectiveAppearance)
+            appearance: appearance
         )
 
         do {
-            return try builder.write(group: group, icon: icon)
+            let isRewritten = try builder.write(
+                group: group,
+                isIconCurrent: verifiedIconInputs[group.id] == iconInputs
+            ) {
+                GroupIconRenderer.render(
+                    group: group,
+                    previewIconCount: previewIconCount,
+                    pointSize: Self.iconPointSize,
+                    appearance: appearance
+                )
+            }
+
+            // 不论改没改写，stub 的图标此刻都与这组输入相符
+            verifiedIconInputs[group.id] = iconInputs
+
+            return isRewritten
         } catch {
+            // 写到一半的 stub 图标与哪组输入相符说不准，下次同步重新渲染、比对
+            verifiedIconInputs[group.id] = nil
+
             Self.logger.error(
                 "写入 stub 失败（\(group.id.uuidString, privacy: .public)）：\(error.localizedDescription, privacy: .public)"
             )

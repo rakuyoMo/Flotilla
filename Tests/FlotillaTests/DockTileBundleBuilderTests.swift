@@ -59,7 +59,7 @@ final class DockTileBundleBuilderTests {
     @Test
     func writeCreatesSignedBundle() throws {
         let group = makeGroup(name: "工作")
-        let changed = try builder.write(group: group, icon: makeIcon(for: group))
+        let changed = try builder.write(group: group) { makeIcon(for: group) }
 
         let bundleURL = directory.appending(path: "\(group.id.uuidString)/工作.app")
         let relativePaths = [
@@ -91,7 +91,7 @@ final class DockTileBundleBuilderTests {
     @Test
     func infoDescribesBackgroundStub() throws {
         let group = makeGroup(name: "工作")
-        try builder.write(group: group, icon: makeIcon(for: group))
+        try builder.write(group: group) { makeIcon(for: group) }
 
         let info = try readInfo(of: group)
         let id = group.id.uuidString
@@ -115,7 +115,7 @@ final class DockTileBundleBuilderTests {
     @Test
     func infoDeclaresApplicationAndFileDocumentTypes() throws {
         let group = makeGroup(name: "工作")
-        try builder.write(group: group, icon: makeIcon(for: group))
+        try builder.write(group: group) { makeIcon(for: group) }
 
         let info = try readInfo(of: group)
         let documentTypes = try #require(info["CFBundleDocumentTypes"] as? [[String: Any]])
@@ -147,7 +147,7 @@ final class DockTileBundleBuilderTests {
     @Test
     func rewrittenStubIsReregistered() throws {
         let group = makeGroup(name: "工作")
-        try builder.write(group: group, icon: makeIcon(for: group))
+        try builder.write(group: group) { makeIcon(for: group) }
 
         let stubURL = builder.bundleURL(for: group)
         let chessURL = URL(filePath: "/System/Applications/Chess.app")
@@ -170,7 +170,7 @@ final class DockTileBundleBuilderTests {
         #expect(try !canAccept(chessURL, stubURL: stubURL))
         #expect(try !canAccept(hostsURL, stubURL: stubURL))
 
-        try builder.write(group: group, icon: makeIcon(for: group))
+        try builder.write(group: group) { makeIcon(for: group) }
 
         #expect(try canAccept(chessURL, stubURL: stubURL))
         #expect(try canAccept(hostsURL, stubURL: stubURL))
@@ -180,34 +180,21 @@ final class DockTileBundleBuilderTests {
     @Test
     func unchangedGroupIsNotRewritten() throws {
         let group = makeGroup(name: "工作")
-        try builder.write(group: group, icon: makeIcon(for: group))
+        try builder.write(group: group) { makeIcon(for: group) }
 
-        #expect(try !builder.write(group: group, icon: makeIcon(for: group)))
-    }
-
-    /// 缺少可执行文件或自定义图标的 stub 即使名称与图标没变也要补全，否则 Dock 上的 tile 点不开或图标不对
-    @Test(arguments: ["Contents/MacOS/FlotillaDockTile", "Icon\r"])
-    func incompleteBundleIsRewritten(missingPath: String) throws {
-        let group = makeGroup(name: "工作")
-        try builder.write(group: group, icon: makeIcon(for: group))
-
-        let missingURL = builder.bundleURL(for: group).appending(path: missingPath)
-        try FileManager.default.removeItem(at: missingURL)
-
-        #expect(try builder.write(group: group, icon: makeIcon(for: group)))
-        #expect(FileManager.default.fileExists(atPath: missingURL.path(percentEncoded: false)))
+        #expect(try !builder.write(group: group) { makeIcon(for: group) })
     }
 
     /// 重命名后 bundle 在原目录里改名，Info.plist 中的名称随之改写：Dock 按 bundle 的文件名显示 tile 的名称
     @Test
     func renameMovesBundleAndRewritesInfo() throws {
         var group = makeGroup(name: "工作")
-        try builder.write(group: group, icon: makeIcon(for: group))
+        try builder.write(group: group) { makeIcon(for: group) }
 
         let originalURL = builder.bundleURL(for: group)
 
         group.name = "日常"
-        let changed = try builder.write(group: group, icon: makeIcon(for: group))
+        let changed = try builder.write(group: group) { makeIcon(for: group) }
 
         let info = try readInfo(of: group)
         let renamedURL = builder.bundleURL(for: group)
@@ -224,10 +211,10 @@ final class DockTileBundleBuilderTests {
     @Test
     func caseOnlyRenameMovesBundle() throws {
         var group = makeGroup(name: "work")
-        try builder.write(group: group, icon: makeIcon(for: group))
+        try builder.write(group: group) { makeIcon(for: group) }
 
         group.name = "Work"
-        try builder.write(group: group, icon: makeIcon(for: group))
+        try builder.write(group: group) { makeIcon(for: group) }
 
         #expect(builder.existingBundleURL(for: group.id)?.lastPathComponent == "Work.app")
     }
@@ -250,13 +237,12 @@ final class DockTileBundleBuilderTests {
         let iconURL = builder.bundleURL(for: group)
             .appending(path: "Contents/Resources/Icon.icns")
 
-        try builder.write(group: group, icon: makeIcon(for: group))
+        try builder.write(group: group) { makeIcon(for: group) }
         let original = try Data(contentsOf: iconURL)
 
-        let changed = try builder.write(
-            group: group,
-            icon: makeIcon(for: group, previewIconCount: 0)
-        )
+        let changed = try builder.write(group: group) {
+            makeIcon(for: group, previewIconCount: 0)
+        }
 
         #expect(changed)
         #expect(try Data(contentsOf: iconURL) != original)
@@ -268,8 +254,8 @@ final class DockTileBundleBuilderTests {
         let first = makeGroup(name: "工作")
         let second = makeGroup(name: "娱乐")
 
-        try builder.write(group: first, icon: makeIcon(for: first))
-        try builder.write(group: second, icon: makeIcon(for: second))
+        try builder.write(group: first) { makeIcon(for: first) }
+        try builder.write(group: second) { makeIcon(for: second) }
 
         // 目录里混入无关的文件与目录
         try Data().write(to: directory.appending(path: "notes.txt"))
@@ -374,13 +360,13 @@ extension DockTileBundleBuilderTests {
         var group = makeGroup(name: "工作")
 
         group.items.append(.webPage(WebPageReference(id: webPageID, url: url, title: nil)))
-        try builder.write(group: group, icon: makeIcon(for: group))
+        try builder.write(group: group) { makeIcon(for: group) }
 
         group.items[group.items.count - 1] = .webPage(
             WebPageReference(id: webPageID, url: url, title: "Example Domain")
         )
 
-        #expect(try !builder.write(group: group, icon: makeIcon(for: group)))
+        #expect(try !builder.write(group: group) { makeIcon(for: group) })
     }
 }
 
@@ -392,9 +378,97 @@ extension DockTileBundleBuilderTests {
     @Test
     func iconWithinToleranceIsNotRewritten() throws {
         let group = makeGroup(name: "工作")
-        try builder.write(group: group, icon: SolidColorIcon.make(red: 100))
+        try builder.write(group: group) { SolidColorIcon.make(red: 100) }
 
-        #expect(try !builder.write(group: group, icon: SolidColorIcon.make(red: 101)))
+        #expect(try !builder.write(group: group) { SolidColorIcon.make(red: 101) })
+    }
+}
+
+// MARK: - Incomplete Stub
+
+extension DockTileBundleBuilderTests {
+    /// 缺少可执行文件、图标或自定义图标的 stub 即使名称与图标没变也要补全，否则 Dock 上的 tile 点不开或图标不对；
+    /// 调用方确认图标没变时同样渲染图标、补全
+    @Test(
+        arguments: [false, true],
+        ["Contents/MacOS/FlotillaDockTile", "Contents/Resources/Icon.icns", "Icon\r"]
+    )
+    func incompleteBundleIsRewritten(isIconCurrent: Bool, missingPath: String) throws {
+        let group = makeGroup(name: "工作")
+        try builder.write(group: group) { makeIcon(for: group) }
+
+        let missingURL = builder.bundleURL(for: group).appending(path: missingPath)
+        try FileManager.default.removeItem(at: missingURL)
+
+        var renderCount = 0
+
+        let changed = try builder.write(group: group, isIconCurrent: isIconCurrent) {
+            renderCount += 1
+
+            return makeIcon(for: group)
+        }
+
+        #expect(changed)
+        #expect(renderCount == 1)
+        #expect(FileManager.default.fileExists(atPath: missingURL.path(percentEncoded: false)))
+    }
+}
+
+// MARK: - Current Icon
+
+extension DockTileBundleBuilderTests {
+    /// 调用方确认现有的图标就是这个组的图标、名称没变、stub 齐全时，不渲染图标，三个文件原样保留：
+    /// 系统缓存换代后重新渲染的图标可能差出容差，不渲染就不会被误判为变了
+    @Test
+    func currentIconIsNotRendered() throws {
+        let group = makeGroup(name: "工作")
+        try builder.write(group: group) { makeIcon(for: group) }
+
+        let fileURLs = [
+            "Contents/Info.plist",
+            "Contents/MacOS/FlotillaDockTile",
+            "Contents/Resources/Icon.icns",
+        ].map {
+            builder.bundleURL(for: group).appending(path: $0)
+        }
+
+        let contents = try fileURLs.map { try Data(contentsOf: $0) }
+        let modificationDates = try fileURLs.map { try modificationDate(of: $0) }
+
+        var renderCount = 0
+
+        let changed = try builder.write(group: group, isIconCurrent: true) {
+            renderCount += 1
+
+            return makeIcon(for: group)
+        }
+
+        #expect(!changed)
+        #expect(renderCount == 0)
+        #expect(try fileURLs.map { try Data(contentsOf: $0) } == contents)
+        #expect(try fileURLs.map { try modificationDate(of: $0) } == modificationDates)
+    }
+
+    /// 调用方确认图标没变，组却改了名：照常渲染图标并改写，Dock 按 bundle 的文件名显示 tile 的名称
+    @Test
+    func currentIconIsRenderedAfterRename() throws {
+        var group = makeGroup(name: "工作")
+        try builder.write(group: group) { makeIcon(for: group) }
+
+        group.name = "日常"
+
+        var renderCount = 0
+
+        let changed = try builder.write(group: group, isIconCurrent: true) {
+            renderCount += 1
+
+            return makeIcon(for: group)
+        }
+
+        #expect(changed)
+        #expect(renderCount == 1)
+        #expect(builder.existingBundleURL(for: group.id)?.lastPathComponent == "日常.app")
+        #expect(try readInfo(of: group)["CFBundleName"] as? String == "日常")
     }
 }
 
@@ -414,5 +488,14 @@ extension DockTileBundleBuilderTests {
                 arguments: ["-u", bundleURL.path(percentEncoded: false)]
             )
         }
+    }
+
+    /// 文件的修改时间；每次都从文件系统读取，不用 URL 缓存的资源值
+    private func modificationDate(of url: URL) throws -> Date {
+        let attributes = try FileManager.default.attributesOfItem(
+            atPath: url.path(percentEncoded: false)
+        )
+
+        return try #require(attributes[.modificationDate] as? Date)
     }
 }

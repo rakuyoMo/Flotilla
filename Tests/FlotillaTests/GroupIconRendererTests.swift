@@ -317,6 +317,60 @@ struct GroupIconRendererTests {
     }
 }
 
+// MARK: - Preview Items
+
+extension GroupIconRendererTests {
+    /// 参与预览的项跳过子组，按组里的顺序取前 `previewIconCount` 个
+    @Test
+    func previewItemsSkipSubgroupsInOrder() throws {
+        let items = try mixedItems()
+
+        let previewItems = GroupIconRenderer.previewItems(
+            of: Group(id: UUID(), name: "混排", items: items),
+            previewIconCount: 3
+        )
+
+        #expect(previewItems == [items[1], items[2], items[4]])
+    }
+
+    /// 预览数量超出 `0...4` 时夹取：负数一项也不取，超过 4 只取前 4 项
+    @Test(arguments: [(-1, 0), (0, 0), (2, 2), (4, 4), (5, 4), (9, 4)])
+    func previewItemCountIsClamped(previewIconCount: Int, expectedCount: Int) throws {
+        let items = try mixedItems()
+
+        let previewItems = GroupIconRenderer.previewItems(
+            of: Group(id: UUID(), name: "混排", items: items),
+            previewIconCount: previewIconCount
+        )
+
+        // 第 0、3 项是子组
+        let nonGroupItems = [1, 2, 4, 5, 6, 7].map { items[$0] }
+
+        #expect(previewItems == Array(nonGroupItems.prefix(expectedCount)))
+    }
+
+    /// `render` 画进单元格的正是 `previewItems` 取到的项：只画这几项的组，画面与原来的组相同
+    @Test(arguments: [GroupIconAppearance.dark, .light])
+    func renderDrawsPreviewItems(appearance: GroupIconAppearance) throws {
+        let group = try Group(id: UUID(), name: "混排", items: mixedItems())
+        let previewItems = GroupIconRenderer.previewItems(of: group, previewIconCount: 4)
+
+        let rendered = try renderedPixels(
+            of: group,
+            previewIconCount: 4,
+            appearance: appearance
+        )
+
+        let previewOnly = try renderedPixels(
+            of: Group(id: UUID(), name: "预览", items: previewItems),
+            previewIconCount: 4,
+            appearance: appearance
+        )
+
+        #expect(rendered == previewOnly)
+    }
+}
+
 // MARK: - Private
 
 extension GroupIconRendererTests {
@@ -330,6 +384,14 @@ extension GroupIconRendererTests {
         let url = try #require(URL(string: "https://example.com/"))
 
         return .webPage(WebPageReference(id: UUID(), url: url, title: nil))
+    }
+
+    /// 子组夹在中间的八项：子组、文件、App、子组、网页，再接三个 App；不算子组共六项，比预览上限多两项
+    private func mixedItems() throws -> [GroupItem] {
+        let subgroup = GroupItem.group(Group(id: UUID(), name: "子组", items: []))
+        let apps = makeGroup(appCount: 4).items
+
+        return try [subgroup, file, apps[0], subgroup, webPage()] + apps.dropFirst()
     }
 
     /// 构造包含前 `appCount` 个系统 App 的组

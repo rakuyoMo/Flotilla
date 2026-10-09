@@ -54,15 +54,8 @@ enum GroupIconRenderer {
         pointSize: CGFloat,
         appearance: GroupIconAppearance
     ) -> NSImage {
-        let count = min(max(previewIconCount, 0), Preferences.maximumPreviewIconCount)
-
-        // 按顺序取前几项，跳过子组；惰性求值，只读取用得上的图标
-        let previewIcons = Array(
-            group.items
-                .lazy
-                .compactMap { previewIcon(of: $0) }
-                .prefix(count)
-        )
+        let previewIcons = previewItems(of: group, previewIconCount: previewIconCount)
+            .compactMap { previewIcon(of: $0) }
 
         // 绘制闭包在每次栅格化时按目标分辨率重新执行；翻转坐标系，让几何按 y 轴自上而下计算
         return NSImage(
@@ -87,6 +80,29 @@ enum GroupIconRenderer {
 
             return true
         }
+    }
+
+    /// 参与预览的项，依次画进左上、右上、左下、右下的单元格
+    ///
+    /// 渲染与判断图标输入是否变化（`GroupIconInputs`）共用这一条规则，两边取到的项始终一致
+    /// - Parameters:
+    ///   - group: 要渲染的组
+    ///   - previewIconCount: 预览数量上限，超出 `0...Preferences.maximumPreviewIconCount` 时夹取
+    /// - Returns: 按顺序取前几个 App、文件或网页，跳过子组
+    static func previewItems(of group: Group, previewIconCount: Int) -> [GroupItem] {
+        let count = min(max(previewIconCount, 0), Preferences.maximumPreviewIconCount)
+
+        // 惰性求值：找够数量就停，不遍历后面的项
+        return Array(
+            group.items
+                .lazy
+                .filter {
+                    guard case .group = $0 else { return true }
+
+                    return false
+                }
+                .prefix(count)
+        )
     }
 
     /// 第 index 个预览单元格在画布中的位置，填充顺序为左上、右上、左下、右下
