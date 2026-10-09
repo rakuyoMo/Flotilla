@@ -57,12 +57,12 @@ extension DockTileLocator {
     /// 第一次调用时带提示地请求辅助功能权限，每次启动最多提示一次；
     /// 没有权限、Dock 正在重启或找不到 tile 时，退化为鼠标位置在 Dock 方向上的投影
     /// - Returns: 没有任何屏幕时为 nil
-    func locate(folderID: UUID) -> DockTileAnchor? {
+    func locate(groupID: UUID) -> DockTileAnchor? {
         let edge = dockEdge()
 
         if
             requestTrustIfNeeded(),
-            let tileFrame = tileFrame(of: folderID),
+            let tileFrame = tileFrame(of: groupID),
             let screen = Self.screen(
                 containing: CGPoint(x: tileFrame.midX, y: tileFrame.midY)
             )
@@ -71,7 +71,7 @@ extension DockTileLocator {
         }
 
         Self.logger.notice(
-            "未能通过辅助功能定位 tile，改用鼠标位置：\(folderID.uuidString, privacy: .public)"
+            "未能通过辅助功能定位 tile，改用鼠标位置：\(groupID.uuidString, privacy: .public)"
         )
 
         return fallbackAnchor(edge: edge)
@@ -80,8 +80,8 @@ extension DockTileLocator {
     /// 快速路径：鼠标位置下的 Flotilla tile；没有权限或不在任何 Flotilla tile 上时返回 nil
     /// - Parameters:
     ///   - point: AppKit 屏幕坐标
-    ///   - folderIDs: 候选的根文件夹
-    func folderID(at point: CGPoint, among folderIDs: [UUID]) -> UUID? {
+    ///   - groupIDs: 候选的根文件夹
+    func groupID(at point: CGPoint, among groupIDs: [UUID]) -> UUID? {
         guard
             AXIsProcessTrusted(),
             let dockElement = Self.dockApplicationElement(),
@@ -108,12 +108,12 @@ extension DockTileLocator {
             error == .success,
             let element,
             let url = Self.url(of: element),
-            let folderID = builder.folderID(forBundleURL: url)
+            let groupID = builder.groupID(forBundleURL: url)
         else {
             return nil
         }
 
-        return folderIDs.contains(folderID) ? folderID : nil
+        return groupIDs.contains(groupID) ? groupID : nil
     }
 
     /// 一次点击是否落在 Dock 区域，按 `dockArea(in:edge:tileSize:)` 估算
@@ -226,7 +226,7 @@ extension DockTileLocator {
     ///
     /// Dock 应用元素的子元素是 tile 列表，列表的子元素才是各个 tile；
     /// 开启自动隐藏时，Dock 重启后到第一次显示之前，所有 tile 的 frame 都是宽度为 0 的无效值，视同找不到
-    private func tileFrame(of folderID: UUID) -> CGRect? {
+    private func tileFrame(of groupID: UUID) -> CGRect? {
         guard
             let dockElement = Self.dockApplicationElement(),
             let primaryScreenHeight = Self.primaryScreenHeight()
@@ -237,7 +237,7 @@ extension DockTileLocator {
         let tiles = Self.children(of: dockElement).flatMap { Self.children(of: $0) }
 
         let tile = tiles.first {
-            Self.url(of: $0).flatMap { builder.folderID(forBundleURL: $0) } == folderID
+            Self.url(of: $0).flatMap { builder.groupID(forBundleURL: $0) } == groupID
         }
 
         guard

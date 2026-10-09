@@ -26,7 +26,7 @@ extension BookmarkedReference {
     /// 把本地 URL 规整成记录用的写法：路径标准化，目录为目录 URL，其余为文件 URL；不存在时为 nil
     ///
     /// 同一个 App 或文件不因 URL 写法不同（结尾斜杠、`..`）而得到不同的 URL，加入时才能去重；
-    /// `FolderItem(url:title:)` 为 App 与文件分类、按书签找到新位置、面板读出访达里的文件夹的内容时都按这里规整
+    /// `GroupItem(url:title:)` 为 App 与文件分类、按书签找到新位置、面板读出访达里的文件夹的内容时都按这里规整
     static func normalizedURL(_ url: URL) -> URL? {
         // 去掉 `..`、多余的斜杠等不同写法
         let path = url.standardizedFileURL.path(percentEncoded: false)

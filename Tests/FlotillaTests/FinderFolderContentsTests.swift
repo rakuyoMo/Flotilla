@@ -201,7 +201,7 @@ final class FinderFolderContentsTests {
 extension FinderFolderContentsTests {
     /// 临时目录本身经分类后成为的文件项
     private func finderFolder() throws -> FileReference {
-        let item = FolderItem(url: directory, title: nil)
+        let item = GroupItem(url: directory, title: nil)
         let file: FileReference? = if case .file(let file) = item { file } else { nil }
 
         return try #require(file, "访达里的文件夹应当是文件：\(String(describing: item))")
@@ -233,7 +233,7 @@ extension FinderFolderContentsTests {
     }
 
     /// 一项的 URL；目录里读出的只有 App 与文件
-    private func url(of item: FolderItem) -> URL? {
+    private func url(of item: GroupItem) -> URL? {
         switch item {
         case .app(let app):
             app.url
@@ -241,20 +241,20 @@ extension FinderFolderContentsTests {
         case .file(let file):
             file.url
 
-        case .folder, .webPage:
+        case .group, .webPage:
             nil
         }
     }
 
     /// 一项是不是 App
-    private func isApp(_ item: FolderItem) -> Bool {
+    private func isApp(_ item: GroupItem) -> Bool {
         guard case .app = item else { return false }
 
         return true
     }
 
     /// 各文件项的文件名，App 不算
-    private func names(of items: [FolderItem]) -> [String] {
+    private func names(of items: [GroupItem]) -> [String] {
         items.compactMap {
             guard case .file(let file) = $0 else { return nil }
 

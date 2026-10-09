@@ -1,0 +1,651 @@
+import Foundation
+import Testing
+
+@testable import Flotilla
+
+// MARK: - GroupStoreTests
+
+/// `GroupStore` 是文件夹树的唯一数据源：增删改查、移动规则与持久化都必须可靠
+@MainActor
+final class GroupStoreTests {
+    /// 本用例独占的临时目录
+    private let directory = FileManager.default.temporaryDirectory
+        .appending(path: "FlotillaTests-\(UUID().uuidString)")
+
+    /// 本用例使用的持久化文件
+    private var fileURL: URL {
+        directory.appending(path: "folders.json")
+    }
+
+    /// 删除本用例的临时目录
+    deinit {
+        try? FileManager.default.removeItem(at: directory)
+    }
+
+    // MARK: 增删改查
+
+    /// 新建的根文件夹与子文件夹都能按 id 查到，子文件夹的父文件夹正确
+    @Test
+    func addsNestedGroups() throws {
+        let store = GroupStore(fileURL: fileURL)
+
+        let root = store.addRootGroup(named: "根")
+        let child = try #require(store.addSubgroup(named: "子", to: root.id))
+        let grandchild = try #require(store.addSubgroup(named: "孙", to: child.id))
+
+        #expect(store.rootGroups.map(\.id) == [root.id])
+        #expect(store.group(id: grandchild.id)?.name == "孙")
+        #expect(store.parentGroup(of: grandchild.id)?.id == child.id)
+        #expect(store.parentGroup(of: child.id)?.id == root.id)
+        #expect(store.parentGroup(of: root.id) == nil)
+    }
+
+    /// 父文件夹不存在时不新建子文件夹
+    @Test
+    func addSubgroupRequiresExistingParent() {
+        let store = GroupStore(fileURL: fileURL)
+
+        #expect(store.addSubgroup(named: "孤儿", to: UUID()) == nil)
+        #expect(store.rootGroups.isEmpty)
+    }
+
+    /// 同一文件夹内相同 URL 的 App 只保留一份，其它文件夹不受影响
+    @Test
+    func addItemsSkipsDuplicateAppsWithinGroup() throws {
+        let store = GroupStore(fileURL: fileURL)
+        let first = store.addRootGroup(named: "一")
+        let second = store.addRootGroup(named: "二")
+
+        store.addItems(apps(chess, calendar, chess), to: first.id)
+        store.addItems(apps(chess), to: first.id)
+        store.addItems(apps(chess), to: second.id)
+
+        #expect(try appURLs(in: first.id, of: store) == [chess, calendar])
+        #expect(try appURLs(in: second.id, of: store) == [chess])
+    }
+
+    /// 文件与网页同样按 URL 去重，已有的与同一批里的都跳过；网页只比网址，标题不同也算同一个网页
+    @Test
+    func addItemsSkipsDuplicateFilesAndWebPages() throws {
+        let store = GroupStore(fileURL: fileURL)
+        let root = store.addRootGroup(named: "根")
+
+        let report = file("/Users/Shared/报告.pdf")
+        let example = try webPage("https://example.com/", title: "Example Domain")
+
+        store.addItems([report, example], to: root.id)
+
+        let notes = file("/Users/Shared/笔记.rtfd/")
+
+        store.addItems(
+            [
+                file("/Users/Shared/报告.pdf"),
+                try webPage("https://example.com/", title: "另一个标题"),
+                notes,
+                file("/Users/Shared/笔记.rtfd/"),
+            ],
+            to: root.id
+        )
+
+        #expect(try items(in: root.id, of: store) == [report, example, notes])
+    }
+
+    /// App、文件与网页混在一批加入，只发一次变更通知：设置窗口与 Dock tile 只按一次变更刷新
+    @Test
+    func addItemsNotifiesOnceForMixedBatch() async throws {
+        let store = GroupStore(fileURL: fileURL)
+        let root = store.addRootGroup(named: "根")
+
+        let batch = try apps(chess) + [
+            file("/Users/Shared/报告.pdf"),
+            webPage("https://example.com/", title: nil),
+        ]
+
+        await confirmation(expectedCount: 1) { changed in
+            let observer = NotificationCenter.default.addObserver(
+                forName: GroupStore.didChangeNotification,
+                object: store,
+                queue: nil
+            ) { _ in
+                changed()
+            }
+
+            defer { NotificationCenter.default.removeObserver(observer) }
+
+            store.addItems(batch, to: root.id)
+        }
+
+        #expect(try items(in: root.id, of: store) == batch)
+    }
+
+    /// 子文件夹不经 `addItems` 加入，混在批里时被忽略
+    @Test
+    func addItemsIgnoresSubgroups() throws {
+        let store = GroupStore(fileURL: fileURL)
+        let root = store.addRootGroup(named: "根")
+
+        let subgroup = Group(id: UUID(), name: "子", items: [])
+        let chessItems = apps(chess)
+
+        store.addItems([.group(subgroup)] + chessItems, to: root.id)
+
+        #expect(try items(in: root.id, of: store) == chessItems)
+        #expect(store.group(id: subgroup.id) == nil)
+    }
+
+    /// 任意层级的文件夹都能按 id 重命名：设置窗口里每一层的文件夹名都能双击编辑
+    @Test
+    func renamesNestedGroup() throws {
+        let store = GroupStore(fileURL: fileURL)
+        let root = store.addRootGroup(named: "根")
+        let child = try #require(store.addSubgroup(named: "旧名", to: root.id))
+
+        store.rename(groupID: child.id, to: "新名")
+
+        #expect(store.group(id: child.id)?.name == "新名")
+    }
+
+    /// 删除文件夹时连同其中的 App 与子文件夹一起删除
+    @Test
+    func removesGroupWithContents() throws {
+        let store = GroupStore(fileURL: fileURL)
+        let root = store.addRootGroup(named: "根")
+        let child = try #require(store.addSubgroup(named: "子", to: root.id))
+        let grandchild = try #require(store.addSubgroup(named: "孙", to: child.id))
+
+        store.addItems(apps(chess), to: grandchild.id)
+
+        store.remove(itemID: child.id)
+
+        #expect(store.group(id: child.id) == nil)
+        #expect(store.group(id: grandchild.id) == nil)
+        #expect(try #require(store.group(id: root.id)).items.isEmpty)
+    }
+
+    /// 删除单个 App 只移除这一项，同一文件夹里的其它 App 保留
+    @Test
+    func removesApp() throws {
+        let store = GroupStore(fileURL: fileURL)
+        let root = store.addRootGroup(named: "根")
+
+        store.addItems(apps(chess, calendar), to: root.id)
+        let chessID = try #require(store.group(id: root.id)?.items.first?.id)
+
+        store.remove(itemID: chessID)
+
+        #expect(try appURLs(in: root.id, of: store) == [calendar])
+    }
+
+    // MARK: 移动
+
+    /// 同一层级内向后移动：目标下标按移动前计算，移除自身后仍落在预期位置
+    @Test
+    func movesForwardWithinSameGroup() throws {
+        let store = GroupStore(fileURL: fileURL)
+        let root = store.addRootGroup(named: "根")
+
+        store.addItems(apps(chess, calendar, calculator), to: root.id)
+        let chessID = try #require(store.group(id: root.id)?.items.first?.id)
+
+        store.move(itemID: chessID, to: root.id, at: 3)
+
+        #expect(try appURLs(in: root.id, of: store) == [calendar, calculator, chess])
+    }
+
+    /// 同一层级内向前移动：目标下标在自身之前，移除自身不影响落点
+    @Test
+    func movesBackwardWithinSameGroup() throws {
+        let store = GroupStore(fileURL: fileURL)
+        let root = store.addRootGroup(named: "根")
+
+        store.addItems(apps(chess, calendar, calculator), to: root.id)
+        let calculatorID = try #require(store.group(id: root.id)?.items.last?.id)
+
+        store.move(itemID: calculatorID, to: root.id, at: 0)
+
+        #expect(try appURLs(in: root.id, of: store) == [calculator, chess, calendar])
+    }
+
+    /// App 可以移到其它文件夹：插在目标文件夹的给定下标处，并从原文件夹移除
+    @Test
+    func movesAppAcrossGroups() throws {
+        let store = GroupStore(fileURL: fileURL)
+        let source = store.addRootGroup(named: "源")
+        let target = store.addRootGroup(named: "目标")
+
+        store.addItems(apps(chess), to: source.id)
+        store.addItems(apps(calendar), to: target.id)
+        let chessID = try #require(store.group(id: source.id)?.items.first?.id)
+
+        store.move(itemID: chessID, to: target.id, at: 0)
+
+        #expect(try appURLs(in: source.id, of: store).isEmpty)
+        #expect(try appURLs(in: target.id, of: store) == [chess, calendar])
+    }
+
+    /// 子文件夹可以移到根层级，成为新的根文件夹
+    @Test
+    func movesSubgroupToRoot() throws {
+        let store = GroupStore(fileURL: fileURL)
+        let root = store.addRootGroup(named: "根")
+        let child = try #require(store.addSubgroup(named: "子", to: root.id))
+
+        store.move(itemID: child.id, to: nil, at: 0)
+
+        #expect(store.rootGroups.map(\.id) == [child.id, root.id])
+        #expect(store.parentGroup(of: child.id) == nil)
+    }
+
+    /// App 不能放在根层级
+    @Test
+    func rejectsAppAtRoot() throws {
+        let store = GroupStore(fileURL: fileURL)
+        let root = store.addRootGroup(named: "根")
+
+        store.addItems(apps(chess), to: root.id)
+        let chessID = try #require(store.group(id: root.id)?.items.first?.id)
+
+        #expect(!store.canMove(itemID: chessID, to: nil))
+
+        store.move(itemID: chessID, to: nil, at: 0)
+
+        #expect(store.rootGroups.map(\.id) == [root.id])
+        #expect(try appURLs(in: root.id, of: store) == [chess])
+    }
+
+    /// 文件与网页和 App 一样只能放在文件夹里：不能移到根层级，能在文件夹之间移动
+    @Test
+    func filesAndWebPagesStayInsideGroups() throws {
+        let store = GroupStore(fileURL: fileURL)
+        let source = store.addRootGroup(named: "源")
+        let target = store.addRootGroup(named: "目标")
+
+        let report = file("/Users/Shared/报告.pdf")
+        let example = try webPage("https://example.com/", title: nil)
+
+        store.addItems([report, example], to: source.id)
+
+        #expect(!store.canMove(itemID: report.id, to: nil))
+        #expect(!store.canMove(itemID: example.id, to: nil))
+
+        store.move(itemID: report.id, to: nil, at: 0)
+        store.move(itemID: example.id, to: target.id, at: 0)
+        store.move(itemID: report.id, to: target.id, at: 1)
+
+        #expect(store.rootGroups.map(\.id) == [source.id, target.id])
+        #expect(try items(in: source.id, of: store).isEmpty)
+        #expect(try items(in: target.id, of: store) == [example, report])
+    }
+
+    /// 文件夹不能移入自身或自己的子孙，否则整棵子树会从数据中消失
+    @Test
+    func rejectsMovingGroupIntoItselfOrDescendant() throws {
+        let store = GroupStore(fileURL: fileURL)
+        let root = store.addRootGroup(named: "根")
+        let child = try #require(store.addSubgroup(named: "子", to: root.id))
+        let grandchild = try #require(store.addSubgroup(named: "孙", to: child.id))
+
+        let before = store.rootGroups
+
+        #expect(!store.canMove(itemID: root.id, to: root.id))
+        #expect(!store.canMove(itemID: root.id, to: grandchild.id))
+        #expect(!store.canMove(itemID: child.id, to: grandchild.id))
+
+        store.move(itemID: root.id, to: grandchild.id, at: 0)
+        store.move(itemID: child.id, to: child.id, at: 0)
+
+        #expect(store.rootGroups == before)
+    }
+
+    // MARK: 持久化
+
+    /// 写入临时目录后重新加载，得到完全相同的树
+    @Test
+    func reloadsPersistedTree() throws {
+        let store = GroupStore(fileURL: fileURL)
+        let root = store.addRootGroup(named: "根")
+        let child = try #require(store.addSubgroup(named: "子", to: root.id))
+
+        store.addItems(apps(chess), to: child.id)
+        store.addItems(apps(calendar), to: root.id)
+
+        let reloaded = GroupStore(fileURL: fileURL)
+
+        #expect(reloaded.rootGroups == store.rootGroups)
+    }
+
+    /// 持久化文件不存在时从空开始
+    @Test
+    func startsEmptyWithoutFile() {
+        #expect(GroupStore(fileURL: fileURL).rootGroups.isEmpty)
+    }
+
+    /// 文件损坏时改名保留原文件并从空开始，用户数据不会被下一次写入覆盖
+    @Test
+    func preservesBrokenFile() throws {
+        try FileManager.default.createDirectory(
+            at: directory,
+            withIntermediateDirectories: true
+        )
+
+        let brokenContent = Data("{ 这不是 JSON".utf8)
+        try brokenContent.write(to: fileURL)
+
+        let store = GroupStore(fileURL: fileURL)
+
+        let files = try FileManager.default.contentsOfDirectory(
+            atPath: directory.path(percentEncoded: false)
+        )
+
+        let brokenFile = try #require(files.first { $0.hasPrefix("folders.json.broken-") })
+
+        #expect(store.rootGroups.isEmpty)
+        #expect(!files.contains("folders.json"))
+        #expect(try Data(contentsOf: directory.appending(path: brokenFile)) == brokenContent)
+    }
+
+    /// 每次变更都发出通知，没有改动时不发
+    @Test
+    func notifiesOnEveryChange() async throws {
+        let store = GroupStore(fileURL: fileURL)
+
+        try await confirmation(expectedCount: 3) { changed in
+            let observer = NotificationCenter.default.addObserver(
+                forName: GroupStore.didChangeNotification,
+                object: store,
+                queue: nil
+            ) { _ in
+                changed()
+            }
+
+            defer { NotificationCenter.default.removeObserver(observer) }
+
+            // 新建根文件夹、改成不同的名字、新建子文件夹各发一次；
+            // 改成同名、加入空列表、删除不存在的 id 都没有改动，不发
+            let root = store.addRootGroup(named: "根")
+            store.rename(groupID: root.id, to: "根")
+            store.rename(groupID: root.id, to: "新根")
+            store.addItems([], to: root.id)
+            store.remove(itemID: UUID())
+            _ = try #require(store.addSubgroup(named: "子", to: root.id))
+        }
+    }
+}
+
+// MARK: - Title Filling
+
+extension GroupStoreTests {
+    /// 不带标题加入的网页取到标题后补上：网址仍是取标题时那个，标题仍为 nil；
+    /// 位置与 id 不变，只发一次变更通知，重新加载后仍在
+    @Test
+    func fillsTitleOfUntitledWebPage() async throws {
+        let store = GroupStore(fileURL: fileURL)
+        let root = store.addRootGroup(named: "根")
+        let url = try #require(URL(string: "https://example.com/"))
+        let example = WebPageReference(id: UUID(), url: url, title: nil)
+
+        store.addItems([.webPage(example)] + apps(chess), to: root.id)
+
+        await confirmation(expectedCount: 1) { changed in
+            let observer = NotificationCenter.default.addObserver(
+                forName: GroupStore.didChangeNotification,
+                object: store,
+                queue: nil
+            ) { _ in
+                changed()
+            }
+
+            defer { NotificationCenter.default.removeObserver(observer) }
+
+            store.fillTitle("Example Domain", of: example)
+        }
+
+        let reloadedItems = try items(in: root.id, of: GroupStore(fileURL: fileURL))
+
+        #expect(reloadedItems.count == 2)
+
+        #expect(
+            reloadedItems.first
+                == .webPage(WebPageReference(id: example.id, url: url, title: "Example Domain"))
+        )
+    }
+
+    /// 已有标题的网页、不是网页的项、找不到的项（例如去重时没有真正加入）：都不变，也不发通知
+    @Test
+    func fillTitleLeavesOtherItemsUntouched() async throws {
+        let store = GroupStore(fileURL: fileURL)
+        let root = store.addRootGroup(named: "根")
+        let url = try #require(URL(string: "https://example.com/"))
+        let example = WebPageReference(id: UUID(), url: url, title: "原来的标题")
+        let chessItems = apps(chess)
+
+        store.addItems([.webPage(example)] + chessItems, to: root.id)
+
+        // 交来补标题的都是不带标题的那一份，id 分别对上已有标题的网页、App 与不存在的项
+        let forTitledWebPage = WebPageReference(id: example.id, url: url, title: nil)
+        let forApp = WebPageReference(id: chessItems[0].id, url: url, title: nil)
+        let forMissingItem = WebPageReference(id: UUID(), url: url, title: nil)
+
+        let before = store.rootGroups
+
+        await confirmation(expectedCount: 0) { changed in
+            let observer = NotificationCenter.default.addObserver(
+                forName: GroupStore.didChangeNotification,
+                object: store,
+                queue: nil
+            ) { _ in
+                changed()
+            }
+
+            defer { NotificationCenter.default.removeObserver(observer) }
+
+            store.fillTitle("新标题", of: forTitledWebPage)
+            store.fillTitle("新标题", of: forApp)
+            store.fillTitle("新标题", of: forMissingItem)
+        }
+
+        #expect(store.rootGroups == before)
+    }
+
+    /// 保存之后网址又被改掉：旧网址晚到的标题不属于这一项，不补，也不发通知；
+    /// 标题仍为 nil，新网址的标题随后照样补上
+    @Test
+    func fillTitleSkipsWebPageWhoseAddressChanged() async throws {
+        let store = GroupStore(fileURL: fileURL)
+        let root = store.addRootGroup(named: "根")
+        let oldURL = try #require(URL(string: "https://example.com/"))
+        let newURL = try #require(URL(string: "https://apple.com/"))
+        let edited = WebPageReference(id: UUID(), url: newURL, title: nil)
+        let savedWithOldURL = WebPageReference(id: edited.id, url: oldURL, title: nil)
+
+        store.addItems([.webPage(edited)], to: root.id)
+
+        await confirmation(expectedCount: 0) { changed in
+            let observer = NotificationCenter.default.addObserver(
+                forName: GroupStore.didChangeNotification,
+                object: store,
+                queue: nil
+            ) { _ in
+                changed()
+            }
+
+            defer { NotificationCenter.default.removeObserver(observer) }
+
+            store.fillTitle("Example Domain", of: savedWithOldURL)
+        }
+
+        #expect(try items(in: root.id, of: store) == [.webPage(edited)])
+
+        store.fillTitle("Apple", of: edited)
+
+        let titled = WebPageReference(id: edited.id, url: newURL, title: "Apple")
+
+        #expect(try items(in: root.id, of: store) == [.webPage(titled)])
+    }
+}
+
+// MARK: - Web Page Update
+
+extension GroupStoreTests {
+    /// 编辑网页：网址与标题原地换成新的，id 与位置不变，只发一次变更通知，重新加载后仍在
+    @Test
+    func updatesWebPageInPlace() async throws {
+        let store = GroupStore(fileURL: fileURL)
+        let root = store.addRootGroup(named: "根")
+        let example = try webPage("https://example.com/", title: "Example Domain")
+
+        store.addItems(apps(chess) + [example] + apps(calendar), to: root.id)
+
+        let url = try #require(URL(string: "https://apple.com"))
+        let updated = WebPageReference(id: example.id, url: url, title: "Apple")
+
+        await confirmation(expectedCount: 1) { changed in
+            let observer = NotificationCenter.default.addObserver(
+                forName: GroupStore.didChangeNotification,
+                object: store,
+                queue: nil
+            ) { _ in
+                changed()
+            }
+
+            defer { NotificationCenter.default.removeObserver(observer) }
+
+            store.updateWebPage(updated)
+        }
+
+        let reloadedItems = try items(in: root.id, of: GroupStore(fileURL: fileURL))
+
+        #expect(reloadedItems.count == 3)
+        #expect(reloadedItems[1] == .webPage(updated))
+    }
+
+    /// 清空标题也能保存：显示名回到网址
+    @Test
+    func updateWebPageClearsTitle() throws {
+        let store = GroupStore(fileURL: fileURL)
+        let root = store.addRootGroup(named: "根")
+        let example = try webPage("https://example.com/", title: "Example Domain")
+
+        store.addItems([example], to: root.id)
+
+        let url = try #require(URL(string: "https://example.com/"))
+        let untitled = WebPageReference(id: example.id, url: url, title: nil)
+
+        store.updateWebPage(untitled)
+
+        let reloadedItems = try items(in: root.id, of: GroupStore(fileURL: fileURL))
+
+        #expect(reloadedItems == [.webPage(untitled)])
+    }
+
+    /// 找不到的项、不是网页的项、网址与标题都没变：都不变，也不发通知
+    @Test
+    func updateWebPageLeavesOtherCasesUntouched() async throws {
+        let store = GroupStore(fileURL: fileURL)
+        let root = store.addRootGroup(named: "根")
+        let exampleURL = try #require(URL(string: "https://example.com/"))
+        let example = WebPageReference(id: UUID(), url: exampleURL, title: "Example Domain")
+        let chessItems = apps(chess)
+
+        store.addItems([.webPage(example)] + chessItems, to: root.id)
+
+        let before = store.rootGroups
+        let url = try #require(URL(string: "https://apple.com"))
+
+        await confirmation(expectedCount: 0) { changed in
+            let observer = NotificationCenter.default.addObserver(
+                forName: GroupStore.didChangeNotification,
+                object: store,
+                queue: nil
+            ) { _ in
+                changed()
+            }
+
+            defer { NotificationCenter.default.removeObserver(observer) }
+
+            store.updateWebPage(WebPageReference(id: UUID(), url: url, title: "Apple"))
+            store.updateWebPage(WebPageReference(id: chessItems[0].id, url: url, title: "Apple"))
+            store.updateWebPage(example)
+        }
+
+        #expect(store.rootGroups == before)
+    }
+
+    /// 编辑不按网址去重：改成同一文件夹里另一个网页的网址时两项都在，去重只在加入时
+    @Test
+    func updateWebPageKeepsDuplicateAddress() throws {
+        let store = GroupStore(fileURL: fileURL)
+        let root = store.addRootGroup(named: "根")
+        let example = try webPage("https://example.com/", title: nil)
+        let apple = try webPage("https://apple.com/", title: nil)
+
+        store.addItems([example, apple], to: root.id)
+
+        let url = try #require(URL(string: "https://example.com/"))
+        let duplicate = WebPageReference(id: apple.id, url: url, title: nil)
+
+        store.updateWebPage(duplicate)
+
+        #expect(try items(in: root.id, of: store) == [example, .webPage(duplicate)])
+    }
+}
+
+// MARK: - Fixtures
+
+extension GroupStoreTests {
+    /// 系统自带的 “国际象棋” 的 URL
+    private var chess: URL {
+        URL(filePath: "/System/Applications/Chess.app/")
+    }
+
+    /// 系统自带的 “日历” 的 URL
+    private var calendar: URL {
+        URL(filePath: "/System/Applications/Calendar.app/")
+    }
+
+    /// 系统自带的 “计算器” 的 URL
+    private var calculator: URL {
+        URL(filePath: "/System/Applications/Calculator.app/")
+    }
+
+    /// 为每个 App URL 新建一项
+    private func apps(_ urls: URL...) -> [GroupItem] {
+        urls.map {
+            .app(AppReference(
+                id: UUID(),
+                url: $0,
+                bookmark: nil,
+                bundleIdentifier: nil
+            ))
+        }
+    }
+
+    /// 按路径新建一个文件项，id 随机
+    private func file(_ path: String) -> GroupItem {
+        .file(FileReference(id: UUID(), url: URL(filePath: path), bookmark: nil))
+    }
+
+    /// 按网址与标题新建一个网页项，id 随机；
+    /// 网址解析不出时抛错
+    private func webPage(_ address: String, title: String?) throws -> GroupItem {
+        let url = try #require(URL(string: address))
+
+        return .webPage(WebPageReference(id: UUID(), url: url, title: title))
+    }
+
+    /// 按顺序列出文件夹里的项
+    private func items(in groupID: UUID, of store: GroupStore) throws -> [GroupItem] {
+        try #require(store.group(id: groupID)).items
+    }
+
+    /// 按顺序列出文件夹里 App 的 URL
+    private func appURLs(in groupID: UUID, of store: GroupStore) throws -> [URL] {
+        let group = try #require(store.group(id: groupID))
+
+        return group.items.compactMap {
+            guard case .app(let app) = $0 else { return nil }
+
+            return app.url
+        }
+    }
+}

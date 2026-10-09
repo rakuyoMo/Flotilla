@@ -4,7 +4,7 @@ import Foundation
 
 /// 面板里展开访达里的文件夹时读出的内容：按设置跳过或显示隐藏文件，按访达 “名称” 的顺序排列，App bundle 为 App，其余为文件
 ///
-/// 各项只存在于这一次展开里，不进 `FolderStore`、不建书签。同一个层级里同名的项在一次展开里 id 不变：
+/// 各项只存在于这一次展开里，不进 `GroupStore`、不建书签。同一个层级里同名的项在一次展开里 id 不变：
 /// 返回时父层级是重新读出来的，要按 id 找到缩回的图标、恢复滚动位置
 struct FinderFolderContents {
     /// 显示隐藏文件时仍不显示的文件名，与访达的 ⌘⇧. 相同（macOS 27 实测）
@@ -27,7 +27,7 @@ struct FinderFolderContents {
     mutating func items(
         of finderFolder: FileReference,
         includingHiddenFiles: Bool
-    ) throws -> [FolderItem] {
+    ) throws -> [GroupItem] {
         // 读目录时一并取齐排序、分类与是否隐藏要用的属性，之后各项只读这份缓存，不再逐项访问磁盘
         let urls = try FileManager.default.contentsOfDirectory(
             at: finderFolder.url,
@@ -74,7 +74,7 @@ extension FinderFolderContents {
     /// - Parameters:
     ///   - url: 这一项的 URL
     ///   - levelID: 所在层级的 id
-    private mutating func item(at url: URL, in levelID: UUID) -> FolderItem? {
+    private mutating func item(at url: URL, in levelID: UUID) -> GroupItem? {
         // 是否目录、是否隐藏与内容类型都取自读目录时的预取，不再访问磁盘
         guard
             let values = try? url.resourceValues(forKeys: [.isDirectoryKey, .isHiddenKey])

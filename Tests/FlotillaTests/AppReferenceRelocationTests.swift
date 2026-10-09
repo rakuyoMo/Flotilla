@@ -262,7 +262,7 @@ final class AppReferenceRelocationTests {
     func fileFollowsIntoTrash() throws {
         try Data("报告".utf8).write(to: directory.appending(path: "报告.txt"))
 
-        let item = try #require(FolderItem(url: directory.appending(path: "报告.txt"), title: nil))
+        let item = try #require(GroupItem(url: directory.appending(path: "报告.txt"), title: nil))
 
         guard case .file(let file) = item else {
             Issue.record("应当是文件：\(item)")
@@ -310,7 +310,7 @@ extension AppReferenceRelocationTests {
 
 extension AppReferenceRelocationTests {
     /// 项是 App 时返回它的引用
-    private static func appReference(of item: FolderItem) -> AppReference? {
+    private static func appReference(of item: GroupItem) -> AppReference? {
         guard case .app(let app) = item else { return nil }
 
         return app
@@ -320,7 +320,7 @@ extension AppReferenceRelocationTests {
     private func addApp() throws -> AppReference {
         try writeBundle("Tool.app")
 
-        let item = try #require(FolderItem(url: directory.appending(path: "Tool.app"), title: nil))
+        let item = try #require(GroupItem(url: directory.appending(path: "Tool.app"), title: nil))
 
         return try #require(Self.appReference(of: item), "应当是 App")
     }

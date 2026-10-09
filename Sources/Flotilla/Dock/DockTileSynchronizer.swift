@@ -35,7 +35,7 @@ final class DockTileSynchronizer: NSObject {
     )
 
     /// 文件夹树的唯一数据源
-    private let store: FolderStore
+    private let store: GroupStore
 
     /// 用户设置，决定图标里的预览数量
     private let preferences: Preferences
@@ -62,7 +62,7 @@ final class DockTileSynchronizer: NSObject {
     ///   - builder: 生成、更新、删除 stub
     ///   - dockPreferences: 读写 Dock 偏好
     init(
-        store: FolderStore,
+        store: GroupStore,
         preferences: Preferences,
         builder: DockTileBundleBuilder,
         dockPreferences: DockPreferences
@@ -74,7 +74,7 @@ final class DockTileSynchronizer: NSObject {
 
         // 创建时就有的根文件夹都视为已同步过：其中缺少 tile 的，是用户在 Flotilla 没运行时拖出去的
         additionTracker = DockTileAdditionTracker(
-            rootFolderIDs: Set(store.rootFolders.map(\.id))
+            rootGroupIDs: Set(store.rootGroups.map(\.id))
         )
     }
 
@@ -85,7 +85,7 @@ final class DockTileSynchronizer: NSObject {
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(scheduleSynchronization),
-            name: FolderStore.didChangeNotification,
+            name: GroupStore.didChangeNotification,
             object: store
         )
 
@@ -120,28 +120,28 @@ final class DockTileSynchronizer: NSObject {
     /// 被用户拖出 Dock 的根文件夹：tile 不在 Dock 上，下一次同步也不会添加；设置窗口据此显示状态
     ///
     /// 刚新建、还没同步的根文件夹，搁置中的根文件夹，以及已经要求添加的根文件夹都不算
-    func rootFolderIDsRemovedFromDock() -> Set<UUID> {
-        additionTracker.removedFolderIDs(
-            rootFolderIDs: Set(store.rootFolders.map(\.id)),
-            onDockFolderIDs: rootFolderIDsOnDock()
+    func rootGroupIDsRemovedFromDock() -> Set<UUID> {
+        additionTracker.removedGroupIDs(
+            rootGroupIDs: Set(store.rootGroups.map(\.id)),
+            onDockGroupIDs: rootGroupIDsOnDock()
         )
     }
 
     /// 把根文件夹记为待添加，并安排一次同步；用于把被拖出 Dock 的 tile 重新添加回去
-    func addTile(for folderID: UUID) {
-        additionTracker.request(folderID: folderID)
+    func addTile(for groupID: UUID) {
+        additionTracker.request(groupID: groupID)
         scheduleSynchronization()
     }
 
     /// 新建的根文件夹开始输入名称：
     /// 名称定下来之前不添加 tile，免得 tile 先以默认名出现、重命名后 Dock 再重启一次
-    func holdTile(for folderID: UUID) {
-        additionTracker.hold(folderID: folderID)
+    func holdTile(for groupID: UUID) {
+        additionTracker.hold(groupID: groupID)
     }
 
     /// 名称编辑结束：解除搁置并安排一次同步，tile 带着最终名称出现；不在搁置中的文件夹忽略
-    func releaseTile(for folderID: UUID) {
-        guard additionTracker.release(folderID: folderID) else { return }
+    func releaseTile(for groupID: UUID) {
+        guard additionTracker.release(groupID: groupID) else { return }
 
         scheduleSynchronization()
     }
@@ -166,28 +166,28 @@ extension DockTileSynchronizer {
     /// 偏好有改动时重启 Dock，等新 Dock 读到期望状态后才算同步结束；
     /// 结束时清理多余的 stub 并发出 `didSynchronizeNotification`
     private func synchronize() {
-        let rootFolders = store.rootFolders
+        let rootGroups = store.rootGroups
 
         // 缺少 tile 的根文件夹里，只有新出现的与用户要求添加的才添加；其余是被用户拖出 Dock 的
-        let folderIDsToAdd = additionTracker.folderIDsToAdd(
-            rootFolderIDs: Set(rootFolders.map(\.id)),
-            onDockFolderIDs: rootFolderIDsOnDock()
+        let groupIDsToAdd = additionTracker.groupIDsToAdd(
+            rootGroupIDs: Set(rootGroups.map(\.id)),
+            onDockGroupIDs: rootGroupIDsOnDock()
         )
 
-        let stubs = writeStubs(of: rootFolders, folderIDsToAdd: folderIDsToAdd)
+        let stubs = writeStubs(of: rootGroups, groupIDsToAdd: groupIDsToAdd)
 
         // 已删除或被拖成子文件夹的根文件夹：先删 tile，新 Dock 不再引用后才删 stub。
         // 候选既取磁盘上现存的 stub 目录，也取 Dock 上指向 stub 目录的 tile：
         // 整个 `<id>` 目录已不存在时，Dock 上残留的 tile 同样要删
-        let staleIDs = builder.existingFolderIDs()
-            .union(rootFolderIDsOnDock())
-            .subtracting(rootFolders.map(\.id))
+        let staleIDs = builder.existingGroupIDs()
+            .union(rootGroupIDsOnDock())
+            .subtracting(rootGroups.map(\.id))
 
         do {
             let isChanged = try dockPreferences.apply(
                 stubs.expectedTiles,
                 rewrittenTileURLs: stubs.rewrittenTileURLs,
-                removingTilesIn: staleIDs.map { builder.folderDirectory(for: $0) }
+                removingTilesIn: staleIDs.map { builder.groupDirectory(for: $0) }
             )
 
             guard isChanged else {
@@ -245,7 +245,7 @@ extension DockTileSynchronizer {
             isRewritten = try dockPreferences.apply(
                 expectedTiles,
                 rewrittenTileURLs: [],
-                removingTilesIn: staleIDs.map { builder.folderDirectory(for: $0) }
+                removingTilesIn: staleIDs.map { builder.groupDirectory(for: $0) }
             )
         } catch {
             Self.logger.error("补写 Dock 偏好失败：\(error.localizedDescription, privacy: .public)")
@@ -257,7 +257,7 @@ extension DockTileSynchronizer {
         // 没有补写时，新 Dock 读到的要么是第一次写入的内容，要么是与期望一致的写回
         guard isRewritten, !isRewriteRead() else {
             // 新 Dock 读到了期望状态：此后 tile 不在 Dock 上，就是用户拖出去的
-            additionTracker.recordDockRelaunch(onDockFolderIDs: rootFolderIDsOnDock())
+            additionTracker.recordDockRelaunch(onDockGroupIDs: rootGroupIDsOnDock())
 
             finishSynchronization(removingStubsOf: staleIDs)
             return
@@ -300,8 +300,8 @@ extension DockTileSynchronizer {
     }
 
     /// Dock 上现有 tile 对应的根文件夹 id
-    private func rootFolderIDsOnDock() -> Set<UUID> {
-        dockPreferences.folderIDs(ofTilesIn: builder.directory)
+    private func rootGroupIDsOnDock() -> Set<UUID> {
+        dockPreferences.groupIDs(ofTilesIn: builder.directory)
     }
 }
 
@@ -311,32 +311,32 @@ extension DockTileSynchronizer {
     /// 逐个更新全部根文件夹的 stub，给出它们的 tile 应有的样子；stub 写入失败的根文件夹不动它的 tile，
     /// 避免 Dock 上出现指向残缺 stub 的图标
     /// - Parameters:
-    ///   - rootFolders: 本次同步时的根文件夹
-    ///   - folderIDsToAdd: tile 不在 Dock 上时要添加的根文件夹
+    ///   - rootGroups: 本次同步时的根文件夹
+    ///   - groupIDsToAdd: tile 不在 Dock 上时要添加的根文件夹
     /// - Returns: 各 tile 的期望状态，以及 stub 被改写过、条目要换新 GUID 的 tile
     private func writeStubs(
-        of rootFolders: [Folder],
-        folderIDsToAdd: Set<UUID>
+        of rootGroups: [Group],
+        groupIDsToAdd: Set<UUID>
     ) -> (expectedTiles: [ExpectedDockTile], rewrittenTileURLs: Set<URL>) {
         let previewIconCount = preferences.previewIconCount
 
         var expectedTiles: [ExpectedDockTile] = []
         var rewrittenTileURLs: Set<URL> = []
 
-        for folder in rootFolders {
+        for group in rootGroups {
             guard
-                let isRewritten = writeStub(of: folder, previewIconCount: previewIconCount)
+                let isRewritten = writeStub(of: group, previewIconCount: previewIconCount)
             else {
                 continue
             }
 
-            let tileURL = builder.bundleURL(for: folder)
+            let tileURL = builder.bundleURL(for: group)
 
             expectedTiles.append(
                 ExpectedDockTile(
                     tileURL: tileURL,
-                    label: folder.name,
-                    canAdd: folderIDsToAdd.contains(folder.id)
+                    label: group.name,
+                    canAdd: groupIDsToAdd.contains(group.id)
                 )
             )
 
@@ -351,23 +351,23 @@ extension DockTileSynchronizer {
 
     /// 按当前外观渲染根文件夹的图标，内容有变化时改写它的 stub
     /// - Parameters:
-    ///   - folder: 根文件夹
+    ///   - group: 根文件夹
     ///   - previewIconCount: 图标里叠加的预览图标数量
     /// - Returns: stub 是否被改写；写入失败时为 nil
-    private func writeStub(of folder: Folder, previewIconCount: Int) -> Bool? {
+    private func writeStub(of group: Group, previewIconCount: Int) -> Bool? {
         // stub 图标没有所在的视图，按 App 当前的外观取底板颜色
-        let icon = FolderIconRenderer.render(
-            folder: folder,
+        let icon = GroupIconRenderer.render(
+            group: group,
             previewIconCount: previewIconCount,
             pointSize: Self.iconPointSize,
-            appearance: FolderIconAppearance(NSApp.effectiveAppearance)
+            appearance: GroupIconAppearance(NSApp.effectiveAppearance)
         )
 
         do {
-            return try builder.write(folder: folder, icon: icon)
+            return try builder.write(group: group, icon: icon)
         } catch {
             Self.logger.error(
-                "写入 stub 失败（\(folder.id.uuidString, privacy: .public)）：\(error.localizedDescription, privacy: .public)"
+                "写入 stub 失败（\(group.id.uuidString, privacy: .public)）：\(error.localizedDescription, privacy: .public)"
             )
 
             return nil
@@ -375,13 +375,13 @@ extension DockTileSynchronizer {
     }
 
     /// 删除这些根文件夹的 stub
-    private func removeStubs(of folderIDs: Set<UUID>) {
-        for folderID in folderIDs {
+    private func removeStubs(of groupIDs: Set<UUID>) {
+        for groupID in groupIDs {
             do {
-                try builder.remove(folderID: folderID)
+                try builder.remove(groupID: groupID)
             } catch {
                 Self.logger.error(
-                    "删除 stub 失败（\(folderID.uuidString, privacy: .public)）：\(error.localizedDescription, privacy: .public)"
+                    "删除 stub 失败（\(groupID.uuidString, privacy: .public)）：\(error.localizedDescription, privacy: .public)"
                 )
             }
         }

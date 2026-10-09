@@ -115,9 +115,9 @@ extension DockPreferences {
     ///
     /// 只比对条目里记录的 URL，不访问磁盘：stub 连同它独占的 `<id>` 目录都已不存在时，Dock 上残留的 tile 仍能据此找出
     /// - Parameter stubsDirectory: 存放所有 stub 的目录
-    func folderIDs(ofTilesIn stubsDirectory: URL) -> Set<UUID> {
+    func groupIDs(ofTilesIn stubsDirectory: URL) -> Set<UUID> {
         let target = Self.normalized(stubsDirectory).path(percentEncoded: false)
-        var folderIDs: Set<UUID> = []
+        var groupIDs: Set<UUID> = []
 
         for tile in tiles {
             guard
@@ -135,12 +135,12 @@ extension DockPreferences {
             guard parentPath == target else { continue }
 
             // 同一目录下与 Flotilla 无关的子目录，名称解析不成 UUID
-            if let folderID = UUID(uuidString: tileDirectory.lastPathComponent) {
-                folderIDs.insert(folderID)
+            if let groupID = UUID(uuidString: tileDirectory.lastPathComponent) {
+                groupIDs.insert(groupID)
             }
         }
 
-        return folderIDs
+        return groupIDs
     }
 }
 

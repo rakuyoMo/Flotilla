@@ -35,19 +35,22 @@ struct DockTileBundleBuilder {
     /// - 文件一项必须为 `None`：`Alternate` 会让 stub 出现在访达的 “打开方式” 里
     /// - 实测（macOS 27）声明了 `public.data` 或 `com.apple.package`，Dock 对访达里的文件夹也高亮并拉起 stub，
     ///   它同样作为文件加入
-    static func infoDictionary(for folder: Folder) -> [String: Any] {
+    static func infoDictionary(for group: Group) -> [String: Any] {
         [
             "CFBundleExecutable": executableName,
-            "CFBundleIdentifier": "com.rakuyo.flotilla.tile.\(folder.id.uuidString)",
-            "CFBundleName": folder.name,
-            "CFBundleDisplayName": folder.name,
+            "CFBundleIdentifier": "com.rakuyo.flotilla.tile.\(group.id.uuidString)",
+            "CFBundleName": group.name,
+            "CFBundleDisplayName": group.name,
             "CFBundleIconFile": iconName,
             "CFBundlePackageType": "APPL",
             "CFBundleInfoDictionaryVersion": "6.0",
             "LSMinimumSystemVersion": "15.0",
             "LSUIElement": true,
             "LSBackgroundOnly": true,
-            "FlotillaFolderID": folder.id.uuidString,
+
+            // 键名沿用 `FlotillaFolderID`：已生成的 stub 里写的就是它
+            "FlotillaFolderID": group.id.uuidString,
+
             "CFBundleDocumentTypes": [
                 [
                     "CFBundleTypeName": "Application",
@@ -78,19 +81,19 @@ extension DockTileBundleBuilder {
     /// 生成或更新根文件夹的 stub；
     /// 名称与图标都没有变化、stub 也不残缺时不动任何文件
     /// - Parameters:
-    ///   - folder: 根文件夹
+    ///   - group: 根文件夹
     ///   - icon: 按需求 2 渲染好的文件夹图标
     /// - Returns: 是否改写了 stub
     /// - Throws: 改名、渲染图标、写文件、签名、设自定义图标或向 Launch Services 注册失败时抛出
     @discardableResult
-    func write(folder: Folder, icon: NSImage) throws -> Bool {
+    func write(group: Group, icon: NSImage) throws -> Bool {
         let fileManager = FileManager.default
-        let bundleURL = bundleURL(for: folder)
+        let bundleURL = bundleURL(for: group)
 
         // 文件夹重命名：原来的 stub 在自己的目录里改名，
         // Dock 条目里的书签仍指向同一个文件
         if
-            let existingURL = existingBundleURL(for: folder.id),
+            let existingURL = existingBundleURL(for: group.id),
             existingURL.lastPathComponent != bundleURL.lastPathComponent
         {
             try fileManager.moveItem(at: existingURL, to: bundleURL)
@@ -110,7 +113,7 @@ extension DockTileBundleBuilder {
 
         // Info.plist 同样逐字节比对：XML 格式的属性列表按键排序输出，内容相同时字节一致
         let infoData = try PropertyListSerialization.data(
-            fromPropertyList: Self.infoDictionary(for: folder),
+            fromPropertyList: Self.infoDictionary(for: group),
             format: .xml,
             options: 0
         )
@@ -151,22 +154,22 @@ extension DockTileBundleBuilder {
     ///
     /// 删除前先注销 stub 在 Launch Services 里的登记：登记是改写 stub 时加上的，bundle 删掉之后就注销不了了
     /// - Throws: 删除目录失败时抛出；注销登记失败不抛
-    func remove(folderID: UUID) throws {
+    func remove(groupID: UUID) throws {
         let fileManager = FileManager.default
-        let folderDirectory = folderDirectory(for: folderID)
-        let path = folderDirectory.path(percentEncoded: false)
+        let groupDirectory = groupDirectory(for: groupID)
+        let path = groupDirectory.path(percentEncoded: false)
 
         guard fileManager.fileExists(atPath: path) else { return }
 
         // 注销失败不影响删除，登记留在 Launch Services 里只是指向一个已不存在的路径
-        if let bundleURL = existingBundleURL(for: folderID) {
+        if let bundleURL = existingBundleURL(for: groupID) {
             try? CommandRunner.run(
                 Self.lsregisterPath,
                 arguments: ["-u", bundleURL.path(percentEncoded: false)]
             )
         }
 
-        try fileManager.removeItem(at: folderDirectory)
+        try fileManager.removeItem(at: groupDirectory)
     }
 }
 
@@ -177,10 +180,10 @@ extension DockTileBundleBuilder {
     ///
     /// stub 启动后，Dock 会把 tile 的名称改成 Launch Services 的显示名，也就是 bundle 的文件名，
     /// 因此文件名必须是文件夹名；同名的根文件夹靠各自独占的 `<id>` 目录区分
-    func bundleURL(for folder: Folder) -> URL {
-        folderDirectory(for: folder.id)
+    func bundleURL(for group: Group) -> URL {
+        groupDirectory(for: group.id)
             .appending(
-                path: "\(Self.fileName(for: folder)).app",
+                path: "\(Self.fileName(for: group)).app",
                 directoryHint: .isDirectory
             )
     }
@@ -189,14 +192,14 @@ extension DockTileBundleBuilder {
     ///
     /// 目录名只取决于 id，不随文件夹重命名变化；
     /// Dock 偏好按它匹配该根文件夹的 tile，stub 本身是否还在都不影响
-    func folderDirectory(for folderID: UUID) -> URL {
-        directory.appending(path: folderID.uuidString, directoryHint: .isDirectory)
+    func groupDirectory(for groupID: UUID) -> URL {
+        directory.appending(path: groupID.uuidString, directoryHint: .isDirectory)
     }
 
     /// 根文件夹已有 stub 的位置；还没有生成时为 nil
-    func existingBundleURL(for folderID: UUID) -> URL? {
+    func existingBundleURL(for groupID: UUID) -> URL? {
         let urls = (try? FileManager.default.contentsOfDirectory(
-            at: folderDirectory(for: folderID),
+            at: groupDirectory(for: groupID),
             includingPropertiesForKeys: nil
         )) ?? []
 
@@ -204,7 +207,7 @@ extension DockTileBundleBuilder {
     }
 
     /// 目录中已有 stub 的根文件夹 id；目录不存在时为空
-    func existingFolderIDs() -> Set<UUID> {
+    func existingGroupIDs() -> Set<UUID> {
         let urls = (try? FileManager.default.contentsOfDirectory(
             at: directory,
             includingPropertiesForKeys: nil
@@ -216,7 +219,7 @@ extension DockTileBundleBuilder {
     }
 
     /// stub 所属的根文件夹：URL 形如 `<directory>/<id>/<文件夹名>.app` 时解析出 id，其它 URL 一律为 nil
-    func folderID(forBundleURL url: URL) -> UUID? {
+    func groupID(forBundleURL url: URL) -> UUID? {
         let components = url.standardizedFileURL.pathComponents
         let directoryComponents = directory.standardizedFileURL.pathComponents
 
@@ -287,9 +290,9 @@ extension DockTileBundleBuilder {
     ///
     /// 名称里的 `/` 换成 `:`，Launch Services 显示时会换回 `/`；
     /// 名称为空时用 id，避免生成以 `.` 开头的隐藏文件
-    private static func fileName(for folder: Folder) -> String {
-        guard !folder.name.isEmpty else { return folder.id.uuidString }
+    private static func fileName(for group: Group) -> String {
+        guard !group.name.isEmpty else { return group.id.uuidString }
 
-        return folder.name.replacingOccurrences(of: "/", with: ":")
+        return group.name.replacingOccurrences(of: "/", with: ":")
     }
 }

@@ -12,7 +12,7 @@ final class SettingsWindowController: NSWindowController {
     static let minimumContentSize = NSSize(width: 570, height: 480)
 
     /// 文件夹区，在窗口上部，随窗口高度伸缩
-    private let folderTreeViewController: FolderTreeViewController
+    private let groupTreeViewController: GroupTreeViewController
 
     /// 通用区，在文件夹区下方，以分隔线隔开
     private let generalSettingsViewController = GeneralSettingsViewController(
@@ -22,7 +22,7 @@ final class SettingsWindowController: NSWindowController {
     /// 创建设置窗口；窗口关闭时只隐藏，不释放
     /// - Parameter dockTileSynchronizer: Dock tile 同步器；Dock 集成不可用时传 nil
     init(dockTileSynchronizer: DockTileSynchronizer?) {
-        folderTreeViewController = FolderTreeViewController(
+        groupTreeViewController = GroupTreeViewController(
             store: .shared,
             dockTileSynchronizer: dockTileSynchronizer
         )
@@ -77,8 +77,8 @@ extension SettingsWindowController: NSWindowDelegate {
     /// 从系统设置授权回来、把 tile 拖出 Dock、在访达里移动或改名 App 与文件后再点开窗口，即可看到结果
     func windowDidBecomeKey(_: Notification) {
         generalSettingsViewController.refreshAccessibilityStatus()
-        folderTreeViewController.refreshDockStatus()
-        folderTreeViewController.updateItemLocations()
+        groupTreeViewController.refreshDockStatus()
+        groupTreeViewController.updateItemLocations()
     }
 
     /// 设置窗口关闭后，若没有其它可见窗口就回到 `.accessory`，Dock 图标随之消失
@@ -107,13 +107,13 @@ extension SettingsWindowController {
 
     /// 文件夹区在上、通用区在下，中间以分隔线隔开；文件夹区随窗口高度伸缩
     private func makeContentView() -> NSView {
-        let folderTreeView = folderTreeViewController.view
+        let groupTreeView = groupTreeViewController.view
         let generalSettingsView = generalSettingsViewController.view
 
         let separator = NSBox()
         separator.boxType = .separator
 
-        let stackView = NSStackView(views: [folderTreeView, separator, generalSettingsView])
+        let stackView = NSStackView(views: [groupTreeView, separator, generalSettingsView])
         stackView.orientation = .vertical
         stackView.alignment = .leading
         stackView.spacing = 16
@@ -126,7 +126,7 @@ extension SettingsWindowController {
 
         // 文件夹区与分隔线扣除左右边距后占满宽度
         NSLayoutConstraint.activate([
-            folderTreeView.widthAnchor.constraint(
+            groupTreeView.widthAnchor.constraint(
                 equalTo: stackView.widthAnchor,
                 constant: -2 * Self.contentInset
             ),

@@ -9,16 +9,16 @@ import Testing
 /// 只有约定的两种形式会被执行，路径里的特殊字符要原样还原，否则加入的是另一个文件
 struct DockTileRequestTests {
     /// 请求里的根文件夹
-    private let folderID = UUID()
+    private let groupID = UUID()
 
     // MARK: 展开或收起
 
     /// `flotilla://folder/<uuid>`：展开或收起该根文件夹的面板
     @Test
-    func parsesToggleFolder() throws {
-        let url = try #require(URL(string: "flotilla://folder/\(folderID.uuidString)"))
+    func parsesToggleGroup() throws {
+        let url = try #require(URL(string: "flotilla://folder/\(groupID.uuidString)"))
 
-        #expect(DockTileRequest(url: url) == .toggleFolder(folderID))
+        #expect(DockTileRequest(url: url) == .toggleGroup(groupID))
     }
 
     // MARK: 加入项
@@ -29,7 +29,7 @@ struct DockTileRequestTests {
         let url = try makeAddItemsURL(paths: ["/Users/Shared/报告.pdf"])
 
         let expected = DockTileRequest.addItems(
-            folderID: folderID,
+            groupID: groupID,
             fileURLs: [URL(filePath: "/Users/Shared/报告.pdf")]
         )
 
@@ -51,7 +51,7 @@ struct DockTileRequestTests {
             return
         }
 
-        #expect(parsedID == folderID)
+        #expect(parsedID == groupID)
         #expect(fileURLs.map { $0.path(percentEncoded: false) } == [path])
         #expect(fileURLs.first?.hasDirectoryPath == path.hasSuffix("/"))
     }
@@ -68,7 +68,7 @@ struct DockTileRequestTests {
         let url = try makeAddItemsURL(paths: paths)
 
         let expected = DockTileRequest.addItems(
-            folderID: folderID,
+            groupID: groupID,
             fileURLs: paths.map { URL(filePath: $0) }
         )
 
@@ -105,7 +105,7 @@ extension DockTileRequestTests {
         var components = URLComponents()
         components.scheme = "flotilla"
         components.host = "folder"
-        components.path = "/\(folderID.uuidString)/items"
+        components.path = "/\(groupID.uuidString)/items"
         components.queryItems = paths.map {
             URLQueryItem(name: "path", value: $0)
         }

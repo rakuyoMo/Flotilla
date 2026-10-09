@@ -18,28 +18,28 @@
 "settings.windowTitle" = "설정";
 
 /* 设置窗口的文件夹区 */
-"folders.sectionTitle" = "폴더";
-"folders.newFolder" = "새로운 폴더";
-"folders.untitledFolder" = "제목 없는 폴더";
-"folders.add" = "추가…";
-"folders.addApps" = "앱 추가…";
-"folders.addFiles" = "파일 추가…";
-"folders.addWebPage" = "웹 페이지 추가…";
-"folders.webPageAlert.message" = "웹 페이지 추가";
-"folders.webPageAlert.editMessage" = "웹 페이지 편집";
-"folders.webPageAlert.informative" = "웹 페이지의 주소를 입력하십시오. 제목은 비워 둘 수 있습니다.";
-"folders.webPageAlert.addressPlaceholder" = "주소";
-"folders.webPageAlert.titlePlaceholder" = "제목(선택 사항)";
-"folders.webPageAlert.fetchingTitle" = "제목 가져오는 중…";
-"folders.webPageAlert.add" = "추가";
-"folders.webPageAlert.save" = "저장";
-"folders.webPageAlert.cancel" = "취소";
-"folders.notOnDock" = "Dock에 없음";
-"folders.addToDock" = "Dock에 추가";
-"folders.showInFinder" = "Finder에서 보기";
-"folders.openInDefaultBrowser" = "기본 브라우저에서 열기";
-"folders.editWebPage" = "편집…";
-"folders.remove" = "삭제";
+"groups.sectionTitle" = "폴더";
+"groups.newGroup" = "새로운 폴더";
+"groups.untitledGroup" = "제목 없는 폴더";
+"groups.add" = "추가…";
+"groups.addApps" = "앱 추가…";
+"groups.addFiles" = "파일 추가…";
+"groups.addWebPage" = "웹 페이지 추가…";
+"groups.webPageAlert.message" = "웹 페이지 추가";
+"groups.webPageAlert.editMessage" = "웹 페이지 편집";
+"groups.webPageAlert.informative" = "웹 페이지의 주소를 입력하십시오. 제목은 비워 둘 수 있습니다.";
+"groups.webPageAlert.addressPlaceholder" = "주소";
+"groups.webPageAlert.titlePlaceholder" = "제목(선택 사항)";
+"groups.webPageAlert.fetchingTitle" = "제목 가져오는 중…";
+"groups.webPageAlert.add" = "추가";
+"groups.webPageAlert.save" = "저장";
+"groups.webPageAlert.cancel" = "취소";
+"groups.notOnDock" = "Dock에 없음";
+"groups.addToDock" = "Dock에 추가";
+"groups.showInFinder" = "Finder에서 보기";
+"groups.openInDefaultBrowser" = "기본 브라우저에서 열기";
+"groups.editWebPage" = "편집…";
+"groups.remove" = "삭제";
 
 /* 设置窗口的通用区 */
 "general.sectionTitle" = "일반";

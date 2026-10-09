@@ -276,7 +276,7 @@ final class DockPreferencesTests {
     /// 只列出 stub 位于存放 stub 的目录下 `<id>` 子目录的 tile，stub 连同目录都不在磁盘上时照样列出；
     /// 同步时据此删掉残留的 tile，用户的 tile 与位置不符的条目一律不能列出
     @Test
-    func folderIDsListsOnlyTilesInStubsDirectory() throws {
+    func groupIDsListsOnlyTilesInStubsDirectory() throws {
         let stubsDirectory = directory.appending(path: "Dock Tiles")
         let ownID = try #require(UUID(uuidString: stubDirectory.lastPathComponent))
         let orphanID = UUID()
@@ -304,7 +304,7 @@ final class DockPreferencesTests {
         let stubsPath = stubsDirectory.path(percentEncoded: false)
 
         #expect(!FileManager.default.fileExists(atPath: stubsPath))
-        #expect(preferences.folderIDs(ofTilesIn: stubsDirectory) == [ownID, orphanID])
+        #expect(preferences.groupIDs(ofTilesIn: stubsDirectory) == [ownID, orphanID])
     }
 
     /// 首次写入前导出改动前的整个域，同一次运行里只备份一次

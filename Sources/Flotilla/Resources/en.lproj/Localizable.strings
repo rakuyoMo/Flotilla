@@ -18,28 +18,28 @@
 "settings.windowTitle" = "Settings";
 
 /* 设置窗口的文件夹区 */
-"folders.sectionTitle" = "Folders";
-"folders.newFolder" = "New Folder";
-"folders.untitledFolder" = "Untitled Folder";
-"folders.add" = "Add…";
-"folders.addApps" = "Add Apps…";
-"folders.addFiles" = "Add Files…";
-"folders.addWebPage" = "Add Web Page…";
-"folders.webPageAlert.message" = "Add Web Page";
-"folders.webPageAlert.editMessage" = "Edit Web Page";
-"folders.webPageAlert.informative" = "Enter the address of the web page. The title is optional.";
-"folders.webPageAlert.addressPlaceholder" = "Address";
-"folders.webPageAlert.titlePlaceholder" = "Title (Optional)";
-"folders.webPageAlert.fetchingTitle" = "Fetching Title…";
-"folders.webPageAlert.add" = "Add";
-"folders.webPageAlert.save" = "Save";
-"folders.webPageAlert.cancel" = "Cancel";
-"folders.notOnDock" = "Not in Dock";
-"folders.addToDock" = "Add to Dock";
-"folders.showInFinder" = "Show in Finder";
-"folders.openInDefaultBrowser" = "Open in Default Browser";
-"folders.editWebPage" = "Edit…";
-"folders.remove" = "Delete";
+"groups.sectionTitle" = "Folders";
+"groups.newGroup" = "New Folder";
+"groups.untitledGroup" = "Untitled Folder";
+"groups.add" = "Add…";
+"groups.addApps" = "Add Apps…";
+"groups.addFiles" = "Add Files…";
+"groups.addWebPage" = "Add Web Page…";
+"groups.webPageAlert.message" = "Add Web Page";
+"groups.webPageAlert.editMessage" = "Edit Web Page";
+"groups.webPageAlert.informative" = "Enter the address of the web page. The title is optional.";
+"groups.webPageAlert.addressPlaceholder" = "Address";
+"groups.webPageAlert.titlePlaceholder" = "Title (Optional)";
+"groups.webPageAlert.fetchingTitle" = "Fetching Title…";
+"groups.webPageAlert.add" = "Add";
+"groups.webPageAlert.save" = "Save";
+"groups.webPageAlert.cancel" = "Cancel";
+"groups.notOnDock" = "Not in Dock";
+"groups.addToDock" = "Add to Dock";
+"groups.showInFinder" = "Show in Finder";
+"groups.openInDefaultBrowser" = "Open in Default Browser";
+"groups.editWebPage" = "Edit…";
+"groups.remove" = "Delete";
 
 /* 设置窗口的通用区 */
 "general.sectionTitle" = "General";

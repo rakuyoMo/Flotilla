@@ -103,7 +103,7 @@ extension FileThumbnailLoader {
         scale: CGFloat,
         completion: @escaping @Sendable (NSImage?) -> Void
     ) -> () -> Void {
-        let side = FolderPanelMetrics.fileThumbnailSize
+        let side = GroupPanelMetrics.fileThumbnailSize
 
         let request = QLThumbnailGenerator.Request(
             fileAt: url,
@@ -130,8 +130,8 @@ extension FileThumbnailLoader {
     ///
     /// 单元格把图标缩放到图标画布的大小显示；缩略图的画布比图标画布小，先居中放进去，才按原样大小显示，中心与图标相同
     private nonisolated static func centeredInIconCanvas(_ thumbnail: NSImage) -> NSImage {
-        let canvas = FolderPanelMetrics.iconSize
-        let inset = (canvas - FolderPanelMetrics.fileThumbnailSize) / 2
+        let canvas = GroupPanelMetrics.iconSize
+        let inset = (canvas - GroupPanelMetrics.fileThumbnailSize) / 2
 
         return NSImage(size: CGSize(width: canvas, height: canvas), flipped: false) { rect in
             thumbnail.draw(in: rect.insetBy(dx: inset, dy: inset))
