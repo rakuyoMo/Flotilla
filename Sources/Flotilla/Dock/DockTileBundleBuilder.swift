@@ -104,14 +104,14 @@ extension DockTileBundleBuilder {
         let iconURL = contentsURL.appending(path: "Resources/\(Self.iconName).icns")
         let stubExecutableURL = contentsURL.appending(path: "MacOS/\(Self.executableName)")
 
-        // 先把图标写到临时位置，与现有图标逐字节比对；一致时直接丢弃
+        // 先把图标写到临时位置，与现有图标按像素比对；相同时直接丢弃
         let renderedIconURL = fileManager.temporaryDirectory
             .appending(path: "Flotilla-\(UUID().uuidString).icns")
 
         try IconFileWriter.write(icon, to: renderedIconURL)
         defer { try? fileManager.removeItem(at: renderedIconURL) }
 
-        // Info.plist 同样逐字节比对：XML 格式的属性列表按键排序输出，内容相同时字节一致
+        // Info.plist 逐字节比对：XML 格式的属性列表按键排序输出，内容相同时字节一致
         let infoData = try PropertyListSerialization.data(
             fromPropertyList: Self.infoDictionary(for: group),
             format: .xml,
@@ -121,7 +121,12 @@ extension DockTileBundleBuilder {
         let renderedIcon = try Data(contentsOf: renderedIconURL)
 
         let isInfoChanged = (try? Data(contentsOf: infoURL)) != infoData
-        let isIconChanged = (try? Data(contentsOf: iconURL)) != renderedIcon
+
+        // 预览里的 App 图标在系统缓存重新生成后像素会差一两级，按 `IconFileComparator` 的容差比对；
+        // 现有图标读不出时视为变了
+        let isIconChanged = (try? Data(contentsOf: iconURL)).map {
+            !IconFileComparator.isEquivalent($0, renderedIcon)
+        } ?? true
 
         // 缺少可执行文件或自定义图标的 stub 视为残缺，同样要重新生成
         let isIncomplete = [
