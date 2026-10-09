@@ -31,8 +31,11 @@ final class FolderPanelDragActionsTests {
 
         let actions = FolderPanelController.dragActions(
             for: .finderFolder(finderFolder, items: []),
-            in: store
-        ) { _ in true }
+            in: store,
+            containsScreenPoint: { _ in true },
+            removeBoundaryContainsScreenPoint: { _ in true },
+            releaseHandler: { }
+        )
 
         #expect(actions == nil)
     }
@@ -103,14 +106,18 @@ final class FolderPanelDragActionsTests {
 // MARK: - Private
 
 extension FolderPanelDragActionsTests {
-    /// 文件夹的层级交给网格的拖动动作；轮廓的判定用不到，一律算在轮廓之内
+    /// 文件夹的层级交给网格的拖动动作；轮廓与 “移除” 的边界的判定用不到，一律算在之内；松开时的回调也用不到
     private func dragActions(
         for folder: Folder,
         in store: FolderStore
     ) throws -> FolderGridDragActions {
-        let actions = FolderPanelController.dragActions(for: .folder(folder), in: store) { _ in
-            true
-        }
+        let actions = FolderPanelController.dragActions(
+            for: .folder(folder),
+            in: store,
+            containsScreenPoint: { _ in true },
+            removeBoundaryContainsScreenPoint: { _ in true },
+            releaseHandler: { }
+        )
 
         return try #require(actions)
     }

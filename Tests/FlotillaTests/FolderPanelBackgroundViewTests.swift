@@ -100,7 +100,9 @@ struct FolderPanelBackgroundViewTests {
         #expect(!view.contains(CGPoint(x: body.minX + 1, y: body.maxY - 1)))
     }
 
-    /// 层级按屏幕坐标判定：屏幕上的点先换算到层级视图里，再与轮廓比较
+    /// 层级按屏幕坐标判定：屏幕上的点先换算到层级视图里，再与轮廓比较；
+    /// “移除” 的边界同样按主体在屏幕上的位置算，正对主体上边 94 pt 以内在边界之内；
+    /// 尾巴那一侧按 Dock 所在的屏幕横贯，主体右下方远处的 Dock 上也在边界之内
     @Test
     func levelConvertsScreenPointsBeforeHitTesting() {
         let tip = tip(facing: .bottom)
@@ -114,6 +116,8 @@ struct FolderPanelBackgroundViewTests {
                 edge: .bottom
             ),
             screenFrame: screenFrame,
+            dockEdge: .bottom,
+            dockScreenFrame: CGRect(x: 0, y: 0, width: 1920, height: 1080),
             scrollView: nil,
             gridView: nil
         )
@@ -127,6 +131,23 @@ struct FolderPanelBackgroundViewTests {
 
         // 这个点在视图自身坐标系里落在主体左缘之内，换算到屏幕上的层级后已在主体左侧之外
         #expect(!level.contains(screenPoint: CGPoint(x: body.minX + 5, y: body.midY)))
+
+        let bodyTopOnScreen = screenFrame.minY + body.maxY
+
+        #expect(level.removeBoundaryContains(screenPoint: CGPoint(
+            x: bodyCenterOnScreen.x,
+            y: bodyTopOnScreen + 94
+        )))
+
+        #expect(!level.removeBoundaryContains(screenPoint: CGPoint(
+            x: bodyCenterOnScreen.x,
+            y: bodyTopOnScreen + 95
+        )))
+
+        #expect(level.removeBoundaryContains(screenPoint: CGPoint(
+            x: 1500,
+            y: screenFrame.minY + body.minY - 10
+        )))
     }
 }
 

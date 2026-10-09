@@ -9,7 +9,8 @@ import AppKit
 /// 访达里的文件夹可能有上千项，一次建齐会让展开明显卡顿。缩略图请求也只为这个范围里的格保留，
 /// 快速滚过上千项后，看得见的格不必排在滚过的格后面等 QuickLook
 ///
-/// 文件夹的层级里各项可以拖动：其余各格让位或补位，在轮廓之内松开保存新的顺序，在轮廓之外松开删除这一项
+/// 文件夹的层级里各项可以拖动：其余各格让位或补位，在轮廓之内松开保存新的顺序；
+/// 拖出面板一段距离、拖动满一会儿，拖动图像上方浮出 “移除”，之后松开删除这一项，浮出之前在轮廓之外松开这一项落回原位
 @MainActor
 final class FolderGridView: NSView {
     /// 这一层的项，顺序即展示顺序
@@ -241,6 +242,7 @@ extension FolderGridView {
                 dy: iconCenter.y - pressPoint.y
             ),
             image: image,
+            removeDelay: makeRemoveDelay(for: image),
             location: event.locationInWindow,
             arrangement: FolderGridDragArrangement(
                 itemCount: items.count,
@@ -265,7 +267,8 @@ extension FolderGridView {
         updateDrag()
     }
 
-    /// 松开：在轮廓之内落进目标格，落定之后保存新的顺序；在轮廓之外，图像立即消失，这一项从文件夹里删除
+    /// 松开：面板随即按鼠标的位置更新点击穿透；在轮廓之内落进目标格，落定之后保存新的顺序；
+    /// “移除” 已浮出，这一项从文件夹里删除，图像在原地淡出；其余情况这一项落回原来的格
     func endDrag(with event: NSEvent) {
         guard isDragging else { return }
 
@@ -274,22 +277,34 @@ extension FolderGridView {
 
         guard let session = dragSession else { return }
 
-        guard let targetIndex = session.arrangement.targetIndex else {
+        // 松开之后计时不再算满
+        session.removeDelay.cancel()
+
+        // 鼠标松开后可能不再移动：落回原位不重建面板，这时就要让轮廓之外的点击穿透到下面的窗口
+        dragActions?.releaseHandler()
+
+        if let targetIndex = session.arrangement.targetIndex {
+            land(session, at: targetIndex)
+            return
+        }
+
+        if session.image.removeLabel.isShowing {
             remove(session)
             return
         }
 
-        land(session, at: targetIndex)
+        landInOriginalCell(session)
     }
 
     /// 作废进行中的拖动：面板开始收起时由面板调用，网格离开窗口（层级被重建、面板隐藏）时自己调用
     ///
-    /// 拖动图像立即消失，这一格显示出来；拖动中的各格恢复原来的样子，数据不变；
+    /// 拖动图像连同 “移除” 立即消失，这一格显示出来，之后不再浮出 “移除”；拖动中的各格恢复原来的样子，数据不变；
     /// 落定中的各格已在新的顺序上，保存仍按松开时的结果进行
     func cancelDrag() {
         guard let session = dragSession else { return }
 
         dragSession = nil
+        session.removeDelay.cancel()
         session.image.close()
         session.itemView.isContentHidden = false
 
@@ -475,7 +490,8 @@ extension FolderGridView {
         addSubview(itemView)
     }
 
-    /// 按鼠标最近的位置更新拖动：图像跟随鼠标；鼠标在轮廓之内时其余各项为目标格让位，在轮廓之外时依次补位
+    /// 按鼠标最近的位置更新拖动：图像跟随鼠标；鼠标在轮廓之内时其余各项为目标格让位，在轮廓之外时依次补位；
+    /// “移除” 随鼠标进出它的边界浮出或淡出
     private func updateDrag() {
         guard
             isDragging,
@@ -503,6 +519,8 @@ extension FolderGridView {
             )
             : nil
 
+        updateRemoveLabel()
+
         let arrangement = FolderGridDragArrangement(
             itemCount: items.count,
             draggedIndex: session.itemIndex,
@@ -513,6 +531,47 @@ extension FolderGridView {
 
         dragSession?.arrangement = arrangement
         arrange(arrangement, draggedIndex: session.itemIndex)
+    }
+
+    /// 按鼠标最近的位置更新 “移除”：开始拖动起已满 `removeLabelDelay`、鼠标又在 “移除” 的边界之外时浮出，否则淡出
+    ///
+    /// 与程序坞相同：拖出面板一点就松手、或刚开始拖动就甩出面板，“移除” 都不浮出，松开不会误删
+    private func updateRemoveLabel() {
+        guard
+            isDragging,
+            let session = dragSession,
+            let window,
+            let dragActions
+        else {
+            return
+        }
+
+        let mouse = window.convertPoint(toScreen: session.location)
+
+        session.image.removeLabel.isShowing = session.isRemoveDelayElapsed
+            && !dragActions.removeBoundaryContainsScreenPoint(mouse)
+    }
+
+    /// 开始拖动起的计时：满 `removeLabelDelay` 之后记下已满，按鼠标当时的位置更新 “移除”
+    ///
+    /// 整次拖动只计一次：之后在面板外移动、回到面板里再出去都不重新计时
+    /// - Parameter image: 这次拖动的拖动图像，计时满时据此确认还是同一次拖动
+    private func makeRemoveDelay(for image: FolderGridDragImage) -> Task<Void, Never> {
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(FolderPanelMetrics.removeLabelDelay))
+
+            // 松开、作废时取消：取消发生在醒来之后、排到主线程之前也一样不算满
+            guard
+                !Task.isCancelled,
+                let self,
+                dragSession?.image === image
+            else {
+                return
+            }
+
+            dragSession?.isRemoveDelayElapsed = true
+            updateRemoveLabel()
+        }
     }
 
     /// 落定途中网格滚动（例如松开时还有惯性滚动）：拖动图像的落点跟着目标格现在的屏幕位置
@@ -593,14 +652,49 @@ extension FolderGridView {
         _ = autoscroll(with: event)
     }
 
-    /// 在轮廓之外松开：图像立即消失，这一项从文件夹里删除
+    /// “移除” 浮出之后松开：这一项立即从文件夹里删除，图像连同 “移除” 在原地淡出
     ///
-    /// 删除引起文件夹树变化，面板随即按剩下的项重建网格、重算尺寸
+    /// 删除引起文件夹树变化，面板随即按剩下的项重建网格、重算尺寸；拖动到这里结束，淡出由图像自己收尾
     private func remove(_ session: FolderGridDragSession) {
         dragSession = nil
-        session.image.close()
+        session.image.fadeOut()
 
         dragActions?.removeHandler(items[session.itemIndex])
+    }
+
+    /// “移除” 没有浮出时在轮廓之外松开：不删除，这一项落回原来的格，顺序不变，不保存
+    ///
+    /// 其余各项从当前画面移回、让出原来的格，与鼠标回到原来那一格时的让位相同；
+    /// 拖动图像飞回原来的格，时长与曲线照抄程序坞里提前松手时图标飞回原位，落定期间的其余规则与落进目标格相同
+    private func landInOriginalCell(_ session: FolderGridDragSession) {
+        guard let window else { return }
+
+        let originalIndex = session.itemIndex
+
+        // 拖动中自动滚动过、原来的格不在可见区域里时，先不加动画地滚到完整看见它，落点才看得见。
+        // 先滚动再排列：滚动后按鼠标的位置重新判定，鼠标仍在轮廓之外，排列不变
+        scrollToVisible(cellFrames[originalIndex])
+
+        let arrangement = FolderGridDragArrangement(
+            itemCount: items.count,
+            draggedIndex: originalIndex,
+            targetIndex: originalIndex
+        )
+
+        dragSession?.arrangement = arrangement
+        arrange(arrangement, draggedIndex: originalIndex)
+
+        dragSession?.isLanding = true
+        session.image.landInOriginalCell(at: screenPoint(ofIconInCell: originalIndex, in: window))
+
+        let image = session.image
+
+        // 按时长收尾，不等 Core Animation 的完成回调，理由同 `land(_:at:)`；顺序不变，什么都不保存
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(FolderPanelMetrics.returnDuration))
+
+            self?.finishLanding(of: image)
+        }
     }
 
     /// 在轮廓之内松开：拖动图像落进目标格的图标位置，落定之后这一格显示出来，目标格变了才保存新的顺序

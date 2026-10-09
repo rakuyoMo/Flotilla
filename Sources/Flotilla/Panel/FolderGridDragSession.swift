@@ -17,12 +17,18 @@ struct FolderGridDragSession {
     /// 跟随鼠标的拖动图像
     let image: FolderGridDragImage
 
+    /// 开始拖动起的计时：满 `removeLabelDelay` 之后把 `isRemoveDelayElapsed` 设为 true；松开、作废时取消
+    let removeDelay: Task<Void, Never>
+
     /// 鼠标最近一次的位置，窗口坐标；网格滚动之后按它重新判定目标格
     var location: CGPoint
 
     /// 当前各项所在的格
     var arrangement: FolderGridDragArrangement
 
-    /// 是否已在轮廓之内松开、拖动图像正落进目标格：这期间网格不响应新的按下
+    /// 是否已松开、拖动图像正落进目标格：这期间网格不响应新的按下
     var isLanding = false
+
+    /// 开始拖动起是否已满 `removeLabelDelay`：整次拖动只计一次，满了之后一直算满
+    var isRemoveDelayElapsed = false
 }
