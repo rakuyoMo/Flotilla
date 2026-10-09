@@ -27,7 +27,17 @@ final class GroupTreeViewController: NSViewController {
     /// 展示组树
     private let outlineView = NSOutlineView()
 
-    /// “添加…” 下拉按钮，菜单里是 “添加 App…” “添加文件…” “添加网页…”；无选中项时禁用
+    /// “新建组” 按钮；选中组或没有选中项时可用
+    private lazy var newGroupButton = NSButton(
+        title: String(
+            localized: "groups.newGroup",
+            comment: "组区的按钮：新建组"
+        ),
+        target: self,
+        action: #selector(addGroup)
+    )
+
+    /// “添加…” 下拉按钮，菜单里是 “添加 App…” “添加文件…” “添加网页…”；只在选中组时可用
     private let addPopUpButton = NSPopUpButton(frame: .zero, pullsDown: true)
 
     /// 最近一次读取到的、被拖出 Dock 的根组；行的状态与右键菜单里 “添加到 Dock” 的可用状态都按它判断
@@ -77,7 +87,7 @@ final class GroupTreeViewController: NSViewController {
     override func loadView() {
         configureOutlineView()
         view = makeContentView()
-        updateAddPopUpButton()
+        updateButtonRow()
         refreshDockStatus()
 
         NotificationCenter.default.addObserver(
@@ -175,9 +185,9 @@ extension GroupTreeViewController: NSOutlineViewDelegate {
         return cell
     }
 
-    /// 选中项变化时更新 “添加…” 的可用状态
+    /// 选中项变化时更新 “新建组” 与 “添加…” 的可用状态
     func outlineViewSelectionDidChange(_: Notification) {
-        updateAddPopUpButton()
+        updateButtonRow()
     }
 }
 
@@ -281,7 +291,7 @@ extension GroupTreeViewController: NSMenuDelegate {
 // MARK: - Actions
 
 extension GroupTreeViewController {
-    /// 新建组：有选中项时建在其所属组内，否则建为根组；建好后立即进入重命名
+    /// 新建组：选中组时建为它的子组，没有选中项时建为根组；建好后立即进入重命名
     ///
     /// 新建的根组在名称编辑结束之前搁置，不添加 tile：tile 带着最终名称出现，Dock 只重启一次
     @objc
@@ -305,7 +315,7 @@ extension GroupTreeViewController {
         beginRenaming(groupID: group.id)
     }
 
-    /// 选择 App 并加入选中项所属的组
+    /// 选择 App 并加入选中的组
     @objc
     private func addApps() {
         let panel = NSOpenPanel()
@@ -317,7 +327,7 @@ extension GroupTreeViewController {
         addItems(chosenIn: panel)
     }
 
-    /// 选择文件与访达文件夹，加入选中项所属的组；不限类型，选到的 App 按分类规则成为 App
+    /// 选择文件与访达文件夹，加入选中的组；不限类型，选到的 App 按分类规则成为 App
     @objc
     private func addFiles() {
         let panel = NSOpenPanel()
@@ -328,7 +338,7 @@ extension GroupTreeViewController {
         addItems(chosenIn: panel)
     }
 
-    /// 输入网址与可选的标题，把网页加入弹出时选中项所属的组；
+    /// 输入网址与可选的标题，把网页加入弹出时选中的组；
     /// 不带标题加入的网页，取到标题后补上
     ///
     /// 弹出期间这个组被删掉时，`addItems` 找不到它，什么都不做；之后取到的标题同样找不到这一项
@@ -469,7 +479,7 @@ extension GroupTreeViewController {
             byExtendingSelection: false
         )
 
-        updateAddPopUpButton()
+        updateButtonRow()
     }
 }
 
@@ -528,15 +538,6 @@ extension GroupTreeViewController {
         scrollView.borderType = .bezelBorder
 
         // 底部按钮：新建组与 “添加…”，靠左
-        let newGroupButton = NSButton(
-            title: String(
-                localized: "groups.newGroup",
-                comment: "组区的按钮：新建组"
-            ),
-            target: self,
-            action: #selector(addGroup)
-        )
-
         configureAddPopUpButton()
 
         let buttonRow = NSStackView()
@@ -570,7 +571,7 @@ extension GroupTreeViewController {
             NSMenuItem(
                 title: String(
                     localized: "groups.addApps",
-                    comment: "“添加…” 菜单的一项：选择 App 加入选中项所属的组"
+                    comment: "“添加…” 菜单的一项：选择 App 加入选中的组"
                 ),
                 action: #selector(addApps),
                 keyEquivalent: ""
@@ -579,7 +580,7 @@ extension GroupTreeViewController {
             NSMenuItem(
                 title: String(
                     localized: "groups.addFiles",
-                    comment: "“添加…” 菜单的一项：选择文件或访达文件夹，加入选中项所属的组"
+                    comment: "“添加…” 菜单的一项：选择文件或访达文件夹，加入选中的组"
                 ),
                 action: #selector(addFiles),
                 keyEquivalent: ""
@@ -588,7 +589,7 @@ extension GroupTreeViewController {
             NSMenuItem(
                 title: String(
                     localized: "groups.addWebPage",
-                    comment: "“添加…” 菜单的一项：输入网址，把网页加入选中项所属的组"
+                    comment: "“添加…” 菜单的一项：输入网址，把网页加入选中的组"
                 ),
                 action: #selector(addWebPage),
                 keyEquivalent: ""
@@ -602,9 +603,13 @@ extension GroupTreeViewController {
         }
     }
 
-    /// 根据选中项更新 “添加…” 的可用状态：有选中项时可用
-    private func updateAddPopUpButton() {
-        addPopUpButton.isEnabled = selectedNode != nil
+    /// 按选中项更新按钮行的可用状态：选中组时两个都可用，在这个组里新建或加入；
+    /// 没有选中项时只有 “新建组” 可用，新建的是根组；选中 App、文件、访达文件夹或网页时两个都禁用
+    private func updateButtonRow() {
+        let selectsGroup = selectedNode?.group != nil
+
+        newGroupButton.isEnabled = selectedNode == nil || selectsGroup
+        addPopUpButton.isEnabled = selectsGroup
     }
 
     /// 右键菜单里 “删除” 之前的各项，按右键点到的那一行的类型给出：
@@ -670,7 +675,7 @@ extension GroupTreeViewController {
         return dataSource.node(withID: itemID)
     }
 
-    /// 以 sheet 弹出选择面板，把选中的 URL 分类后加入选中项所属的组
+    /// 以 sheet 弹出选择面板，把选中的 URL 分类后加入选中的组
     private func addItems(chosenIn panel: NSOpenPanel) {
         guard
             let groupID = selectedNode?.containingGroupID,

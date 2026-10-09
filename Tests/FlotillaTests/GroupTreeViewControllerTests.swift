@@ -6,7 +6,8 @@ import Testing
 // MARK: - GroupTreeViewControllerTests
 
 /// 设置窗口的组区：树的宽度必须始终与滚动区一致，行尾的 “不在 Dock 上” 才不会被右缘裁掉；
-/// 添加 App、文件与网页都从 “添加…” 的菜单进入；窗口缩到最窄时，底部按钮行在每种语言下都完整显示；
+/// 添加 App、文件与网页都从 “添加…” 的菜单进入；“新建组” 与 “添加…” 在选中组时可用，没有选中项时只有 “新建组” 可用；
+/// 窗口缩到最窄时，底部按钮行在每种语言下都完整显示；
 /// 右键菜单按点到的那一行给出各项，作用于点到的那一项，不论之后选中项与树怎样变；
 /// 网页的标题晚到时补上，但不打断正在编辑的组名
 @MainActor
@@ -151,22 +152,127 @@ final class GroupTreeViewControllerTests {
         #expect(menuItems.allSatisfy { $0.target === controller })
     }
 
-    /// 三项都加入选中项所属的组：没有选中项时 “添加…” 禁用，选中一行后可用
+    /// 两个按钮的目标都是组：“添加…” 加入选中的组，只在选中组时可用；
+    /// “新建组” 在选中的组里建子组、没有选中项时建根组，所以这两种情况下可用。
+    /// 选中 App、文件、访达文件夹或网页时两个都禁用
     @Test
-    func addIsEnabledOnlyWithSelection() throws {
+    func buttonsAreEnabledOnlyForGroupOrNoSelection() throws {
+        let fixtures = try showWebPageFixtures()
+        let outlineView = try groupTreeView(of: fixtures.controller)
+        let newGroup = try newGroupButton(of: fixtures.controller)
+        let addPopUp = try addPopUpButton(of: fixtures.controller)
+
+        // 没有选中项：只能新建根组
+        #expect(outlineView.selectedRow == -1)
+        #expect(newGroup.isEnabled)
+        #expect(!addPopUp.isEnabled)
+
+        // 行依次是 工作（根组）、开发（子组）、Chess、网页、文件、访达文件夹
+        let expectations = [
+            (row: 0, isGroup: true),
+            (row: 1, isGroup: true),
+            (row: 2, isGroup: false),
+            (row: 3, isGroup: false),
+            (row: 4, isGroup: false),
+            (row: 5, isGroup: false),
+        ]
+
+        for (row, isGroup) in expectations {
+            outlineView.selectRowIndexes([row], byExtendingSelection: false)
+
+            #expect(newGroup.isEnabled == isGroup, "选中第 \(row) 行时 “新建组” 的可用状态不对")
+            #expect(addPopUp.isEnabled == isGroup, "选中第 \(row) 行时 “添加…” 的可用状态不对")
+        }
+    }
+
+    /// 选中项被删掉、树重建后没有选中项：按钮随之变成只能新建根组，不留着删掉之前的状态
+    @Test
+    func buttonsFollowSelectionRemovedByReload() throws {
+        let controller = GroupTreeViewController(store: store, dockTileSynchronizer: nil)
+        let window = makeWindow(width: Self.minimumWidth)
+
+        window.contentView = controller.view
+
+        let outlineView = try groupTreeView(of: controller)
+        let newGroup = try newGroupButton(of: controller)
+        let addPopUp = try addPopUpButton(of: controller)
+
+        outlineView.expandItem(outlineView.item(atRow: 0))
+        controller.view.layoutSubtreeIfNeeded()
+
+        let work = try #require(store.rootGroups.first)
+        let development = work.items[0]
+        let chess = work.items[1]
+
+        // 选中子组 “开发” 后删掉它：“添加…” 从可用变成禁用
+        outlineView.selectRowIndexes([1], byExtendingSelection: false)
+
+        #expect(addPopUp.isEnabled)
+
+        store.remove(itemID: development.id)
+
+        #expect(outlineView.selectedRow == -1)
+        #expect(newGroup.isEnabled)
+        #expect(!addPopUp.isEnabled)
+
+        // 选中 Chess（现在是第 1 行）后删掉它：“新建组” 从禁用变成可用
+        outlineView.selectRowIndexes([1], byExtendingSelection: false)
+
+        #expect(!newGroup.isEnabled)
+
+        store.remove(itemID: chess.id)
+
+        #expect(outlineView.selectedRow == -1)
+        #expect(newGroup.isEnabled)
+        #expect(!addPopUp.isEnabled)
+    }
+
+    /// 没有选中项时 “新建组” 新建的是根组，排在最后
+    @Test
+    func newGroupWithoutSelectionAddsRootGroup() throws {
         let controller = GroupTreeViewController(store: store, dockTileSynchronizer: nil)
         let window = makeWindow(width: Self.minimumWidth)
 
         window.contentView = controller.view
         controller.view.layoutSubtreeIfNeeded()
 
-        let addPopUp = try addPopUpButton(of: controller)
+        try newGroupButton(of: controller).performClick(nil)
 
-        #expect(!addPopUp.isEnabled)
+        // 测试进程读不到译文，默认名就是键名
+        #expect(store.rootGroups.map(\.name) == ["工作", "groups.untitledGroup"])
+        #expect(store.rootGroups.first?.items.count == 2)
+    }
 
-        try groupTreeView(of: controller).selectRowIndexes([0], byExtendingSelection: false)
+    /// 选中组时 “新建组” 新建的是这个组的子组，不是它所在的组的
+    @Test
+    func newGroupWithGroupSelectedAddsItsSubgroup() throws {
+        let controller = GroupTreeViewController(store: store, dockTileSynchronizer: nil)
+        let window = makeWindow(width: Self.minimumWidth)
 
-        #expect(addPopUp.isEnabled)
+        window.contentView = controller.view
+
+        let outlineView = try groupTreeView(of: controller)
+
+        outlineView.expandItem(outlineView.item(atRow: 0))
+        controller.view.layoutSubtreeIfNeeded()
+
+        let developmentID = try #require(store.rootGroups.first?.items.first?.id)
+
+        // 选中 “工作” 的子组 “开发”
+        outlineView.selectRowIndexes([1], byExtendingSelection: false)
+
+        try newGroupButton(of: controller).performClick(nil)
+
+        let development = try #require(store.group(id: developmentID))
+        let created = try #require(development.items.first)
+
+        // 测试进程读不到译文，默认名就是键名
+        #expect(development.items.count == 1)
+        #expect(store.group(id: created.id)?.name == "groups.untitledGroup")
+
+        // “工作” 与根层级都没有多出组
+        #expect(store.rootGroups.count == 1)
+        #expect(store.rootGroups.first?.items.count == 2)
     }
 
     // MARK: 补标题
@@ -542,6 +648,15 @@ extension GroupTreeViewControllerTests {
     private func buttonRow(of controller: GroupTreeViewController) throws -> NSStackView {
         try #require(
             (controller.view as? NSStackView)?.arrangedSubviews.last as? NSStackView
+        )
+    }
+
+    /// 按钮行里的 “新建组”
+    private func newGroupButton(of controller: GroupTreeViewController) throws -> NSButton {
+        try #require(
+            buttonRow(of: controller).views
+                .compactMap { $0 as? NSButton }
+                .first { !($0 is NSPopUpButton) }
         )
     }
 
