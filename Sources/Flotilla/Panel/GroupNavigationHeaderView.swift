@@ -2,7 +2,7 @@ import AppKit
 
 // MARK: - GroupNavigationHeaderView
 
-/// 面板主体顶部的标题区：根层级与子层级都显示当前文件夹名，子层级另在左侧显示返回按钮
+/// 面板主体顶部的标题区：根层级与子层级都显示当前层级的名称，子层级另在左侧显示返回按钮
 @MainActor
 final class GroupNavigationHeaderView: NSView {
     /// 返回按钮；根层级没有
@@ -18,7 +18,7 @@ final class GroupNavigationHeaderView: NSView {
 
     /// 创建标题区
     /// - Parameters:
-    ///   - title: 当前层级的名称：文件夹名，或访达里的文件夹在访达中显示的名称
+    ///   - title: 当前层级的名称：组名，或访达文件夹在访达中显示的名称
     ///   - backHandler: 点击返回按钮后执行；为 nil 时不显示返回按钮
     init(title: String, backHandler: (() -> Void)?) {
         backButton = backHandler.map { GroupNavigationBackButton(clickHandler: $0) }

@@ -4,7 +4,7 @@ import QuartzCore
 
 // MARK: - GroupPanelController
 
-/// 管理全局唯一的面板：按 tile 摆放、构建每个层级、嵌套导航（需求 1）与访达里的文件夹的展开（需求 20），
+/// 管理全局唯一的面板：按 tile 摆放、构建每个层级、嵌套导航（需求 1）与访达文件夹的展开（需求 20），
 /// 以及展开、收起与转场动画
 ///
 /// 每个层级是一个 `GroupPanelLevel`，四周带着阴影留白；窗口 frame 是当前全部层级的并集。
@@ -24,16 +24,16 @@ final class GroupPanelController {
     /// 按下 Esc，点击 App、文件、网页或 “在访达中打开”，以及要进入或返回的那一层读不出来时调用
     var dismissRequestHandler: (() -> Void)? = nil
 
-    /// 本次展开里各次读访达里的文件夹占住主线程的时段，`DockGroupPresenter` 据此忽略这期间的鼠标按下
+    /// 本次展开里各次读访达文件夹占住主线程的时段，`DockGroupPresenter` 据此忽略这期间的鼠标按下
     private(set) var readPeriods = FinderFolderReadPeriods()
 
     /// 面板的 contentView，承载全部层级；展开与收起的动画作用在它的图层上
     private let containerView = NSView()
 
-    /// 文件夹树的唯一数据源
+    /// 组树的唯一数据源
     private let store: GroupStore
 
-    /// 用户设置，决定子文件夹图标里的预览数量，以及访达里的文件夹是否显示隐藏文件
+    /// 用户设置，决定子组图标里的预览数量，以及访达文件夹是否显示隐藏文件
     private let preferences: Preferences
 
     /// 本次展开的定位依据
@@ -42,7 +42,7 @@ final class GroupPanelController {
     /// 展开、收起时整个面板缩放的锚点（tile 图标中心），AppKit 屏幕坐标
     private var scaleAnchor = CGPoint.zero
 
-    /// 从根文件夹到当前层级的各层 id：根文件夹、子文件夹或访达里的文件夹
+    /// 从根组到当前层级的各层 id：根组、子组或访达文件夹
     private var path: [UUID] = []
 
     /// 当前层级：正在显示、接收点击的那一层；面板收起后为 nil
@@ -54,7 +54,7 @@ final class GroupPanelController {
     /// 本次展开中各层级网格的滚动位置，按层级的 id 记录，返回上一层时恢复
     private var scrollOffsets: [UUID: CGPoint] = [:]
 
-    /// 本次展开里读出的访达里的文件夹的内容，让其中各项的 id 在这一次展开里保持不变
+    /// 本次展开里读出的访达文件夹的内容，让其中各项的 id 在这一次展开里保持不变
     private var finderFolderContents = FinderFolderContents()
 
     /// 动画代数：每次立即隐藏、开始收起都加一，过期的收起收尾据此放弃
@@ -65,8 +65,8 @@ final class GroupPanelController {
 
     /// 创建面板控制器
     /// - Parameters:
-    ///   - store: 文件夹树的唯一数据源
-    ///   - preferences: 用户设置，决定子文件夹图标里的预览数量，以及访达里的文件夹是否显示隐藏文件
+    ///   - store: 组树的唯一数据源
+    ///   - preferences: 用户设置，决定子组图标里的预览数量，以及访达文件夹是否显示隐藏文件
     init(store: GroupStore, preferences: Preferences) {
         self.store = store
         self.preferences = preferences
@@ -79,12 +79,12 @@ final class GroupPanelController {
         }
     }
 
-    /// 沿导航路径逐层查找，返回当前层级的内容：在当前层的项里找下一层的 id，子文件夹取它本身，访达里的文件夹读出目录
+    /// 沿导航路径逐层查找，返回当前层级的内容：在当前层的项里找下一层的 id，子组取它本身，访达文件夹读出目录
     /// - Parameters:
-    ///   - path: 从根文件夹到当前层级的各层 id
-    ///   - rootGroups: 文件夹树的根文件夹
-    ///   - finderFolderItems: 读出访达里的文件夹里的各项；读不出来时为 nil
-    /// - Returns: 根文件夹已不是根文件夹、路径上任何一层已不在上一层之内、或某一层读不出来时为 nil
+    ///   - path: 从根组到当前层级的各层 id
+    ///   - rootGroups: 组树的根组
+    ///   - finderFolderItems: 读出访达文件夹里的各项；读不出来时为 nil
+    /// - Returns: 根组已不是根组、路径上任何一层已不在上一层之内、或某一层读不出来时为 nil
     static func levelContent(
         at path: [UUID],
         in rootGroups: [Group],
@@ -106,13 +106,13 @@ final class GroupPanelController {
             case .group(let subgroup):
                 content = .group(subgroup)
 
-            // 访达里的文件夹按它当前的 URL 读，它可能刚按书签跟到新位置
+            // 访达文件夹按它当前的 URL 读，它可能刚按书签跟到新位置
             case .file(let finderFolder) where finderFolder.isFinderFolder:
                 guard let items = finderFolderItems(finderFolder) else { return nil }
 
                 content = .finderFolder(finderFolder, items: items)
 
-            // 已不再是访达里的文件夹，或是 App、网页：进不去
+            // 已不再是访达文件夹，或是 App、网页：进不去
             default:
                 return nil
             }
@@ -121,7 +121,7 @@ final class GroupPanelController {
         return content
     }
 
-    /// 一个层级交给网格的拖动判定与动作：只有 Flotilla 的文件夹的层级有，访达里的文件夹的层级为 nil
+    /// 一个层级交给网格的拖动判定与动作：只有组的层级有，访达文件夹的层级为 nil
     ///
     /// 网格交出的目标格是移动之后的下标，按建这一层时的各项换算成 `GroupStore.move(itemID:to:at:)` 的下标
     /// - Parameters:
@@ -155,7 +155,7 @@ final class GroupPanelController {
                 )
             },
             removeHandler: {
-                // 删的只是文件夹里的这一项，不动磁盘上的 App 与文件；子文件夹连同其中的内容一起删除，不弹确认
+                // 删的只是组里的这一项，不动磁盘上的 App 与文件；子组连同其中的内容一起删除，不弹确认
                 store.remove(itemID: $0.id)
             }
         )
@@ -165,7 +165,7 @@ final class GroupPanelController {
 // MARK: - Presenting
 
 extension GroupPanelController {
-    /// 展开根文件夹的根层级；已有面板时旧面板立即消失，新面板按展开动画出现
+    /// 展开根组的根层级；已有面板时旧面板立即消失，新面板按展开动画出现
     func expand(rootGroup: Group, anchor: DockTileAnchor) {
         hideImmediately()
 
@@ -210,8 +210,8 @@ extension GroupPanelController {
         }
     }
 
-    /// 文件夹树变化后按新数据重建当前层级，保留滚动位置，不带动画；访达里的文件夹的层级重新读取
-    /// - Returns: 当前层级已不在该根文件夹之下、或某一层读不出来时为 false，由调用方收起面板
+    /// 组树变化后按新数据重建当前层级，保留滚动位置，不带动画；访达文件夹的层级重新读取
+    /// - Returns: 当前层级已不在该根组之下、或某一层读不出来时为 false，由调用方收起面板
     func reload() -> Bool {
         guard
             let anchor,
@@ -238,7 +238,7 @@ extension GroupPanelController {
 extension GroupPanelController {
     /// 点击网格中的一项：
     /// App 直接启动、文件用默认 App 打开、网页用默认浏览器打开，随即收起面板（需求 9、14）；
-    /// 子文件夹与访达里的文件夹在同一个面板里进入
+    /// 子组与访达文件夹在同一个面板里进入
     private func select(_ item: GroupItem) {
         switch item {
         case .app(let app):
@@ -247,7 +247,7 @@ extension GroupPanelController {
         case .group(let group):
             enter(.group(group))
 
-        // 点击时才判断是不是访达里的文件夹：文件包、符号链接、替身与已删除的都按文件打开
+        // 点击时才判断是不是访达文件夹：文件包、符号链接、替身与已删除的都按文件打开
         case .file(let file) where file.isFinderFolder:
             enter(finderFolder: file)
 
@@ -259,7 +259,7 @@ extension GroupPanelController {
         }
     }
 
-    /// 进入访达里的文件夹：读出目录里的各项再进入；读不出来时交给访达打开，随即收起面板
+    /// 进入访达文件夹：读出目录里的各项再进入；读不出来时交给访达打开，随即收起面板
     private func enter(finderFolder: FileReference) {
         let items: [GroupItem]
 
@@ -277,7 +277,7 @@ extension GroupPanelController {
         enter(.finderFolder(finderFolder, items: items))
     }
 
-    /// 进入子文件夹或访达里的文件夹：新层级从被点击的图标里长出来，旧层级原地淡出
+    /// 进入子组或访达文件夹：新层级从被点击的图标里长出来，旧层级原地淡出
     private func enter(_ content: GroupPanelLevelContent) {
         guard
             let anchor,
@@ -378,7 +378,7 @@ extension GroupPanelController {
     ) -> (level: GroupPanelLevel, placement: GroupPanelPlacement) {
         let visibleFrame = anchor.screen.visibleFrame
 
-        // 网格的列数与显示行数受 tile 旁可用的空间限制；访达里的文件夹多出 “在访达中打开” 一格
+        // 网格的列数与显示行数受 tile 旁可用的空间限制；访达文件夹多出 “在访达中打开” 一格
         let layout = GroupGridLayout(
             itemCount: content.cellCount,
             availableSize: GroupPanelPlacement.availableBodySize(
@@ -415,7 +415,7 @@ extension GroupPanelController {
 
         view.bodyView.addSubview(makeHeader(title: content.title, bodySize: layout.bodySize))
 
-        // 空的 Flotilla 文件夹只有标题区，格内为空；空的访达里的文件夹仍有 “在访达中打开” 一格
+        // 空的组只有标题区，格内为空；空的访达文件夹仍有 “在访达中打开” 一格
         let scrollView = content.cellCount == 0
             ? nil
             : makeScrollView(
@@ -496,12 +496,12 @@ extension GroupPanelController {
             { [weak self] in self?.open(url, named: content.title) }
         }
 
-        // 访达里的文件夹的层级里，文件按原生叠放显示内容缩略图
+        // 访达文件夹的层级里，文件按原生叠放显示内容缩略图
         let fileThumbnailLoader = content.showsFileThumbnails
             ? FileThumbnailLoader(scale: scale)
             : nil
 
-        // 文件夹的层级里各项可以拖动：鼠标是否在轮廓之内、是否在 “移除” 的边界之内，都按当前层级判定；
+        // 组的层级里各项可以拖动：鼠标是否在轮廓之内、是否在 “移除” 的边界之内，都按当前层级判定；
         // 松开时按鼠标的位置更新点击穿透，不等鼠标下一次移动
         let dragActions = Self.dragActions(
             for: content,
@@ -517,7 +517,7 @@ extension GroupPanelController {
             }
         )
 
-        // 隐藏的项只来自访达里的文件夹：本次展开读出的隐藏项按 id 交给网格，Flotilla 的文件夹里各项的 id 不在其中
+        // 隐藏的项只来自访达文件夹：本次展开读出的隐藏项按 id 交给网格，组里各项的 id 不在其中
         scrollView.documentView = GroupGridView(
             items: content.items,
             layout: layout,
@@ -608,14 +608,14 @@ extension GroupPanelController {
         currentLevel = nil
     }
 
-    /// 按当前的导航路径与文件夹树解析出当前层级的内容；访达里的文件夹的层级重新读取
+    /// 按当前的导航路径与组树解析出当前层级的内容；访达文件夹的层级重新读取
     private func currentPathContent() -> GroupPanelLevelContent? {
         Self.levelContent(at: path, in: store.rootGroups) {
             try? readItems(of: $0)
         }
     }
 
-    /// 读出访达里的文件夹里的各项，并记下这次读取占住主线程的时段
+    /// 读出访达文件夹里的各项，并记下这次读取占住主线程的时段
     ///
     /// 第一次读受保护的位置时读取等到用户回答隐私授权框，这期间的鼠标按下要据此认出来
     /// - Throws: 读不出内容时抛出：已删除、没有权限、隐私授权被拒

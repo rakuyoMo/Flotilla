@@ -89,7 +89,7 @@ enum GroupPanelMetrics {
     /// 按下时图标的亮度（RGB 乘以这个系数）
     static let pressedIconBrightness: CGFloat = 0.475
 
-    /// 访达里的文件夹显示隐藏文件时，隐藏的项图标与名称的不透明度，与访达的 ⌘⇧. 相同
+    /// 访达文件夹显示隐藏文件时，隐藏的项图标与名称的不透明度，与访达的 ⌘⇧. 相同
     static let hiddenItemOpacity: CGFloat = 0.5
 
     /// “在访达中打开” 图标的边长：Dock 的 128 pt 原图按这个边长画，中心与其它格的图标相同，圆圈外径 64 pt、线宽 2.3 pt
@@ -163,7 +163,7 @@ enum GroupPanelMetrics {
 
     /// 按下后移动超过这个距离即视为拖动，两处用到：
     /// - 在 tile 上按下：与 Dock 一致，移动不超过 5 pt 时 Dock 仍按点击启动 stub
-    /// - 在面板里按下文件夹的一项：超过即开始拖动这一项，阈值与 Dock 判定拖动 tile 的相同；不超过时照旧是点击
+    /// - 在面板里按下组的一项：超过即开始拖动这一项，阈值与 Dock 判定拖动 tile 的相同；不超过时照旧是点击
     static let dragThreshold: CGFloat = 5
 
     /// 按住 tile 超过这个时长（秒）抬起不算点击

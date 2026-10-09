@@ -2,10 +2,10 @@ import CoreGraphics
 
 // MARK: - GroupGridDragActions
 
-/// 文件夹的层级交给网格的拖动判定与动作：鼠标是否在当前层级的轮廓之内、是否在 “移除” 的边界之内，
+/// 组的层级交给网格的拖动判定与动作：鼠标是否在当前层级的轮廓之内、是否在 “移除” 的边界之内，
 /// 松开时更新点击穿透，松开后保存新的顺序或删除这一项
 ///
-/// 访达里的文件夹的层级没有，其中各项不能拖动
+/// 访达文件夹的层级没有，其中各项不能拖动
 struct GroupGridDragActions {
     /// 屏幕上的点（AppKit 屏幕坐标）是否在当前层级的轮廓之内：面板主体与尾巴
     let containsScreenPoint: @MainActor (CGPoint) -> Bool

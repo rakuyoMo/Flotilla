@@ -3,7 +3,7 @@ import QuickLookThumbnailing
 
 // MARK: - FileThumbnailLoader
 
-/// 为访达里的文件夹的层级里的文件请求 QuickLook 内容缩略图：原生叠放里，文件显示的是内容缩略图而不是通用图标
+/// 为访达文件夹的层级里的文件请求 QuickLook 内容缩略图：原生叠放里，文件显示的是内容缩略图而不是通用图标
 ///
 /// 缩略图在主线程交给调用方；`cancel(_:)` 取消一个还没完成的请求，`cancelAll()` 取消全部，之后到达的结果一律丢掉
 @MainActor
@@ -79,7 +79,7 @@ extension FileThumbnailLoader {
         // 已取消的请求不在表里：晚到的结果丢掉，不会落到已离开的层级上
         guard let request = pendingRequests.removeValue(forKey: id) else { return }
 
-        // 生成不出缩略图是常态（访达里的文件夹、没有缩略图扩展的类型、已删除、没有权限），
+        // 生成不出缩略图是常态（访达文件夹、没有缩略图扩展的类型、已删除、没有权限），
         // 保持图标，不记日志
         guard let thumbnail else { return }
 

@@ -16,7 +16,7 @@ final class DockGroupPresenter: NSObject {
         category: "DockGroupPresenter"
     )
 
-    /// 文件夹树的唯一数据源
+    /// 组树的唯一数据源
     private let store: GroupStore
 
     /// 定位 tile，并为快速路径做命中测试
@@ -33,8 +33,8 @@ final class DockGroupPresenter: NSObject {
 
     /// 创建面板调度者
     /// - Parameters:
-    ///   - store: 文件夹树的唯一数据源
-    ///   - preferences: 用户设置，决定子文件夹图标里的预览数量
+    ///   - store: 组树的唯一数据源
+    ///   - preferences: 用户设置，决定子组图标里的预览数量
     ///   - locator: 定位 tile
     init(store: GroupStore, preferences: Preferences, locator: DockTileLocator) {
         self.store = store
@@ -48,7 +48,7 @@ final class DockGroupPresenter: NSObject {
         }
     }
 
-    /// 开始监听鼠标点击、文件夹树与屏幕参数的变化
+    /// 开始监听鼠标点击、组树与屏幕参数的变化
     func start() {
         installMouseMonitors()
 
@@ -67,10 +67,10 @@ final class DockGroupPresenter: NSObject {
         )
     }
 
-    /// URL 路径：stub 打开 `flotilla://folder/<id>` 后由 `AppDelegate` 转交；不是根文件夹的 id 一律忽略
+    /// URL 路径：stub 打开 `flotilla://folder/<id>` 后由 `AppDelegate` 转交；不是根组的 id 一律忽略
     func handleURLSignal(groupID: UUID) {
         guard store.rootGroups.contains(where: { $0.id == groupID }) else {
-            Self.logger.notice("忽略不存在的根文件夹：\(groupID.uuidString, privacy: .public)")
+            Self.logger.notice("忽略不存在的根组：\(groupID.uuidString, privacy: .public)")
             return
         }
 
@@ -81,13 +81,13 @@ final class DockGroupPresenter: NSObject {
 // MARK: - Event Handling
 
 extension DockGroupPresenter {
-    /// 收起面板：Esc、启动 App、打开文件或网页、屏幕参数变化、当前文件夹被删除等
+    /// 收起面板：Esc、启动 App、打开文件或网页、屏幕参数变化、当前组被删除等
     @objc
     private func dismiss() {
         apply(state.dismiss())
     }
 
-    /// 文件夹树变化：展示中的文件夹仍在则重建网格并尽量保留当前层级，否则收起
+    /// 组树变化：展示中的组仍在则重建网格并尽量保留当前层级，否则收起
     @objc
     private func groupStoreDidChange() {
         guard state.presentedGroupID != nil, !panelController.reload() else { return }
@@ -137,7 +137,7 @@ extension DockGroupPresenter {
 
         switch event.type {
         case .leftMouseDown, .rightMouseDown, .otherMouseDown:
-            // 读访达里的文件夹期间的按下（例如点系统隐私授权框）排到读取结束后才处理到，
+            // 读访达文件夹期间的按下（例如点系统隐私授权框）排到读取结束后才处理到，
             // 既不算面板以外的点击，也不算点击 tile
             guard !panelController.readPeriods.contains(event.timestamp) else { return }
 
@@ -171,7 +171,7 @@ extension DockGroupPresenter {
     private func handleLocalMouseDown(_ event: NSEvent) {
         guard event.window !== panelController.panel else { return }
 
-        // 读访达里的文件夹期间的按下排到读取结束后才处理到，不算面板以外的点击
+        // 读访达文件夹期间的按下排到读取结束后才处理到，不算面板以外的点击
         guard !panelController.readPeriods.contains(event.timestamp) else { return }
 
         apply(state.mouseDown(
@@ -207,13 +207,13 @@ extension DockGroupPresenter {
 
     /// 定位 tile 并展开；Dock 正在重启等原因定位不到时由定位器退化到鼠标位置，连屏幕都没有时放弃并同步状态
     ///
-    /// 展开之后按书签把这个根文件夹里的 App 与文件跟到新位置，有变化时经 `groupStoreDidChange` 重建网格
+    /// 展开之后按书签把这个根组里的 App 与文件跟到新位置，有变化时经 `groupStoreDidChange` 重建网格
     private func expand(_ groupID: UUID) {
         guard
             let group = store.rootGroups.first(where: { $0.id == groupID }),
             let anchor = locator.locate(groupID: groupID)
         else {
-            Self.logger.error("无法展开根文件夹：\(groupID.uuidString, privacy: .public)")
+            Self.logger.error("无法展开根组：\(groupID.uuidString, privacy: .public)")
             dismiss()
             return
         }

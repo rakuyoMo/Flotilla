@@ -2,7 +2,7 @@ import AppKit
 
 // MARK: - GroupPanel
 
-/// 展开文件夹时的悬浮面板：层级高于 Dock，可以成为 key window 接收 Esc，但从不激活 Flotilla（需求 6）
+/// 展开组时的悬浮面板：层级高于 Dock，可以成为 key window 接收 Esc，但从不激活 Flotilla（需求 6）
 ///
 /// 全局只有一个实例，由 `GroupPanelController` 持有并复用
 @MainActor

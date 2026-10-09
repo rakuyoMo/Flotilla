@@ -4,11 +4,11 @@ import AppKit
 
 /// 网格中的一个单元格：图标在上、名称在下；悬停没有任何变化，按下与抬起的表现见 `GroupGridItemStyle`
 ///
-/// 文件夹的层级里按下后移动超过 `GroupPanelMetrics.dragThreshold` 即开始拖动，拖动与松开都转交给网格
+/// 组的层级里按下后移动超过 `GroupPanelMetrics.dragThreshold` 即开始拖动，拖动与松开都转交给网格
 @MainActor
 final class GroupGridItemView: NSView {
-    /// 拖动转交给的网格：文件夹的层级里由网格设置；
-    /// 为 nil 时（访达里的文件夹的层级、“在访达中打开”）不能拖动，按下与抬起照旧
+    /// 拖动转交给的网格：组的层级里由网格设置；
+    /// 为 nil 时（访达文件夹的层级、“在访达中打开”）不能拖动，按下与抬起照旧
     weak var dragTarget: GroupGridView?
 
     /// 显示图标的视图：大小按样式在 `layout()` 里定，以图标中心定位
@@ -20,7 +20,7 @@ final class GroupGridItemView: NSView {
     /// 单元格的样式：决定图标怎么画、按下时怎么变、在哪里抬起才触发
     private let style: GroupGridItemStyle
 
-    /// 图标：各项原样显示，子文件夹的图标在系统外观变化时由网格换成对应外观的版本；
+    /// 图标：各项原样显示，子组的图标在系统外观变化时由网格换成对应外观的版本；
     /// “在访达中打开” 只取原图的形状，按外观着色后显示
     var icon: NSImage {
         didSet {
@@ -70,7 +70,7 @@ final class GroupGridItemView: NSView {
         true
     }
 
-    /// 图标中心，自身坐标系；进入子文件夹时新层级从这里长出来
+    /// 图标中心，自身坐标系；进入子组或访达文件夹时新层级从这里长出来
     var iconCenter: CGPoint {
         CGPoint(x: bounds.midX, y: GroupPanelMetrics.iconCenterY)
     }
@@ -79,7 +79,7 @@ final class GroupGridItemView: NSView {
     /// - Parameters:
     ///   - title: 图标下方显示的名称
     ///   - icon: 图标；“在访达中打开” 是透明底上的原图，只取形状
-    ///   - style: 样式；只有访达里的文件夹的层级末尾那一格是 “在访达中打开”，
+    ///   - style: 样式；只有访达文件夹的层级末尾那一格是 “在访达中打开”，
     ///     其余单元格都用默认的各项样式
     ///   - clickHandler: 按下并抬起后执行，在哪里抬起才算见 `GroupGridItemStyle`
     init(

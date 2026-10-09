@@ -38,7 +38,7 @@ final class GroupGridRemoveLabel {
     init(scale: CGFloat) {
         text = String(
             localized: "panel.remove",
-            comment: "面板里把一项拖出面板一段距离、拖动满一会儿之后，拖动图像的图标上方浮出的标识，此后松开即从文件夹里删除这一项；照抄程序坞"
+            comment: "面板里把一项拖出面板一段距离、拖动满一会儿之后，拖动图像的图标上方浮出的标识，此后松开即从组里删除这一项；照抄程序坞"
         )
 
         let font = NSFont.systemFont(ofSize: GroupPanelMetrics.removeLabelFontSize)

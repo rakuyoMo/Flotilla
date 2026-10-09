@@ -2,7 +2,7 @@ import AppKit
 
 // MARK: - GroupPanelLevel
 
-/// 面板里的一个层级：Flotilla 的文件夹或访达里的文件夹的背景、标题区与网格，以及它在屏幕上占据的位置
+/// 面板里的一个层级：组或访达文件夹的背景、标题区与网格，以及它在屏幕上占据的位置
 @MainActor
 struct GroupPanelLevel {
     /// 这一层的 id，即 `GroupPanelLevelContent.id`
@@ -20,10 +20,10 @@ struct GroupPanelLevel {
     /// Dock 所在屏幕的 frame（AppKit 屏幕坐标）：“移除” 的边界在尾巴那一侧横贯这块屏幕
     let dockScreenFrame: CGRect
 
-    /// 网格所在的滚动视图；空的 Flotilla 文件夹没有
+    /// 网格所在的滚动视图；空的组没有
     let scrollView: NSScrollView?
 
-    /// 网格；空的 Flotilla 文件夹没有
+    /// 网格；空的组没有
     let gridView: GroupGridView?
 
     /// 某一项的图标中心，AppKit 屏幕坐标；没有这一项时为 nil

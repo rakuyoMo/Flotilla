@@ -3,13 +3,13 @@ import AppKit
 // MARK: - GroupGridView
 
 /// 一个层级的网格：按 `GroupGridLayout` 摆放每一项的单元格，作为滚动视图的文档视图；
-/// 访达里的文件夹的层级在末尾另有一格 “在访达中打开”，其中的文件换上内容缩略图
+/// 访达文件夹的层级在末尾另有一格 “在访达中打开”，其中的文件换上内容缩略图
 ///
 /// 只为与可见区域相交的行（上下各多一行）建单元格，滚动时按需补建，建过的不删：
-/// 访达里的文件夹可能有上千项，一次建齐会让展开明显卡顿。缩略图请求也只为这个范围里的格保留，
+/// 访达文件夹可能有上千项，一次建齐会让展开明显卡顿。缩略图请求也只为这个范围里的格保留，
 /// 快速滚过上千项后，看得见的格不必排在滚过的格后面等 QuickLook
 ///
-/// 文件夹的层级里各项可以拖动：其余各格让位或补位，在轮廓之内松开保存新的顺序；
+/// 组的层级里各项可以拖动：其余各格让位或补位，在轮廓之内松开保存新的顺序；
 /// 拖出面板一段距离、拖动满一会儿，拖动图像上方浮出 “移除”，之后松开删除这一项，浮出之前在轮廓之外松开这一项落回原位
 @MainActor
 final class GroupGridView: NSView {
@@ -22,13 +22,13 @@ final class GroupGridView: NSView {
     /// 列数：拖动时按它算鼠标所在的格
     private let columnCount: Int
 
-    /// 子文件夹图标里叠加的预览图标数量
+    /// 子组图标里叠加的预览图标数量
     private let previewIconCount: Int
 
-    /// 隐藏的项的 id：访达里的文件夹显示隐藏文件时，这些项半透明
+    /// 隐藏的项的 id：访达文件夹显示隐藏文件时，这些项半透明
     private let hiddenItemIDs: Set<UUID>
 
-    /// 为文件请求内容缩略图；只有访达里的文件夹的层级有，为 nil 时文件显示图标
+    /// 为文件请求内容缩略图；只有访达文件夹的层级有，为 nil 时文件显示图标
     private let fileThumbnailLoader: FileThumbnailLoader?
 
     /// 点击 “在访达中打开” 后执行；为 nil 时没有这一格
@@ -37,7 +37,7 @@ final class GroupGridView: NSView {
     /// 点击某一项后执行
     private let selectionHandler: (GroupItem) -> Void
 
-    /// 拖动各项时的判定与动作；只有文件夹的层级有，为 nil 时各项不能拖动
+    /// 拖动各项时的判定与动作；只有组的层级有，为 nil 时各项不能拖动
     private let dragActions: GroupGridDragActions?
 
     /// 已建好单元格的格序号，与 `cellFrames` 的下标一致
@@ -54,7 +54,7 @@ final class GroupGridView: NSView {
         dragSession?.image
     }
 
-    /// 已建的子文件夹与它的单元格：系统外观变化时，按新外观重新渲染这些单元格的图标
+    /// 已建的子组与它的单元格：系统外观变化时，按新外观重新渲染这些单元格的图标
     private var groupItemViews: [(group: Group, itemView: GroupGridItemView)] = []
 
     /// 已建、还没换上缩略图的文件格，按格序号；只在有缩略图加载器时记，格在看得见附近时为它请求缩略图
@@ -74,11 +74,11 @@ final class GroupGridView: NSView {
     /// - Parameters:
     ///   - items: 这一层的项，顺序即展示顺序
     ///   - layout: 按格数算好的布局
-    ///   - previewIconCount: 子文件夹图标里叠加的预览图标数量
+    ///   - previewIconCount: 子组图标里叠加的预览图标数量
     ///   - hiddenItemIDs: 隐藏的项的 id，这些项半透明
-    ///   - fileThumbnailLoader: 为文件请求内容缩略图；只有访达里的文件夹的层级传入，为 nil 时文件显示图标
+    ///   - fileThumbnailLoader: 为文件请求内容缩略图；只有访达文件夹的层级传入，为 nil 时文件显示图标
     ///   - openInFinderHandler: 点击 “在访达中打开” 后执行；为 nil 时没有这一格
-    ///   - dragActions: 拖动各项时的判定与动作；只有文件夹的层级传入，为 nil 时各项不能拖动
+    ///   - dragActions: 拖动各项时的判定与动作；只有组的层级传入，为 nil 时各项不能拖动
     ///   - selectionHandler: 点击某一项后执行
     init(
         items: [GroupItem],
@@ -149,7 +149,7 @@ final class GroupGridView: NSView {
         )
     }
 
-    /// 离开窗口（离开这一层、面板收起、文件夹树变化重建）时，取消还没完成的缩略图请求，晚到的结果不再换上；
+    /// 离开窗口（离开这一层、面板收起、组树变化重建）时，取消还没完成的缩略图请求，晚到的结果不再换上；
     /// 进行中的拖动随之作废
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
@@ -183,7 +183,7 @@ final class GroupGridView: NSView {
         buildCells(near: rect)
     }
 
-    /// 系统外观变化时，已建的子文件夹图标换成对应外观的底板；之后才建的单元格按建的时候的外观渲染
+    /// 系统外观变化时，已建的子组图标换成对应外观的底板；之后才建的单元格按建的时候的外观渲染
     override func viewDidChangeEffectiveAppearance() {
         super.viewDidChangeEffectiveAppearance()
 
@@ -217,7 +217,7 @@ extension GroupGridView {
             return false
         }
 
-        // 让位只移动已有的单元格：懒建是为访达里上千项的目录，文件夹的层级一般不多，一次建齐
+        // 让位只移动已有的单元格：懒建是为上千项的访达文件夹，组的层级一般不多，一次建齐
         buildCells(near: bounds)
 
         // 图标中心与按下的位置之差保持到拖动结束：鼠标在图标上的位置与按下时相同
@@ -268,7 +268,7 @@ extension GroupGridView {
     }
 
     /// 松开：面板随即按鼠标的位置更新点击穿透；在轮廓之内落进目标格，落定之后保存新的顺序；
-    /// “移除” 已浮出，这一项从文件夹里删除，图像在原地淡出；其余情况这一项落回原来的格
+    /// “移除” 已浮出，这一项从组里删除，图像在原地淡出；其余情况这一项落回原来的格
     func endDrag(with event: NSEvent) {
         guard isDragging else { return }
 
@@ -375,7 +375,7 @@ extension GroupGridView {
 
         itemViews[index] = itemView
 
-        // 文件夹的层级里，单元格把拖动转交给网格
+        // 组的层级里，单元格把拖动转交给网格
         if dragActions != nil {
             itemView.dragTarget = self
         }
@@ -385,12 +385,12 @@ extension GroupGridView {
             itemView.alphaValue = GroupPanelMetrics.hiddenItemOpacity
         }
 
-        // 记下子文件夹的单元格：外观变化时只有文件夹图标需要重新渲染
+        // 记下子组的单元格：外观变化时只有组图标需要重新渲染
         if case .group(let group) = item {
             groupItemViews.append((group, itemView))
         }
 
-        // 访达里的文件夹的层级里，文件先显示图标；缩略图由 `updateThumbnailRequests()` 在格处于看得见附近时请求
+        // 访达文件夹的层级里，文件先显示图标；缩略图由 `updateThumbnailRequests()` 在格处于看得见附近时请求
         if case .file = item, fileThumbnailLoader != nil {
             cellsAwaitingThumbnails[index] = itemView
         }
@@ -441,7 +441,7 @@ extension GroupGridView {
         }
     }
 
-    /// 一项显示的名称与图标：App、文件与网页用各自的图标与显示名，子文件夹用渲染出的文件夹图标与文件夹名
+    /// 一项显示的名称与图标：App、文件与网页用各自的图标与显示名，子组用渲染出的组图标与组名
     private func content(of item: GroupItem) -> (title: String, icon: NSImage) {
         switch item {
         case .app(let app):
@@ -458,7 +458,7 @@ extension GroupGridView {
         }
     }
 
-    /// 子文件夹的图标，底板按网格当前的外观取色
+    /// 子组的图标，底板按网格当前的外观取色
     private func groupIcon(of group: Group) -> NSImage {
         GroupIconRenderer.render(
             group: group,
@@ -475,7 +475,7 @@ extension GroupGridView {
 
         let title = String(
             localized: "panel.openInFinder",
-            comment: "访达里的文件夹在面板里展开后，网格末尾那一格的名称"
+            comment: "访达文件夹在面板里展开后，网格末尾那一格的名称"
         )
 
         // 图标只给原图的形状，颜色与合成方式由单元格按外观决定
@@ -652,9 +652,9 @@ extension GroupGridView {
         _ = autoscroll(with: event)
     }
 
-    /// “移除” 浮出之后松开：这一项立即从文件夹里删除，图像连同 “移除” 在原地淡出
+    /// “移除” 浮出之后松开：这一项立即从组里删除，图像连同 “移除” 在原地淡出
     ///
-    /// 删除引起文件夹树变化，面板随即按剩下的项重建网格、重算尺寸；拖动到这里结束，淡出由图像自己收尾
+    /// 删除引起组树变化，面板随即按剩下的项重建网格、重算尺寸；拖动到这里结束，淡出由图像自己收尾
     private func remove(_ session: GroupGridDragSession) {
         dragSession = nil
         session.image.fadeOut()

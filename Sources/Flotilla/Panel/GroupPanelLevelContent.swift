@@ -2,15 +2,15 @@ import Foundation
 
 // MARK: - GroupPanelLevelContent
 
-/// 面板里一个层级展示的内容：Flotilla 的文件夹，或访达里的文件夹
+/// 面板里一个层级展示的内容：组，或访达文件夹
 enum GroupPanelLevelContent: Equatable {
-    /// Flotilla 的文件夹：网格是它的各项
+    /// 组：网格是它的各项
     case group(Group)
 
-    /// 访达里的文件夹：网格是其中的各项，末尾另有一格 “在访达中打开”
+    /// 访达文件夹：网格是其中的各项，末尾另有一格 “在访达中打开”
     case finderFolder(FileReference, items: [GroupItem])
 
-    /// 这一层的 id：文件夹的 id，或访达里的文件夹这一项的 id；返回时按它在父层级里找到缩回的图标
+    /// 这一层的 id：组的 id，或访达文件夹这一项的 id；返回时按它在父层级里找到缩回的图标
     var id: UUID {
         switch self {
         case .group(let group):
@@ -21,7 +21,7 @@ enum GroupPanelLevelContent: Equatable {
         }
     }
 
-    /// 标题区显示的名称：文件夹名，或访达里的文件夹在访达中显示的名称
+    /// 标题区显示的名称：组名，或访达文件夹在访达中显示的名称
     var title: String {
         switch self {
         case .group(let group):
@@ -44,14 +44,14 @@ enum GroupPanelLevelContent: Equatable {
     }
 
     /// “在访达中打开” 打开的文件夹；
-    /// Flotilla 的文件夹没有这一格（需求 4），为 nil
+    /// 组没有这一格（需求 4），为 nil
     var finderFolderURL: URL? {
         guard case .finderFolder(let finderFolder, _) = self else { return nil }
 
         return finderFolder.url
     }
 
-    /// 网格里的文件是否显示内容缩略图：访达里的文件夹与原生叠放一致显示缩略图，Flotilla 的文件夹显示图标
+    /// 网格里的文件是否显示内容缩略图：访达文件夹与原生叠放一致显示缩略图，组显示图标
     var showsFileThumbnails: Bool {
         switch self {
         case .group:
@@ -62,7 +62,7 @@ enum GroupPanelLevelContent: Equatable {
         }
     }
 
-    /// 网格的格数：访达里的文件夹多出末尾的 “在访达中打开”，空的也有这一格
+    /// 网格的格数：访达文件夹多出末尾的 “在访达中打开”，空的也有这一格
     var cellCount: Int {
         finderFolderURL == nil ? items.count : items.count + 1
     }

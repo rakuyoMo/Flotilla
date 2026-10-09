@@ -11,7 +11,7 @@ struct DockGroupPresenterState {
     /// 同一次点击的两路信号相互合并的时间窗（秒）
     static let signalMergeInterval: TimeInterval = 1
 
-    /// 正在展示的根文件夹；nil 表示面板已收起
+    /// 正在展示的根组；nil 表示面板已收起
     private(set) var presentedGroupID: UUID? = nil
 
     /// 快速路径识别出的、尚未抬起的 tile 按下，记下位置与时间，抬起时据此排除拖动与长按
@@ -23,7 +23,7 @@ struct DockGroupPresenterState {
     /// 或在同一 tile 上连点两次，两个 URL 随后才到达时，每个 URL 都要与一次点击合并
     private var recentTileClicks: [(groupID: UUID, time: TimeInterval)] = []
 
-    /// 最近一次因点击 Dock 区域而收起时展示的文件夹，等待与随后到达的 URL 合并
+    /// 最近一次因点击 Dock 区域而收起时展示的组，等待与随后到达的 URL 合并
     private var lastDockAreaDismissal: (groupID: UUID, time: TimeInterval)? = nil
 }
 
@@ -71,7 +71,7 @@ extension DockGroupPresenterState {
         return dismissForOutsideClick(isInDockArea: true, time: time)
     }
 
-    /// 左键抬起：完成一次 tile 点击，切换该文件夹的展开状态
+    /// 左键抬起：完成一次 tile 点击，切换该组的展开状态
     ///
     /// 按住超过 `longPressDuration` 时 Dock 已弹出 App 菜单，
     /// 这次抬起不算点击，与拖动 tile 一样按面板以外的点击收起
@@ -85,7 +85,7 @@ extension DockGroupPresenterState {
             return dismissForOutsideClick(isInDockArea: true, time: time)
         }
 
-        // 记下这次点击，等待随后到达的同一文件夹 URL 来合并；追加在末尾，记录保持按抬起的先后排列
+        // 记下这次点击，等待随后到达的同一个组的 URL 来合并；追加在末尾，记录保持按抬起的先后排列
         pruneTileClicks(at: time)
         recentTileClicks.append((press.groupID, time))
 
@@ -93,8 +93,8 @@ extension DockGroupPresenterState {
     }
 
     /// stub 打开的 `flotilla://folder/<id>` 到达：
-    /// 属于快速路径已处理过的点击、或刚因点击 Dock 区域而收起的同一文件夹时忽略，
-    /// 否则切换该文件夹的展开状态
+    /// 属于快速路径已处理过的点击、或刚因点击 Dock 区域而收起的同一个组时忽略，
+    /// 否则切换该组的展开状态
     mutating func receiveURL(
         groupID: UUID,
         time: TimeInterval
@@ -102,7 +102,7 @@ extension DockGroupPresenterState {
         // 超出合并时间窗的点击已不再合并，先清掉，剩下的记录都在时间窗内
         pruneTileClicks(at: time)
 
-        // 快速路径已处理过这个文件夹的点击，随后到达的 URL 属于其中最早的那一次；
+        // 快速路径已处理过这个组的点击，随后到达的 URL 属于其中最早的那一次；
         // 该条记录随即删除，一次点击只合并一个 URL，同一 tile 连点两次就依次合并两个
         if let index = recentTileClicks.firstIndex(where: { $0.groupID == groupID }) {
             recentTileClicks.remove(at: index)
@@ -122,7 +122,7 @@ extension DockGroupPresenterState {
         return toggle(groupID: groupID)
     }
 
-    /// 由 Esc、启动 App、打开文件或网页、屏幕参数变化、文件夹被删除等原因收起
+    /// 由 Esc、启动 App、打开文件或网页、屏幕参数变化、组被删除等原因收起
     mutating func dismiss() -> DockGroupPresenterTransition {
         guard presentedGroupID != nil else { return .unchanged }
 
@@ -135,7 +135,7 @@ extension DockGroupPresenterState {
 // MARK: - Private
 
 extension DockGroupPresenterState {
-    /// 未展开时展开；已展开同一文件夹时收起；已展开另一个文件夹时直接切换
+    /// 未展开时展开；已展开同一个组时收起；已展开另一个组时直接切换
     private mutating func toggle(groupID: UUID) -> DockGroupPresenterTransition {
         guard presentedGroupID != groupID else {
             presentedGroupID = nil
@@ -147,7 +147,7 @@ extension DockGroupPresenterState {
         return .expand(groupID)
     }
 
-    /// 点击面板以外的位置时收起；落在 Dock 区域时记下被收起的文件夹，供随后到达的 URL 合并
+    /// 点击面板以外的位置时收起；落在 Dock 区域时记下被收起的组，供随后到达的 URL 合并
     private mutating func dismissForOutsideClick(
         isInDockArea: Bool,
         time: TimeInterval

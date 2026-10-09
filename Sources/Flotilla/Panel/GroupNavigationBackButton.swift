@@ -28,7 +28,7 @@ final class GroupNavigationBackButton: NSView {
         setAccessibilityLabel(
             String(
                 localized: "panel.back",
-                comment: "面板标题区返回按钮的辅助功能标签，回到上一层文件夹"
+                comment: "面板标题区返回按钮的辅助功能标签，回到上一层"
             )
         )
     }
