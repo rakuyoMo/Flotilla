@@ -1,0 +1,2451 @@
+<!doctype html>
+<html
+  lang="zh-Hans"
+  data-root="../"
+>
+<head>
+  <meta charset="utf-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
+  <!-- 标记脚本可用，CSS 据此启用依赖脚本的样式 -->
+  <script>
+    document.documentElement.classList.add("js");
+  </script>
+
+  <title>归帆 —— 帆归坞，App 归组。</title>
+
+  <meta
+    name="description"
+    content="在 macOS 的 Dock 上增加 “组”：把 App、文件、访达文件夹与网页分类收纳进去，点击组即在 Dock 上方以网格展开，与原生 Dock 文件夹一样。"
+  >
+
+  <meta
+    name="color-scheme"
+    content="light dark"
+  >
+
+  <meta
+    name="theme-color"
+    content="#FDF9F0"
+    media="(prefers-color-scheme: light)"
+  >
+
+  <meta
+    name="theme-color"
+    content="#031536"
+    media="(prefers-color-scheme: dark)"
+  >
+
+  <link
+    rel="canonical"
+    href="https://blog.rakuyo.dev/Flotilla/zh/"
+  >
+
+  <link
+    rel="alternate"
+    hreflang="en"
+    href="https://blog.rakuyo.dev/Flotilla/"
+  >
+
+  <link
+    rel="alternate"
+    hreflang="zh-Hans"
+    href="https://blog.rakuyo.dev/Flotilla/zh/"
+  >
+
+  <link
+    rel="alternate"
+    hreflang="x-default"
+    href="https://blog.rakuyo.dev/Flotilla/"
+  >
+
+  <meta
+    property="og:type"
+    content="website"
+  >
+
+  <meta
+    property="og:site_name"
+    content="归帆"
+  >
+
+  <meta
+    property="og:title"
+    content="归帆 —— 帆归坞，App 归组。"
+  >
+
+  <meta
+    property="og:description"
+    content="在 macOS 的 Dock 上增加 “组”：把 App、文件、访达文件夹与网页分类收纳进去，点击组即在 Dock 上方以网格展开，与原生 Dock 文件夹一样。"
+  >
+
+  <meta
+    property="og:url"
+    content="https://blog.rakuyo.dev/Flotilla/zh/"
+  >
+
+  <meta
+    property="og:image"
+    content="https://blog.rakuyo.dev/Flotilla/assets/img/og-zh.png"
+  >
+
+  <meta
+    property="og:image:width"
+    content="1200"
+  >
+
+  <meta
+    property="og:image:height"
+    content="480"
+  >
+
+  <meta
+    property="og:locale"
+    content="zh_CN"
+  >
+
+  <meta
+    name="twitter:card"
+    content="summary_large_image"
+  >
+
+  <link
+    rel="icon"
+    href="../assets/img/favicon-light.png"
+    type="image/png"
+    media="(prefers-color-scheme: light)"
+  >
+
+  <link
+    rel="icon"
+    href="../assets/img/favicon-dark.png"
+    type="image/png"
+    media="(prefers-color-scheme: dark)"
+  >
+
+  <link
+    rel="apple-touch-icon"
+    href="../assets/img/apple-touch-icon.png"
+  >
+
+  <link
+    rel="stylesheet"
+    href="../assets/css/site.css"
+  >
+
+  <link
+    rel="stylesheet"
+    href="../assets/css/home.css"
+  >
+
+  <script
+    src="../assets/js/site.js"
+    defer
+  ></script>
+  <script
+    src="../assets/js/releases.js"
+    defer
+  ></script>
+</head>
+<body>
+  <svg
+    class="icon-sprite"
+    aria-hidden="true"
+  >
+    <symbol
+      id="i-github"
+      viewBox="0 0 16 16"
+    >
+      <path
+        fill="currentColor"
+        stroke="none"
+        d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"
+      />
+    </symbol>
+
+    <symbol
+      id="i-download"
+      viewBox="0 0 24 24"
+    >
+      <path d="M12 4v11"/>
+      <path d="m7 10 5 5 5-5"/>
+      <path d="M5 19.5h14"/>
+    </symbol>
+
+    <symbol
+      id="i-arrow-right"
+      viewBox="0 0 24 24"
+    >
+      <path d="M5 12h14"/>
+      <path d="m13 6 6 6-6 6"/>
+    </symbol>
+
+    <symbol
+      id="i-external"
+      viewBox="0 0 24 24"
+    >
+      <path d="M7 17 17 7"/>
+      <path d="M8.5 7H17v8.5"/>
+    </symbol>
+
+    <symbol
+      id="i-copy"
+      viewBox="0 0 24 24"
+    >
+      <rect
+        x="8.5"
+        y="8.5"
+        width="11.5"
+        height="11.5"
+        rx="2.5"
+      />
+
+      <path d="M15.5 8.5V6.5A2.5 2.5 0 0 0 13 4H6.5A2.5 2.5 0 0 0 4 6.5V13a2.5 2.5 0 0 0 2.5 2.5h2"/>
+    </symbol>
+
+    <symbol
+      id="i-check"
+      viewBox="0 0 24 24"
+    >
+      <path d="m5 12.5 4.5 4.5L19 7.5"/>
+    </symbol>
+
+    <symbol
+      id="i-close"
+      viewBox="0 0 24 24"
+    >
+      <path d="m6.5 6.5 11 11"/>
+      <path d="m17.5 6.5-11 11"/>
+    </symbol>
+
+    <symbol
+      id="i-menu"
+      viewBox="0 0 24 24"
+    >
+      <path d="M4 8.5h16"/>
+      <path d="M4 15.5h16"/>
+    </symbol>
+
+    <symbol
+      id="i-globe"
+      viewBox="0 0 24 24"
+    >
+      <circle
+        cx="12"
+        cy="12"
+        r="9"
+      />
+
+      <path d="M3 12h18"/>
+      <path d="M12 3c2.5 2.6 3.75 5.6 3.75 9s-1.25 6.4-3.75 9c-2.5-2.6-3.75-5.6-3.75-9S9.5 5.6 12 3Z"/>
+    </symbol>
+
+    <symbol
+      id="i-link"
+      viewBox="0 0 24 24"
+    >
+      <path d="M10 14a4.5 4.5 0 0 0 6.4 0l2.8-2.8a4.5 4.5 0 0 0-6.4-6.4L11.5 6.1"/>
+      <path d="M14 10a4.5 4.5 0 0 0-6.4 0l-2.8 2.8a4.5 4.5 0 0 0 6.4 6.4l1.3-1.3"/>
+    </symbol>
+
+    <symbol
+      id="i-rss"
+      viewBox="0 0 24 24"
+    >
+      <path d="M5 4.5A14.5 14.5 0 0 1 19.5 19"/>
+      <path d="M5 10.5a8.5 8.5 0 0 1 8.5 8.5"/>
+
+      <circle
+        cx="6"
+        cy="18"
+        r="1.5"
+        fill="currentColor"
+        stroke="none"
+      />
+    </symbol>
+
+    <symbol
+      id="i-star"
+      viewBox="0 0 24 24"
+    >
+      <path d="m12 3.5 2.6 5.3 5.9.9-4.25 4.1 1 5.8L12 16.85l-5.25 2.75 1-5.8L3.5 9.7l5.9-.9Z"/>
+    </symbol>
+
+    <symbol
+      id="i-eye"
+      viewBox="0 0 24 24"
+    >
+      <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/>
+
+      <circle
+        cx="12"
+        cy="12"
+        r="3"
+      />
+    </symbol>
+
+    <symbol
+      id="i-issue"
+      viewBox="0 0 24 24"
+    >
+      <circle
+        cx="12"
+        cy="12"
+        r="8.5"
+      />
+
+      <circle
+        cx="12"
+        cy="12"
+        r="1.75"
+        fill="currentColor"
+        stroke="none"
+      />
+    </symbol>
+
+    <symbol
+      id="i-pull-request"
+      viewBox="0 0 24 24"
+    >
+      <circle
+        cx="6.5"
+        cy="6"
+        r="2.25"
+      />
+
+      <circle
+        cx="6.5"
+        cy="18"
+        r="2.25"
+      />
+
+      <circle
+        cx="17.5"
+        cy="18"
+        r="2.25"
+      />
+
+      <path d="M6.5 8.25v7.5"/>
+      <path d="M17.5 15.75V9.5a3 3 0 0 0-3-3H11"/>
+      <path d="m13 4-2.5 2.5L13 9"/>
+    </symbol>
+
+    <symbol
+      id="i-terminal"
+      viewBox="0 0 24 24"
+    >
+      <rect
+        x="3"
+        y="4.5"
+        width="18"
+        height="15"
+        rx="3"
+      />
+
+      <path d="m7.5 10 2.5 2-2.5 2"/>
+      <path d="M12.5 14.5h4"/>
+    </symbol>
+
+    <symbol
+      id="i-scale"
+      viewBox="0 0 24 24"
+    >
+      <path d="M12 4v16"/>
+      <path d="M8 20h8"/>
+      <path d="M5 7.5h14"/>
+      <path d="M5 7.5 2.75 13a2.5 2.5 0 0 0 4.5 0Z"/>
+      <path d="M19 7.5 16.75 13a2.5 2.5 0 0 0 4.5 0Z"/>
+    </symbol>
+
+    <symbol
+      id="i-chevron-down"
+      viewBox="0 0 24 24"
+    >
+      <path d="m6 9.5 6 6 6-6"/>
+    </symbol>
+
+    <symbol
+      id="i-dock"
+      viewBox="0 0 24 24"
+    >
+      <rect
+        x="2.5"
+        y="12"
+        width="19"
+        height="8.5"
+        rx="3"
+      />
+
+      <rect
+        x="5.5"
+        y="14.75"
+        width="3.5"
+        height="3.5"
+        rx="1"
+      />
+
+      <rect
+        x="10.25"
+        y="14.75"
+        width="3.5"
+        height="3.5"
+        rx="1"
+      />
+
+      <rect
+        x="15"
+        y="14.75"
+        width="3.5"
+        height="3.5"
+        rx="1"
+      />
+
+      <path d="M12 3.5v5"/>
+      <path d="m9.5 6.5 2.5 2.5 2.5-2.5"/>
+    </symbol>
+
+    <symbol
+      id="i-items"
+      viewBox="0 0 24 24"
+    >
+      <rect
+        x="3"
+        y="3"
+        width="7.5"
+        height="7.5"
+        rx="2"
+      />
+
+      <path d="M14 3h4l2.5 2.5v5H14Z"/>
+      <path d="M3 15a1.5 1.5 0 0 1 1.5-1.5h2l1 1.25h3a1.5 1.5 0 0 1 1.5 1.5v3.25a1.5 1.5 0 0 1-1.5 1.5h-6A1.5 1.5 0 0 1 3 19.5Z"/>
+
+      <circle
+        cx="17.25"
+        cy="17.25"
+        r="3.75"
+      />
+
+      <path d="M13.5 17.25h7.5"/>
+    </symbol>
+
+    <symbol
+      id="i-nested"
+      viewBox="0 0 24 24"
+    >
+      <rect
+        x="3"
+        y="3"
+        width="18"
+        height="18"
+        rx="4.5"
+      />
+
+      <rect
+        x="8"
+        y="8"
+        width="8"
+        height="8"
+        rx="2"
+      />
+    </symbol>
+
+    <symbol
+      id="i-grid"
+      viewBox="0 0 24 24"
+    >
+      <path d="M5 3.5h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-5l-2 2.5-2-2.5H5a2 2 0 0 1-2-2v-10a2 2 0 0 1 2-2Z"/>
+
+      <g
+        fill="currentColor"
+        stroke="none"
+      >
+        <circle
+          cx="8"
+          cy="8.5"
+          r="1.15"
+        />
+
+        <circle
+          cx="12"
+          cy="8.5"
+          r="1.15"
+        />
+
+        <circle
+          cx="16"
+          cy="8.5"
+          r="1.15"
+        />
+
+        <circle
+          cx="8"
+          cy="12.75"
+          r="1.15"
+        />
+
+        <circle
+          cx="12"
+          cy="12.75"
+          r="1.15"
+        />
+
+        <circle
+          cx="16"
+          cy="12.75"
+          r="1.15"
+        />
+      </g>
+    </symbol>
+
+    <symbol
+      id="i-group-icon"
+      viewBox="0 0 24 24"
+    >
+      <rect
+        x="3"
+        y="3"
+        width="18"
+        height="18"
+        rx="5"
+      />
+
+      <rect
+        x="7"
+        y="7"
+        width="4"
+        height="4"
+        rx="1"
+      />
+
+      <rect
+        x="13"
+        y="7"
+        width="4"
+        height="4"
+        rx="1"
+      />
+
+      <rect
+        x="7"
+        y="13"
+        width="4"
+        height="4"
+        rx="1"
+      />
+
+      <rect
+        x="13"
+        y="13"
+        width="4"
+        height="4"
+        rx="1"
+      />
+    </symbol>
+
+    <symbol
+      id="i-move"
+      viewBox="0 0 24 24"
+    >
+      <path d="M12 3v18"/>
+      <path d="m9 6 3-3 3 3"/>
+      <path d="m9 18 3 3 3-3"/>
+      <path d="M3 12h18"/>
+      <path d="m6 9-3 3 3 3"/>
+      <path d="m18 9 3 3-3 3"/>
+    </symbol>
+
+    <symbol
+      id="i-route"
+      viewBox="0 0 24 24"
+    >
+      <circle
+        cx="6"
+        cy="18"
+        r="2.5"
+      />
+
+      <circle
+        cx="18"
+        cy="6"
+        r="2.5"
+      />
+
+      <path d="M8.5 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5"/>
+    </symbol>
+
+    <symbol
+      id="i-menubar"
+      viewBox="0 0 24 24"
+    >
+      <rect
+        x="2.5"
+        y="4"
+        width="19"
+        height="16"
+        rx="3"
+      />
+
+      <path d="M2.5 8.5h19"/>
+
+      <circle
+        cx="17.75"
+        cy="6.25"
+        r="0.9"
+        fill="currentColor"
+        stroke="none"
+      />
+    </symbol>
+
+    <symbol
+      id="i-languages"
+      viewBox="0 0 24 24"
+    >
+      <path d="M3.5 5.5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2V10a2 2 0 0 1-2 2h-4l-3 2.5V12a2 2 0 0 1-2-2Z"/>
+      <path d="M17.5 9h1a2 2 0 0 1 2 2v4.5a2 2 0 0 1-2 2V20l-3-2.5h-3a2 2 0 0 1-2-2V15"/>
+    </symbol>
+
+    <symbol
+      id="i-refresh"
+      viewBox="0 0 24 24"
+    >
+      <path d="M19.5 11A7.5 7.5 0 0 0 6 6.6L4.5 8"/>
+      <path d="M4.5 4v4h4"/>
+      <path d="M4.5 13A7.5 7.5 0 0 0 18 17.4l1.5-1.4"/>
+      <path d="M19.5 20v-4h-4"/>
+    </symbol>
+
+    <symbol
+      id="i-archive"
+      viewBox="0 0 24 24"
+    >
+      <rect
+        x="3"
+        y="4"
+        width="18"
+        height="5"
+        rx="1.5"
+      />
+
+      <path d="M5 9v8.5A2.5 2.5 0 0 0 7.5 20h9a2.5 2.5 0 0 0 2.5-2.5V9"/>
+      <path d="M10 13h4"/>
+    </symbol>
+
+    <symbol
+      id="i-folder"
+      viewBox="0 0 24 24"
+    >
+      <path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h3.2l2 2.2h7.8A2.5 2.5 0 0 1 21 9.7v7.8a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5Z"/>
+    </symbol>
+
+    <symbol
+      id="i-stack"
+      viewBox="0 0 24 24"
+    >
+      <path d="M3 9.5A2.5 2.5 0 0 1 5.5 7h3.2l2 2.2h7.8A2.5 2.5 0 0 1 21 11.7v6.3a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 18Z"/>
+      <path d="M6 4h12"/>
+    </symbol>
+
+    <symbol
+      id="i-drop"
+      viewBox="0 0 24 24"
+    >
+      <rect
+        x="3"
+        y="11"
+        width="18"
+        height="9.5"
+        rx="3"
+      />
+
+      <path d="M12 3v9"/>
+      <path d="m8.5 8.5 3.5 3.5 3.5-3.5"/>
+    </symbol>
+
+    <symbol
+      id="i-shield"
+      viewBox="0 0 24 24"
+    >
+      <path d="M12 3 4.5 6v5.5c0 4.5 3.2 8.2 7.5 9.5 4.3-1.3 7.5-5 7.5-9.5V6Z"/>
+      <path d="m9 12 2.2 2.2L15.5 10"/>
+    </symbol>
+
+    <symbol
+      id="i-accessibility"
+      viewBox="0 0 24 24"
+    >
+      <circle
+        cx="12"
+        cy="12"
+        r="9"
+      />
+
+      <circle
+        cx="12"
+        cy="7.5"
+        r="1.25"
+        fill="currentColor"
+        stroke="none"
+      />
+
+      <path d="M7.5 10h9"/>
+      <path d="M12 10v4"/>
+      <path d="m9.5 18 2.5-4 2.5 4"/>
+    </symbol>
+
+    <symbol
+      id="i-sail"
+      viewBox="0 0 24 24"
+    >
+      <path d="M12 3v14"/>
+      <path d="M12 4.5 18.5 15H12"/>
+      <path d="M10 6.5 5 15h5"/>
+      <path d="M3.5 18h17l-2 2.5h-13Z"/>
+    </symbol>
+  </svg>
+
+  <a
+    class="skip-link"
+    href="#main"
+  >跳到正文</a>
+
+  <header
+    class="site-header"
+    data-site-header
+  >
+    <nav
+      class="nav container"
+      aria-label="主导航"
+    >
+      <a
+        class="brand"
+        href="./"
+      >
+        <picture>
+          <source
+            srcset="../assets/img/app-icon-dark-64.png"
+            media="(prefers-color-scheme: dark)"
+          >
+
+          <img
+            src="../assets/img/app-icon-light-64.png"
+            alt=""
+            width="32"
+            height="32"
+          >
+        </picture>
+
+        <span>归帆</span>
+      </a>
+
+      <button
+        class="nav-toggle"
+        type="button"
+        aria-expanded="false"
+        aria-controls="nav-menu"
+        aria-label="菜单"
+        data-nav-toggle
+      >
+        <svg
+          class="icon"
+          aria-hidden="true"
+        ><use href="#i-menu"/></svg>
+      </button>
+
+      <div
+        class="nav-menu"
+        id="nav-menu"
+      >
+        <ul class="nav-links">
+          <li>
+            <a
+              href="#features"
+              data-nav-section="features"
+            >功能</a>
+          </li>
+
+          <li>
+            <a
+              href="#how-it-works"
+              data-nav-section="how-it-works"
+            >工作原理</a>
+          </li>
+
+          <li>
+            <a href="releases/">更新日志</a>
+          </li>
+
+          <li>
+            <a href="https://github.com/rakuyoMo/Flotilla">
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-github"/></svg>
+              GitHub
+            </a>
+          </li>
+        </ul>
+
+        <a
+          class="language-switch"
+          href="../"
+          hreflang="en"
+          lang="en"
+          data-language-switch="en"
+        >
+          <svg
+            class="icon"
+            aria-hidden="true"
+          ><use href="#i-globe"/></svg>
+          English
+        </a>
+      </div>
+
+      <a
+        class="button button-primary button-small nav-download"
+        href="download/"
+      >下载</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section
+      class="hero"
+      aria-labelledby="hero-title"
+    >
+      <div
+        class="hero-sky"
+        aria-hidden="true"
+      ></div>
+
+      <div class="container hero-inner">
+        <div class="hero-copy">
+          <h1
+            class="hero-title"
+            id="hero-title"
+          >帆归坞，App&nbsp;归组。</h1>
+
+          <p class="hero-lead">
+            在 macOS 的 Dock 上增加 “组”：把 App、文件、访达文件夹与网页分类收纳进去，点击组即在 Dock 上方以网格展开，与原生 Dock 文件夹一样。
+          </p>
+
+          <div class="hero-actions">
+            <a
+              class="button button-primary button-large"
+              href="https://github.com/rakuyoMo/Flotilla/releases/latest"
+              data-when="latest unknown"
+              data-download
+            >
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-download"/></svg>
+              下载 Mac 版
+              <span
+                class="version-chip"
+                data-when="latest"
+                data-release-version
+              ></span>
+            </a>
+
+            <a
+              class="button button-primary button-large"
+              href="https://github.com/rakuyoMo/Flotilla"
+              data-when="none"
+            >
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-github"/></svg>
+              在 GitHub 上查看
+            </a>
+
+            <a
+              class="button button-secondary button-large"
+              href="https://github.com/rakuyoMo/Flotilla"
+              data-when="latest unknown"
+            >
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-github"/></svg>
+              在 GitHub 上查看
+            </a>
+
+            <a
+              class="button button-secondary button-large"
+              href="download/#build"
+              data-when="none"
+            >
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-terminal"/></svg>
+              从源码构建
+            </a>
+          </div>
+
+          <p class="meta-line hero-meta">
+            <span>macOS 15 或更高版本</span>
+            <span>Apple 芯片</span>
+            <span>免费开源（GPL-3.0）</span>
+          </p>
+
+          <p
+            class="hero-whats-new"
+            data-when="latest"
+          >
+            <a
+              href="releases/"
+              data-release-notes-link
+            ><span data-release-version></span> 更新了什么 →</a>
+          </p>
+        </div>
+
+        <figure class="hero-visual">
+          <div
+            class="hero-orb"
+            aria-hidden="true"
+          ></div>
+
+          <picture>
+            <source
+              srcset="../assets/img/screenshot-panel-zh-dark.jpg"
+              media="(prefers-color-scheme: dark)"
+            >
+
+            <img
+              class="hero-shot"
+              src="../assets/img/screenshot-panel-zh-light.jpg"
+              alt="“常用” 组在 Dock 上方以网格展开，里面是几个 App 与一个访达文件夹，尾巴指向组的 tile"
+              width="482"
+              height="556"
+              fetchpriority="high"
+            >
+          </picture>
+        </figure>
+      </div>
+
+      <svg
+        class="hero-waves"
+        viewBox="0 0 1440 120"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+      >
+        <path
+          class="wave wave-back"
+          d="M0 46C86.4 36 153.6 36 240 46s153.6 10 240 0 153.6-10 240 0 153.6 10 240 0 153.6-10 240 0 153.6 10 240 0 153.6-10 240 0 153.6 10 240 0 153.6-10 240 0 153.6 10 240 0 153.6-10 240 0 153.6 10 240 0V120H0Z"
+        />
+
+        <path
+          class="wave wave-middle"
+          d="M0 64C64.8 56 115.2 56 180 64s115.2 8 180 0 115.2-8 180 0 115.2 8 180 0 115.2-8 180 0 115.2 8 180 0 115.2-8 180 0 115.2 8 180 0 115.2-8 180 0 115.2 8 180 0 115.2-8 180 0 115.2 8 180 0 115.2-8 180 0 115.2 8 180 0 115.2-8 180 0 115.2 8 180 0V120H0Z"
+        />
+
+        <path
+          class="wave wave-front"
+          d="M0 84C129.6 75 230.4 75 360 84s230.4 9 360 0 230.4-9 360 0 230.4 9 360 0 230.4-9 360 0 230.4 9 360 0 230.4-9 360 0 230.4 9 360 0V120H0Z"
+        />
+      </svg>
+    </section>
+
+    <section
+      class="section about"
+      id="about"
+      aria-labelledby="about-title"
+    >
+      <div class="container">
+        <p class="eyebrow reveal">简介</p>
+
+        <h2
+          class="about-statement reveal"
+          id="about-title"
+        >
+          <span class="about-statement-muted">原生的 Dock 文件夹只能放在 Dock 右侧，而且每一个都是磁盘上的一个文件夹。</span>归帆（Flotilla）把 “组” 放进 Dock 左侧的 App 区域。
+        </h2>
+
+        <figure
+          class="dock-diagram reveal"
+          aria-hidden="true"
+        >
+          <svg
+            class="dock-diagram-art"
+            viewBox="0 56 960 244"
+          >
+            <path
+              class="diagram-panel"
+              d="M200 70h200a18 18 0 0 1 18 18v94a18 18 0 0 1-18 18h-86l-14 14-14-14h-86a18 18 0 0 1-18-18V88a18 18 0 0 1 18-18Z"
+            />
+
+            <rect
+              class="diagram-tile diagram-sky"
+              x="224"
+              y="92"
+              width="44"
+              height="44"
+              rx="11"
+            />
+
+            <rect
+              class="diagram-tile diagram-sun"
+              x="278"
+              y="92"
+              width="44"
+              height="44"
+              rx="11"
+            />
+
+            <rect
+              class="diagram-tile diagram-sea"
+              x="332"
+              y="92"
+              width="44"
+              height="44"
+              rx="11"
+            />
+
+            <rect
+              class="diagram-tile diagram-sea"
+              x="224"
+              y="146"
+              width="44"
+              height="40"
+              rx="11"
+            />
+
+            <rect
+              class="diagram-tile diagram-sky"
+              x="278"
+              y="146"
+              width="44"
+              height="40"
+              rx="11"
+            />
+
+            <path
+              class="diagram-folder-mark"
+              d="M332 152a5 5 0 0 1 5-5h10l4 5h20a5 5 0 0 1 5 5v24a5 5 0 0 1-5 5h-34a5 5 0 0 1-5-5Z"
+            />
+
+            <rect
+              class="diagram-dock"
+              x="60"
+              y="222"
+              width="840"
+              height="76"
+              rx="26"
+            />
+
+            <rect
+              class="diagram-tile diagram-muted"
+              x="86"
+              y="234"
+              width="52"
+              height="52"
+              rx="13"
+            />
+
+            <rect
+              class="diagram-tile diagram-muted"
+              x="150"
+              y="234"
+              width="52"
+              height="52"
+              rx="13"
+            />
+
+            <rect
+              class="diagram-tile diagram-muted"
+              x="214"
+              y="234"
+              width="52"
+              height="52"
+              rx="13"
+            />
+
+            <rect
+              class="diagram-group"
+              x="278"
+              y="234"
+              width="52"
+              height="52"
+              rx="13"
+            />
+
+            <rect
+              class="diagram-tile diagram-sky"
+              x="287"
+              y="243"
+              width="15"
+              height="15"
+              rx="4"
+            />
+
+            <rect
+              class="diagram-tile diagram-sun"
+              x="306"
+              y="243"
+              width="15"
+              height="15"
+              rx="4"
+            />
+
+            <rect
+              class="diagram-tile diagram-sea"
+              x="287"
+              y="262"
+              width="15"
+              height="15"
+              rx="4"
+            />
+
+            <rect
+              class="diagram-tile diagram-sky"
+              x="306"
+              y="262"
+              width="15"
+              height="15"
+              rx="4"
+            />
+
+            <rect
+              class="diagram-tile diagram-muted"
+              x="342"
+              y="234"
+              width="52"
+              height="52"
+              rx="13"
+            />
+
+            <rect
+              class="diagram-group"
+              x="406"
+              y="234"
+              width="52"
+              height="52"
+              rx="13"
+            />
+
+            <rect
+              class="diagram-tile diagram-sun"
+              x="415"
+              y="243"
+              width="15"
+              height="15"
+              rx="4"
+            />
+
+            <rect
+              class="diagram-tile diagram-sea"
+              x="434"
+              y="243"
+              width="15"
+              height="15"
+              rx="4"
+            />
+
+            <rect
+              class="diagram-tile diagram-sky"
+              x="415"
+              y="262"
+              width="15"
+              height="15"
+              rx="4"
+            />
+
+            <rect
+              class="diagram-tile diagram-muted"
+              x="470"
+              y="234"
+              width="52"
+              height="52"
+              rx="13"
+            />
+
+            <rect
+              class="diagram-tile diagram-muted"
+              x="534"
+              y="234"
+              width="52"
+              height="52"
+              rx="13"
+            />
+
+            <rect
+              class="diagram-tile diagram-muted"
+              x="598"
+              y="234"
+              width="52"
+              height="52"
+              rx="13"
+            />
+
+            <path
+              class="diagram-divider"
+              d="M680 242v36"
+            />
+
+            <rect
+              class="diagram-folder"
+              x="710"
+              y="234"
+              width="52"
+              height="52"
+              rx="13"
+            />
+
+            <path
+              class="diagram-folder-mark diagram-folder-mark-small"
+              d="M722 249a3 3 0 0 1 3-3h7l3 3.5h12a3 3 0 0 1 3 3V271a3 3 0 0 1-3 3h-22a3 3 0 0 1-3-3Z"
+            />
+
+            <rect
+              class="diagram-folder"
+              x="774"
+              y="234"
+              width="52"
+              height="52"
+              rx="13"
+            />
+
+            <path
+              class="diagram-folder-mark diagram-folder-mark-small"
+              d="M786 249a3 3 0 0 1 3-3h7l3 3.5h12a3 3 0 0 1 3 3V271a3 3 0 0 1-3 3h-22a3 3 0 0 1-3-3Z"
+            />
+
+            <rect
+              class="diagram-tile diagram-muted"
+              x="838"
+              y="234"
+              width="40"
+              height="52"
+              rx="11"
+            />
+          </svg>
+
+          <div class="dock-diagram-labels">
+            <p class="dock-diagram-label dock-diagram-label-groups">
+              <strong>归帆的组</strong>
+              <span>放在左侧的 App 区域</span>
+            </p>
+
+            <p class="dock-diagram-label dock-diagram-label-folders">
+              <strong>原生 Dock 文件夹</strong>
+              <span>只能放在右侧</span>
+            </p>
+          </div>
+        </figure>
+
+        <ul class="about-points">
+          <li class="reveal">
+            <span class="icon-box icon-box-sun">
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-nested"/></svg>
+            </span>
+
+            <p>组由归帆自己保存，不对应磁盘上的文件夹，收纳进去的 App 都留在原处。</p>
+          </li>
+
+          <li class="reveal">
+            <span class="icon-box icon-box-sky">
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-items"/></svg>
+            </span>
+
+            <p>像 Dock 右侧区域那样，组里也可以放文件、访达文件夹与网页。</p>
+          </li>
+
+          <li class="reveal">
+            <span class="icon-box icon-box-sun">
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-grid"/></svg>
+            </span>
+
+            <p>点击组，它会在 Dock 上方以网格展开；外观、动效与位置一比一还原原生 Dock 文件夹的网格样式。</p>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section
+      class="section features"
+      id="features"
+      aria-labelledby="features-title"
+    >
+      <div class="container">
+        <header class="section-header reveal">
+          <p class="eyebrow">功能</p>
+
+          <h2
+            class="section-title"
+            id="features-title"
+          >App、文件、访达文件夹与网页，分类收纳进组。</h2>
+        </header>
+
+        <article class="feature-row reveal">
+          <div class="feature-copy">
+            <span class="icon-box icon-box-sky">
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-stack"/></svg>
+            </span>
+
+            <h3 class="feature-title">访达文件夹<wbr>像叠放那样展开</h3>
+            <p>点击访达文件夹，在同一个面板里浏览其中的内容，文件显示内容缩略图，网格末尾是 “在访达中打开”。</p>
+
+            <ul class="check-list">
+              <li>返回按钮回到上一层</li>
+              <li>设置里可以打开显示隐藏文件</li>
+            </ul>
+          </div>
+
+          <figure class="feature-media feature-media-stack">
+            <picture>
+              <source
+                srcset="../assets/img/screenshot-stack-zh-dark.jpg"
+                media="(prefers-color-scheme: dark)"
+              >
+
+              <img
+                class="screenshot"
+                src="../assets/img/screenshot-stack-zh-light.jpg"
+                alt="访达文件夹 “壁纸” 在面板里展开，显示其中图片的缩略图，末尾是 “在访达中打开”"
+                width="738"
+                height="428"
+                loading="lazy"
+              >
+            </picture>
+          </figure>
+        </article>
+
+        <article class="feature-row feature-row-reverse reveal">
+          <div class="feature-copy">
+            <span class="icon-box icon-box-sun">
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-drop"/></svg>
+            </span>
+
+            <h3 class="feature-title">拖进来就加入</h3>
+            <p>把 App、文件与访达文件夹拖到 Dock 上组的 tile 上，或把它们连同网页拖到设置窗口的组上。</p>
+
+            <h4 class="feature-subtitle">在设置窗口里管理组</h4>
+
+            <ul class="check-list">
+              <li>“添加…” 弹出菜单：“添加 App…” “添加文件…” “添加网页…”</li>
+              <li>双击组即可重命名</li>
+              <li>拖动行来调整顺序，或移进其它组</li>
+              <li>右键点按或按住 Control 点按一行，弹出更多操作</li>
+            </ul>
+          </div>
+
+          <figure class="feature-media feature-media-settings">
+            <picture>
+              <source
+                srcset="../assets/img/screenshot-settings-zh-dark.png"
+                media="(prefers-color-scheme: dark)"
+              >
+
+              <img
+                src="../assets/img/screenshot-settings-zh-light.png"
+                alt="设置窗口：“组” 下展开了 “常用” 组，下方是 “通用” 区"
+                width="732"
+                height="672"
+                loading="lazy"
+              >
+            </picture>
+          </figure>
+        </article>
+
+        <ul class="feature-grid">
+          <li class="feature-card reveal">
+            <span class="icon-box icon-box-sun">
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-dock"/></svg>
+            </span>
+
+            <h3>与 App 并排的组</h3>
+            <p>每个顶层的组在 Dock 的 App 区域里都有自己的 tile，名称就是组名。</p>
+          </li>
+
+          <li class="feature-card reveal">
+            <span class="icon-box icon-box-sky">
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-items"/></svg>
+            </span>
+
+            <h3>App、文件、访达文件夹与网页</h3>
+            <p>在一个组里随意混放；文件用默认 App 打开，网页用默认浏览器打开。</p>
+          </li>
+
+          <li class="feature-card reveal">
+            <span class="icon-box icon-box-sun">
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-nested"/></svg>
+            </span>
+
+            <h3>组可以嵌套</h3>
+            <p>组里还能放组；在面板里点击子组即可进入，返回按钮回到上一层。</p>
+          </li>
+
+          <li class="feature-card reveal">
+            <span class="icon-box icon-box-sky">
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-grid"/></svg>
+            </span>
+
+            <h3>与 Dock 文件夹一样的网格</h3>
+            <p>点击 tile，组在 Dock 上方展开，尾巴指向 tile。</p>
+          </li>
+
+          <li class="feature-card reveal">
+            <span class="icon-box icon-box-sun">
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-group-icon"/></svg>
+            </span>
+
+            <h3>实时渲染的组图标</h3>
+            <p>tile 显示组内前几项的图标，数量可选，最多 4 个；底板跟随系统的浅色、深色外观。</p>
+          </li>
+
+          <li class="feature-card reveal">
+            <span class="icon-box icon-box-sky">
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-move"/></svg>
+            </span>
+
+            <h3>在面板里直接整理</h3>
+            <p>拖动调整顺序；把一项拖出面板，停到浮出 “移除” 再松开，即从组里删除，就像把图标拖离 Dock。</p>
+          </li>
+
+          <li class="feature-card reveal">
+            <span class="icon-box icon-box-sun">
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-route"/></svg>
+            </span>
+
+            <h3>跟随移动与更新</h3>
+            <p>App 与文件移动或改名后，组里的这一项自动跟到新位置；App 更新后仍打开装好的那一份。</p>
+          </li>
+
+          <li class="feature-card reveal">
+            <span class="icon-box icon-box-sky">
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-menubar"/></svg>
+            </span>
+
+            <h3>不打扰</h3>
+            <p>归帆在后台运行，只有一个状态栏图标；展开面板时 Dock 上不出现归帆，也不抢走当前 App 的焦点。</p>
+          </li>
+
+          <li class="feature-card reveal">
+            <span class="icon-box icon-box-sun">
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-languages"/></svg>
+            </span>
+
+            <h3>五种语言</h3>
+            <p>英文、简体中文、繁体中文、日文、韩文，跟随系统语言；其它语言显示英文。</p>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section
+      class="section how"
+      id="how-it-works"
+      aria-labelledby="how-title"
+    >
+      <div class="container">
+        <header class="section-header reveal">
+          <p class="eyebrow">工作原理</p>
+
+          <h2
+            class="section-title"
+            id="how-title"
+          >每个顶层的组，都有一个占位 App。</h2>
+
+          <p class="lead">Dock 只能放 App 与文件，所以归帆为每个顶层的组生成一个占位 App，放进 Dock；它的图标就是组图标。</p>
+        </header>
+
+        <ol class="how-steps">
+          <li class="how-step reveal">
+            <svg
+              class="how-art"
+              viewBox="0 0 280 150"
+              aria-hidden="true"
+            >
+              <rect
+                class="art-dock"
+                x="20"
+                y="88"
+                width="240"
+                height="50"
+                rx="17"
+              />
+
+              <rect
+                class="art-tile art-muted"
+                x="36"
+                y="97"
+                width="32"
+                height="32"
+                rx="8"
+              />
+
+              <rect
+                class="art-tile art-muted"
+                x="76"
+                y="97"
+                width="32"
+                height="32"
+                rx="8"
+              />
+
+              <circle
+                class="art-ripple"
+                cx="140"
+                cy="113"
+                r="28"
+              />
+
+              <rect
+                class="art-group"
+                x="124"
+                y="97"
+                width="32"
+                height="32"
+                rx="8"
+              />
+
+              <rect
+                class="art-tile art-sky"
+                x="130"
+                y="103"
+                width="9"
+                height="9"
+                rx="2.5"
+              />
+
+              <rect
+                class="art-tile art-sun"
+                x="141"
+                y="103"
+                width="9"
+                height="9"
+                rx="2.5"
+              />
+
+              <rect
+                class="art-tile art-sea"
+                x="130"
+                y="114"
+                width="9"
+                height="9"
+                rx="2.5"
+              />
+
+              <rect
+                class="art-tile art-sky"
+                x="141"
+                y="114"
+                width="9"
+                height="9"
+                rx="2.5"
+              />
+
+              <rect
+                class="art-tile art-muted"
+                x="172"
+                y="97"
+                width="32"
+                height="32"
+                rx="8"
+              />
+
+              <rect
+                class="art-tile art-muted"
+                x="212"
+                y="97"
+                width="32"
+                height="32"
+                rx="8"
+              />
+
+              <path
+                class="art-cursor"
+                d="M150 118v26l6.5-6 4.5 10 4.5-2-4.5-10h9Z"
+              />
+            </svg>
+
+            <span class="how-number">1</span>
+            <h3>点击组的 tile</h3>
+            <p>点击 tile 时 Dock 启动占位 App。</p>
+          </li>
+
+          <li class="how-step reveal">
+            <svg
+              class="how-art"
+              viewBox="0 0 280 150"
+              aria-hidden="true"
+            >
+              <rect
+                class="art-pill"
+                x="66"
+                y="20"
+                width="148"
+                height="34"
+                rx="17"
+              />
+
+              <text
+                class="art-pill-text"
+                x="140"
+                y="42"
+                text-anchor="middle"
+              >flotilla://</text>
+
+              <path
+                class="art-arrow"
+                d="M140 88V64"
+              />
+
+              <path
+                class="art-arrow"
+                d="m132 70 8-8 8 8"
+              />
+
+              <rect
+                class="art-placeholder"
+                x="116"
+                y="96"
+                width="48"
+                height="48"
+                rx="12"
+              />
+
+              <rect
+                class="art-tile art-sky"
+                x="125"
+                y="105"
+                width="13"
+                height="13"
+                rx="3.5"
+              />
+
+              <rect
+                class="art-tile art-sun"
+                x="142"
+                y="105"
+                width="13"
+                height="13"
+                rx="3.5"
+              />
+
+              <rect
+                class="art-tile art-sea"
+                x="125"
+                y="122"
+                width="13"
+                height="13"
+                rx="3.5"
+              />
+
+              <rect
+                class="art-tile art-sky"
+                x="142"
+                y="122"
+                width="13"
+                height="13"
+                rx="3.5"
+              />
+            </svg>
+
+            <span class="how-number">2</span>
+            <h3>占位 App 打开 <code>flotilla://</code> URL</h3>
+            <p>它不把任何 App 带到前台，打开 URL 后随即退出。</p>
+          </li>
+
+          <li class="how-step reveal">
+            <svg
+              class="how-art"
+              viewBox="0 0 280 150"
+              aria-hidden="true"
+            >
+              <path
+                class="art-panel"
+                d="M78 8h124a14 14 0 0 1 14 14v52a14 14 0 0 1-14 14h-52l-10 10-10-10H78a14 14 0 0 1-14-14V22A14 14 0 0 1 78 8Z"
+              />
+
+              <rect
+                class="art-tile art-sky"
+                x="84"
+                y="22"
+                width="28"
+                height="22"
+                rx="7"
+              />
+
+              <rect
+                class="art-tile art-sun"
+                x="126"
+                y="22"
+                width="28"
+                height="22"
+                rx="7"
+              />
+
+              <rect
+                class="art-tile art-sea"
+                x="168"
+                y="22"
+                width="28"
+                height="22"
+                rx="7"
+              />
+
+              <rect
+                class="art-tile art-sea"
+                x="84"
+                y="54"
+                width="28"
+                height="22"
+                rx="7"
+              />
+
+              <rect
+                class="art-tile art-sky"
+                x="126"
+                y="54"
+                width="28"
+                height="22"
+                rx="7"
+              />
+
+              <rect
+                class="art-tile art-sun"
+                x="168"
+                y="54"
+                width="28"
+                height="22"
+                rx="7"
+              />
+
+              <rect
+                class="art-dock"
+                x="20"
+                y="104"
+                width="240"
+                height="40"
+                rx="14"
+              />
+
+              <rect
+                class="art-tile art-muted"
+                x="38"
+                y="110"
+                width="28"
+                height="28"
+                rx="7"
+              />
+
+              <rect
+                class="art-tile art-muted"
+                x="76"
+                y="110"
+                width="28"
+                height="28"
+                rx="7"
+              />
+
+              <rect
+                class="art-group"
+                x="126"
+                y="110"
+                width="28"
+                height="28"
+                rx="7"
+              />
+
+              <rect
+                class="art-tile art-sky"
+                x="131"
+                y="115"
+                width="8"
+                height="8"
+                rx="2"
+              />
+
+              <rect
+                class="art-tile art-sun"
+                x="141"
+                y="115"
+                width="8"
+                height="8"
+                rx="2"
+              />
+
+              <rect
+                class="art-tile art-sea"
+                x="131"
+                y="125"
+                width="8"
+                height="8"
+                rx="2"
+              />
+
+              <rect
+                class="art-tile art-sky"
+                x="141"
+                y="125"
+                width="8"
+                height="8"
+                rx="2"
+              />
+
+              <rect
+                class="art-tile art-muted"
+                x="176"
+                y="110"
+                width="28"
+                height="28"
+                rx="7"
+              />
+
+              <rect
+                class="art-tile art-muted"
+                x="214"
+                y="110"
+                width="28"
+                height="28"
+                rx="7"
+              />
+            </svg>
+
+            <span class="how-number">3</span>
+            <h3>归帆展开或收起面板</h3>
+            <p>归帆没有运行时，系统会先启动它。拖到 tile 上的项也经同样的途径交给归帆。</p>
+          </li>
+        </ol>
+
+        <div class="mac-changes">
+          <header class="mac-changes-header reveal">
+            <span class="icon-box icon-box-sky">
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-shield"/></svg>
+            </span>
+
+            <h3 class="subsection-title">归帆对你的 Mac 做了什么</h3>
+          </header>
+
+          <ul class="change-grid">
+            <li class="change-card change-card-wide reveal">
+              <h4>
+                <svg
+                  class="icon"
+                  aria-hidden="true"
+                ><use href="#i-dock"/></svg>
+                只动自己的 tile
+              </h4>
+
+              <p>归帆通过修改 Dock 偏好（<code>com.apple.dock</code>）把 tile 加到 Dock 上。</p>
+              <p>只增删改归帆自己的 tile，位于 <code>persistent-apps</code>，即 Dock 左侧的 App 区域；其它 tile 与 Dock 的其它设置都不动。</p>
+            </li>
+
+            <li class="change-card reveal">
+              <h4>
+                <svg
+                  class="icon"
+                  aria-hidden="true"
+                ><use href="#i-refresh"/></svg>
+                每次改动后重启 Dock
+              </h4>
+
+              <p>每次改动后结束 Dock 进程，由系统自动重新启动 Dock，改动随之生效。</p>
+            </li>
+
+            <li class="change-card reveal">
+              <h4>
+                <svg
+                  class="icon"
+                  aria-hidden="true"
+                ><use href="#i-archive"/></svg>
+                第一次改动前先备份
+              </h4>
+
+              <p>每次运行中第一次改动之前，先把整个 <code>com.apple.dock</code> 偏好导出备份，最多保留最新的 5 份。</p>
+              <p><code>~/Library/<wbr>Application Support/<wbr>Flotilla/<wbr>Backups/<wbr>com.apple.dock-&lt;yyyyMMdd-HHmmss&gt;.plist</code></p>
+            </li>
+
+            <li class="change-card reveal">
+              <h4>
+                <svg
+                  class="icon"
+                  aria-hidden="true"
+                ><use href="#i-folder"/></svg>
+                数据与设置
+              </h4>
+
+              <p>数据保存在 <code>~/Library/<wbr>Application Support/<wbr>Flotilla</code>：</p>
+
+              <ul>
+                <li><code>folders.json</code>：组的数据</li>
+                <li><code>DockTiles/</code>：代表每个根组放进 Dock 的占位 App</li>
+                <li><code>Backups/</code>：Dock 偏好的备份</li>
+              </ul>
+
+              <p>设置保存在偏好设置域 <code>com.rakuyo.flotilla</code>。</p>
+            </li>
+
+            <li class="change-card reveal">
+              <h4>
+                <svg
+                  class="icon"
+                  aria-hidden="true"
+                ><use href="#i-globe"/></svg>
+                只为网页标题联网
+              </h4>
+
+              <p>归帆只在 “添加网页…” 与 “编辑…” 的提示框里获取网页标题时联网。</p>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section
+      class="section open-source"
+      id="open-source"
+      aria-labelledby="open-source-title"
+    >
+      <div
+        class="open-source-art"
+        aria-hidden="true"
+      >
+        <picture>
+          <source
+            srcset="../assets/img/sailing-ship-moon.jpg"
+            media="(prefers-color-scheme: dark)"
+          >
+
+          <img
+            src="../assets/img/sailing-ship-sun.jpg"
+            alt=""
+            width="1000"
+            height="1000"
+            loading="lazy"
+          >
+        </picture>
+      </div>
+
+      <div class="container open-source-inner">
+        <header class="section-header reveal">
+          <p class="eyebrow">开源与参与</p>
+
+          <h2
+            class="section-title"
+            id="open-source-title"
+          >在 GitHub 上公开开发。</h2>
+
+          <p class="lead">归帆免费开源：代码、问题反馈与需求文档都在 GitHub 上。</p>
+        </header>
+
+        <ul class="github-grid">
+          <li class="github-card github-card-wide reveal">
+            <span class="icon-box icon-box-sun">
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-star"/></svg>
+            </span>
+
+            <div class="github-card-body">
+              <h3>Star 与 Watch</h3>
+              <p>在 GitHub 上给归帆点 Star，并选择 “Watch › Custom › Releases”，有新版本时就会收到通知。</p>
+            </div>
+
+            <a
+              class="button button-primary"
+              href="https://github.com/rakuyoMo/Flotilla"
+            >
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-github"/></svg>
+              rakuyoMo/Flotilla
+            </a>
+          </li>
+
+          <li class="github-card reveal">
+            <span class="icon-box icon-box-sky">
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-issue"/></svg>
+            </span>
+
+            <h3>报告问题</h3>
+            <p>遇到 bug 时，请到 GitHub 的 Issues 里报告。</p>
+
+            <a
+              class="card-link"
+              href="https://github.com/rakuyoMo/Flotilla/issues"
+            >
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-github"/></svg>
+              Issues
+            </a>
+          </li>
+
+          <li class="github-card reveal">
+            <span class="icon-box icon-box-sun">
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-pull-request"/></svg>
+            </span>
+
+            <h3>参与贡献</h3>
+            <p>提交 PR 之前，确认 <code>mise run swift:lint</code> 与 <code>swift test</code> 都通过。</p>
+
+            <p>
+              分支命名、commit message 等协作规范见
+              <a href="https://github.com/rakuyoMo/Flotilla/blob/main/AGENTS.md">AGENTS.md</a>，各功能的行为由
+              <a href="https://github.com/rakuyoMo/Flotilla/tree/main/docs/requirements">docs/requirements</a>
+              里的需求文档规定。
+            </p>
+          </li>
+
+          <li class="github-card reveal">
+            <span class="icon-box icon-box-sky">
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-terminal"/></svg>
+            </span>
+
+            <h3>从源码构建</h3>
+            <p>只需要 Xcode Command Line Tools 与 mise，不需要安装 Xcode。</p>
+
+            <a
+              class="card-link"
+              href="download/#build"
+            >
+              构建步骤
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-arrow-right"/></svg>
+            </a>
+          </li>
+
+          <li class="github-card reveal">
+            <span class="icon-box icon-box-sun">
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-scale"/></svg>
+            </span>
+
+            <h3>GPL-3.0</h3>
+            <p>归帆以 GNU General Public License v3.0 许可证发布。</p>
+
+            <a
+              class="card-link"
+              href="https://github.com/rakuyoMo/Flotilla/blob/main/LICENSE"
+            >
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-github"/></svg>
+              许可证
+            </a>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section
+      class="section faq"
+      id="faq"
+      aria-labelledby="faq-title"
+    >
+      <div class="container faq-inner">
+        <header class="section-header faq-header reveal">
+          <p class="eyebrow">常见问题</p>
+
+          <h2
+            class="section-title"
+            id="faq-title"
+          >你可能<wbr>想知道的。</h2>
+
+          <p class="lead">
+            更多细节见
+            <a href="https://github.com/rakuyoMo/Flotilla/blob/main/README-ZH.md">README</a>。
+          </p>
+        </header>
+
+        <div class="faq-list">
+          <details class="faq-item reveal">
+            <summary>
+              为什么 macOS 提示无法验证归帆，不让打开？
+              <svg
+                class="icon faq-chevron"
+                aria-hidden="true"
+              ><use href="#i-chevron-down"/></svg>
+            </summary>
+
+            <div class="faq-answer">
+              <p>归帆没有经过 Apple 公证。第一次打开时，系统会提示 Apple 无法验证它是否包含恶意软件，并拒绝打开。</p>
+              <p>点击 “完成” 关闭提示，打开 “系统设置 › 隐私与安全性”，向下滚动到 “安全性”，点击 “仍要打开”。这个按钮只在尝试打开归帆之后的一小时内出现。</p>
+              <p><a href="download/#install">查看安装指南 →</a></p>
+            </div>
+          </details>
+
+          <details class="faq-item reveal">
+            <summary>
+              不给辅助功能权限能用吗？差别在哪？
+              <svg
+                class="icon faq-chevron"
+                aria-hidden="true"
+              ><use href="#i-chevron-down"/></svg>
+            </summary>
+
+            <div class="faq-answer">
+              <p>没有这项权限时仍然可以使用，区别是：</p>
+
+              <ul>
+                <li>面板以点击时鼠标所在的位置为准摆放，不一定正好对准 tile</li>
+                <li>要等 Dock 启动 tile 之后面板才会出现，比有权限时稍慢</li>
+              </ul>
+            </div>
+          </details>
+
+          <details class="faq-item reveal">
+            <summary>
+              换用新版本后，为什么要重新授权？
+              <svg
+                class="icon faq-chevron"
+                aria-hidden="true"
+              ><use href="#i-chevron-down"/></svg>
+            </summary>
+
+            <div class="faq-answer">
+              <p>归帆使用 ad-hoc 签名，换用新版本后，原来的授权可能失效，需要重新授权。</p>
+              <p>授权的位置是 “系统设置 › 隐私与安全性 › 辅助功能”；macOS 27 里这一页是 “隐私与安全 › 设备控制和数据访问”。</p>
+            </div>
+          </details>
+
+          <details class="faq-item reveal">
+            <summary>
+              Dock 为什么会重启？
+              <svg
+                class="icon faq-chevron"
+                aria-hidden="true"
+              ><use href="#i-chevron-down"/></svg>
+            </summary>
+
+            <div class="faq-answer">
+              <p>归帆通过修改 Dock 偏好把 tile 加到 Dock 上。每次改动后结束 Dock 进程，由系统自动重新启动 Dock，改动随之生效。</p>
+              <p>更新 tile 的图标也是这样的改动，所以组的预览变化、系统切换浅色与深色外观时，Dock 都会重启。</p>
+            </div>
+          </details>
+
+          <details class="faq-item reveal">
+            <summary>
+              怎么把组的 tile 从 Dock 上去掉，又怎么放回来？
+              <svg
+                class="icon faq-chevron"
+                aria-hidden="true"
+              ><use href="#i-chevron-down"/></svg>
+            </summary>
+
+            <div class="faq-answer">
+              <p>要去掉组的 tile，像其它 App 那样把它拖出 Dock 即可。</p>
+              <p>归帆不会自己把它加回去：这个组在设置窗口里标出 “不在 Dock 上”，在它的右键菜单里点 “添加到 Dock” 即可加回。</p>
+            </div>
+          </details>
+
+          <details class="faq-item reveal">
+            <summary>
+              支持哪些 Mac？
+              <svg
+                class="icon faq-chevron"
+                aria-hidden="true"
+              ><use href="#i-chevron-down"/></svg>
+            </summary>
+
+            <div class="faq-answer">
+              <p>归帆需要 macOS 15 或更高版本，以及搭载 Apple 芯片的 Mac。</p>
+            </div>
+          </details>
+
+          <details class="faq-item reveal">
+            <summary>
+              支持哪些语言？
+              <svg
+                class="icon faq-chevron"
+                aria-hidden="true"
+              ><use href="#i-chevron-down"/></svg>
+            </summary>
+
+            <div class="faq-answer">
+              <p>英文、简体中文、繁体中文、日文、韩文，跟随系统语言；其它语言显示英文。</p>
+              <p>App 名在简体中文下显示为 “归帆”，繁体中文下为 “歸帆”，日文下为 “帰帆”，其它语言下为 “Flotilla”。</p>
+            </div>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section
+      class="section closing"
+      aria-labelledby="closing-title"
+    >
+      <div class="container">
+        <div class="closing-card reveal">
+          <picture>
+            <source
+              srcset="../assets/img/app-icon-dark-256.png"
+              media="(prefers-color-scheme: dark)"
+            >
+
+            <img
+              class="closing-icon"
+              src="../assets/img/app-icon-light-256.png"
+              alt=""
+              width="128"
+              height="128"
+              loading="lazy"
+            >
+          </picture>
+
+          <h2
+            class="closing-title"
+            id="closing-title"
+          >帆归坞，App&nbsp;归组。</h2>
+
+          <div class="closing-actions">
+            <a
+              class="button button-primary button-large"
+              href="https://github.com/rakuyoMo/Flotilla/releases/latest"
+              data-when="latest unknown"
+              data-download
+            >
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-download"/></svg>
+              下载 Mac 版
+              <span
+                class="version-chip"
+                data-when="latest"
+                data-release-version
+              ></span>
+            </a>
+
+            <a
+              class="button button-primary button-large"
+              href="https://github.com/rakuyoMo/Flotilla"
+              data-when="none"
+            >
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-github"/></svg>
+              在 GitHub 上查看
+            </a>
+
+            <a
+              class="button button-secondary button-large"
+              href="download/#build"
+              data-when="none"
+            >
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-terminal"/></svg>
+              从源码构建
+            </a>
+          </div>
+
+          <p class="meta-line">
+            <span>macOS 15 或更高版本</span>
+            <span>Apple 芯片</span>
+            <span>免费开源（GPL-3.0）</span>
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <a
+          class="brand"
+          href="./"
+        >
+          <picture>
+            <source
+              srcset="../assets/img/app-icon-dark-64.png"
+              media="(prefers-color-scheme: dark)"
+            >
+
+            <img
+              src="../assets/img/app-icon-light-64.png"
+              alt=""
+              width="32"
+              height="32"
+              loading="lazy"
+            >
+          </picture>
+
+          <span>归帆</span>
+        </a>
+
+        <p>帆归坞，App 归组。</p>
+      </div>
+
+      <nav
+        class="footer-columns"
+        aria-label="页脚导航"
+      >
+        <div class="footer-column">
+          <h2>产品</h2>
+
+          <ul>
+            <li><a href="#features">功能</a></li>
+            <li><a href="download/">下载</a></li>
+            <li><a href="releases/">更新日志</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-column">
+          <h2>资源</h2>
+
+          <ul>
+            <li><a href="https://github.com/rakuyoMo/Flotilla">GitHub</a></li>
+            <li><a href="https://github.com/rakuyoMo/Flotilla/issues">Issues</a></li>
+            <li><a href="https://github.com/rakuyoMo/Flotilla/blob/main/README-ZH.md">README</a></li>
+            <li><a href="https://github.com/rakuyoMo/Flotilla/blob/main/LICENSE">许可证</a></li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+
+    <div class="container footer-bottom">
+      <p>GPL-3.0 · rakuyoMo</p>
+
+      <a
+        class="language-switch"
+        href="../"
+        hreflang="en"
+        lang="en"
+        data-language-switch="en"
+      >
+        <svg
+          class="icon"
+          aria-hidden="true"
+        ><use href="#i-globe"/></svg>
+        English
+      </a>
+    </div>
+  </footer>
+
+  <dialog
+    class="download-toast"
+    aria-labelledby="download-toast-title"
+    data-download-toast
+  >
+    <div class="toast-header">
+      <picture>
+        <source
+          srcset="../assets/img/app-icon-dark-80.png"
+          media="(prefers-color-scheme: dark)"
+        >
+
+        <img
+          class="toast-icon"
+          src="../assets/img/app-icon-light-80.png"
+          alt=""
+          width="40"
+          height="40"
+          loading="lazy"
+        >
+      </picture>
+
+      <div class="toast-heading">
+        <p class="toast-app">归帆</p>
+
+        <h2
+          class="toast-title"
+          id="download-toast-title"
+        >已开始下载</h2>
+      </div>
+
+      <button
+        class="toast-close"
+        type="button"
+        aria-label="关闭"
+        data-toast-close
+      >
+        <svg
+          class="icon"
+          aria-hidden="true"
+        ><use href="#i-close"/></svg>
+      </button>
+    </div>
+
+    <ol class="toast-steps">
+      <li>把 <code>Flotilla.app</code> 拖进 “应用程序”</li>
+      <li>在 “隐私与安全性” 里点击 “仍要打开”</li>
+      <li>授予辅助功能权限</li>
+    </ol>
+
+    <a
+      class="toast-link"
+      href="download/#install"
+    >
+      查看安装指南
+      <svg
+        class="icon"
+        aria-hidden="true"
+      ><use href="#i-arrow-right"/></svg>
+    </a>
+  </dialog>
+</body>
+</html>

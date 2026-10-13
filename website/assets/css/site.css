@@ -1,0 +1,1604 @@
+/* 官网各页共用的样式：设计 token、基础排版，以及导航、按钮、代码块、通知卡片、页脚等公共组件 */
+
+/* ==========================================
+   设计 token
+   ========================================== */
+
+:root {
+  color-scheme: light dark;
+
+  /* 品牌色：取自 App 图标与 README 头图的白天版 */
+  --sun: #FEC550;
+  --sky: #A3DFFC;
+  --sea: #0089C2;
+  --ink: #222D3E;
+  --cream: #FDF9F0;
+
+  /* 页面底色与文字 */
+  --color-bg: var(--cream);
+  --color-bg-raised: #FFFFFF;
+  --color-bg-sunken: #F6EFE0;
+  --color-text: var(--ink);
+  --color-text-secondary: #525D6F;
+  --color-link: #006A96;
+  --color-border: rgb(34 45 62 / 10%);
+  --color-border-strong: rgb(34 45 62 / 18%);
+  --color-focus: #0089C2;
+
+  /* 按钮与版本号胶囊 */
+  --color-button-bg: var(--ink);
+  --color-button-bg-hover: #2E3B50;
+  --color-button-text: var(--cream);
+  --color-button-secondary-bg: rgb(255 255 255 / 70%);
+  --color-button-secondary-bg-hover: #FFFFFF;
+  --color-chip-bg: var(--sun);
+  --color-chip-text: var(--ink);
+
+  /* 图标的衬底：日黄与天蓝两种 */
+  --color-tint-sun: rgb(254 197 80 / 26%);
+  --color-tint-sky: rgb(163 223 252 / 42%);
+  --color-icon: var(--ink);
+
+  /* 毛玻璃：导航与通知卡片 */
+  --color-glass: rgb(253 249 240 / 74%);
+  --color-glass-strong: rgb(255 253 248 / 84%);
+
+  /* 天空：各页顶部与首页收尾区的渐变，日的柔光与海浪 */
+  --sky-top: #C2E9FD;
+  --sky-middle: #E6F6FD;
+  --sky-bottom: var(--color-bg);
+  --orb-core: #FEC550;
+  --orb-glow: rgb(254 197 80 / 42%);
+  --wave-back: rgb(163 223 252 / 75%);
+  --wave-middle: rgb(0 137 194 / 20%);
+
+  /* 代码块：两种外观下都是深色底 */
+  --color-code-bg: #1F2939;
+  --color-code-text: #E9EEF6;
+  --color-code-comment: #93A1B8;
+  --color-code-border: transparent;
+  --color-inline-code-bg: rgb(34 45 62 / 7%);
+
+  /* 阴影 */
+  --shadow-card:
+    0 1px 2px rgb(34 45 62 / 5%),
+    0 14px 34px -16px rgb(34 45 62 / 16%);
+
+  --shadow-float:
+    0 2px 8px rgb(22 36 60 / 8%),
+    0 40px 90px -32px rgb(22 36 60 / 42%);
+
+  --shadow-button:
+    0 1px 2px rgb(34 45 62 / 18%),
+    0 8px 18px -8px rgb(34 45 62 / 36%);
+
+  /* 字体：只用系统字体 */
+  --font-sans:
+    -apple-system,
+    BlinkMacSystemFont,
+    "SF Pro Text",
+    "Helvetica Neue",
+    "PingFang SC",
+    "Hiragino Sans GB",
+    "Microsoft YaHei",
+    sans-serif;
+
+  --font-mono:
+    ui-monospace,
+    "SF Mono",
+    Menlo,
+    monospace;
+
+  /* 尺寸 */
+  --gutter: clamp(16px, 4vw, 40px);
+  --content-width: 1200px;
+  --nav-height: 64px;
+  --radius-small: 10px;
+  --radius-medium: 16px;
+  --radius-large: 24px;
+  --section-space: clamp(96px, 11vw, 160px);
+
+  /* 正文一行的最大宽度：英文一行约 70 个字符，中文一行约 30 个字 */
+  --measure: 50ch;
+
+  /* 动效曲线 */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.32, 0.64, 1);
+}
+
+/* 深色：夜间版的夜蓝底与月光 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #031536;
+    --color-bg-raised: #0A2246;
+    --color-bg-sunken: #041B3E;
+    --color-text: #F5F7FC;
+    --color-text-secondary: #B3C1DA;
+    --color-link: #B4DAF7;
+    --color-border: rgb(180 218 247 / 12%);
+    --color-border-strong: rgb(180 218 247 / 22%);
+    --color-focus: #B4DAF7;
+
+    --color-button-bg: #F5F7FC;
+    --color-button-bg-hover: #FFFFFF;
+    --color-button-text: #031536;
+    --color-button-secondary-bg: rgb(180 218 247 / 10%);
+    --color-button-secondary-bg-hover: rgb(180 218 247 / 17%);
+    --color-chip-bg: #0B4B8D;
+    --color-chip-text: #F5F7FC;
+
+    --color-tint-sun: rgb(254 197 80 / 14%);
+    --color-tint-sky: rgb(180 218 247 / 14%);
+    --color-icon: #DDEBFA;
+
+    --color-glass: rgb(3 21 54 / 70%);
+    --color-glass-strong: rgb(12 36 74 / 80%);
+
+    --sky-top: #020D25;
+    --sky-middle: #05214A;
+    --sky-bottom: #0A2E5E;
+    --orb-core: #EAF5FF;
+    --orb-glow: rgb(180 218 247 / 26%);
+    --wave-back: rgb(11 75 141 / 80%);
+    --wave-middle: rgb(180 218 247 / 13%);
+
+    --color-code-bg: #020E27;
+    --color-code-text: #E3EAF6;
+    --color-code-comment: #8597B6;
+    --color-code-border: rgb(180 218 247 / 12%);
+    --color-inline-code-bg: rgb(180 218 247 / 12%);
+
+    --shadow-card:
+      0 1px 2px rgb(0 0 0 / 28%),
+      0 16px 38px -16px rgb(0 0 0 / 55%);
+
+    --shadow-float:
+      0 2px 8px rgb(0 0 0 / 30%),
+      0 40px 100px -30px rgb(0 0 0 / 72%);
+
+    --shadow-button:
+      0 1px 2px rgb(0 0 0 / 30%),
+      0 8px 20px -8px rgb(0 0 0 / 55%);
+  }
+}
+
+/* ==========================================
+   基础样式
+   ========================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-padding-top: calc(var(--nav-height) + 24px);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* 内容不满一屏时，页脚仍贴在底部 */
+body {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  min-height: 100vh;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* 中文的字面更满，行高再放松一些 */
+body:lang(zh) {
+  line-height: 1.8;
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+ul,
+ol,
+figure,
+blockquote {
+  margin: 0;
+}
+
+ul,
+ol {
+  padding: 0;
+}
+
+main {
+  flex: 1;
+}
+
+/* 标题各行长短均衡，不把一两个字甩到下一行；正文避免末行只剩一两个字 */
+h1,
+h2,
+h3,
+h4 {
+  text-wrap: balance;
+}
+
+p,
+li,
+summary {
+  text-wrap: pretty;
+}
+
+/* 中文标题只在标点与空格处换行，不把一个词拆到两行；一行放不下时才在字间断开 */
+:lang(zh) :is(h1, h2, h3, h4) {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+img,
+svg,
+picture {
+  display: block;
+  max-width: 100%;
+}
+
+img {
+  height: auto;
+}
+
+/* `hidden` 优先于组件自己的 display */
+[hidden] {
+  display: none !important;
+}
+
+a {
+  color: var(--color-link);
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+  text-underline-offset: 0.22em;
+  transition: text-decoration-color 0.2s;
+}
+
+a:hover {
+  text-decoration-color: currentColor;
+}
+
+strong {
+  font-weight: 650;
+}
+
+code {
+  padding: 0.12em 0.4em;
+  border-radius: 6px;
+  background: var(--color-inline-code-bg);
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  overflow-wrap: anywhere;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--sky) 70%, transparent);
+  color: var(--ink);
+}
+
+/* 只给读屏软件看的文字 */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* 内联 SVG 图标的 symbol 定义，本身不占位置 */
+.icon-sprite {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.icon {
+  flex: none;
+  width: 1.25em;
+  height: 1.25em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.container {
+  width: min(100% - 2 * var(--gutter), var(--content-width));
+  margin-inline: auto;
+}
+
+/* 跳到正文：平时藏在视口外，键盘聚焦时出现在左上角 */
+.skip-link {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 200;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: var(--color-button-bg);
+  color: var(--color-button-text);
+  font-weight: 600;
+  text-decoration: none;
+  transform: translateY(-160%);
+  transition: transform 0.2s var(--ease-out);
+}
+
+.skip-link:focus-visible {
+  transform: none;
+}
+
+/* ==========================================
+   通用排版
+   ========================================== */
+
+.section {
+  position: relative;
+  padding-block: var(--section-space);
+}
+
+.section-header {
+  display: grid;
+  gap: 18px;
+  max-width: 56rem;
+  margin-bottom: clamp(48px, 6vw, 80px);
+}
+
+.eyebrow {
+  color: var(--color-link);
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* 中文没有大小写，也不需要加宽字距 */
+:lang(zh) .eyebrow {
+  letter-spacing: 0;
+}
+
+.section-title {
+  font-size: clamp(2rem, 1.3rem + 2.6vw, 3.25rem);
+  font-weight: 760;
+  line-height: 1.12;
+  letter-spacing: -0.028em;
+  text-wrap: balance;
+}
+
+:lang(zh) .section-title {
+  line-height: 1.3;
+  letter-spacing: 0;
+}
+
+.subsection-title {
+  font-size: clamp(1.5rem, 1.2rem + 1vw, 2rem);
+  font-weight: 720;
+  line-height: 1.25;
+  letter-spacing: -0.018em;
+}
+
+:lang(zh) .subsection-title {
+  letter-spacing: 0;
+}
+
+.lead {
+  max-width: var(--measure);
+  color: var(--color-text-secondary);
+  font-size: clamp(1.125rem, 1.05rem + 0.35vw, 1.3125rem);
+  line-height: 1.65;
+}
+
+:lang(zh) .lead {
+  line-height: 1.8;
+}
+
+/* 用 “·” 隔开的一行短信息，如系统要求 */
+.meta-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 0;
+  color: var(--color-text-secondary);
+  font-size: 0.9375rem;
+}
+
+.meta-line > * + *::before {
+  content: "·";
+  margin-inline: 0.6em;
+  opacity: 0.7;
+}
+
+/* 窄屏放不下一行时逐条竖排，免得 “·” 落到行首 */
+@media (max-width: 639px) {
+  .meta-line {
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .meta-line > * + *::before {
+    content: none;
+  }
+}
+
+/* 带对勾的要点列表 */
+.check-list {
+  display: grid;
+  gap: 12px;
+  max-width: var(--measure);
+  list-style: none;
+}
+
+.check-list li {
+  position: relative;
+  padding-left: 30px;
+}
+
+.check-list li::before {
+  content: "";
+  position: absolute;
+  top: 0.42em;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23222D3E' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 12.5 4 4 8-8.5'/%3E%3C/svg%3E") center / 12px no-repeat,
+    var(--color-tint-sun);
+}
+
+@media (prefers-color-scheme: dark) {
+  .check-list li::before {
+    background:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23F5F7FC' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 12.5 4 4 8-8.5'/%3E%3C/svg%3E") center / 12px no-repeat,
+      var(--color-tint-sky);
+  }
+}
+
+/* 图标的圆角衬底 */
+.icon-box {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  color: var(--color-icon);
+}
+
+.icon-box .icon {
+  width: 24px;
+  height: 24px;
+}
+
+.icon-box-sun {
+  background: var(--color-tint-sun);
+}
+
+.icon-box-sky {
+  background: var(--color-tint-sky);
+}
+
+/* 截图外框：圆角、细描边与柔和的投影 */
+.screenshot {
+  border-radius: var(--radius-medium);
+  box-shadow:
+    0 0 0 1px var(--color-border),
+    var(--shadow-float);
+}
+
+/* ==========================================
+   天空页头：各页顶部的天空渐变与底边的海浪
+   ========================================== */
+
+/* 天空一直铺到导航底下：页头向上挪出导航的高度，上下内边距由各页自定 */
+.hero {
+  position: relative;
+  isolation: isolate;
+  margin-top: calc(-1 * var(--nav-height));
+  overflow: clip;
+}
+
+.hero-sky {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    180deg,
+    var(--sky-top) 0%,
+    var(--sky-middle) 52%,
+    var(--sky-bottom) 100%
+  );
+}
+
+/* 底边的三层海浪，各自以不同的速度缓慢漂动；最前一层与页面底色相同，把页头接进下一个区块 */
+.hero-waves {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: clamp(72px, 9vw, 132px);
+}
+
+.wave {
+  transform-box: fill-box;
+}
+
+.wave-back {
+  fill: var(--wave-back);
+}
+
+.wave-middle {
+  fill: var(--wave-middle);
+}
+
+.wave-front {
+  fill: var(--color-bg);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .wave {
+    animation: wave-drift linear infinite;
+  }
+
+  .wave-back {
+    animation-duration: 48s;
+  }
+
+  .wave-middle {
+    animation-duration: 32s;
+    animation-direction: reverse;
+  }
+
+  .wave-front {
+    animation-duration: 22s;
+  }
+}
+
+@keyframes wave-drift {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* 下载页、更新日志页的页头：居中的图标、大标题与一两行说明 */
+.page-hero {
+  padding-top: calc(var(--nav-height) + clamp(40px, 6vw, 88px));
+  padding-bottom: clamp(140px, 15vw, 210px);
+  text-align: center;
+}
+
+.page-hero-inner {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+}
+
+/* 图标后面一团日或月的柔光 */
+.page-hero-icon {
+  position: relative;
+  isolation: isolate;
+  margin-bottom: 12px;
+}
+
+.page-hero-icon::before {
+  content: "";
+  position: absolute;
+  inset: -50%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--orb-glow) 0%, transparent 64%);
+}
+
+.page-hero-icon img {
+  width: 128px;
+  height: 128px;
+  filter: drop-shadow(0 18px 28px rgb(22 36 60 / 22%));
+}
+
+.page-title {
+  font-size: clamp(2.5rem, 1.7rem + 3vw, 4.25rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+}
+
+.page-title:lang(zh) {
+  font-weight: 760;
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+}
+
+.page-lead {
+  max-width: var(--measure);
+  color: var(--color-text-secondary);
+  font-size: clamp(1.0625rem, 1rem + 0.3vw, 1.25rem);
+  line-height: 1.65;
+}
+
+:lang(zh) .page-lead {
+  line-height: 1.8;
+}
+
+/* 窄屏逐条竖排时也居中 */
+.page-meta {
+  align-items: center;
+  justify-content: center;
+}
+
+.page-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+/* 帆船画稿裁成圆形、边缘淡入底色：更新日志的空状态与 404 页共用 */
+.ship-art {
+  width: min(280px, 70vw);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  overflow: clip;
+  -webkit-mask-image: radial-gradient(circle, #000 56%, transparent 71%);
+  mask-image: radial-gradient(circle, #000 56%, transparent 71%);
+}
+
+.ship-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 图标像面板弹出那样从底边放大淡入，与首页的截图一致 */
+@media (prefers-reduced-motion: no-preference) {
+  .page-hero-icon img {
+    transform-origin: 50% 100%;
+    animation: icon-pop 0.8s var(--ease-spring) 0.1s both;
+  }
+
+  .page-hero-inner > :not(.page-hero-icon) {
+    animation: page-copy-in 0.8s var(--ease-out) both;
+  }
+}
+
+@keyframes icon-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+}
+
+@keyframes page-copy-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+/* ==========================================
+   截图底板与折叠的问答
+   ========================================== */
+
+/* 截图放在一块带天空色的圆角底板上 */
+.feature-media {
+  display: grid;
+  place-items: center;
+  padding: clamp(20px, 4vw, 52px);
+  border-radius: 32px;
+  background:
+    radial-gradient(
+      circle at 85% 10%,
+      var(--color-tint-sun),
+      transparent 55%
+    ),
+    linear-gradient(160deg, var(--color-tint-sky), transparent 75%),
+    var(--color-bg-sunken);
+}
+
+.faq-item {
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  background: var(--color-bg-raised);
+  transition: box-shadow 0.3s;
+  interpolate-size: allow-keywords;
+}
+
+.faq-item[open] {
+  box-shadow: var(--shadow-card);
+}
+
+.faq-item summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px;
+  border-radius: 18px;
+  font-size: 1.0625rem;
+  font-weight: 620;
+  line-height: 1.5;
+  list-style: none;
+  cursor: pointer;
+}
+
+.faq-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq-chevron {
+  color: var(--color-text-secondary);
+  transition: transform 0.3s var(--ease-out);
+}
+
+.faq-item[open] .faq-chevron {
+  transform: rotate(180deg);
+}
+
+.faq-answer {
+  display: grid;
+  gap: 12px;
+  padding: 0 24px 24px;
+  color: var(--color-text-secondary);
+}
+
+.faq-answer > * {
+  max-width: var(--measure);
+}
+
+.faq-answer ul {
+  display: grid;
+  gap: 8px;
+  padding-left: 1.25em;
+}
+
+/* 支持的浏览器里，展开与收起时高度平滑过渡 */
+@supports (interpolate-size: allow-keywords) {
+  .faq-item::details-content {
+    height: 0;
+    overflow: clip;
+    transition:
+      height 0.35s var(--ease-out),
+      content-visibility 0.35s allow-discrete;
+  }
+
+  .faq-item[open]::details-content {
+    height: auto;
+  }
+}
+
+@media (max-width: 639px) {
+  .faq-item summary {
+    padding: 18px 20px;
+  }
+
+  .faq-answer {
+    padding: 0 20px 22px;
+  }
+}
+
+/* ==========================================
+   按钮与胶囊
+   ========================================== */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55em;
+  min-height: 44px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 620;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    transform 0.25s var(--ease-out),
+    background-color 0.2s,
+    box-shadow 0.25s var(--ease-out);
+}
+
+.button:active {
+  transform: scale(0.98);
+}
+
+.button-primary {
+  background: var(--color-button-bg);
+  color: var(--color-button-text);
+  box-shadow: var(--shadow-button);
+}
+
+.button-primary:hover {
+  background: var(--color-button-bg-hover);
+}
+
+.button-secondary {
+  background: var(--color-button-secondary-bg);
+  color: var(--color-text);
+  box-shadow: inset 0 0 0 1px var(--color-border-strong);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.button-secondary:hover {
+  background: var(--color-button-secondary-bg-hover);
+}
+
+.button-large {
+  min-height: 54px;
+  padding: 0 26px;
+  font-size: 1.0625rem;
+}
+
+.button-small {
+  min-height: 36px;
+  padding: 0 16px;
+  font-size: 0.875rem;
+}
+
+@media (hover: hover) {
+  .button:hover {
+    transform: translateY(-1px);
+  }
+
+  .button:active {
+    transform: scale(0.98);
+  }
+}
+
+.version-chip {
+  display: inline-flex;
+  align-items: center;
+  margin-right: -10px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--color-chip-bg);
+  color: var(--color-chip-text);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+/* 卡片底部的文字链接 */
+.card-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.card-link:hover {
+  text-decoration: underline;
+}
+
+.card-link .icon {
+  width: 1.1em;
+  height: 1.1em;
+}
+
+/* ==========================================
+   发版数据决定显示哪一组内容
+   ========================================== */
+
+/*
+  `data-when` 写明元素在哪些状态下显示：
+  latest 有正式版本；none 还没有正式版本；unknown 没有脚本、正在读取或读取失败，退回到 GitHub 链接
+*/
+html[data-release="latest"]
+  [data-when]:not([data-when~="latest"]),
+html[data-release="none"]
+  [data-when]:not([data-when~="none"]),
+html:not([data-release="latest"], [data-release="none"])
+  [data-when]:not([data-when~="unknown"]) {
+  display: none;
+}
+
+/* 读取期间先藏起这些元素，免得从 GitHub 链接闪成下载按钮；脚本迟迟没有结果时，两秒后照常显示 */
+html.js:not([data-release]) [data-when] {
+  visibility: hidden;
+  animation: release-fallback 0s 2s forwards;
+}
+
+@keyframes release-fallback {
+  to {
+    visibility: visible;
+  }
+}
+
+/* ==========================================
+   导航
+   ========================================== */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  view-transition-name: site-header;
+  border-bottom: 1px solid transparent;
+  transition:
+    background-color 0.3s,
+    border-color 0.3s,
+    -webkit-backdrop-filter 0.3s,
+    backdrop-filter 0.3s;
+}
+
+/* 滚动后或菜单展开时换成毛玻璃，并出现细分隔线；没有脚本时一直是毛玻璃 */
+.site-header.is-scrolled,
+.site-header.is-open,
+html:not(.js) .site-header {
+  border-bottom-color: var(--color-border);
+  background: var(--color-glass);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+}
+
+/*
+  导航自身带 backdrop-filter 或 view-transition-name 时，里面的窄屏菜单模糊不到底下的正文，文字会直接透出来：
+  菜单展开时去掉这两项，导航的毛玻璃改画在伪元素上；点了菜单里的链接会先收起菜单，页面过渡照常
+*/
+.site-header.is-open {
+  view-transition-name: none;
+  background: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.site-header.is-open::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--color-glass);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: var(--nav-height);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-text);
+  font-size: 1.125rem;
+  font-weight: 720;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+}
+
+.brand img {
+  width: 32px;
+  height: 32px;
+}
+
+.nav-menu {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  list-style: none;
+}
+
+.nav-links a,
+.language-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  color: var(--color-text-secondary);
+  font-size: 0.9375rem;
+  font-weight: 520;
+  text-decoration: none;
+  transition:
+    color 0.2s,
+    background-color 0.2s;
+}
+
+.nav-links a:hover,
+.language-switch:hover {
+  background: var(--color-inline-code-bg);
+  color: var(--color-text);
+}
+
+/* 当前所在的区块或页面 */
+.nav-links a.is-active,
+.nav-links a[aria-current="page"] {
+  background: var(--color-inline-code-bg);
+  color: var(--color-text);
+}
+
+.nav-links .icon,
+.language-switch .icon {
+  width: 17px;
+  height: 17px;
+}
+
+.language-switch {
+  margin-right: 4px;
+}
+
+.nav-toggle {
+  display: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.nav-toggle .icon {
+  width: 22px;
+  height: 22px;
+}
+
+.nav-toggle:hover {
+  background: var(--color-inline-code-bg);
+}
+
+/* 窄屏：链接与语言切换收进菜单按钮，展开后在导航下方铺开 */
+@media (max-width: 899px) {
+  /*
+    菜单按钮在 DOM 里紧挨在菜单之前，展开后按 Tab 先进入菜单；
+    视觉上与 DOM 同序：菜单按钮推到右侧，下载按钮在它后面、排在最右
+  */
+  .nav-toggle {
+    display: grid;
+    margin-left: auto;
+  }
+
+  .nav-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    left: 0;
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    padding: 12px var(--gutter) 20px;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-glass);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+  }
+
+  .site-header.is-open .nav-menu {
+    display: flex;
+    animation: menu-in 0.3s var(--ease-out);
+  }
+
+  .nav-links {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+  }
+
+  .nav-links a,
+  .language-switch {
+    min-height: 48px;
+    padding: 0 14px;
+    border-radius: 12px;
+    font-size: 1.0625rem;
+  }
+
+  .language-switch {
+    margin-right: 0;
+  }
+
+  /* 没有脚本时菜单按钮不起作用，链接直接排在导航下方 */
+  html:not(.js) .nav {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: var(--nav-height);
+  }
+
+  html:not(.js) .nav-toggle {
+    display: none;
+  }
+
+  /* 没有菜单按钮时，下载按钮自己推到右侧 */
+  html:not(.js) .nav-download {
+    margin-left: auto;
+  }
+
+  html:not(.js) .nav-menu {
+    position: static;
+    display: flex;
+    flex-basis: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 0 0 12px;
+    border: 0;
+    background: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  html:not(.js) .nav-links {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+/* ==========================================
+   代码块与复制按钮
+   ========================================== */
+
+.code-block {
+  position: relative;
+  border: 1px solid var(--color-code-border);
+  border-radius: var(--radius-medium);
+  background: var(--color-code-bg);
+  color: var(--color-code-text);
+}
+
+.code-block pre {
+  margin: 0;
+  padding: 20px 22px;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  line-height: 1.75;
+}
+
+/* 有复制按钮时给右上角留出位置 */
+html.js .code-block pre {
+  padding-right: 112px;
+}
+
+.code-block code {
+  padding: 0;
+  background: none;
+  font-size: inherit;
+  overflow-wrap: normal;
+}
+
+.code-comment {
+  color: var(--color-code-comment);
+}
+
+.code-prompt {
+  color: var(--color-code-comment);
+  user-select: none;
+}
+
+.copy-button {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 8%);
+  color: var(--color-code-text);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.copy-button:hover {
+  background: rgb(255 255 255 / 16%);
+}
+
+.copy-button .icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* 复制按钮只在有脚本时出现 */
+html:not(.js) .copy-button {
+  display: none;
+}
+
+/* 窄屏：命令常要横向滚动，复制按钮挪到代码上方单独一行，免得压住命令 */
+@media (max-width: 639px) {
+  .code-block {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .copy-button {
+    position: relative;
+    top: auto;
+    right: auto;
+    order: -1;
+    align-self: flex-end;
+    margin: 10px 10px -8px;
+  }
+
+  html.js .code-block pre {
+    padding-right: 22px;
+  }
+}
+
+/* 复制成功后按钮旁浮出的提示 */
+.copy-toast {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 5;
+  width: max-content;
+  max-width: min(320px, 80vw);
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--color-button-bg);
+  color: var(--color-button-text);
+  font-size: 0.8125rem;
+  font-weight: 560;
+  line-height: 1.4;
+  white-space: normal;
+  box-shadow: var(--shadow-card);
+  pointer-events: none;
+  animation: copy-toast-in 0.25s var(--ease-out);
+}
+
+@keyframes copy-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+/* ==========================================
+   下载后的通知卡片
+   ========================================== */
+
+.download-toast {
+  position: fixed;
+  inset: calc(var(--nav-height) + 12px) 16px auto auto;
+  z-index: 100;
+  width: min(380px, 100vw - 32px);
+  max-width: none;
+  margin: 0;
+  padding: 16px 18px 18px;
+  border: 1px solid var(--color-border);
+  border-radius: 22px;
+  background: var(--color-glass-strong);
+  color: var(--color-text);
+  box-shadow: var(--shadow-float);
+  -webkit-backdrop-filter: saturate(180%) blur(28px);
+  backdrop-filter: saturate(180%) blur(28px);
+}
+
+.download-toast[open] {
+  display: grid;
+  gap: 14px;
+  animation: toast-in 0.55s var(--ease-spring);
+}
+
+.toast-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toast-icon {
+  width: 40px;
+  height: 40px;
+}
+
+.toast-heading {
+  flex: 1;
+  min-width: 0;
+}
+
+.toast-app {
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+:lang(zh) .toast-app {
+  letter-spacing: 0;
+}
+
+.toast-title {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.toast-close {
+  display: grid;
+  place-items: center;
+  align-self: flex-start;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-inline-code-bg);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.toast-close:hover {
+  color: var(--color-text);
+}
+
+.toast-close .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.toast-steps {
+  display: grid;
+  gap: 8px;
+  counter-reset: toast-step;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  list-style: none;
+}
+
+/* 序号绝对定位在左侧：步骤里的文字与 code、strong 照常排成一行，不被拆成弹性项目 */
+.toast-steps li {
+  position: relative;
+  padding-left: 32px;
+  counter-increment: toast-step;
+}
+
+.toast-steps li::before {
+  content: counter(toast-step);
+  position: absolute;
+  top: 0.06em;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-tint-sun);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.toast-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  border-radius: 12px;
+  background: var(--color-inline-code-bg);
+  color: var(--color-text);
+  font-size: 0.9375rem;
+  font-weight: 620;
+  text-decoration: none;
+}
+
+.toast-link:hover {
+  background: var(--color-border-strong);
+}
+
+.toast-link .icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* 窄屏：卡片贴在屏幕底部 */
+@media (max-width: 639px) {
+  .download-toast {
+    inset: auto 16px 16px;
+    width: auto;
+  }
+
+  .download-toast[open] {
+    animation-name: toast-in-bottom;
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px) scale(0.98);
+  }
+}
+
+@keyframes toast-in-bottom {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+
+/* ==========================================
+   页脚
+   ========================================== */
+
+.site-footer {
+  padding-block: 64px 40px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-bg-sunken);
+  font-size: 0.9375rem;
+}
+
+.footer-inner {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 48px;
+}
+
+.footer-brand {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
+.footer-brand p {
+  color: var(--color-text-secondary);
+}
+
+.footer-columns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 48px clamp(48px, 8vw, 120px);
+}
+
+.footer-column h2 {
+  margin-bottom: 14px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+:lang(zh) .footer-column h2 {
+  letter-spacing: 0;
+}
+
+.footer-column ul {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+}
+
+.footer-column a {
+  color: var(--color-text-secondary);
+  text-decoration: none;
+}
+
+.footer-column a:hover {
+  color: var(--color-text);
+  text-decoration: underline;
+}
+
+.footer-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 56px;
+  padding-top: 24px;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+.footer-bottom .language-switch {
+  margin-right: -12px;
+}
+
+/* ==========================================
+   区块进入视口时淡入上移
+   ========================================== */
+
+@media (prefers-reduced-motion: no-preference) {
+  html.js .reveal {
+    opacity: 0;
+    transform: translateY(28px);
+    transition:
+      opacity 0.9s var(--ease-out),
+      transform 0.9s var(--ease-out);
+  }
+
+  /* site.js 没能运行时，几秒后由动画把内容显示出来；它运行后在 <html> 上加 `reveal-ready`，改由它逐个淡入 */
+  html.js:not(.reveal-ready) .reveal {
+    animation: reveal-fallback 0.9s var(--ease-out) 3s forwards;
+  }
+
+  html.js .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* 同一行并排的卡片依次错开一点出现 */
+  html.js .reveal:nth-child(3n + 2) {
+    transition-delay: 80ms;
+  }
+
+  html.js .reveal:nth-child(3n) {
+    transition-delay: 160ms;
+  }
+}
+
+@keyframes reveal-fallback {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ==========================================
+   页面之间的过渡与减弱动效
+   ========================================== */
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  @view-transition {
+    navigation: auto;
+  }
+}
+
+/* 系统开了 “减弱动态效果” 时关闭所有动效 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,58 @@
+/* 404 页的样式：整屏的天空，中间是帆船画稿与中英两行说明，底边接海浪 */
+
+/* 没有导航，天空不必挪到导航底下；内容在一屏里居中 */
+.not-found {
+  display: grid;
+  min-height: 100vh;
+  margin-top: 0;
+  padding-block: clamp(32px, 6vh, 64px) clamp(110px, 14vh, 160px);
+  text-align: center;
+}
+
+.not-found-inner {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 16px;
+}
+
+.not-found-inner .brand {
+  margin-bottom: clamp(8px, 3vh, 32px);
+}
+
+.not-found .ship-art {
+  width: min(260px, 64vw);
+}
+
+.not-found-code {
+  color: var(--color-link);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.2em;
+}
+
+/* 英文、中文各占一行 */
+.not-found-title {
+  display: grid;
+  gap: 6px;
+  font-size: clamp(2rem, 1.5rem + 2vw, 3rem);
+  font-weight: 780;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+}
+
+.not-found-title :lang(zh) {
+  color: var(--color-text-secondary);
+  font-size: 0.62em;
+  font-weight: 680;
+  letter-spacing: 0.02em;
+}
+
+.not-found-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 12px;
+}
