@@ -57,10 +57,13 @@ Tests/FlotillaTests/    单元测试（Swift Testing）
 Scripts/bundle.sh       打包脚本：组装 .app 并签名
 Scripts/release.sh      发版脚本：改版本号并开 release PR
 docs/requirements/      需求文档：00 为总览，01–12 为按实现顺序拆分的阶段
+docs/resources/         README 的头图 readme-header-<en|zh>-<light|dark>.png：英文、中文各一套，各有浅色、深色两版；
+                        README 的截图 screenshot-<panel|stack|settings>-<en|zh>-<light|dark>.<jpg|png>，分法同头图；
+                        帆船画稿 sailing-ship-*.png
 .github/workflows/      GitHub Actions：ci.yml 检查与构建，release.yml 发布新版本
 .claude/skills/release/ Claude Code 的 release skill：用自然语言发布新版本
 .claude/agents/         Claude Code 的 flotilla-implementer 代理：按阶段需求文档实现功能
-README.md               英文 README：只写项目环境、配置、编译、运行，不写使用说明
+README.md               英文 README：介绍、功能、安装、权限、使用方法、工作原理与对系统的改动、从源码构建、开发与贡献说明
 README-ZH.md            README.md 的简体中文版，与它同步修改
 ```
 
