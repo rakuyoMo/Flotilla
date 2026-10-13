@@ -9,6 +9,7 @@ Flotilla 是一个原生 macOS App：在 Dock 上增加 “组”，把多个 Ap
 - 中文名 “归帆”，繁体写作 “歸帆”：简繁中文环境下 App 以这个名字显示，中文界面文案提到 App 时也写这个名字
 - 日文名 “帰帆”：日文环境下 App 以这个名字显示，日文界面文案提到 App 时也写这个名字
 - 纯开源的个人工具，只在 GitHub 分发
+- 官网为 <https://blog.rakuyo.dev/Flotilla/>，由 GitHub Pages 托管，见 “官网”
 - 许可证为 [GPL-3.0](LICENSE)
 
 ## 技术栈与环境
@@ -37,6 +38,8 @@ Flotilla 是一个原生 macOS App：在 Dock 上增加 “组”，把多个 Ap
 | `mise run swift:format` | 按代码规范自动格式化 |
 | `mise run swift:lint` | 检查代码规范 |
 | `mise run release <版本号>` | 为新版本开 release PR，见 “发布流程” |
+| `mise run site:build` | 组装官网到 `build/site/`，见 “官网” |
+| `mise run site:preview` | 组装官网并在本机预览，地址为 `http://localhost:8000/Flotilla/` |
 
 ## 目录结构
 
@@ -48,7 +51,7 @@ Sources/Flotilla/       App 源码
   StatusBar/            状态栏图标与菜单
   Settings/             设置窗口
   Resources/            五种语言的 Localizable.strings、InfoPlist.strings 与白天、夜间两版 App 图标母版，不参与编译；
-                        由打包脚本拷入 .app，图标母版转成 icns
+                        由打包脚本拷入 .app，图标母版转成 icns；官网的 App 图标与 favicon 也由图标母版生成
   Panel/                Dock 上展开的面板
   Dock/                 stub 生成、Dock 偏好读写与 tile 同步
   Info.plist            App 包的 Info.plist，不参与编译，由打包脚本拷入 .app
@@ -56,11 +59,15 @@ Sources/FlotillaDockTile/  Dock tile 的 stub 可执行文件，由打包脚本�
 Tests/FlotillaTests/    单元测试（Swift Testing）
 Scripts/bundle.sh       打包脚本：组装 .app 并签名
 Scripts/release.sh      发版脚本：改版本号并开 release PR
+Scripts/site.sh         官网组装脚本：拷入 website/、生成位图、取 Release 数据，输出到 build/site/
 docs/requirements/      需求文档：00 为总览，01–12 为按实现顺序拆分的阶段
 docs/resources/         README 的头图 readme-header-<en|zh>-<light|dark>.png：英文、中文各一套，各有浅色、深色两版；
                         README 的截图 screenshot-<panel|stack|settings>-<en|zh>-<light|dark>.<jpg|png>，分法同头图；
-                        帆船画稿 sailing-ship-*.png
-.github/workflows/      GitHub Actions：ci.yml 检查与构建，release.yml 发布新版本
+                        帆船画稿 sailing-ship-*.png；
+                        官网组装时从这里取截图与帆船画稿，并由浅色头图生成分享图
+website/                官网源码：英文页在根目录，简体中文页在 zh/，404.html 中英双语；
+                        assets/ 下是样式与脚本，位图在组装时生成，不进仓库
+.github/workflows/      GitHub Actions：ci.yml 检查与构建，release.yml 发布新版本，pages.yml 组装并部署官网
 .claude/skills/release/ Claude Code 的 release skill：用自然语言发布新版本
 .claude/agents/         Claude Code 的 flotilla-implementer 代理：按阶段需求文档实现功能
 README.md               英文 README：介绍、功能、安装、权限、使用方法、工作原理与对系统的改动、从源码构建、开发与贡献说明
@@ -209,6 +216,38 @@ README-ZH.md            README.md 的简体中文版，与它同步修改
   - [takuarc/FolderDock](https://github.com/takuarc/FolderDock)：自定义许可证禁止商用，与 GPL-3.0 不兼容
   - [benianwalls/Dock-Folders-App](https://github.com/benianwalls/Dock-Folders-App)：没有许可证
 
+## 官网
+
+官网 <https://blog.rakuyo.dev/Flotilla/> 是 GitHub Pages 上的项目页，挂在 `/Flotilla/` 下。
+
+账号的 GitHub Pages 自定义域名是 `blog.rakuyo.dev`，所以项目页在 `https://blog.rakuyo.dev/Flotilla/`，`rakuyomo.github.io/Flotilla/` 会跳转过来。
+
+### 源码与组装
+
+- 源码在 `website/`，只放手写的页面、样式与脚本，不放位图
+- `mise run site:build` 运行 `Scripts/site.sh`，组装到 `build/site/`：
+  - 拷入 `website/` 的全部内容
+  - 用 `sips` 从 App 图标母版生成图标与 favicon，从 `docs/resources/` 的浅色头图生成分享图、把帆船画稿转成 JPEG，截图原样拷入
+  - 用 `gh api` 取 GitHub 上的全部 Release，整理成 `build/site/releases.json`；`gh` 要先登录
+- 页面运行时只读同源的 `releases.json`，不请求 GitHub API；读不到时退回到指向 GitHub Releases 的链接
+- `mise run site:preview` 组装后在本机起服务，访问路径与线上一样带 `/Flotilla/` 前缀
+
+### 部署
+
+由 `.github/workflows/pages.yml` 完成：
+
+- 推送到 `main`、且改动涉及组装用到的文件时，组装并部署
+- 向 `main` 提 PR、且改动涉及同样的文件时，只组装、不部署，提前发现组装失败
+- “发布” workflow 成功后重新部署，更新下载链接与更新日志
+- 在 GitHub 上改了 release notes 之后，到仓库的 Actions 页面手动运行 “官网” workflow
+
+### 维护
+
+- 英文页在根目录，简体中文页在 `zh/`：像 `README.md` 与 `README-ZH.md` 那样同步修改，两边结构一致、内容对应
+- 页面上的事实以 README 为准，文案能照搬就照搬
+- 站内链接一律用相对路径：以 `/` 开头的路径会跳出 `/Flotilla/`；每页在 `<html data-root>` 上声明自己到站点根目录的相对路径，脚本据此拼地址
+  - `404.html` 会在任意不存在的路径下返回，用 `<base href="/Flotilla/">` 固定相对路径的起点
+
 ## 发布流程
 
 版本号记在 `Sources/Flotilla/Info.plist` 的 `CFBundleShortVersionString` 与 `CFBundleVersion` 里，两者始终相同，格式为 `X.Y.Z`：三段都是不带前导零的整数，不带 `v`。
@@ -229,6 +268,7 @@ README-ZH.md            README.md 的简体中文版，与它同步修改
    - 在合并提交上打 tag `vX.Y.Z`
    - 打包并压缩为 `Flotilla-X.Y.Z.zip`
    - 创建 GitHub Release，附上 zip 与自动生成的更新说明
+   - 官网随后重新部署，更新下载链接与更新日志，见 “官网”
 
 标题以 `release:` 开头（不区分大小写）的 PR 合并后，以下任一情况都会让发布失败：
 
