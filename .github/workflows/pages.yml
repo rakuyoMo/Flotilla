@@ -1,0 +1,109 @@
+# 官网的改动推送到 main、发布新版本之后，组装官网并部署到 GitHub Pages；向 main 提 PR 时只组装，提前发现组装失败
+
+name: 官网
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - website/**
+      - Scripts/site.sh
+      - mise.toml
+      - docs/resources/**
+      - Sources/Flotilla/Resources/AppIcon*.png
+      - .github/workflows/pages.yml
+
+  pull_request:
+    branches:
+      - main
+    paths:
+      - website/**
+      - Scripts/site.sh
+      - mise.toml
+      - docs/resources/**
+      - Sources/Flotilla/Resources/AppIcon*.png
+      - .github/workflows/pages.yml
+
+  # 刚建好 Release，官网要更新下载链接与更新日志；
+  # `release.yml` 用 GITHUB_TOKEN 建 Release，由它触发的 `release` 事件不会再触发 workflow，所以等 “发布” 跑完
+  workflow_run:
+    workflows:
+      - 发布
+    types:
+      - completed
+
+    # 按触发 “发布” 的 PR 的 head 分支匹配：只有 release PR 关闭时的 “发布” 才可能建出 Release
+    branches:
+      - release/**
+
+  # 在 GitHub 上改了 release notes 之后手动重跑
+  workflow_dispatch:
+
+permissions: {}
+
+# 组装与部署排成一组依次运行，不取消进行中的运行；PR 只组装，按 PR 编号另成一组，新推送取消旧运行
+concurrency:
+  group: >-
+    ${{ github.workflow }}-${{
+      github.event_name == 'pull_request'
+      && format('pr-{0}', github.event.pull_request.number)
+      || 'deploy'
+    }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    name: 组装官网
+
+    # “发布” 失败或被跳过时没有新的 Release，不组装也不部署
+    if: >-
+      github.event_name != 'workflow_run'
+      || github.event.workflow_run.conclusion == 'success'
+
+    # 生成位图要用 macOS 自带的 sips
+    runs-on: macos-26
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: 安装 mise
+        uses: jdx/mise-action@v4
+
+      - name: 组装
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: mise run site:build
+
+      - name: 上传
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: build/site
+
+  deploy:
+    name: 部署官网
+    needs: build
+
+    # PR 只组装，不部署
+    if: github.event_name != 'pull_request'
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: 部署
+        id: deployment
+        uses: actions/deploy-pages@v5
