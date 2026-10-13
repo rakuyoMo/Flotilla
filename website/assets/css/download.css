@@ -1,0 +1,925 @@
+/* 下载页的样式：下载卡片、安装三步与示意、快速上手、从源码构建 */
+
+/* ==========================================
+   设计 token
+   ========================================== */
+
+:root {
+  /* 示意里的系统界面：窗口按钮、开关与默认按钮的强调色（白字对比度不低于 4.5）、访达里 “应用程序” 文件夹的颜色 */
+  --mock-close: #FF5F57;
+  --mock-minimize: #FEBC2E;
+  --mock-zoom: #28C840;
+  --mock-accent: #0A6CDB;
+  --mock-accent-text: #FFFFFF;
+  --mock-folder-back: #6FBDF0;
+  --mock-folder-front: #97D3F8;
+  --mock-folder-mark: rgb(255 255 255 / 85%);
+  --mock-line: rgb(34 45 62 / 13%);
+  --mock-line-strong: rgb(34 45 62 / 30%);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --mock-accent: #2470D8;
+    --mock-folder-back: #3E8FD6;
+    --mock-folder-front: #5DA9E6;
+    --mock-folder-mark: rgb(3 21 54 / 55%);
+    --mock-line: rgb(180 218 247 / 16%);
+    --mock-line-strong: rgb(180 218 247 / 34%);
+  }
+}
+
+/* ==========================================
+   下载卡片
+   ========================================== */
+
+/* 卡片向上压住页头底边的海浪 */
+.download {
+  position: relative;
+  z-index: 1;
+  margin-top: calc(-1 * clamp(96px, 11vw, 150px));
+}
+
+.download-card {
+  max-width: 780px;
+  margin-inline: auto;
+  padding: clamp(24px, 3.5vw, 36px);
+  border: 1px solid var(--color-border);
+  border-radius: 30px;
+  background: var(--color-bg-raised);
+  box-shadow: var(--shadow-float);
+  transition:
+    border-color 0.4s,
+    box-shadow 0.4s var(--ease-out);
+}
+
+.download-card-body {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 20px 24px;
+}
+
+.download-card-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+}
+
+.download-card-icon .icon {
+  width: 32px;
+  height: 32px;
+}
+
+.download-card-text {
+  display: grid;
+  gap: 6px;
+}
+
+.download-card-text p {
+  color: var(--color-text-secondary);
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.download-card-title {
+  font-size: 1.5rem;
+  font-weight: 720;
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+}
+
+.download-card-title:lang(zh) {
+  letter-spacing: 0;
+}
+
+.download-card-file {
+  font-variant-numeric: tabular-nums;
+}
+
+.download-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* 还没有发布时说明更长，按钮挪到说明下方 */
+html[data-release="none"] .download-card-body {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+html[data-release="none"] .download-card-actions {
+  grid-column: 2;
+  justify-content: flex-start;
+}
+
+.download-card-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  margin-top: 26px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: 0.9375rem;
+}
+
+/* 点击下载之前与之后各显示一组内容 */
+.download-card:not([data-state="started"]) .when-started,
+.download-card[data-state="started"] .when-ready {
+  display: none;
+}
+
+/* 已开始下载：边框泛起日黄，图标换成对勾并弹一下 */
+.download-card[data-state="started"] {
+  border-color: color-mix(in srgb, var(--sun) 70%, transparent);
+  box-shadow:
+    0 0 0 5px var(--color-tint-sun),
+    var(--shadow-float);
+}
+
+.download-card[data-state="started"] .download-card-icon {
+  background: var(--sun);
+  color: var(--ink);
+}
+
+.download-card[data-state="started"] .download-card-icon .icon {
+  stroke-width: 2.25;
+  animation: check-pop 0.5s var(--ease-spring);
+}
+
+@keyframes check-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+
+.download-card-started {
+  margin-top: 20px;
+  font-weight: 620;
+}
+
+.download-card-started a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+}
+
+.download-card-started a:hover {
+  text-decoration: underline;
+}
+
+/* 窄屏：图标、说明与按钮从上到下排成一列 */
+@media (max-width: 639px) {
+  .download-card-body,
+  html[data-release="none"] .download-card-body {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .download-card-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 15px;
+  }
+
+  .download-card-icon .icon {
+    width: 26px;
+    height: 26px;
+  }
+
+  .download-card-actions,
+  html[data-release="none"] .download-card-actions {
+    grid-column: auto;
+    margin-top: 4px;
+  }
+
+  .download-card-actions .button {
+    flex: 1 1 100%;
+  }
+}
+
+/* ==========================================
+   安装三步
+   ========================================== */
+
+/* 紧跟在下载卡片之后，上方的留白收小一些 */
+.install {
+  padding-top: clamp(72px, 8vw, 120px);
+}
+
+.install-steps {
+  display: grid;
+  gap: 24px;
+  list-style: none;
+}
+
+.install-step {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  align-items: start;
+  gap: clamp(28px, 4vw, 56px);
+  padding: clamp(24px, 3.5vw, 44px);
+  border: 1px solid var(--color-border);
+  border-radius: 32px;
+  background: var(--color-bg-raised);
+  box-shadow: var(--shadow-card);
+}
+
+/* 下载开始后滚到这里，第一步闪两下日黄的光圈 */
+.install-step.is-highlighted {
+  animation: step-highlight 1.8s var(--ease-out);
+}
+
+@keyframes step-highlight {
+  20%,
+  60% {
+    border-color: color-mix(in srgb, var(--sun) 80%, transparent);
+    box-shadow:
+      0 0 0 6px color-mix(in srgb, var(--sun) 32%, transparent),
+      var(--shadow-card);
+  }
+
+  40% {
+    border-color: var(--color-border);
+    box-shadow: var(--shadow-card);
+  }
+}
+
+/* 列宽取 minmax(0, 1fr)：代码块里的长命令在代码块内横向滚动，不把整列撑宽 */
+.install-copy {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: start;
+  gap: 16px;
+}
+
+.install-copy > * {
+  max-width: 40rem;
+}
+
+/* 文字再收窄到正文的行宽，代码块与卡片仍可放宽到 40rem */
+.install-copy > :is(p, ul, ol),
+.step-alternative > p {
+  max-width: var(--measure);
+}
+
+.step-number {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-button-bg);
+  color: var(--color-button-text);
+  font-size: 1.0625rem;
+  font-weight: 750;
+}
+
+.step-title {
+  margin-bottom: 2px;
+  font-size: clamp(1.5rem, 1.25rem + 0.8vw, 1.875rem);
+  font-weight: 740;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+.step-title:lang(zh) {
+  line-height: 1.35;
+  letter-spacing: 0;
+}
+
+/* 补充说明：左侧一道天蓝的竖线 */
+.step-note {
+  padding-left: 14px;
+  border-left: 3px solid var(--color-tint-sky);
+  color: var(--color-text-secondary);
+  font-size: 0.9375rem;
+}
+
+/* 带圆形序号的步骤列表 */
+.number-list {
+  display: grid;
+  gap: 14px;
+  max-width: var(--measure);
+  counter-reset: number-list;
+  list-style: none;
+}
+
+.number-list > li {
+  position: relative;
+  padding-left: 40px;
+  counter-increment: number-list;
+}
+
+.number-list > li::before {
+  content: counter(number-list);
+  position: absolute;
+  top: 0.12em;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--color-tint-sun);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.list-note {
+  display: block;
+  margin-top: 4px;
+  color: var(--color-text-secondary);
+  font-size: 0.9375rem;
+}
+
+.step-alternative {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.install-copy .faq-item {
+  width: 100%;
+}
+
+/* 有无权限的差别与换版本后的提示，两块并排 */
+.step-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.step-fact {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 18px 20px 20px;
+  border-radius: 18px;
+  background: var(--color-bg-sunken);
+  color: var(--color-text-secondary);
+  font-size: 0.9375rem;
+  line-height: 1.65;
+}
+
+.step-fact h4 {
+  color: var(--color-text);
+  font-size: 1rem;
+  font-weight: 680;
+  line-height: 1.4;
+}
+
+.step-fact ul {
+  display: grid;
+  gap: 6px;
+  padding-left: 1.2em;
+}
+
+/* 系统里同类权限的提示 */
+.callout {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  margin-top: 24px;
+  padding: 26px 28px;
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+  background: var(--color-bg-sunken);
+}
+
+.callout-body {
+  display: grid;
+  gap: 6px;
+}
+
+.callout h3 {
+  font-size: 1.125rem;
+  font-weight: 680;
+  line-height: 1.4;
+}
+
+.callout p {
+  max-width: var(--measure);
+  color: var(--color-text-secondary);
+  font-size: 1rem;
+}
+
+@media (max-width: 1023px) {
+  .install-step {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* 单栏时示意放在文字上方 */
+  .install-art {
+    position: static;
+    order: -1;
+  }
+}
+
+@media (max-width: 639px) {
+  .install-step {
+    padding: 18px 18px 26px;
+    border-radius: 26px;
+  }
+
+  .install-copy {
+    padding-inline: 4px;
+  }
+
+  .step-facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .callout {
+    flex-direction: column;
+    padding: 22px;
+  }
+}
+
+/* ==========================================
+   安装步骤的示意：仿系统界面，只为点明位置
+   ========================================== */
+
+/* 文字比示意长时，示意跟着滚动停在导航下方 */
+.install-art {
+  position: sticky;
+  top: calc(var(--nav-height) + 32px);
+  min-height: 280px;
+  border-radius: 24px;
+  overflow: clip;
+}
+
+.mock-window {
+  width: min(100%, 360px);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 14px;
+  background: var(--color-bg-raised);
+  box-shadow: var(--shadow-float);
+  overflow: clip;
+}
+
+.mock-titlebar {
+  display: flex;
+  gap: 7px;
+  padding: 11px 13px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.mock-titlebar span {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--mock-close);
+}
+
+.mock-titlebar span:nth-child(2) {
+  background: var(--mock-minimize);
+}
+
+.mock-titlebar span:nth-child(3) {
+  background: var(--mock-zoom);
+}
+
+/* 从左边的 App 拖到右边的 “应用程序” 文件夹 */
+.mock-drag {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 30px 24px 28px;
+}
+
+.mock-item {
+  position: relative;
+  display: grid;
+  flex: none;
+  justify-items: center;
+  gap: 8px;
+}
+
+.mock-item img {
+  width: 72px;
+  height: 72px;
+}
+
+.mock-label {
+  color: var(--color-text);
+  font-size: 0.8125rem;
+  font-weight: 560;
+  line-height: 1.3;
+}
+
+.mock-cursor {
+  position: absolute;
+  right: -4px;
+  bottom: 22px;
+  width: 18px;
+  fill: var(--color-text);
+  stroke: var(--color-bg-raised);
+  stroke-width: 1.75;
+  stroke-linejoin: round;
+}
+
+.mock-arrow {
+  flex: 1;
+  max-width: 110px;
+  fill: none;
+  stroke: var(--color-link);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.mock-arrow path:first-child {
+  stroke-dasharray: 5 7;
+}
+
+.mock-folder {
+  width: 78px;
+  height: auto;
+}
+
+.mock-folder-back {
+  fill: var(--mock-folder-back);
+}
+
+.mock-folder-front {
+  fill: var(--mock-folder-front);
+}
+
+.mock-folder-mark {
+  fill: none;
+  stroke: var(--mock-folder-mark);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* 系统的拦截提示叠在 “安全性” 一栏的上方 */
+.install-art-stack {
+  align-content: center;
+}
+
+.mock-alert {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  gap: 9px;
+  width: 210px;
+  margin-right: 72px;
+  padding: 20px 18px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  background: var(--color-glass-strong);
+  box-shadow: var(--shadow-float);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+}
+
+.mock-alert img {
+  width: 56px;
+  height: 56px;
+  margin-bottom: 4px;
+}
+
+.mock-line {
+  display: block;
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--mock-line);
+}
+
+.mock-line-strong {
+  width: 72%;
+  height: 10px;
+  background: var(--mock-line-strong);
+}
+
+.mock-line-short {
+  width: 56%;
+}
+
+.mock-button {
+  display: grid;
+  flex: none;
+  place-items: center;
+  min-height: 28px;
+  padding: 0 14px;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.mock-button-default {
+  width: 100%;
+  margin-top: 6px;
+  background: var(--mock-accent);
+  color: var(--mock-accent-text);
+}
+
+/* “仍要打开” 外面套一圈日黄，标出要点的按钮 */
+.mock-button-accent {
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-bg-raised);
+  color: var(--color-text);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--sun) 45%, transparent);
+}
+
+.mock-panel {
+  display: grid;
+  gap: 10px;
+  width: min(100%, 320px);
+  margin-top: -22px;
+  margin-left: 64px;
+  padding: 34px 16px 16px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 16px;
+  background: var(--color-bg-raised);
+  box-shadow: var(--shadow-card);
+}
+
+.mock-heading {
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.mock-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--color-bg-sunken);
+}
+
+.mock-lines {
+  display: grid;
+  flex: 1;
+  gap: 6px;
+}
+
+/* 辅助功能的列表：归帆这一行的开关打开 */
+.mock-panel-list {
+  width: min(100%, 340px);
+  margin: 0;
+  padding: 16px;
+  box-shadow: var(--shadow-float);
+}
+
+.mock-row-muted {
+  opacity: 0.6;
+}
+
+.mock-row .mock-line {
+  flex: 1;
+}
+
+.mock-app,
+.mock-app-icon {
+  flex: none;
+  width: 32px;
+  height: 32px;
+}
+
+.mock-app {
+  border-radius: 8px;
+  background: var(--mock-line-strong);
+}
+
+.mock-name {
+  flex: 1;
+  color: var(--color-text);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.mock-switch {
+  position: relative;
+  flex: none;
+  width: 38px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--mock-line-strong);
+  transition: background-color 0.35s 0.5s;
+}
+
+.mock-switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 28%);
+  transition: transform 0.35s var(--ease-out) 0.5s;
+}
+
+.mock-switch.is-on {
+  background: var(--mock-accent);
+}
+
+.mock-switch.is-on::after {
+  transform: translateX(16px);
+}
+
+/* 这一步淡入时开关才拨到打开；由 site.css 兜底显示时开关保持打开 */
+@media (prefers-reduced-motion: no-preference) {
+  html.reveal-ready
+    .install-step:not(.is-visible)
+    .mock-switch.is-on {
+    background: var(--mock-line-strong);
+  }
+
+  html.reveal-ready
+    .install-step:not(.is-visible)
+    .mock-switch.is-on::after {
+    transform: none;
+  }
+}
+
+@media (max-width: 479px) {
+  .install-art {
+    min-height: 240px;
+    padding: 20px 14px;
+  }
+
+  .mock-drag {
+    padding: 24px 16px;
+  }
+
+  .mock-item img {
+    width: 60px;
+    height: 60px;
+  }
+
+  .mock-folder {
+    width: 64px;
+  }
+
+  .mock-alert {
+    margin-right: 40px;
+  }
+
+  .mock-panel {
+    margin-left: 32px;
+  }
+
+  .mock-panel-list {
+    margin: 0;
+  }
+}
+
+/* ==========================================
+   快速上手
+   ========================================== */
+
+.get-started {
+  padding-top: 0;
+}
+
+.get-started-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: clamp(32px, 5vw, 72px);
+}
+
+.get-started-copy {
+  display: grid;
+  gap: 20px;
+}
+
+.guide {
+  display: grid;
+  gap: 18px;
+  padding: 26px 28px 30px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-large);
+  background: var(--color-bg-raised);
+  box-shadow: var(--shadow-card);
+}
+
+.guide-title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.guide-more {
+  padding-left: 4px;
+}
+
+/* 截图跟着左侧的文字吸顶 */
+.get-started-media {
+  position: sticky;
+  top: calc(var(--nav-height) + 32px);
+  padding: clamp(8px, 2.5vw, 28px);
+}
+
+.get-started-media img {
+  width: 100%;
+  max-width: 600px;
+}
+
+@media (max-width: 1023px) {
+  .get-started-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .get-started-media {
+    position: static;
+    order: -1;
+  }
+}
+
+@media (max-width: 639px) {
+  .guide {
+    padding: 22px 22px 26px;
+  }
+}
+
+/* ==========================================
+   从源码构建
+   ========================================== */
+
+.build {
+  background: var(--color-bg-sunken);
+}
+
+/* 两项要求并排在上，命令占满整行，长注释不必折行 */
+.build-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+}
+
+.requirements {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  list-style: none;
+}
+
+.requirement {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 22px 24px 24px;
+  border: 1px solid var(--color-border);
+  border-radius: 22px;
+  background: var(--color-bg-raised);
+}
+
+.requirement h3 {
+  font-size: 1.0625rem;
+  font-weight: 680;
+  line-height: 1.45;
+}
+
+.requirement p {
+  margin-top: 4px;
+  color: var(--color-text-secondary);
+  font-size: 0.9375rem;
+}
+
+.build-commands {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+}
+
+.build-notes {
+  display: grid;
+  gap: 10px;
+  max-width: var(--measure);
+  padding-left: 1.2em;
+  color: var(--color-text-secondary);
+  font-size: 0.9375rem;
+}
+
+@media (max-width: 767px) {
+  .requirements {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

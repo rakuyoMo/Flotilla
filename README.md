@@ -12,6 +12,7 @@ English | [简体中文](README-ZH.md)
 Groups for the macOS Dock: sort apps, files, Finder folders, and web pages into them,
 and open each group as a grid right above the Dock, just like a Dock folder.
 
+[![Website](https://img.shields.io/badge/website-blog.rakuyo.dev%2FFlotilla-0089C2)](https://blog.rakuyo.dev/Flotilla/)
 [![CI](https://github.com/rakuyoMo/Flotilla/actions/workflows/ci.yml/badge.svg)](https://github.com/rakuyoMo/Flotilla/actions/workflows/ci.yml)
 ![macOS 15+](https://img.shields.io/badge/macOS-15%2B-000000?logo=apple&logoColor=white)
 ![Swift 6](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)
@@ -67,9 +68,9 @@ The app is shown as 归帆 in Simplified Chinese, 歸帆 in Traditional Chinese,
 
 ## Installation
 
-Flotilla requires macOS 15 or later.
+Flotilla requires macOS 15 or later, on a Mac with Apple silicon.
 
-1. Download the latest `Flotilla-X.Y.Z.zip` from the [Releases](https://github.com/rakuyoMo/Flotilla/releases) page
+1. Download the latest `Flotilla-X.Y.Z.zip` from the [website](https://blog.rakuyo.dev/Flotilla/download/) or the [Releases](https://github.com/rakuyoMo/Flotilla/releases) page
 2. Double-click to unzip it, then drag `Flotilla.app` into the Applications folder
    - Finder shows it under its name for the system language, such as 归帆 in Simplified Chinese
 3. Open Flotilla
@@ -300,6 +301,20 @@ Back up the Dock preferences before modifying them while debugging:
 ```bash
 defaults export com.apple.dock <file>
 ```
+
+### Website
+
+The [website](https://blog.rakuyo.dev/Flotilla/) is built from `website/` and deployed to GitHub Pages; see the "官网" section of [AGENTS.md](AGENTS.md) (in Chinese) for details.
+
+```bash
+# Assemble the website into build/site/
+mise run site:build
+
+# Assemble it and preview it at http://localhost:8000/Flotilla/
+mise run site:preview
+```
+
+Assembling fetches the releases with `gh`, so log in with `gh auth login` first.
 
 ## Contributing
 

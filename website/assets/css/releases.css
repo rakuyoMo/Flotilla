@@ -1,0 +1,555 @@
+/* 更新日志页的样式：版本目录、跳到版本、每个版本的条目与 GitHub 渲染的正文，以及空状态与读取失败的说明 */
+
+/* ==========================================
+   页头与版面
+   ========================================== */
+
+/* 页头下方不压卡片，留给海浪的高度小一些 */
+.releases-hero {
+  padding-bottom: clamp(112px, 12vw, 168px);
+}
+
+.releases {
+  padding-block: clamp(24px, 4vw, 48px) var(--section-space);
+}
+
+.releases-layout {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  align-items: start;
+  gap: clamp(32px, 5vw, 72px);
+}
+
+/* ==========================================
+   版本目录与跳到版本
+   ========================================== */
+
+/* 桌面：左侧吸顶，高亮当前读到的版本 */
+.releases-toc {
+  position: sticky;
+  top: calc(var(--nav-height) + 32px);
+  display: grid;
+  gap: 12px;
+}
+
+.releases-toc-title {
+  padding-left: 14px;
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+:lang(zh) .releases-toc-title {
+  letter-spacing: 0;
+}
+
+/* 版本很多时目录自己滚动，不超出视口 */
+.releases-toc ol {
+  display: grid;
+  gap: 2px;
+  max-height: calc(100vh - var(--nav-height) - 120px);
+  overflow-y: auto;
+  list-style: none;
+}
+
+.releases-toc a {
+  position: relative;
+  display: grid;
+  gap: 1px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  color: var(--color-text);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.releases-toc a:hover {
+  background: var(--color-inline-code-bg);
+}
+
+.releases-toc time {
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.releases-toc a[aria-current] {
+  background: var(--color-tint-sun);
+}
+
+.releases-toc a[aria-current]::before {
+  content: "";
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  left: 0;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--sun);
+}
+
+/* 窄屏才出现的 “跳到版本” 选择 */
+.releases-jump {
+  display: none;
+}
+
+.releases-jump label {
+  color: var(--color-text-secondary);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.releases-select {
+  position: relative;
+  flex: 1;
+}
+
+.releases-select select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 40px 0 14px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 12px;
+  background: var(--color-bg-raised);
+  color: var(--color-text);
+  font: inherit;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+.releases-select .icon {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  color: var(--color-text-secondary);
+  translate: 0 -50%;
+  pointer-events: none;
+}
+
+/* 窄屏：目录收起，“跳到版本” 吸在导航下方 */
+@media (max-width: 899px) {
+  .releases-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+
+  .releases-toc {
+    display: none;
+  }
+
+  .releases-jump {
+    position: sticky;
+    top: var(--nav-height);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-inline: calc(-1 * var(--gutter));
+    padding: 10px var(--gutter);
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-glass);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+  }
+
+  /* 跳到某个版本时再让出吸顶的 “跳到版本” 条：44 px 的选择框、上下 10 px 的内边距与 1 px 的分隔线 */
+  .release {
+    scroll-margin-top: 65px;
+  }
+}
+
+/* ==========================================
+   版本条目
+   ========================================== */
+
+.releases-list {
+  display: grid;
+  gap: 28px;
+}
+
+.release {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: start;
+  gap: 20px;
+  padding: clamp(24px, 3.5vw, 44px);
+  border: 1px solid var(--color-border);
+  border-radius: 28px;
+  background: var(--color-bg-raised);
+  box-shadow: var(--shadow-card);
+}
+
+.release-header {
+  display: grid;
+  gap: 8px;
+}
+
+.release-title {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: clamp(1.75rem, 1.4rem + 1.2vw, 2.25rem);
+  font-weight: 760;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+}
+
+.release-anchor {
+  color: inherit;
+  text-decoration: none;
+}
+
+.release-anchor:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+}
+
+/* 复制版本链接：悬停在标题上或键盘聚焦时出现，触屏上一直显示 */
+.release-copy {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-text-secondary);
+  letter-spacing: 0;
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity 0.2s,
+    background-color 0.2s;
+}
+
+.release-copy .icon {
+  width: 20px;
+  height: 20px;
+}
+
+.release-header:hover .release-copy,
+.release-copy:focus-visible,
+.release-copy:has(.copy-toast) {
+  opacity: 1;
+}
+
+.release-copy:hover {
+  background: var(--color-inline-code-bg);
+  color: var(--color-text);
+}
+
+@media (hover: none) {
+  .release-copy {
+    opacity: 1;
+  }
+}
+
+/* 提示从按钮下方向右展开，不压住版本号 */
+.release-copy .copy-toast {
+  right: auto;
+  left: 0;
+}
+
+html:not(.js) .release-copy {
+  display: none;
+}
+
+.release-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  color: var(--color-text-secondary);
+  font-size: 0.9375rem;
+}
+
+.release-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.release-badge-latest {
+  background: var(--color-chip-bg);
+  color: var(--color-chip-text);
+}
+
+.release-badge-prerelease {
+  background: var(--color-tint-sky);
+  color: var(--color-text);
+}
+
+/* zip 的下载 chip */
+.release-asset {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 6px 16px 6px 14px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 14px;
+  background: var(--color-bg-sunken);
+  color: var(--color-text);
+  font-size: 0.9375rem;
+  font-weight: 620;
+  line-height: 1.4;
+  text-decoration: none;
+  transition:
+    border-color 0.2s,
+    background-color 0.2s;
+}
+
+.release-asset:hover {
+  border-color: var(--color-link);
+  background: var(--color-bg-raised);
+}
+
+.release-asset-name {
+  overflow-wrap: anywhere;
+}
+
+.release-asset-size {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.release-asset-download {
+  color: var(--color-link);
+}
+
+.release-link {
+  font-size: 0.9375rem;
+}
+
+@media (max-width: 639px) {
+  .release {
+    padding: 22px 20px 26px;
+    border-radius: 24px;
+  }
+}
+
+/* ==========================================
+   GitHub 渲染的正文
+   ========================================== */
+
+.release-body {
+  display: grid;
+  gap: 14px;
+  width: 100%;
+  padding-top: 22px;
+  border-top: 1px solid var(--color-border);
+}
+
+.release-body :is(h3, h4, h5, h6) {
+  margin: 10px 0 0;
+  line-height: 1.4;
+}
+
+.release-body h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.release-body :is(h4, h5, h6) {
+  font-size: 1.0625rem;
+  font-weight: 680;
+}
+
+.release-body > :first-child {
+  margin-top: 0;
+}
+
+/* 文字不超过正文的行宽，图片、代码与表格仍可占满整列 */
+.release-body > :is(p, ul, ol, blockquote) {
+  max-width: var(--measure);
+}
+
+.release-body :is(ul, ol) {
+  display: grid;
+  gap: 8px;
+  padding-left: 1.4em;
+}
+
+.release-body li::marker {
+  color: var(--color-text-secondary);
+}
+
+.release-body li > :is(ul, ol) {
+  margin-top: 8px;
+}
+
+.release-body a {
+  overflow-wrap: anywhere;
+}
+
+.release-body tt {
+  padding: 0.12em 0.4em;
+  border-radius: 6px;
+  background: var(--color-inline-code-bg);
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+}
+
+.release-body pre {
+  margin: 0;
+  padding: 16px 20px;
+  border: 1px solid var(--color-code-border);
+  border-radius: 14px;
+  background: var(--color-code-bg);
+  color: var(--color-code-text);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  line-height: 1.7;
+  overflow-x: auto;
+}
+
+.release-body pre code {
+  padding: 0;
+  background: none;
+  font-size: inherit;
+  overflow-wrap: normal;
+}
+
+.release-body blockquote {
+  display: grid;
+  gap: 8px;
+  padding: 12px 18px;
+  border-left: 3px solid var(--sky);
+  border-radius: 0 12px 12px 0;
+  background: var(--color-bg-sunken);
+  color: var(--color-text-secondary);
+}
+
+.release-body img {
+  border-radius: 12px;
+}
+
+.release-body hr {
+  width: 100%;
+  margin: 6px 0;
+  border: 0;
+  border-top: 1px solid var(--color-border);
+}
+
+/* 表格过宽时在自身范围内横向滚动 */
+.release-body table {
+  display: block;
+  max-width: 100%;
+  border-collapse: collapse;
+  overflow-x: auto;
+}
+
+.release-body :is(th, td) {
+  padding: 6px 12px;
+  border: 1px solid var(--color-border);
+}
+
+g-emoji {
+  font-family:
+    "Apple Color Emoji",
+    "Segoe UI Emoji",
+    "Noto Color Emoji",
+    sans-serif;
+  font-style: normal;
+}
+
+/* ==========================================
+   还没有发布与读取失败
+   ========================================== */
+
+.releases-empty {
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+  max-width: 600px;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.releases-empty .ship-art {
+  margin-bottom: 4px;
+}
+
+.releases-empty-title {
+  font-size: clamp(1.75rem, 1.4rem + 1.2vw, 2.25rem);
+  font-weight: 760;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+.releases-empty-title:lang(zh) {
+  letter-spacing: 0;
+}
+
+.releases-empty > p {
+  color: var(--color-text-secondary);
+}
+
+.releases-empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.releases-empty-hint {
+  font-size: 0.9375rem;
+}
+
+.releases-message {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  max-width: 780px;
+  margin-inline: auto;
+  padding: 28px;
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+  background: var(--color-bg-raised);
+  box-shadow: var(--shadow-card);
+}
+
+.releases-message-body {
+  display: grid;
+  flex: 1;
+  gap: 4px;
+}
+
+.releases-message h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.releases-message p {
+  color: var(--color-text-secondary);
+  font-size: 1rem;
+}
+
+@media (max-width: 639px) {
+  .releases-message {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 24px;
+  }
+}

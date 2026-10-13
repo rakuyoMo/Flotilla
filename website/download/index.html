@@ -1,0 +1,1626 @@
+<!doctype html>
+<html
+  lang="en"
+  data-root="../"
+>
+<head>
+  <meta charset="utf-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
+  <!-- 浏览器首选简体中文、又没在语言切换里选过时，跳到中文页；先于渲染执行，避免先闪一下英文 -->
+  <script>
+    (() => {
+      document.documentElement.classList.add("js");
+
+      let saved = null;
+
+      try {
+        saved = localStorage.getItem("flotilla.language");
+      } catch {
+        saved = null;
+      }
+
+      const preferred = (
+        navigator.languages?.[0]
+        ?? navigator.language
+        ?? ""
+      ).toLowerCase();
+
+      const isSimplifiedChinese = ["zh", "zh-cn", "zh-sg"].includes(preferred)
+        || preferred.startsWith("zh-hans");
+
+      if (saved === null && isSimplifiedChinese) {
+        location.replace("../zh/download/" + location.hash);
+      }
+    })();
+  </script>
+
+  <title>Download Flotilla</title>
+
+  <meta
+    name="description"
+    content="Download Flotilla for macOS 15 or later on Apple silicon, then install it, open it for the first time, and grant the Accessibility permission."
+  >
+
+  <meta
+    name="color-scheme"
+    content="light dark"
+  >
+
+  <meta
+    name="theme-color"
+    content="#FDF9F0"
+    media="(prefers-color-scheme: light)"
+  >
+
+  <meta
+    name="theme-color"
+    content="#031536"
+    media="(prefers-color-scheme: dark)"
+  >
+
+  <link
+    rel="canonical"
+    href="https://blog.rakuyo.dev/Flotilla/download/"
+  >
+
+  <link
+    rel="alternate"
+    hreflang="en"
+    href="https://blog.rakuyo.dev/Flotilla/download/"
+  >
+
+  <link
+    rel="alternate"
+    hreflang="zh-Hans"
+    href="https://blog.rakuyo.dev/Flotilla/zh/download/"
+  >
+
+  <link
+    rel="alternate"
+    hreflang="x-default"
+    href="https://blog.rakuyo.dev/Flotilla/download/"
+  >
+
+  <meta
+    property="og:type"
+    content="website"
+  >
+
+  <meta
+    property="og:site_name"
+    content="Flotilla"
+  >
+
+  <meta
+    property="og:title"
+    content="Download Flotilla"
+  >
+
+  <meta
+    property="og:description"
+    content="Download Flotilla for macOS 15 or later on Apple silicon, then install it, open it for the first time, and grant the Accessibility permission."
+  >
+
+  <meta
+    property="og:url"
+    content="https://blog.rakuyo.dev/Flotilla/download/"
+  >
+
+  <meta
+    property="og:image"
+    content="https://blog.rakuyo.dev/Flotilla/assets/img/og-en.png"
+  >
+
+  <meta
+    property="og:image:width"
+    content="1200"
+  >
+
+  <meta
+    property="og:image:height"
+    content="480"
+  >
+
+  <meta
+    property="og:locale"
+    content="en_US"
+  >
+
+  <meta
+    name="twitter:card"
+    content="summary_large_image"
+  >
+
+  <link
+    rel="icon"
+    href="../assets/img/favicon-light.png"
+    type="image/png"
+    media="(prefers-color-scheme: light)"
+  >
+
+  <link
+    rel="icon"
+    href="../assets/img/favicon-dark.png"
+    type="image/png"
+    media="(prefers-color-scheme: dark)"
+  >
+
+  <link
+    rel="apple-touch-icon"
+    href="../assets/img/apple-touch-icon.png"
+  >
+
+  <link
+    rel="stylesheet"
+    href="../assets/css/site.css"
+  >
+
+  <link
+    rel="stylesheet"
+    href="../assets/css/download.css"
+  >
+
+  <script
+    src="../assets/js/site.js"
+    defer
+  ></script>
+  <script
+    src="../assets/js/releases.js"
+    defer
+  ></script>
+</head>
+<body>
+  <svg
+    class="icon-sprite"
+    aria-hidden="true"
+  >
+    <symbol
+      id="i-github"
+      viewBox="0 0 16 16"
+    >
+      <path
+        fill="currentColor"
+        stroke="none"
+        d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"
+      />
+    </symbol>
+
+    <symbol
+      id="i-download"
+      viewBox="0 0 24 24"
+    >
+      <path d="M12 4v11"/>
+      <path d="m7 10 5 5 5-5"/>
+      <path d="M5 19.5h14"/>
+    </symbol>
+
+    <symbol
+      id="i-arrow-right"
+      viewBox="0 0 24 24"
+    >
+      <path d="M5 12h14"/>
+      <path d="m13 6 6 6-6 6"/>
+    </symbol>
+
+    <symbol
+      id="i-external"
+      viewBox="0 0 24 24"
+    >
+      <path d="M7 17 17 7"/>
+      <path d="M8.5 7H17v8.5"/>
+    </symbol>
+
+    <symbol
+      id="i-copy"
+      viewBox="0 0 24 24"
+    >
+      <rect
+        x="8.5"
+        y="8.5"
+        width="11.5"
+        height="11.5"
+        rx="2.5"
+      />
+
+      <path d="M15.5 8.5V6.5A2.5 2.5 0 0 0 13 4H6.5A2.5 2.5 0 0 0 4 6.5V13a2.5 2.5 0 0 0 2.5 2.5h2"/>
+    </symbol>
+
+    <symbol
+      id="i-check"
+      viewBox="0 0 24 24"
+    >
+      <path d="m5 12.5 4.5 4.5L19 7.5"/>
+    </symbol>
+
+    <symbol
+      id="i-close"
+      viewBox="0 0 24 24"
+    >
+      <path d="m6.5 6.5 11 11"/>
+      <path d="m17.5 6.5-11 11"/>
+    </symbol>
+
+    <symbol
+      id="i-menu"
+      viewBox="0 0 24 24"
+    >
+      <path d="M4 8.5h16"/>
+      <path d="M4 15.5h16"/>
+    </symbol>
+
+    <symbol
+      id="i-globe"
+      viewBox="0 0 24 24"
+    >
+      <circle
+        cx="12"
+        cy="12"
+        r="9"
+      />
+
+      <path d="M3 12h18"/>
+      <path d="M12 3c2.5 2.6 3.75 5.6 3.75 9s-1.25 6.4-3.75 9c-2.5-2.6-3.75-5.6-3.75-9S9.5 5.6 12 3Z"/>
+    </symbol>
+
+    <symbol
+      id="i-link"
+      viewBox="0 0 24 24"
+    >
+      <path d="M10 14a4.5 4.5 0 0 0 6.4 0l2.8-2.8a4.5 4.5 0 0 0-6.4-6.4L11.5 6.1"/>
+      <path d="M14 10a4.5 4.5 0 0 0-6.4 0l-2.8 2.8a4.5 4.5 0 0 0 6.4 6.4l1.3-1.3"/>
+    </symbol>
+
+    <symbol
+      id="i-rss"
+      viewBox="0 0 24 24"
+    >
+      <path d="M5 4.5A14.5 14.5 0 0 1 19.5 19"/>
+      <path d="M5 10.5a8.5 8.5 0 0 1 8.5 8.5"/>
+
+      <circle
+        cx="6"
+        cy="18"
+        r="1.5"
+        fill="currentColor"
+        stroke="none"
+      />
+    </symbol>
+
+    <symbol
+      id="i-star"
+      viewBox="0 0 24 24"
+    >
+      <path d="m12 3.5 2.6 5.3 5.9.9-4.25 4.1 1 5.8L12 16.85l-5.25 2.75 1-5.8L3.5 9.7l5.9-.9Z"/>
+    </symbol>
+
+    <symbol
+      id="i-eye"
+      viewBox="0 0 24 24"
+    >
+      <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/>
+
+      <circle
+        cx="12"
+        cy="12"
+        r="3"
+      />
+    </symbol>
+
+    <symbol
+      id="i-issue"
+      viewBox="0 0 24 24"
+    >
+      <circle
+        cx="12"
+        cy="12"
+        r="8.5"
+      />
+
+      <circle
+        cx="12"
+        cy="12"
+        r="1.75"
+        fill="currentColor"
+        stroke="none"
+      />
+    </symbol>
+
+    <symbol
+      id="i-pull-request"
+      viewBox="0 0 24 24"
+    >
+      <circle
+        cx="6.5"
+        cy="6"
+        r="2.25"
+      />
+
+      <circle
+        cx="6.5"
+        cy="18"
+        r="2.25"
+      />
+
+      <circle
+        cx="17.5"
+        cy="18"
+        r="2.25"
+      />
+
+      <path d="M6.5 8.25v7.5"/>
+      <path d="M17.5 15.75V9.5a3 3 0 0 0-3-3H11"/>
+      <path d="m13 4-2.5 2.5L13 9"/>
+    </symbol>
+
+    <symbol
+      id="i-terminal"
+      viewBox="0 0 24 24"
+    >
+      <rect
+        x="3"
+        y="4.5"
+        width="18"
+        height="15"
+        rx="3"
+      />
+
+      <path d="m7.5 10 2.5 2-2.5 2"/>
+      <path d="M12.5 14.5h4"/>
+    </symbol>
+
+    <symbol
+      id="i-scale"
+      viewBox="0 0 24 24"
+    >
+      <path d="M12 4v16"/>
+      <path d="M8 20h8"/>
+      <path d="M5 7.5h14"/>
+      <path d="M5 7.5 2.75 13a2.5 2.5 0 0 0 4.5 0Z"/>
+      <path d="M19 7.5 16.75 13a2.5 2.5 0 0 0 4.5 0Z"/>
+    </symbol>
+
+    <symbol
+      id="i-chevron-down"
+      viewBox="0 0 24 24"
+    >
+      <path d="m6 9.5 6 6 6-6"/>
+    </symbol>
+
+    <symbol
+      id="i-dock"
+      viewBox="0 0 24 24"
+    >
+      <rect
+        x="2.5"
+        y="12"
+        width="19"
+        height="8.5"
+        rx="3"
+      />
+
+      <rect
+        x="5.5"
+        y="14.75"
+        width="3.5"
+        height="3.5"
+        rx="1"
+      />
+
+      <rect
+        x="10.25"
+        y="14.75"
+        width="3.5"
+        height="3.5"
+        rx="1"
+      />
+
+      <rect
+        x="15"
+        y="14.75"
+        width="3.5"
+        height="3.5"
+        rx="1"
+      />
+
+      <path d="M12 3.5v5"/>
+      <path d="m9.5 6.5 2.5 2.5 2.5-2.5"/>
+    </symbol>
+
+    <symbol
+      id="i-items"
+      viewBox="0 0 24 24"
+    >
+      <rect
+        x="3"
+        y="3"
+        width="7.5"
+        height="7.5"
+        rx="2"
+      />
+
+      <path d="M14 3h4l2.5 2.5v5H14Z"/>
+      <path d="M3 15a1.5 1.5 0 0 1 1.5-1.5h2l1 1.25h3a1.5 1.5 0 0 1 1.5 1.5v3.25a1.5 1.5 0 0 1-1.5 1.5h-6A1.5 1.5 0 0 1 3 19.5Z"/>
+
+      <circle
+        cx="17.25"
+        cy="17.25"
+        r="3.75"
+      />
+
+      <path d="M13.5 17.25h7.5"/>
+    </symbol>
+
+    <symbol
+      id="i-nested"
+      viewBox="0 0 24 24"
+    >
+      <rect
+        x="3"
+        y="3"
+        width="18"
+        height="18"
+        rx="4.5"
+      />
+
+      <rect
+        x="8"
+        y="8"
+        width="8"
+        height="8"
+        rx="2"
+      />
+    </symbol>
+
+    <symbol
+      id="i-grid"
+      viewBox="0 0 24 24"
+    >
+      <path d="M5 3.5h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-5l-2 2.5-2-2.5H5a2 2 0 0 1-2-2v-10a2 2 0 0 1 2-2Z"/>
+
+      <g
+        fill="currentColor"
+        stroke="none"
+      >
+        <circle
+          cx="8"
+          cy="8.5"
+          r="1.15"
+        />
+
+        <circle
+          cx="12"
+          cy="8.5"
+          r="1.15"
+        />
+
+        <circle
+          cx="16"
+          cy="8.5"
+          r="1.15"
+        />
+
+        <circle
+          cx="8"
+          cy="12.75"
+          r="1.15"
+        />
+
+        <circle
+          cx="12"
+          cy="12.75"
+          r="1.15"
+        />
+
+        <circle
+          cx="16"
+          cy="12.75"
+          r="1.15"
+        />
+      </g>
+    </symbol>
+
+    <symbol
+      id="i-group-icon"
+      viewBox="0 0 24 24"
+    >
+      <rect
+        x="3"
+        y="3"
+        width="18"
+        height="18"
+        rx="5"
+      />
+
+      <rect
+        x="7"
+        y="7"
+        width="4"
+        height="4"
+        rx="1"
+      />
+
+      <rect
+        x="13"
+        y="7"
+        width="4"
+        height="4"
+        rx="1"
+      />
+
+      <rect
+        x="7"
+        y="13"
+        width="4"
+        height="4"
+        rx="1"
+      />
+
+      <rect
+        x="13"
+        y="13"
+        width="4"
+        height="4"
+        rx="1"
+      />
+    </symbol>
+
+    <symbol
+      id="i-move"
+      viewBox="0 0 24 24"
+    >
+      <path d="M12 3v18"/>
+      <path d="m9 6 3-3 3 3"/>
+      <path d="m9 18 3 3 3-3"/>
+      <path d="M3 12h18"/>
+      <path d="m6 9-3 3 3 3"/>
+      <path d="m18 9 3 3-3 3"/>
+    </symbol>
+
+    <symbol
+      id="i-route"
+      viewBox="0 0 24 24"
+    >
+      <circle
+        cx="6"
+        cy="18"
+        r="2.5"
+      />
+
+      <circle
+        cx="18"
+        cy="6"
+        r="2.5"
+      />
+
+      <path d="M8.5 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5"/>
+    </symbol>
+
+    <symbol
+      id="i-menubar"
+      viewBox="0 0 24 24"
+    >
+      <rect
+        x="2.5"
+        y="4"
+        width="19"
+        height="16"
+        rx="3"
+      />
+
+      <path d="M2.5 8.5h19"/>
+
+      <circle
+        cx="17.75"
+        cy="6.25"
+        r="0.9"
+        fill="currentColor"
+        stroke="none"
+      />
+    </symbol>
+
+    <symbol
+      id="i-languages"
+      viewBox="0 0 24 24"
+    >
+      <path d="M3.5 5.5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2V10a2 2 0 0 1-2 2h-4l-3 2.5V12a2 2 0 0 1-2-2Z"/>
+      <path d="M17.5 9h1a2 2 0 0 1 2 2v4.5a2 2 0 0 1-2 2V20l-3-2.5h-3a2 2 0 0 1-2-2V15"/>
+    </symbol>
+
+    <symbol
+      id="i-refresh"
+      viewBox="0 0 24 24"
+    >
+      <path d="M19.5 11A7.5 7.5 0 0 0 6 6.6L4.5 8"/>
+      <path d="M4.5 4v4h4"/>
+      <path d="M4.5 13A7.5 7.5 0 0 0 18 17.4l1.5-1.4"/>
+      <path d="M19.5 20v-4h-4"/>
+    </symbol>
+
+    <symbol
+      id="i-archive"
+      viewBox="0 0 24 24"
+    >
+      <rect
+        x="3"
+        y="4"
+        width="18"
+        height="5"
+        rx="1.5"
+      />
+
+      <path d="M5 9v8.5A2.5 2.5 0 0 0 7.5 20h9a2.5 2.5 0 0 0 2.5-2.5V9"/>
+      <path d="M10 13h4"/>
+    </symbol>
+
+    <symbol
+      id="i-folder"
+      viewBox="0 0 24 24"
+    >
+      <path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h3.2l2 2.2h7.8A2.5 2.5 0 0 1 21 9.7v7.8a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5Z"/>
+    </symbol>
+
+    <symbol
+      id="i-stack"
+      viewBox="0 0 24 24"
+    >
+      <path d="M3 9.5A2.5 2.5 0 0 1 5.5 7h3.2l2 2.2h7.8A2.5 2.5 0 0 1 21 11.7v6.3a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 18Z"/>
+      <path d="M6 4h12"/>
+    </symbol>
+
+    <symbol
+      id="i-drop"
+      viewBox="0 0 24 24"
+    >
+      <rect
+        x="3"
+        y="11"
+        width="18"
+        height="9.5"
+        rx="3"
+      />
+
+      <path d="M12 3v9"/>
+      <path d="m8.5 8.5 3.5 3.5 3.5-3.5"/>
+    </symbol>
+
+    <symbol
+      id="i-shield"
+      viewBox="0 0 24 24"
+    >
+      <path d="M12 3 4.5 6v5.5c0 4.5 3.2 8.2 7.5 9.5 4.3-1.3 7.5-5 7.5-9.5V6Z"/>
+      <path d="m9 12 2.2 2.2L15.5 10"/>
+    </symbol>
+
+    <symbol
+      id="i-accessibility"
+      viewBox="0 0 24 24"
+    >
+      <circle
+        cx="12"
+        cy="12"
+        r="9"
+      />
+
+      <circle
+        cx="12"
+        cy="7.5"
+        r="1.25"
+        fill="currentColor"
+        stroke="none"
+      />
+
+      <path d="M7.5 10h9"/>
+      <path d="M12 10v4"/>
+      <path d="m9.5 18 2.5-4 2.5 4"/>
+    </symbol>
+
+    <symbol
+      id="i-sail"
+      viewBox="0 0 24 24"
+    >
+      <path d="M12 3v14"/>
+      <path d="M12 4.5 18.5 15H12"/>
+      <path d="M10 6.5 5 15h5"/>
+      <path d="M3.5 18h17l-2 2.5h-13Z"/>
+    </symbol>
+  </svg>
+
+  <a
+    class="skip-link"
+    href="#main"
+  >Skip to content</a>
+
+  <header
+    class="site-header"
+    data-site-header
+  >
+    <nav
+      class="nav container"
+      aria-label="Main"
+    >
+      <a
+        class="brand"
+        href="../"
+      >
+        <picture>
+          <source
+            srcset="../assets/img/app-icon-dark-64.png"
+            media="(prefers-color-scheme: dark)"
+          >
+
+          <img
+            src="../assets/img/app-icon-light-64.png"
+            alt=""
+            width="32"
+            height="32"
+          >
+        </picture>
+
+        <span>Flotilla</span>
+      </a>
+
+      <button
+        class="nav-toggle"
+        type="button"
+        aria-expanded="false"
+        aria-controls="nav-menu"
+        aria-label="Menu"
+        data-nav-toggle
+      >
+        <svg
+          class="icon"
+          aria-hidden="true"
+        ><use href="#i-menu"/></svg>
+      </button>
+
+      <div
+        class="nav-menu"
+        id="nav-menu"
+      >
+        <ul class="nav-links">
+          <li>
+            <a href="../#features">Features</a>
+          </li>
+
+          <li>
+            <a href="../#how-it-works">How it works</a>
+          </li>
+
+          <li>
+            <a href="../releases/">Release notes</a>
+          </li>
+
+          <li>
+            <a href="https://github.com/rakuyoMo/Flotilla">
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-github"/></svg>
+              GitHub
+            </a>
+          </li>
+        </ul>
+
+        <a
+          class="language-switch"
+          href="../zh/download/"
+          hreflang="zh-Hans"
+          lang="zh-Hans"
+          data-language-switch="zh-Hans"
+        >
+          <svg
+            class="icon"
+            aria-hidden="true"
+          ><use href="#i-globe"/></svg>
+          简体中文
+        </a>
+      </div>
+
+      <a
+        class="button button-primary button-small nav-download"
+        href="./"
+        aria-current="page"
+      >Download</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section
+      class="hero page-hero"
+      aria-labelledby="page-title"
+    >
+      <div
+        class="hero-sky"
+        aria-hidden="true"
+      ></div>
+
+      <div class="container page-hero-inner">
+        <div class="page-hero-icon">
+          <picture>
+            <source
+              srcset="../assets/img/app-icon-dark-256.png"
+              media="(prefers-color-scheme: dark)"
+            >
+
+            <img
+              src="../assets/img/app-icon-light-256.png"
+              alt=""
+              width="128"
+              height="128"
+              fetchpriority="high"
+            >
+          </picture>
+        </div>
+
+        <h1
+          class="page-title"
+          id="page-title"
+        >Download Flotilla</h1>
+
+        <p
+          class="meta-line page-meta"
+          data-when="latest"
+        >
+          <span>Version <span data-release-version></span></span>
+          <span>Released <time data-release-date></time></span>
+
+          <span>
+            <a
+              href="../releases/"
+              data-release-notes-link
+            >Release notes</a>
+          </span>
+        </p>
+
+        <p
+          class="meta-line page-meta"
+          data-when="unknown"
+        >
+          <span><a href="../releases/">Release notes</a></span>
+        </p>
+
+        <p class="meta-line page-meta">
+          <span>macOS 15 or later</span>
+          <span>Apple silicon</span>
+          <span>Free and open source (GPL-3.0)</span>
+        </p>
+      </div>
+
+      <svg
+        class="hero-waves"
+        viewBox="0 0 1440 120"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+      >
+        <path
+          class="wave wave-back"
+          d="M0 46C86.4 36 153.6 36 240 46s153.6 10 240 0 153.6-10 240 0 153.6 10 240 0 153.6-10 240 0 153.6 10 240 0 153.6-10 240 0 153.6 10 240 0 153.6-10 240 0 153.6 10 240 0 153.6-10 240 0 153.6 10 240 0V120H0Z"
+        />
+
+        <path
+          class="wave wave-middle"
+          d="M0 64C64.8 56 115.2 56 180 64s115.2 8 180 0 115.2-8 180 0 115.2 8 180 0 115.2-8 180 0 115.2 8 180 0 115.2-8 180 0 115.2 8 180 0 115.2-8 180 0 115.2 8 180 0 115.2-8 180 0 115.2 8 180 0 115.2-8 180 0 115.2 8 180 0 115.2-8 180 0 115.2 8 180 0V120H0Z"
+        />
+
+        <path
+          class="wave wave-front"
+          d="M0 84C129.6 75 230.4 75 360 84s230.4 9 360 0 230.4-9 360 0 230.4 9 360 0 230.4-9 360 0 230.4 9 360 0 230.4-9 360 0 230.4 9 360 0V120H0Z"
+        />
+      </svg>
+    </section>
+
+    <section
+      class="download"
+      aria-label="Download"
+    >
+      <div class="container">
+        <div
+          class="download-card"
+          data-download-card
+        >
+          <div class="download-card-body">
+            <span
+              class="icon-box icon-box-sun download-card-icon"
+              data-when="latest unknown"
+            >
+              <svg
+                class="icon when-ready"
+                aria-hidden="true"
+              ><use href="#i-archive"/></svg>
+
+              <svg
+                class="icon when-started"
+                aria-hidden="true"
+              ><use href="#i-check"/></svg>
+            </span>
+
+            <span
+              class="icon-box icon-box-sky download-card-icon"
+              data-when="none"
+            >
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-sail"/></svg>
+            </span>
+
+            <div
+              class="download-card-text"
+              data-when="latest"
+            >
+              <h2 class="download-card-title when-ready">Flotilla <span data-release-version></span></h2>
+              <h2 class="download-card-title when-started">Download started</h2>
+
+              <p class="meta-line download-card-file">
+                <span data-release-asset-name></span>
+                <span data-release-asset-size></span>
+              </p>
+            </div>
+
+            <div
+              class="download-card-text"
+              data-when="none"
+            >
+              <h2 class="download-card-title">Not released yet</h2>
+              <p>Flotilla hasn’t published a release yet. Build it from source, or watch the repository on GitHub to be notified when the first version is out.</p>
+            </div>
+
+            <div
+              class="download-card-text"
+              data-when="unknown"
+            >
+              <h2 class="download-card-title">The latest version</h2>
+              <p>Download the latest <code>Flotilla-X.Y.Z.zip</code> from the Releases page on GitHub.</p>
+            </div>
+
+            <div class="download-card-actions">
+              <a
+                class="button button-primary button-large"
+                href="https://github.com/rakuyoMo/Flotilla/releases/latest"
+                data-when="latest"
+                data-download
+              >
+                <svg
+                  class="icon"
+                  aria-hidden="true"
+                ><use href="#i-download"/></svg>
+
+                <span class="when-ready">Download</span>
+                <span class="when-started">Download again</span>
+              </a>
+
+              <a
+                class="button button-primary button-large"
+                href="https://github.com/rakuyoMo/Flotilla/releases/latest"
+                data-when="unknown"
+              >
+                <svg
+                  class="icon"
+                  aria-hidden="true"
+                ><use href="#i-github"/></svg>
+                Open Releases
+              </a>
+
+              <a
+                class="button button-primary"
+                href="#build"
+                data-when="none"
+              >
+                <svg
+                  class="icon"
+                  aria-hidden="true"
+                ><use href="#i-terminal"/></svg>
+                Build from source
+              </a>
+
+              <a
+                class="button button-secondary"
+                href="https://github.com/rakuyoMo/Flotilla"
+                data-when="none"
+              >
+                <svg
+                  class="icon"
+                  aria-hidden="true"
+                ><use href="#i-eye"/></svg>
+                Watch on GitHub
+              </a>
+            </div>
+          </div>
+
+          <p
+            class="download-card-started when-started"
+            data-when="latest"
+          >
+            <a href="#install">
+              Next, install Flotilla in three steps
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-chevron-down"/></svg>
+            </a>
+          </p>
+
+          <div class="download-card-footer">
+            <a
+              class="card-link"
+              href="https://github.com/rakuyoMo/Flotilla/releases"
+              data-when="latest unknown"
+            >
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-github"/></svg>
+              All versions on GitHub
+            </a>
+
+            <p data-when="none">On GitHub, choose <strong>Watch › Custom › Releases</strong> to be notified of new versions.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section
+      class="section install"
+      id="install"
+      aria-labelledby="install-title"
+    >
+      <div class="container">
+        <header class="section-header reveal">
+          <p class="eyebrow">Installation</p>
+
+          <h2
+            class="section-title"
+            id="install-title"
+          >Install Flotilla in three steps.</h2>
+        </header>
+
+        <ol class="install-steps">
+          <li
+            class="install-step reveal"
+            data-install-step
+          >
+            <div class="install-copy">
+              <span class="step-number">1</span>
+              <h3 class="step-title">Unzip it and drag it into Applications</h3>
+              <p>Double-click the downloaded <code>Flotilla-X.Y.Z.zip</code> to unzip it, then drag <code>Flotilla.app</code> into the Applications folder.</p>
+              <p class="step-note">Finder shows it under its name for the system language, such as 归帆 in Simplified Chinese.</p>
+            </div>
+
+            <div
+              class="feature-media install-art"
+              aria-hidden="true"
+            >
+              <div class="mock-window">
+                <div class="mock-titlebar">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+
+                <div class="mock-drag">
+                  <div class="mock-item">
+                    <picture>
+                      <source
+                        srcset="../assets/img/app-icon-dark-256.png"
+                        media="(prefers-color-scheme: dark)"
+                      >
+
+                      <img
+                        src="../assets/img/app-icon-light-256.png"
+                        alt=""
+                        width="72"
+                        height="72"
+                        loading="lazy"
+                      >
+                    </picture>
+
+                    <span class="mock-label">Flotilla</span>
+
+                    <svg
+                      class="mock-cursor"
+                      viewBox="0 0 24 32"
+                    ><path d="M2 2v24l6.5-6 4.5 10 4.5-2-4.5-10h9Z"/></svg>
+                  </div>
+
+                  <svg
+                    class="mock-arrow"
+                    viewBox="0 0 120 48"
+                  >
+                    <path d="M8 36C34 8 82 4 108 30"/>
+                    <path d="m96 31 12-1-2-12"/>
+                  </svg>
+
+                  <div class="mock-item">
+                    <svg
+                      class="mock-folder"
+                      viewBox="0 0 72 60"
+                    >
+                      <path
+                        class="mock-folder-back"
+                        d="M4 10a5 5 0 0 1 5-5h17l6 6h31a5 5 0 0 1 5 5v36a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5Z"
+                      />
+
+                      <path
+                        class="mock-folder-front"
+                        d="M4 20a5 5 0 0 1 5-5h54a5 5 0 0 1 5 5v32a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5Z"
+                      />
+
+                      <path
+                        class="mock-folder-mark"
+                        d="M28 48 36 26l8 22M31 41h10"
+                      />
+                    </svg>
+
+                    <span class="mock-label">Applications</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </li>
+
+          <li class="install-step reveal">
+            <div class="install-copy">
+              <span class="step-number">2</span>
+              <h3 class="step-title">Open it for the first time</h3>
+              <p>Flotilla is not notarized by Apple. The first time you open it, macOS says that Apple cannot verify it is free of malware, and refuses to open it.</p>
+
+              <p>Click <strong>Done</strong> to close the alert, then allow the app to open:</p>
+
+              <ol class="number-list">
+                <li>Open <strong>System Settings › Privacy &amp; Security</strong></li>
+
+                <li>
+                  Scroll down to <strong>Security</strong>, and click <strong>Open Anyway</strong> on the line saying the app was blocked
+                  <span class="list-note">This button only appears for an hour after you try to open Flotilla</span>
+                </li>
+
+                <li>Confirm with your login password when prompted</li>
+              </ol>
+
+              <p>After that, Flotilla opens like any other app.</p>
+
+              <div class="step-alternative">
+                <p>Alternatively, remove the quarantine attribute in Terminal, then open it directly:</p>
+
+                <div class="code-block">
+                  <pre><code>xattr -d com.apple.quarantine /Applications/Flotilla.app</code></pre>
+
+                  <button
+                    class="copy-button"
+                    type="button"
+                    data-copy
+                    data-copied-label="Copied — paste it into Terminal to run"
+                  >
+                    <svg
+                      class="icon"
+                      aria-hidden="true"
+                    ><use href="#i-copy"/></svg>
+                    Copy
+                  </button>
+                </div>
+              </div>
+
+              <details class="faq-item">
+                <summary>
+                  Why does macOS block Flotilla?
+                  <svg
+                    class="icon faq-chevron"
+                    aria-hidden="true"
+                  ><use href="#i-chevron-down"/></svg>
+                </summary>
+
+                <div class="faq-answer">
+                  <p>Flotilla is ad-hoc signed and not notarized by Apple, so Apple cannot verify that it is free of malware, and macOS refuses to open it the first time.</p>
+
+                  <p>
+                    Apple explains how macOS checks the apps you open, and how to open one anyway, in
+                    <a href="https://support.apple.com/102445">Safely open apps on your Mac</a>.
+                  </p>
+                </div>
+              </details>
+            </div>
+
+            <div
+              class="feature-media install-art install-art-stack"
+              aria-hidden="true"
+            >
+              <div class="mock-alert">
+                <picture>
+                  <source
+                    srcset="../assets/img/app-icon-dark-256.png"
+                    media="(prefers-color-scheme: dark)"
+                  >
+
+                  <img
+                    src="../assets/img/app-icon-light-256.png"
+                    alt=""
+                    width="56"
+                    height="56"
+                    loading="lazy"
+                  >
+                </picture>
+
+                <span class="mock-line mock-line-strong"></span>
+                <span class="mock-line"></span>
+                <span class="mock-line mock-line-short"></span>
+                <span class="mock-button mock-button-default">Done</span>
+              </div>
+
+              <div class="mock-panel">
+                <span class="mock-heading">Security</span>
+
+                <div class="mock-row">
+                  <span class="mock-lines">
+                    <span class="mock-line"></span>
+                    <span class="mock-line mock-line-short"></span>
+                  </span>
+
+                  <span class="mock-button mock-button-accent">Open Anyway</span>
+                </div>
+              </div>
+            </div>
+          </li>
+
+          <li class="install-step reveal">
+            <div class="install-copy">
+              <span class="step-number">3</span>
+              <h3 class="step-title">Grant the Accessibility permission</h3>
+              <p>Flotilla uses Accessibility to read the Dock’s interface, in order to:</p>
+
+              <ul class="check-list">
+                <li>Find where a group’s tile (its icon in the Dock) is on screen, so the panel and its tail line up with the tile</li>
+                <li>Detect clicks on a tile and expand on mouse-up, with the same timing as the Dock’s built-in folders</li>
+              </ul>
+
+              <p>Without the permission, macOS prompts for it the first time a tile is clicked after each launch of Flotilla. It is granted in <strong>System Settings › Privacy &amp; Security › Accessibility</strong>; on macOS 27, this page is <strong>Privacy &amp; Security › Device Control and Data Access</strong>.</p>
+
+              <div class="step-facts">
+                <div class="step-fact">
+                  <h4>Without the permission</h4>
+                  <p>Flotilla still works, except that:</p>
+
+                  <ul>
+                    <li>The panel is placed at the mouse location of the click, and may not line up exactly with the tile</li>
+                    <li>The panel appears only after the Dock launches the tile, slightly later than with the permission</li>
+                  </ul>
+                </div>
+
+                <div class="step-fact">
+                  <h4>After updating</h4>
+                  <p>Flotilla is ad-hoc signed. After switching to a new version, the previous grant may stop working, and the permission needs to be granted again.</p>
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="feature-media install-art"
+              aria-hidden="true"
+            >
+              <div class="mock-panel mock-panel-list">
+                <span class="mock-heading">Accessibility</span>
+
+                <div class="mock-row mock-row-muted">
+                  <span class="mock-app"></span>
+                  <span class="mock-line"></span>
+                  <span class="mock-switch"></span>
+                </div>
+
+                <div class="mock-row">
+                  <picture>
+                    <source
+                      srcset="../assets/img/app-icon-dark-64.png"
+                      media="(prefers-color-scheme: dark)"
+                    >
+
+                    <img
+                      class="mock-app-icon"
+                      src="../assets/img/app-icon-light-64.png"
+                      alt=""
+                      width="32"
+                      height="32"
+                      loading="lazy"
+                    >
+                  </picture>
+
+                  <span class="mock-name">Flotilla</span>
+                  <span class="mock-switch is-on"></span>
+                </div>
+
+                <div class="mock-row mock-row-muted">
+                  <span class="mock-app"></span>
+                  <span class="mock-line mock-line-short"></span>
+                  <span class="mock-switch"></span>
+                </div>
+              </div>
+            </div>
+          </li>
+        </ol>
+
+        <aside class="callout reveal">
+          <span class="icon-box icon-box-sky">
+            <svg
+              class="icon"
+              aria-hidden="true"
+            ><use href="#i-folder"/></svg>
+          </span>
+
+          <div class="callout-body">
+            <h3>Files and folders</h3>
+            <p>The first time the panel expands a Finder folder in Documents, Desktop, Downloads, or a similar location, macOS asks whether to allow access. Flotilla needs to read a folder’s contents to expand it in the panel.</p>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section
+      class="section get-started"
+      id="get-started"
+      aria-labelledby="get-started-title"
+    >
+      <div class="container">
+        <header class="section-header reveal">
+          <p class="eyebrow">Getting started</p>
+
+          <h2
+            class="section-title"
+            id="get-started-title"
+          >Create your first group.</h2>
+
+          <p class="lead">Flotilla lives in the menu bar as a sailing ship icon. Click it and choose <strong>Settings…</strong> to open the settings window; <strong>Quit Flotilla</strong> is in the same menu.</p>
+        </header>
+
+        <div class="get-started-grid">
+          <div class="get-started-copy">
+            <article class="guide reveal">
+              <h3 class="guide-title">
+                <span class="icon-box icon-box-sun">
+                  <svg
+                    class="icon"
+                    aria-hidden="true"
+                  ><use href="#i-group-icon"/></svg>
+                </span>
+                Create a group
+              </h3>
+
+              <ol class="number-list">
+                <li>
+                  Under <strong>Groups</strong>, click <strong>New Group</strong>, type a name, and press Return
+                  <span class="list-note">A tile for the group appears in the app section of the Dock; the Dock restarts briefly to show it</span>
+                </li>
+
+                <li>Select the group, click <strong>Add…</strong>, and choose <strong>Add Apps…</strong>, <strong>Add Files…</strong>, or <strong>Add Web Page…</strong></li>
+
+                <li>Or drag apps, files, and Finder folders onto the group in the settings window or onto its tile in the Dock; drag a web page from your browser onto the group in the settings window</li>
+              </ol>
+            </article>
+
+            <article class="guide reveal">
+              <h3 class="guide-title">
+                <span class="icon-box icon-box-sky">
+                  <svg
+                    class="icon"
+                    aria-hidden="true"
+                  ><use href="#i-grid"/></svg>
+                </span>
+                Use the panel
+              </h3>
+
+              <ul class="check-list">
+                <li>Click a group’s tile to open the panel, and click an item to open it</li>
+                <li>Click a sub-group or a Finder folder to step into it; the back button takes you up one level</li>
+                <li>Click the tile again, click anywhere else, or press Esc to close the panel</li>
+                <li>Drag an item within a group to reorder it</li>
+                <li>Drag an item out of the panel and hold it there until <strong>Remove</strong> appears, then let go to take it out of the group</li>
+              </ul>
+            </article>
+
+            <p class="guide-more reveal">
+              <a
+                class="card-link"
+                href="https://github.com/rakuyoMo/Flotilla#getting-started"
+              >
+                The full guide is in the README
+                <svg
+                  class="icon"
+                  aria-hidden="true"
+                ><use href="#i-arrow-right"/></svg>
+              </a>
+            </p>
+          </div>
+
+          <figure class="feature-media get-started-media reveal">
+            <picture>
+              <source
+                srcset="../assets/img/screenshot-settings-en-dark.png"
+                media="(prefers-color-scheme: dark)"
+              >
+
+              <img
+                src="../assets/img/screenshot-settings-en-light.png"
+                alt="The settings window, with the Essentials group expanded under Groups and the General section below"
+                width="732"
+                height="672"
+                loading="lazy"
+              >
+            </picture>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section
+      class="section build"
+      id="build"
+      aria-labelledby="build-title"
+    >
+      <div class="container">
+        <header class="section-header reveal">
+          <p class="eyebrow">Build from source</p>
+
+          <h2
+            class="section-title"
+            id="build-title"
+          >Build it yourself.</h2>
+
+          <p class="lead">Only the Xcode Command Line Tools and mise are needed; Xcode is not required.</p>
+        </header>
+
+        <div class="build-grid">
+          <ul class="requirements reveal">
+            <li class="requirement">
+              <span class="icon-box icon-box-sky">
+                <svg
+                  class="icon"
+                  aria-hidden="true"
+                ><use href="#i-terminal"/></svg>
+              </span>
+
+              <div>
+                <h3>Xcode Command Line Tools 26 or later</h3>
+                <p>Version 26 ships with Swift 6.2 and the macOS 26 SDK; <code>NSGlassEffectView</code>, which the panel uses on macOS 26, is only available in that SDK.</p>
+              </div>
+            </li>
+
+            <li class="requirement">
+              <span class="icon-box icon-box-sun">
+                <svg
+                  class="icon"
+                  aria-hidden="true"
+                ><use href="#i-route"/></svg>
+              </span>
+
+              <div>
+                <h3><a href="https://mise.jdx.dev">mise</a></h3>
+                <p>The build commands are tasks in <code>mise.toml</code>.</p>
+              </div>
+            </li>
+          </ul>
+
+          <div class="build-commands reveal">
+            <div class="code-block">
+              <pre><code>git clone https://github.com/rakuyoMo/Flotilla.git
+cd Flotilla
+
+<span class="code-comment"># Build the release version, bundle it as build/Flotilla.app, and ad-hoc sign it</span>
+mise run bundle
+
+<span class="code-comment"># Launch the bundled app</span>
+open build/Flotilla.app</code></pre>
+
+              <button
+                class="copy-button"
+                type="button"
+                data-copy
+                data-copied-label="Copied — paste it into Terminal to run"
+              >
+                <svg
+                  class="icon"
+                  aria-hidden="true"
+                ><use href="#i-copy"/></svg>
+                Copy
+              </button>
+            </div>
+
+            <ul class="build-notes">
+              <li>The two <code>ld: warning: search path ... not found</code> warnings during the build can be ignored: they point to directories that the Command Line Tools don’t include.</li>
+              <li>Quit any installed Flotilla before launching <code>build/Flotilla.app</code>: when an instance is already running, a newly launched copy activates it and quits immediately.</li>
+            </ul>
+
+            <p>
+              <a
+                class="card-link"
+                href="https://github.com/rakuyoMo/Flotilla#development"
+              >
+                Tests, code style, and more in the README
+                <svg
+                  class="icon"
+                  aria-hidden="true"
+                ><use href="#i-arrow-right"/></svg>
+              </a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <a
+          class="brand"
+          href="../"
+        >
+          <picture>
+            <source
+              srcset="../assets/img/app-icon-dark-64.png"
+              media="(prefers-color-scheme: dark)"
+            >
+
+            <img
+              src="../assets/img/app-icon-light-64.png"
+              alt=""
+              width="32"
+              height="32"
+              loading="lazy"
+            >
+          </picture>
+
+          <span>Flotilla</span>
+        </a>
+
+        <p>Group therapy for your Dock.</p>
+      </div>
+
+      <nav
+        class="footer-columns"
+        aria-label="Footer"
+      >
+        <div class="footer-column">
+          <h2>Product</h2>
+
+          <ul>
+            <li><a href="../#features">Features</a></li>
+            <li><a href="./">Download</a></li>
+            <li><a href="../releases/">Release notes</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-column">
+          <h2>Resources</h2>
+
+          <ul>
+            <li><a href="https://github.com/rakuyoMo/Flotilla">GitHub</a></li>
+            <li><a href="https://github.com/rakuyoMo/Flotilla/issues">Issues</a></li>
+            <li><a href="https://github.com/rakuyoMo/Flotilla#readme">README</a></li>
+            <li><a href="https://github.com/rakuyoMo/Flotilla/blob/main/LICENSE">License</a></li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+
+    <div class="container footer-bottom">
+      <p>GPL-3.0 · rakuyoMo</p>
+
+      <a
+        class="language-switch"
+        href="../zh/download/"
+        hreflang="zh-Hans"
+        lang="zh-Hans"
+        data-language-switch="zh-Hans"
+      >
+        <svg
+          class="icon"
+          aria-hidden="true"
+        ><use href="#i-globe"/></svg>
+        简体中文
+      </a>
+    </div>
+  </footer>
+</body>
+</html>

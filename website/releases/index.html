@@ -1,0 +1,1186 @@
+<!doctype html>
+<html
+  lang="en"
+  data-root="../"
+>
+<head>
+  <meta charset="utf-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
+  <!-- 浏览器首选简体中文、又没在语言切换里选过时，跳到中文页；先于渲染执行，避免先闪一下英文 -->
+  <script>
+    (() => {
+      document.documentElement.classList.add("js");
+
+      let saved = null;
+
+      try {
+        saved = localStorage.getItem("flotilla.language");
+      } catch {
+        saved = null;
+      }
+
+      const preferred = (
+        navigator.languages?.[0]
+        ?? navigator.language
+        ?? ""
+      ).toLowerCase();
+
+      const isSimplifiedChinese = ["zh", "zh-cn", "zh-sg"].includes(preferred)
+        || preferred.startsWith("zh-hans");
+
+      if (saved === null && isSimplifiedChinese) {
+        location.replace("../zh/releases/" + location.hash);
+      }
+    })();
+  </script>
+
+  <title>Flotilla release notes</title>
+
+  <meta
+    name="description"
+    content="What changed in each version of Flotilla, with release dates and downloads."
+  >
+
+  <meta
+    name="color-scheme"
+    content="light dark"
+  >
+
+  <meta
+    name="theme-color"
+    content="#FDF9F0"
+    media="(prefers-color-scheme: light)"
+  >
+
+  <meta
+    name="theme-color"
+    content="#031536"
+    media="(prefers-color-scheme: dark)"
+  >
+
+  <link
+    rel="canonical"
+    href="https://blog.rakuyo.dev/Flotilla/releases/"
+  >
+
+  <link
+    rel="alternate"
+    hreflang="en"
+    href="https://blog.rakuyo.dev/Flotilla/releases/"
+  >
+
+  <link
+    rel="alternate"
+    hreflang="zh-Hans"
+    href="https://blog.rakuyo.dev/Flotilla/zh/releases/"
+  >
+
+  <link
+    rel="alternate"
+    hreflang="x-default"
+    href="https://blog.rakuyo.dev/Flotilla/releases/"
+  >
+
+  <meta
+    property="og:type"
+    content="website"
+  >
+
+  <meta
+    property="og:site_name"
+    content="Flotilla"
+  >
+
+  <meta
+    property="og:title"
+    content="Flotilla release notes"
+  >
+
+  <meta
+    property="og:description"
+    content="What changed in each version of Flotilla, with release dates and downloads."
+  >
+
+  <meta
+    property="og:url"
+    content="https://blog.rakuyo.dev/Flotilla/releases/"
+  >
+
+  <meta
+    property="og:image"
+    content="https://blog.rakuyo.dev/Flotilla/assets/img/og-en.png"
+  >
+
+  <meta
+    property="og:image:width"
+    content="1200"
+  >
+
+  <meta
+    property="og:image:height"
+    content="480"
+  >
+
+  <meta
+    property="og:locale"
+    content="en_US"
+  >
+
+  <meta
+    name="twitter:card"
+    content="summary_large_image"
+  >
+
+  <link
+    rel="icon"
+    href="../assets/img/favicon-light.png"
+    type="image/png"
+    media="(prefers-color-scheme: light)"
+  >
+
+  <link
+    rel="icon"
+    href="../assets/img/favicon-dark.png"
+    type="image/png"
+    media="(prefers-color-scheme: dark)"
+  >
+
+  <link
+    rel="apple-touch-icon"
+    href="../assets/img/apple-touch-icon.png"
+  >
+
+  <link
+    rel="stylesheet"
+    href="../assets/css/site.css"
+  >
+
+  <link
+    rel="stylesheet"
+    href="../assets/css/releases.css"
+  >
+
+  <script
+    src="../assets/js/site.js"
+    defer
+  ></script>
+  <script
+    src="../assets/js/releases.js"
+    defer
+  ></script>
+</head>
+<body>
+  <svg
+    class="icon-sprite"
+    aria-hidden="true"
+  >
+    <symbol
+      id="i-github"
+      viewBox="0 0 16 16"
+    >
+      <path
+        fill="currentColor"
+        stroke="none"
+        d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"
+      />
+    </symbol>
+
+    <symbol
+      id="i-download"
+      viewBox="0 0 24 24"
+    >
+      <path d="M12 4v11"/>
+      <path d="m7 10 5 5 5-5"/>
+      <path d="M5 19.5h14"/>
+    </symbol>
+
+    <symbol
+      id="i-arrow-right"
+      viewBox="0 0 24 24"
+    >
+      <path d="M5 12h14"/>
+      <path d="m13 6 6 6-6 6"/>
+    </symbol>
+
+    <symbol
+      id="i-external"
+      viewBox="0 0 24 24"
+    >
+      <path d="M7 17 17 7"/>
+      <path d="M8.5 7H17v8.5"/>
+    </symbol>
+
+    <symbol
+      id="i-copy"
+      viewBox="0 0 24 24"
+    >
+      <rect
+        x="8.5"
+        y="8.5"
+        width="11.5"
+        height="11.5"
+        rx="2.5"
+      />
+
+      <path d="M15.5 8.5V6.5A2.5 2.5 0 0 0 13 4H6.5A2.5 2.5 0 0 0 4 6.5V13a2.5 2.5 0 0 0 2.5 2.5h2"/>
+    </symbol>
+
+    <symbol
+      id="i-check"
+      viewBox="0 0 24 24"
+    >
+      <path d="m5 12.5 4.5 4.5L19 7.5"/>
+    </symbol>
+
+    <symbol
+      id="i-close"
+      viewBox="0 0 24 24"
+    >
+      <path d="m6.5 6.5 11 11"/>
+      <path d="m17.5 6.5-11 11"/>
+    </symbol>
+
+    <symbol
+      id="i-menu"
+      viewBox="0 0 24 24"
+    >
+      <path d="M4 8.5h16"/>
+      <path d="M4 15.5h16"/>
+    </symbol>
+
+    <symbol
+      id="i-globe"
+      viewBox="0 0 24 24"
+    >
+      <circle
+        cx="12"
+        cy="12"
+        r="9"
+      />
+
+      <path d="M3 12h18"/>
+      <path d="M12 3c2.5 2.6 3.75 5.6 3.75 9s-1.25 6.4-3.75 9c-2.5-2.6-3.75-5.6-3.75-9S9.5 5.6 12 3Z"/>
+    </symbol>
+
+    <symbol
+      id="i-link"
+      viewBox="0 0 24 24"
+    >
+      <path d="M10 14a4.5 4.5 0 0 0 6.4 0l2.8-2.8a4.5 4.5 0 0 0-6.4-6.4L11.5 6.1"/>
+      <path d="M14 10a4.5 4.5 0 0 0-6.4 0l-2.8 2.8a4.5 4.5 0 0 0 6.4 6.4l1.3-1.3"/>
+    </symbol>
+
+    <symbol
+      id="i-rss"
+      viewBox="0 0 24 24"
+    >
+      <path d="M5 4.5A14.5 14.5 0 0 1 19.5 19"/>
+      <path d="M5 10.5a8.5 8.5 0 0 1 8.5 8.5"/>
+
+      <circle
+        cx="6"
+        cy="18"
+        r="1.5"
+        fill="currentColor"
+        stroke="none"
+      />
+    </symbol>
+
+    <symbol
+      id="i-star"
+      viewBox="0 0 24 24"
+    >
+      <path d="m12 3.5 2.6 5.3 5.9.9-4.25 4.1 1 5.8L12 16.85l-5.25 2.75 1-5.8L3.5 9.7l5.9-.9Z"/>
+    </symbol>
+
+    <symbol
+      id="i-eye"
+      viewBox="0 0 24 24"
+    >
+      <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/>
+
+      <circle
+        cx="12"
+        cy="12"
+        r="3"
+      />
+    </symbol>
+
+    <symbol
+      id="i-issue"
+      viewBox="0 0 24 24"
+    >
+      <circle
+        cx="12"
+        cy="12"
+        r="8.5"
+      />
+
+      <circle
+        cx="12"
+        cy="12"
+        r="1.75"
+        fill="currentColor"
+        stroke="none"
+      />
+    </symbol>
+
+    <symbol
+      id="i-pull-request"
+      viewBox="0 0 24 24"
+    >
+      <circle
+        cx="6.5"
+        cy="6"
+        r="2.25"
+      />
+
+      <circle
+        cx="6.5"
+        cy="18"
+        r="2.25"
+      />
+
+      <circle
+        cx="17.5"
+        cy="18"
+        r="2.25"
+      />
+
+      <path d="M6.5 8.25v7.5"/>
+      <path d="M17.5 15.75V9.5a3 3 0 0 0-3-3H11"/>
+      <path d="m13 4-2.5 2.5L13 9"/>
+    </symbol>
+
+    <symbol
+      id="i-terminal"
+      viewBox="0 0 24 24"
+    >
+      <rect
+        x="3"
+        y="4.5"
+        width="18"
+        height="15"
+        rx="3"
+      />
+
+      <path d="m7.5 10 2.5 2-2.5 2"/>
+      <path d="M12.5 14.5h4"/>
+    </symbol>
+
+    <symbol
+      id="i-scale"
+      viewBox="0 0 24 24"
+    >
+      <path d="M12 4v16"/>
+      <path d="M8 20h8"/>
+      <path d="M5 7.5h14"/>
+      <path d="M5 7.5 2.75 13a2.5 2.5 0 0 0 4.5 0Z"/>
+      <path d="M19 7.5 16.75 13a2.5 2.5 0 0 0 4.5 0Z"/>
+    </symbol>
+
+    <symbol
+      id="i-chevron-down"
+      viewBox="0 0 24 24"
+    >
+      <path d="m6 9.5 6 6 6-6"/>
+    </symbol>
+
+    <symbol
+      id="i-dock"
+      viewBox="0 0 24 24"
+    >
+      <rect
+        x="2.5"
+        y="12"
+        width="19"
+        height="8.5"
+        rx="3"
+      />
+
+      <rect
+        x="5.5"
+        y="14.75"
+        width="3.5"
+        height="3.5"
+        rx="1"
+      />
+
+      <rect
+        x="10.25"
+        y="14.75"
+        width="3.5"
+        height="3.5"
+        rx="1"
+      />
+
+      <rect
+        x="15"
+        y="14.75"
+        width="3.5"
+        height="3.5"
+        rx="1"
+      />
+
+      <path d="M12 3.5v5"/>
+      <path d="m9.5 6.5 2.5 2.5 2.5-2.5"/>
+    </symbol>
+
+    <symbol
+      id="i-items"
+      viewBox="0 0 24 24"
+    >
+      <rect
+        x="3"
+        y="3"
+        width="7.5"
+        height="7.5"
+        rx="2"
+      />
+
+      <path d="M14 3h4l2.5 2.5v5H14Z"/>
+      <path d="M3 15a1.5 1.5 0 0 1 1.5-1.5h2l1 1.25h3a1.5 1.5 0 0 1 1.5 1.5v3.25a1.5 1.5 0 0 1-1.5 1.5h-6A1.5 1.5 0 0 1 3 19.5Z"/>
+
+      <circle
+        cx="17.25"
+        cy="17.25"
+        r="3.75"
+      />
+
+      <path d="M13.5 17.25h7.5"/>
+    </symbol>
+
+    <symbol
+      id="i-nested"
+      viewBox="0 0 24 24"
+    >
+      <rect
+        x="3"
+        y="3"
+        width="18"
+        height="18"
+        rx="4.5"
+      />
+
+      <rect
+        x="8"
+        y="8"
+        width="8"
+        height="8"
+        rx="2"
+      />
+    </symbol>
+
+    <symbol
+      id="i-grid"
+      viewBox="0 0 24 24"
+    >
+      <path d="M5 3.5h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-5l-2 2.5-2-2.5H5a2 2 0 0 1-2-2v-10a2 2 0 0 1 2-2Z"/>
+
+      <g
+        fill="currentColor"
+        stroke="none"
+      >
+        <circle
+          cx="8"
+          cy="8.5"
+          r="1.15"
+        />
+
+        <circle
+          cx="12"
+          cy="8.5"
+          r="1.15"
+        />
+
+        <circle
+          cx="16"
+          cy="8.5"
+          r="1.15"
+        />
+
+        <circle
+          cx="8"
+          cy="12.75"
+          r="1.15"
+        />
+
+        <circle
+          cx="12"
+          cy="12.75"
+          r="1.15"
+        />
+
+        <circle
+          cx="16"
+          cy="12.75"
+          r="1.15"
+        />
+      </g>
+    </symbol>
+
+    <symbol
+      id="i-group-icon"
+      viewBox="0 0 24 24"
+    >
+      <rect
+        x="3"
+        y="3"
+        width="18"
+        height="18"
+        rx="5"
+      />
+
+      <rect
+        x="7"
+        y="7"
+        width="4"
+        height="4"
+        rx="1"
+      />
+
+      <rect
+        x="13"
+        y="7"
+        width="4"
+        height="4"
+        rx="1"
+      />
+
+      <rect
+        x="7"
+        y="13"
+        width="4"
+        height="4"
+        rx="1"
+      />
+
+      <rect
+        x="13"
+        y="13"
+        width="4"
+        height="4"
+        rx="1"
+      />
+    </symbol>
+
+    <symbol
+      id="i-move"
+      viewBox="0 0 24 24"
+    >
+      <path d="M12 3v18"/>
+      <path d="m9 6 3-3 3 3"/>
+      <path d="m9 18 3 3 3-3"/>
+      <path d="M3 12h18"/>
+      <path d="m6 9-3 3 3 3"/>
+      <path d="m18 9 3 3-3 3"/>
+    </symbol>
+
+    <symbol
+      id="i-route"
+      viewBox="0 0 24 24"
+    >
+      <circle
+        cx="6"
+        cy="18"
+        r="2.5"
+      />
+
+      <circle
+        cx="18"
+        cy="6"
+        r="2.5"
+      />
+
+      <path d="M8.5 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5"/>
+    </symbol>
+
+    <symbol
+      id="i-menubar"
+      viewBox="0 0 24 24"
+    >
+      <rect
+        x="2.5"
+        y="4"
+        width="19"
+        height="16"
+        rx="3"
+      />
+
+      <path d="M2.5 8.5h19"/>
+
+      <circle
+        cx="17.75"
+        cy="6.25"
+        r="0.9"
+        fill="currentColor"
+        stroke="none"
+      />
+    </symbol>
+
+    <symbol
+      id="i-languages"
+      viewBox="0 0 24 24"
+    >
+      <path d="M3.5 5.5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2V10a2 2 0 0 1-2 2h-4l-3 2.5V12a2 2 0 0 1-2-2Z"/>
+      <path d="M17.5 9h1a2 2 0 0 1 2 2v4.5a2 2 0 0 1-2 2V20l-3-2.5h-3a2 2 0 0 1-2-2V15"/>
+    </symbol>
+
+    <symbol
+      id="i-refresh"
+      viewBox="0 0 24 24"
+    >
+      <path d="M19.5 11A7.5 7.5 0 0 0 6 6.6L4.5 8"/>
+      <path d="M4.5 4v4h4"/>
+      <path d="M4.5 13A7.5 7.5 0 0 0 18 17.4l1.5-1.4"/>
+      <path d="M19.5 20v-4h-4"/>
+    </symbol>
+
+    <symbol
+      id="i-archive"
+      viewBox="0 0 24 24"
+    >
+      <rect
+        x="3"
+        y="4"
+        width="18"
+        height="5"
+        rx="1.5"
+      />
+
+      <path d="M5 9v8.5A2.5 2.5 0 0 0 7.5 20h9a2.5 2.5 0 0 0 2.5-2.5V9"/>
+      <path d="M10 13h4"/>
+    </symbol>
+
+    <symbol
+      id="i-folder"
+      viewBox="0 0 24 24"
+    >
+      <path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h3.2l2 2.2h7.8A2.5 2.5 0 0 1 21 9.7v7.8a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5Z"/>
+    </symbol>
+
+    <symbol
+      id="i-stack"
+      viewBox="0 0 24 24"
+    >
+      <path d="M3 9.5A2.5 2.5 0 0 1 5.5 7h3.2l2 2.2h7.8A2.5 2.5 0 0 1 21 11.7v6.3a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 18Z"/>
+      <path d="M6 4h12"/>
+    </symbol>
+
+    <symbol
+      id="i-drop"
+      viewBox="0 0 24 24"
+    >
+      <rect
+        x="3"
+        y="11"
+        width="18"
+        height="9.5"
+        rx="3"
+      />
+
+      <path d="M12 3v9"/>
+      <path d="m8.5 8.5 3.5 3.5 3.5-3.5"/>
+    </symbol>
+
+    <symbol
+      id="i-shield"
+      viewBox="0 0 24 24"
+    >
+      <path d="M12 3 4.5 6v5.5c0 4.5 3.2 8.2 7.5 9.5 4.3-1.3 7.5-5 7.5-9.5V6Z"/>
+      <path d="m9 12 2.2 2.2L15.5 10"/>
+    </symbol>
+
+    <symbol
+      id="i-accessibility"
+      viewBox="0 0 24 24"
+    >
+      <circle
+        cx="12"
+        cy="12"
+        r="9"
+      />
+
+      <circle
+        cx="12"
+        cy="7.5"
+        r="1.25"
+        fill="currentColor"
+        stroke="none"
+      />
+
+      <path d="M7.5 10h9"/>
+      <path d="M12 10v4"/>
+      <path d="m9.5 18 2.5-4 2.5 4"/>
+    </symbol>
+
+    <symbol
+      id="i-sail"
+      viewBox="0 0 24 24"
+    >
+      <path d="M12 3v14"/>
+      <path d="M12 4.5 18.5 15H12"/>
+      <path d="M10 6.5 5 15h5"/>
+      <path d="M3.5 18h17l-2 2.5h-13Z"/>
+    </symbol>
+  </svg>
+
+  <a
+    class="skip-link"
+    href="#main"
+  >Skip to content</a>
+
+  <header
+    class="site-header"
+    data-site-header
+  >
+    <nav
+      class="nav container"
+      aria-label="Main"
+    >
+      <a
+        class="brand"
+        href="../"
+      >
+        <picture>
+          <source
+            srcset="../assets/img/app-icon-dark-64.png"
+            media="(prefers-color-scheme: dark)"
+          >
+
+          <img
+            src="../assets/img/app-icon-light-64.png"
+            alt=""
+            width="32"
+            height="32"
+          >
+        </picture>
+
+        <span>Flotilla</span>
+      </a>
+
+      <button
+        class="nav-toggle"
+        type="button"
+        aria-expanded="false"
+        aria-controls="nav-menu"
+        aria-label="Menu"
+        data-nav-toggle
+      >
+        <svg
+          class="icon"
+          aria-hidden="true"
+        ><use href="#i-menu"/></svg>
+      </button>
+
+      <div
+        class="nav-menu"
+        id="nav-menu"
+      >
+        <ul class="nav-links">
+          <li>
+            <a href="../#features">Features</a>
+          </li>
+
+          <li>
+            <a href="../#how-it-works">How it works</a>
+          </li>
+
+          <li>
+            <a
+              href="./"
+              aria-current="page"
+            >Release notes</a>
+          </li>
+
+          <li>
+            <a href="https://github.com/rakuyoMo/Flotilla">
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-github"/></svg>
+              GitHub
+            </a>
+          </li>
+        </ul>
+
+        <a
+          class="language-switch"
+          href="../zh/releases/"
+          hreflang="zh-Hans"
+          lang="zh-Hans"
+          data-language-switch="zh-Hans"
+        >
+          <svg
+            class="icon"
+            aria-hidden="true"
+          ><use href="#i-globe"/></svg>
+          简体中文
+        </a>
+      </div>
+
+      <a
+        class="button button-primary button-small nav-download"
+        href="../download/"
+      >Download</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section
+      class="hero page-hero releases-hero"
+      aria-labelledby="page-title"
+    >
+      <div
+        class="hero-sky"
+        aria-hidden="true"
+      ></div>
+
+      <div class="container page-hero-inner">
+        <h1
+          class="page-title"
+          id="page-title"
+        >Release notes</h1>
+
+        <p class="page-lead">What changed in each version of Flotilla, with its release date and download.</p>
+
+        <div class="page-hero-actions">
+          <a
+            class="button button-secondary"
+            href="https://github.com/rakuyoMo/Flotilla/releases"
+          >
+            <svg
+              class="icon"
+              aria-hidden="true"
+            ><use href="#i-github"/></svg>
+            GitHub Releases
+          </a>
+
+          <a
+            class="button button-secondary"
+            href="https://github.com/rakuyoMo/Flotilla/releases.atom"
+          >
+            <svg
+              class="icon"
+              aria-hidden="true"
+            ><use href="#i-rss"/></svg>
+            Atom feed
+          </a>
+        </div>
+      </div>
+
+      <svg
+        class="hero-waves"
+        viewBox="0 0 1440 120"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+      >
+        <path
+          class="wave wave-back"
+          d="M0 46C86.4 36 153.6 36 240 46s153.6 10 240 0 153.6-10 240 0 153.6 10 240 0 153.6-10 240 0 153.6 10 240 0 153.6-10 240 0 153.6 10 240 0 153.6-10 240 0 153.6 10 240 0 153.6-10 240 0 153.6 10 240 0V120H0Z"
+        />
+
+        <path
+          class="wave wave-middle"
+          d="M0 64C64.8 56 115.2 56 180 64s115.2 8 180 0 115.2-8 180 0 115.2 8 180 0 115.2-8 180 0 115.2 8 180 0 115.2-8 180 0 115.2 8 180 0 115.2-8 180 0 115.2 8 180 0 115.2-8 180 0 115.2 8 180 0 115.2-8 180 0 115.2 8 180 0 115.2-8 180 0 115.2 8 180 0V120H0Z"
+        />
+
+        <path
+          class="wave wave-front"
+          d="M0 84C129.6 75 230.4 75 360 84s230.4 9 360 0 230.4-9 360 0 230.4 9 360 0 230.4-9 360 0 230.4 9 360 0 230.4-9 360 0 230.4 9 360 0V120H0Z"
+        />
+      </svg>
+    </section>
+
+    <section
+      class="releases"
+      aria-label="Versions"
+    >
+      <div class="container">
+        <div
+          class="releases-message"
+          data-when="unknown"
+        >
+          <span class="icon-box icon-box-sky">
+            <svg
+              class="icon"
+              aria-hidden="true"
+            ><use href="#i-github"/></svg>
+          </span>
+
+          <div class="releases-message-body">
+            <h2>Release notes are on GitHub</h2>
+            <p>Every version of Flotilla, with what changed and its download, is listed on the Releases page.</p>
+          </div>
+
+          <a
+            class="button button-primary"
+            href="https://github.com/rakuyoMo/Flotilla/releases"
+          >
+            Open GitHub Releases
+            <svg
+              class="icon"
+              aria-hidden="true"
+            ><use href="#i-external"/></svg>
+          </a>
+        </div>
+
+        <div
+          class="releases-empty"
+          data-release-empty
+          hidden
+        >
+          <div
+            class="ship-art"
+            aria-hidden="true"
+          >
+            <picture>
+              <source
+                srcset="../assets/img/sailing-ship-moon.jpg"
+                media="(prefers-color-scheme: dark)"
+              >
+
+              <img
+                src="../assets/img/sailing-ship-sun.jpg"
+                alt=""
+                width="1000"
+                height="1000"
+                loading="lazy"
+              >
+            </picture>
+          </div>
+
+          <h2 class="releases-empty-title">No releases yet</h2>
+          <p>Flotilla hasn’t published a release yet. Build it from source, or watch the repository on GitHub to be notified when the first version is out.</p>
+
+          <div class="releases-empty-actions">
+            <a
+              class="button button-primary"
+              href="../download/#build"
+            >
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-terminal"/></svg>
+              Build from source
+            </a>
+
+            <a
+              class="button button-secondary"
+              href="https://github.com/rakuyoMo/Flotilla"
+            >
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-eye"/></svg>
+              Watch on GitHub
+            </a>
+          </div>
+
+          <p class="releases-empty-hint">On GitHub, choose <strong>Watch › Custom › Releases</strong> to be notified of new versions.</p>
+        </div>
+
+        <div
+          class="releases-layout"
+          data-release-content
+          hidden
+        >
+          <nav
+            class="releases-toc"
+            aria-labelledby="releases-toc-title"
+          >
+            <h2
+              class="releases-toc-title"
+              id="releases-toc-title"
+            >Versions</h2>
+
+            <ol data-release-toc></ol>
+          </nav>
+
+          <div class="releases-jump">
+            <label for="release-jump">Jump to version</label>
+
+            <div class="releases-select">
+              <select
+                id="release-jump"
+                data-release-jump
+              ></select>
+
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-chevron-down"/></svg>
+            </div>
+          </div>
+
+          <div
+            class="releases-list"
+            data-release-list
+          ></div>
+        </div>
+
+        <template data-release-template>
+          <article class="release">
+            <header class="release-header">
+              <h2 class="release-title">
+                <a
+                  class="release-anchor"
+                  data-field="anchor"
+                ><span data-field="version"></span></a>
+
+                <button
+                  class="release-copy"
+                  type="button"
+                  aria-label="Copy link to this version"
+                  data-field="copy-link"
+                  data-copy
+                  data-copied-label="Link copied"
+                >
+                  <svg
+                    class="icon"
+                    aria-hidden="true"
+                  ><use href="#i-link"/></svg>
+                </button>
+              </h2>
+
+              <p class="release-meta">
+                <span
+                  class="release-badge release-badge-latest"
+                  data-field="latest"
+                >Latest</span>
+
+                <span
+                  class="release-badge release-badge-prerelease"
+                  data-field="prerelease"
+                >Pre-release</span>
+
+                <time data-field="date"></time>
+              </p>
+            </header>
+
+            <a
+              class="release-asset"
+              data-field="asset"
+            >
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-archive"/></svg>
+
+              <span
+                class="release-asset-name"
+                data-field="asset-name"
+              ></span>
+
+              <span
+                class="release-asset-size"
+                data-field="asset-size"
+              ></span>
+
+              <svg
+                class="icon release-asset-download"
+                aria-hidden="true"
+              ><use href="#i-download"/></svg>
+            </a>
+
+            <div
+              class="release-body"
+              data-field="body"
+            ></div>
+
+            <a
+              class="card-link release-link"
+              data-field="url"
+            >
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-github"/></svg>
+              View on GitHub
+            </a>
+          </article>
+        </template>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <a
+          class="brand"
+          href="../"
+        >
+          <picture>
+            <source
+              srcset="../assets/img/app-icon-dark-64.png"
+              media="(prefers-color-scheme: dark)"
+            >
+
+            <img
+              src="../assets/img/app-icon-light-64.png"
+              alt=""
+              width="32"
+              height="32"
+              loading="lazy"
+            >
+          </picture>
+
+          <span>Flotilla</span>
+        </a>
+
+        <p>Group therapy for your Dock.</p>
+      </div>
+
+      <nav
+        class="footer-columns"
+        aria-label="Footer"
+      >
+        <div class="footer-column">
+          <h2>Product</h2>
+
+          <ul>
+            <li><a href="../#features">Features</a></li>
+            <li><a href="../download/">Download</a></li>
+            <li><a href="./">Release notes</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-column">
+          <h2>Resources</h2>
+
+          <ul>
+            <li><a href="https://github.com/rakuyoMo/Flotilla">GitHub</a></li>
+            <li><a href="https://github.com/rakuyoMo/Flotilla/issues">Issues</a></li>
+            <li><a href="https://github.com/rakuyoMo/Flotilla#readme">README</a></li>
+            <li><a href="https://github.com/rakuyoMo/Flotilla/blob/main/LICENSE">License</a></li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+
+    <div class="container footer-bottom">
+      <p>GPL-3.0 · rakuyoMo</p>
+
+      <a
+        class="language-switch"
+        href="../zh/releases/"
+        hreflang="zh-Hans"
+        lang="zh-Hans"
+        data-language-switch="zh-Hans"
+      >
+        <svg
+          class="icon"
+          aria-hidden="true"
+        ><use href="#i-globe"/></svg>
+        简体中文
+      </a>
+    </div>
+  </footer>
+</body>
+</html>
