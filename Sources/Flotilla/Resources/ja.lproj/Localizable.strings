@@ -8,13 +8,15 @@
 "mainMenu.paste" = "ペースト";
 "mainMenu.selectAll" = "すべてを選択";
 
-/* 状态栏菜单 */
-"statusBar.settings" = "設定…";
-
 /* 状态栏图标的无障碍描述：旁白读出的 App 名 */
 "statusBar.iconDescription" = "帰帆";
 
+/* 关于面板 */
+"about.menuTitle" = "帰帆について";
+"about.website" = "公式サイト";
+
 /* 设置窗口 */
+"settings.menuTitle" = "設定…";
 "settings.windowTitle" = "設定";
 
 /* 设置窗口的组区 */

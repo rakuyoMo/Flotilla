@@ -63,6 +63,13 @@
     const setOpen = (open) => {
       header.classList.toggle("is-open", open);
       toggle.setAttribute("aria-expanded", String(open));
+
+      // 导航收起时一并关闭语言菜单，下次展开从导航入口开始
+      if (!open) {
+        menu.querySelectorAll(".language-menu[open]").forEach((item) => {
+          item.open = false;
+        });
+      }
     };
 
     toggle.addEventListener("click", () => {
@@ -80,6 +87,7 @@
       if (
         event.key !== "Escape"
         || !header.classList.contains("is-open")
+        || document.querySelector(".language-menu[open]")
       ) {
         return;
       }
@@ -195,10 +203,19 @@
   }
 
   /**
-   * 导航与页脚的语言切换：记住选择，并把当前的锚点带到另一种语言的页面。
+   * 导航与页脚的语言菜单：管理展开状态，记住选择，并保留当前页面的锚点。
    */
   function setUpLanguageSwitch() {
+    const menus = [...document.querySelectorAll(".language-menu")];
+
+    // 点到菜单外部或另一处语言入口时，收起已展开的菜单
     document.addEventListener("click", (event) => {
+      menus.forEach((menu) => {
+        if (!menu.contains(event.target)) {
+          menu.open = false;
+        }
+      });
+
       const link = event.target.closest("[data-language-switch]");
 
       if (!link) {
@@ -212,6 +229,29 @@
       }
 
       link.hash = location.hash;
+    });
+
+    // 焦点离开后关闭浮层，避免键盘用户移到正文时仍被菜单遮挡
+    document.addEventListener("focusin", (event) => {
+      menus.forEach((menu) => {
+        if (!menu.contains(event.target)) {
+          menu.open = false;
+        }
+      });
+    });
+
+    // Esc 先关闭语言菜单并归还焦点；窄屏导航保持展开
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") {
+        return;
+      }
+
+      const menu = menus.find((item) => item.open);
+
+      if (menu) {
+        menu.open = false;
+        menu.querySelector("summary").focus();
+      }
     });
   }
 

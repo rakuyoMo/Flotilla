@@ -8,13 +8,15 @@
 "mainMenu.paste" = "粘贴";
 "mainMenu.selectAll" = "全选";
 
-/* 状态栏菜单 */
-"statusBar.settings" = "设置…";
-
 /* 状态栏图标的无障碍描述：旁白读出的 App 名 */
 "statusBar.iconDescription" = "归帆";
 
+/* 关于面板 */
+"about.menuTitle" = "关于归帆";
+"about.website" = "官网";
+
 /* 设置窗口 */
+"settings.menuTitle" = "设置…";
 "settings.windowTitle" = "设置";
 
 /* 设置窗口的组区 */

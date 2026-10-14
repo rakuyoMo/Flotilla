@@ -55,7 +55,8 @@ final class SettingsWindowController: NSWindowController {
         fatalError("不支持从归档解码")
     }
 
-    /// 显示设置窗口并把它带到最前；这是唯一允许激活 Flotilla 的场景
+    /// 显示设置窗口并把它带到最前
+    @objc
     func show() {
         guard NSApp.activationPolicy() != .regular else {
             bringToFront()

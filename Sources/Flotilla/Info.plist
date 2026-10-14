@@ -54,6 +54,8 @@
 	<string>Flotilla needs to read the contents of Finder folders to expand them in its panel on the Dock.</string>
 	<key>NSFileProviderDomainUsageDescription</key>
 	<string>Flotilla needs to read the contents of Finder folders to expand them in its panel on the Dock.</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>Copyright © 2026 Rakuyo. All rights reserved.</string>
 	<key>NSNetworkVolumesUsageDescription</key>
 	<string>Flotilla needs to read the contents of Finder folders to expand them in its panel on the Dock.</string>
 	<key>NSRemovableVolumesUsageDescription</key>
