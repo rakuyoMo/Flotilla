@@ -11,7 +11,7 @@
 
 在 macOS 的 Dock 上增加 “组”：把 App、文件、访达文件夹与网页分类收纳进去，点击组即在 Dock 上方以网格展开，与原生 Dock 文件夹一样。
 
-[![官网](https://img.shields.io/badge/website-blog.rakuyo.dev%2FFlotilla-0089C2)](https://blog.rakuyo.dev/Flotilla/zh/)
+[![官网](https://img.shields.io/badge/website-flotilla.rakuyo.dev-0089C2)](https://flotilla.rakuyo.dev/zh/)
 [![CI](https://github.com/rakuyoMo/Flotilla/actions/workflows/ci.yml/badge.svg)](https://github.com/rakuyoMo/Flotilla/actions/workflows/ci.yml)
 ![macOS 15+](https://img.shields.io/badge/macOS-15%2B-000000?logo=apple&logoColor=white)
 ![Swift 6](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)
@@ -69,7 +69,7 @@ App 名在简体中文下显示为 “归帆”，繁体中文下为 “歸帆�
 
 归帆需要 macOS 15 或更高版本，以及搭载 Apple 芯片的 Mac。
 
-1. 在 [官网](https://blog.rakuyo.dev/Flotilla/zh/download/) 或 [Releases](https://github.com/rakuyoMo/Flotilla/releases) 页面下载最新版本的 `Flotilla-X.Y.Z.zip`
+1. 在 [官网](https://flotilla.rakuyo.dev/zh/download/) 或 [Releases](https://github.com/rakuyoMo/Flotilla/releases) 页面下载最新版本的 `Flotilla-X.Y.Z.zip`
 2. 双击解压，把 `Flotilla.app` 拖到 “应用程序” 文件夹
    - 访达按系统语言显示它的名称，简体中文下为 “归帆”
 3. 打开归帆
@@ -304,13 +304,13 @@ defaults export com.apple.dock <文件>
 
 ### 官网
 
-[官网](https://blog.rakuyo.dev/Flotilla/zh/) 由 `website/` 组装而成，部署在 GitHub Pages 上，详见 [AGENTS.md](AGENTS.md) 的 “官网”。
+[官网](https://flotilla.rakuyo.dev/zh/) 由 `website/` 组装而成，部署在 GitHub Pages 上，详见 [AGENTS.md](AGENTS.md) 的 “官网”。
 
 ```bash
 # 组装官网到 build/site/
 mise run site:build
 
-# 组装后在本机预览，地址为 http://localhost:8000/Flotilla/
+# 组装后在本机预览，地址为 http://localhost:8000/
 mise run site:preview
 ```
 

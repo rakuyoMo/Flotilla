@@ -9,7 +9,7 @@ Flotilla 是一个原生 macOS App：在 Dock 上增加 “组”，把多个 Ap
 - 中文名 “归帆”，繁体写作 “歸帆”：简繁中文环境下 App 以这个名字显示，中文界面文案提到 App 时也写这个名字
 - 日文名 “帰帆”：日文环境下 App 以这个名字显示，日文界面文案提到 App 时也写这个名字
 - 纯开源的个人工具，只在 GitHub 分发
-- 官网为 <https://blog.rakuyo.dev/Flotilla/>，由 GitHub Pages 托管，见 “官网”
+- 官网为 <https://flotilla.rakuyo.dev/>，由 GitHub Pages 托管，见 “官网”
 - 许可证为 [GPL-3.0](LICENSE)
 
 ## 技术栈与环境
@@ -39,7 +39,7 @@ Flotilla 是一个原生 macOS App：在 Dock 上增加 “组”，把多个 Ap
 | `mise run swift:lint` | 检查代码规范 |
 | `mise run release <版本号>` | 为新版本开 release PR，见 “发布流程” |
 | `mise run site:build` | 组装官网到 `build/site/`，见 “官网” |
-| `mise run site:preview` | 组装官网并在本机预览，地址为 `http://localhost:8000/Flotilla/` |
+| `mise run site:preview` | 组装官网并在本机预览，地址为 `http://localhost:8000/` |
 
 ## 目录结构
 
@@ -218,9 +218,9 @@ README-ZH.md            README.md 的简体中文版，与它同步修改
 
 ## 官网
 
-官网 <https://blog.rakuyo.dev/Flotilla/> 是 GitHub Pages 上的项目页，挂在 `/Flotilla/` 下。
+官网 <https://flotilla.rakuyo.dev/> 是本仓库在 GitHub Pages 上的项目页。
 
-账号的 GitHub Pages 自定义域名是 `blog.rakuyo.dev`，所以项目页在 `https://blog.rakuyo.dev/Flotilla/`，`rakuyomo.github.io/Flotilla/` 会跳转过来。
+自定义域名 `flotilla.rakuyo.dev` 在仓库的 Pages 设置里配置，DNS 上是指向 `rakuyomo.github.io` 的 CNAME 记录；`rakuyomo.github.io/Flotilla/` 会跳转过来。
 
 ### 源码与组装
 
@@ -230,7 +230,7 @@ README-ZH.md            README.md 的简体中文版，与它同步修改
   - 用 `sips` 从 App 图标母版生成图标与 favicon，从 `docs/resources/` 的浅色头图生成分享图、把帆船画稿转成 JPEG，截图原样拷入
   - 用 `gh api` 取 GitHub 上的全部 Release，整理成 `build/site/releases.json`；`gh` 要先登录
 - 页面运行时只读同源的 `releases.json`，不请求 GitHub API；读不到时退回到指向 GitHub Releases 的链接
-- `mise run site:preview` 组装后在本机起服务，访问路径与线上一样带 `/Flotilla/` 前缀
+- `mise run site:preview` 组装后在本机起服务，地址为 `http://localhost:8000/`
 
 ### 部署
 
@@ -245,8 +245,8 @@ README-ZH.md            README.md 的简体中文版，与它同步修改
 
 - 英文页在根目录，简体中文页在 `zh/`：像 `README.md` 与 `README-ZH.md` 那样同步修改，两边结构一致、内容对应
 - 页面上的事实以 README 为准，文案能照搬就照搬
-- 站内链接一律用相对路径：以 `/` 开头的路径会跳出 `/Flotilla/`；每页在 `<html data-root>` 上声明自己到站点根目录的相对路径，脚本据此拼地址
-  - `404.html` 会在任意不存在的路径下返回，用 `<base href="/Flotilla/">` 固定相对路径的起点
+- 站内链接一律用相对路径；每页在 `<html data-root>` 上声明自己到站点根目录的相对路径，脚本据此拼地址
+  - `404.html` 会在任意不存在的路径下返回，用 `<base href="/">` 固定相对路径的起点
 
 ## 发布流程
 
