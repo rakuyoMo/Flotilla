@@ -48,3 +48,7 @@ python3 -m http.server 8000 --bind 127.0.0.1 --directory build/site
 [tasks.release]
 description = "为新版本开 release PR，用法：mise run release X.Y.Z"
 run = "./Scripts/release.sh"
+
+[tasks.appcast]
+description = "将 build/Flotilla.app 压缩并生成签名更新清单"
+run = "bash Scripts/appcast.sh"

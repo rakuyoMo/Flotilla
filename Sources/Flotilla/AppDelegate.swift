@@ -1,5 +1,6 @@
 import AppKit
 import os
+import Sparkle
 
 // MARK: - AppDelegate
 
@@ -17,6 +18,13 @@ final class AppDelegate: NSObject {
 
     /// App 菜单的 “关于” 面板控制器，持续持有菜单项的动作接收者
     private let aboutPanelController = AboutPanelController()
+
+    /// 主菜单与设置共用的更新器；启动后由 Sparkle 调度检查、校验下载并安装
+    private let updaterController = SPUStandardUpdaterController(
+        startingUpdater: false,
+        updaterDelegate: nil,
+        userDriverDelegate: nil
+    )
 
     /// 让 Dock 上的 tile 与根组保持一致；
     /// 在 `applicationWillFinishLaunching` 里创建
@@ -44,7 +52,7 @@ final class AppDelegate: NSObject {
         }
     }
 
-    /// 构建主菜单：App 菜单提供 “关于”、“设置…” 与 “退出”；“编辑” 菜单支持文本框的标准快捷键
+    /// 构建主菜单：App 菜单提供 “关于”、“检查更新…”、“设置…” 与 “退出”
     /// - Parameter settingsWindowController: 与状态栏入口共用的设置窗口
     func makeMainMenu(settingsWindowController: SettingsWindowController) -> NSMenu {
         let aboutItem = NSMenuItem(
@@ -56,6 +64,18 @@ final class AppDelegate: NSObject {
             keyEquivalent: ""
         )
         aboutItem.target = aboutPanelController
+
+        let updateItem = NSMenuItem(
+            title: String(
+                localized: "updates.checkForUpdates",
+                comment: "App 菜单与设置里的手动检查更新入口"
+            ),
+            action: #selector(SPUStandardUpdaterController.checkForUpdates(_:)),
+            keyEquivalent: ""
+        )
+
+        // Sparkle 校验菜单的可用状态，避免检查或下载期间重复启动更新流程
+        updateItem.target = updaterController
 
         let settingsItem = NSMenuItem(
             title: String(
@@ -72,6 +92,7 @@ final class AppDelegate: NSObject {
         let appMenu = NSMenu()
         appMenu.items = [
             aboutItem,
+            updateItem,
             .separator(),
             settingsItem,
             .separator(),
@@ -113,11 +134,12 @@ extension AppDelegate: NSApplicationDelegate {
         startDockIntegration()
     }
 
-    /// 搭好主菜单与状态栏，按 “图标与小组件样式” 设好 App 图标，把当前这份 App 注册为 `flotilla` scheme 的处理者
+    /// 搭好主菜单、设置与状态栏，启动更新调度，并注册图标样式和 `flotilla` scheme
     func applicationDidFinishLaunching(_: Notification) {
         // 主菜单与状态栏共用一份设置窗口控制器，两个入口都显示当前这一个窗口
         let settingsWindowController = SettingsWindowController(
-            dockTileSynchronizer: dockTileSynchronizer
+            dockTileSynchronizer: dockTileSynchronizer,
+            updater: updaterController.updater
         )
 
         NSApp.mainMenu = makeMainMenu(settingsWindowController: settingsWindowController)
@@ -129,6 +151,9 @@ extension AppDelegate: NSApplicationDelegate {
         )
 
         registerAsURLHandler()
+
+        // 窗口与菜单就绪后启动，更新弹窗与定时检查都由同一更新器管理
+        updaterController.startUpdater()
     }
 
     /// 处理 stub 发来的请求：展开或收起面板交给面板处理，拖到 tile 上的 App 与文件加入根组；

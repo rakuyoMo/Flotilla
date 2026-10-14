@@ -34,7 +34,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>1.0.0</string>
+	<string>1</string>
 	<key>LSHasLocalizedDisplayName</key>
 	<true/>
 	<key>LSMinimumSystemVersion</key>
@@ -60,5 +60,19 @@
 	<string>Flotilla needs to read the contents of Finder folders to expand them in its panel on the Dock.</string>
 	<key>NSRemovableVolumesUsageDescription</key>
 	<string>Flotilla needs to read the contents of Finder folders to expand them in its panel on the Dock.</string>
+	<key>SUAutomaticallyUpdate</key>
+	<false/>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUFeedURL</key>
+	<string>https://github.com/rakuyoMo/Flotilla/releases/latest/download/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>Wca4Jf0Y0x+6W0Q0qUNgMDPapbYBHETuU7tPDtPNzVQ=</string>
+	<key>SURequireSignedFeed</key>
+	<true/>
+	<key>SUScheduledCheckInterval</key>
+	<integer>86400</integer>
+	<key>SUVerifyUpdateBeforeExtraction</key>
+	<true/>
 </dict>
 </plist>

@@ -53,6 +53,18 @@
 "general.accessibilityNotGranted" = "Not granted";
 "general.openSystemSettings" = "Open System Settings";
 
+/* 设置窗口的更新区 */
+"updates.sectionTitle" = "Software Update";
+"updates.checkForUpdates" = "Check for Updates…";
+"updates.automaticChecks" = "Automatically check for updates";
+"updates.automaticInstallation" = "Automatically download and install updates on quit";
+"updates.checkFrequency" = "Check frequency:";
+"updates.hourly" = "Every hour";
+"updates.daily" = "Every day";
+"updates.weekly" = "Every week";
+"updates.lastCheck" = "Last checked:";
+"updates.neverChecked" = "Never";
+
 /* 展开面板 */
 "panel.back" = "Back";
 "panel.openInFinder" = "Open in Finder";

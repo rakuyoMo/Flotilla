@@ -53,6 +53,18 @@
 "general.accessibilityNotGranted" = "未授權";
 "general.openSystemSettings" = "打開系統設定";
 
+/* 设置窗口的更新区 */
+"updates.sectionTitle" = "軟體更新";
+"updates.checkForUpdates" = "檢查更新…";
+"updates.automaticChecks" = "自動檢查更新";
+"updates.automaticInstallation" = "自動下載更新並在結束時安裝";
+"updates.checkFrequency" = "檢查頻率：";
+"updates.hourly" = "每小時";
+"updates.daily" = "每天";
+"updates.weekly" = "每週";
+"updates.lastCheck" = "上次檢查：";
+"updates.neverChecked" = "尚未檢查";
+
 /* 展开面板 */
 "panel.back" = "返回";
 "panel.openInFinder" = "在Finder裡打開";

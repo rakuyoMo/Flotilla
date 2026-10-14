@@ -1,4 +1,5 @@
 import AppKit
+import Sparkle
 import Testing
 
 @testable import Flotilla
@@ -14,13 +15,22 @@ struct AppDelegateTests {
     /// 测试参数里的 200 就是当前进程自己
     private let currentProcessIdentifier: pid_t = 200
 
-    /// “关于” 与 “设置…” 位于 App 名称菜单，设置入口指向共用窗口并支持 ⌘,
+    /// App 名称菜单提供更新入口及共用设置窗口，更新动作由 Sparkle 接收并校验可用状态
     @Test
     func appMenuProvidesAboutAndSharedSettings() throws {
         _ = NSApplication.shared
 
         let delegate = AppDelegate()
-        let settingsWindowController = SettingsWindowController(dockTileSynchronizer: nil)
+        let updater = SPUStandardUpdaterController(
+            startingUpdater: false,
+            updaterDelegate: nil,
+            userDriverDelegate: nil
+        )
+
+        let settingsWindowController = SettingsWindowController(
+            dockTileSynchronizer: nil,
+            updater: updater.updater
+        )
         let mainMenu = delegate.makeMainMenu(settingsWindowController: settingsWindowController)
         let appMenu = try #require(mainMenu.items.first?.submenu)
 
@@ -31,6 +41,13 @@ struct AppDelegateTests {
             })
 
             #expect(aboutItem.action == #selector(AboutPanelController.show))
+
+            let updateItem = try #require(appMenu.items.first {
+                $0.target is SPUStandardUpdaterController
+            })
+
+            #expect(updateItem.action == #selector(SPUStandardUpdaterController.checkForUpdates(_:)))
+            #expect(updateItem.title == "updates.checkForUpdates")
 
             let settingsItem = try #require(appMenu.items.first {
                 $0.target === settingsWindowController

@@ -22,10 +22,19 @@ BIN_DIR="$(swift build -c release --show-bin-path)"
 
 # 按 macOS App 的包结构组装
 rm -rf "$APP_PATH"
-mkdir -p "$APP_PATH/Contents/MacOS" "$APP_PATH/Contents/Resources"
+mkdir -p \
+    "$APP_PATH/Contents/MacOS" \
+    "$APP_PATH/Contents/Resources" \
+    "$APP_PATH/Contents/Frameworks"
 cp "$BIN_DIR/$APP_NAME" "$APP_PATH/Contents/MacOS/$APP_NAME"
 cp "$BIN_DIR/$TILE_NAME" "$APP_PATH/Contents/MacOS/$TILE_NAME"
 cp "Sources/$APP_NAME/Info.plist" "$APP_PATH/Contents/Info.plist"
+
+# 保留框架的符号链接与辅助进程；更新器在安装和重新启动时需要完整的 Sparkle bundle
+readonly SPARKLE_ARTIFACT=".build/artifacts/sparkle/Sparkle"
+readonly SPARKLE_FRAMEWORK="$APP_PATH/Contents/Frameworks/Sparkle.framework"
+ditto "$SPARKLE_ARTIFACT/Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework" "$SPARKLE_FRAMEWORK"
+cp "$SPARKLE_ARTIFACT/LICENSE" "$APP_PATH/Contents/Resources/Sparkle-LICENSE.txt"
 
 # 五种语言的界面文字、App 名与隐私授权框里的用途说明
 cp -R "Sources/$APP_NAME/Resources/"*.lproj "$APP_PATH/Contents/Resources/"
@@ -54,8 +63,21 @@ for ICON_NAME in AppIcon AppIconDark; do
     iconutil -c icns "$ICONSET" -o "$APP_PATH/Contents/Resources/$ICON_NAME.icns"
 done
 
-# 嵌套代码要先于外层签名：stub 可执行文件单独签一次
+# 嵌套代码从内到外签名，保留 Sparkle 辅助进程所需的 entitlements
+for SERVICE in Downloader Installer; do
+    codesign --force --sign - --preserve-metadata=entitlements \
+        "$SPARKLE_FRAMEWORK/Versions/B/XPCServices/$SERVICE.xpc"
+done
+
+codesign --force --sign - "$SPARKLE_FRAMEWORK/Versions/B/Autoupdate"
+codesign --force --sign - "$SPARKLE_FRAMEWORK/Versions/B/Updater.app"
+codesign --force --sign - "$SPARKLE_FRAMEWORK"
+
+# Dock stub 是独立的可执行文件，也在外层 App 签名前签好
 codesign --force --sign - "$APP_PATH/Contents/MacOS/$TILE_NAME"
 
 # 组装后重新签名，把 Info.plist 一并纳入签名
 codesign --force --sign - "$APP_PATH"
+
+# 框架、XPC 服务与 App 都必须通过验证，才交给发布脚本压缩
+codesign --verify --deep --strict "$APP_PATH"
