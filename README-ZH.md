@@ -355,6 +355,10 @@ mise run site:preview
 - 分支命名和提交信息等约定见 [AGENTS.md](AGENTS.md)
 - 各项功能的具体要求见 [docs/requirements](docs/requirements)
 
+## 友链
+
+[LINUX DO](https://linux.do)
+
 ## 许可证
 
 归帆以 [GNU General Public License v3.0](LICENSE) 许可证发布。
