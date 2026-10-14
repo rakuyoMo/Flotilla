@@ -812,19 +812,52 @@
           </li>
         </ul>
 
-        <a
-          class="language-switch"
-          href="zh/"
-          hreflang="zh-Hans"
-          lang="zh-Hans"
-          data-language-switch="zh-Hans"
-        >
-          <svg
-            class="icon"
-            aria-hidden="true"
-          ><use href="#i-globe"/></svg>
-          简体中文
-        </a>
+        <details class="language-menu">
+          <summary
+            class="language-switch"
+            aria-label="Select language"
+          >
+            <svg
+              class="icon"
+              aria-hidden="true"
+            ><use href="#i-globe"/></svg>
+            <span>English</span>
+
+            <svg
+              class="icon language-chevron"
+              aria-hidden="true"
+            ><use href="#i-chevron-down"/></svg>
+          </summary>
+
+          <ul class="language-options">
+            <li>
+              <a
+                href="./"
+                hreflang="en"
+                lang="en"
+                data-language-switch="en"
+                aria-current="true"
+              >
+                English
+                <svg
+                  class="icon"
+                  aria-hidden="true"
+                ><use href="#i-check"/></svg>
+              </a>
+            </li>
+
+            <li>
+              <a
+                href="zh/"
+                hreflang="zh-Hans"
+                lang="zh-Hans"
+                data-language-switch="zh-Hans"
+              >
+                简体中文
+              </a>
+            </li>
+          </ul>
+        </details>
       </div>
 
       <a
@@ -2394,21 +2427,54 @@
     </div>
 
     <div class="container footer-bottom">
-      <p>GPL-3.0 · rakuyoMo</p>
+      <p>Copyright ©️ 2026 <a href="https://github.com/rakuyoMo">Rakuyo</a>. All rights reserved.</p>
 
-      <a
-        class="language-switch"
-        href="zh/"
-        hreflang="zh-Hans"
-        lang="zh-Hans"
-        data-language-switch="zh-Hans"
-      >
-        <svg
-          class="icon"
-          aria-hidden="true"
-        ><use href="#i-globe"/></svg>
-        简体中文
-      </a>
+      <details class="language-menu">
+        <summary
+          class="language-switch"
+          aria-label="Select language"
+        >
+          <svg
+            class="icon"
+            aria-hidden="true"
+          ><use href="#i-globe"/></svg>
+          <span>English</span>
+
+          <svg
+            class="icon language-chevron"
+            aria-hidden="true"
+          ><use href="#i-chevron-down"/></svg>
+        </summary>
+
+        <ul class="language-options">
+          <li>
+            <a
+              href="./"
+              hreflang="en"
+              lang="en"
+              data-language-switch="en"
+              aria-current="true"
+            >
+              English
+              <svg
+                class="icon"
+                aria-hidden="true"
+              ><use href="#i-check"/></svg>
+            </a>
+          </li>
+
+          <li>
+            <a
+              href="zh/"
+              hreflang="zh-Hans"
+              lang="zh-Hans"
+              data-language-switch="zh-Hans"
+            >
+              简体中文
+            </a>
+          </li>
+        </ul>
+      </details>
     </div>
   </footer>
 

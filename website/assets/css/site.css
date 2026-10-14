@@ -1054,6 +1054,63 @@ html:not(.js) .site-header {
 
 .language-switch {
   margin-right: 4px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.language-switch::-webkit-details-marker {
+  display: none;
+}
+
+/* 两处语言入口共用选项列表，浮层跟随所在入口定位 */
+.language-menu {
+  position: relative;
+}
+
+.language-chevron {
+  transition: transform 0.2s;
+}
+
+.language-menu[open] .language-chevron {
+  transform: rotate(180deg);
+}
+
+.language-options {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 10;
+  min-width: 180px;
+  padding: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  background: var(--color-bg-raised);
+  box-shadow: var(--shadow-card);
+  list-style: none;
+}
+
+.language-options a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border-radius: var(--radius-small);
+  color: var(--color-text-secondary);
+  font-size: 0.9375rem;
+  text-decoration: none;
+}
+
+.language-options a:hover,
+.language-options a[aria-current="true"] {
+  background: var(--color-inline-code-bg);
+  color: var(--color-text);
+}
+
+.language-options .icon {
+  width: 16px;
+  height: 16px;
 }
 
 .nav-toggle {
@@ -1126,6 +1183,13 @@ html:not(.js) .site-header {
 
   .language-switch {
     margin-right: 0;
+  }
+
+  /* 窄屏导航中的语言列表随菜单排版，避免浮层超出导航底部 */
+  .nav-menu .language-options {
+    position: static;
+    margin-top: 4px;
+    box-shadow: none;
   }
 
   /* 没有脚本时菜单按钮不起作用，链接直接排在导航下方 */
@@ -1534,8 +1598,19 @@ html:not(.js) .copy-button {
   color: var(--color-text-secondary);
 }
 
+/* 版权文案换行时，语言入口仍靠右，浮层保持在视口内 */
+.footer-bottom .language-menu {
+  margin-left: auto;
+}
+
 .footer-bottom .language-switch {
   margin-right: -12px;
+}
+
+/* 页脚入口向上展开，选项保持在页面可见范围内 */
+.footer-bottom .language-options {
+  top: auto;
+  bottom: calc(100% + 8px);
 }
 
 /* ==========================================
