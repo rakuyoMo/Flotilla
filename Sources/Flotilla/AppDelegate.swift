@@ -15,6 +15,9 @@ final class AppDelegate: NSObject {
     /// 状态栏图标与菜单；启动完成后创建
     private var statusBarController: StatusBarController?
 
+    /// App 菜单的 “关于” 面板控制器，持续持有菜单项的动作接收者
+    private let aboutPanelController = AboutPanelController()
+
     /// 让 Dock 上的 tile 与根组保持一致；
     /// 在 `applicationWillFinishLaunching` 里创建
     private var dockTileSynchronizer: DockTileSynchronizer?
@@ -40,6 +43,58 @@ final class AppDelegate: NSObject {
             processIdentifier($0) != currentProcessIdentifier
         }
     }
+
+    /// 构建主菜单：App 菜单提供 “关于”、“设置…” 与 “退出”；“编辑” 菜单支持文本框的标准快捷键
+    /// - Parameter settingsWindowController: 与状态栏入口共用的设置窗口
+    func makeMainMenu(settingsWindowController: SettingsWindowController) -> NSMenu {
+        let aboutItem = NSMenuItem(
+            title: String(
+                localized: "about.menuTitle",
+                comment: "App 名称菜单里打开 “关于” 面板的入口，带本地化的 App 名"
+            ),
+            action: #selector(AboutPanelController.show),
+            keyEquivalent: ""
+        )
+        aboutItem.target = aboutPanelController
+
+        let settingsItem = NSMenuItem(
+            title: String(
+                localized: "settings.menuTitle",
+                comment: "App 名称菜单与状态栏菜单共用的 “设置…” 入口"
+            ),
+            action: #selector(SettingsWindowController.show),
+            keyEquivalent: ","
+        )
+
+        // 两个菜单都直接唤起同一窗口，保持正在编辑的内容与窗口状态
+        settingsItem.target = settingsWindowController
+
+        let appMenu = NSMenu()
+        appMenu.items = [
+            aboutItem,
+            .separator(),
+            settingsItem,
+            .separator(),
+            NSMenuItem(
+                title: String(
+                    localized: "mainMenu.quit",
+                    comment: "App 菜单的 “退出归帆”"
+                ),
+                action: #selector(NSApplication.terminate(_:)),
+                keyEquivalent: "q"
+            ),
+        ]
+
+        // 主菜单的每一项只是子菜单的容器，App 菜单的标题由系统显示为 App 名称
+        let mainMenu = NSMenu()
+        for submenu in [appMenu, makeEditMenu()] {
+            let item = NSMenuItem()
+            item.submenu = submenu
+            mainMenu.addItem(item)
+        }
+
+        return mainMenu
+    }
 }
 
 // MARK: NSApplicationDelegate
@@ -60,14 +115,17 @@ extension AppDelegate: NSApplicationDelegate {
 
     /// 搭好主菜单与状态栏，按 “图标与小组件样式” 设好 App 图标，把当前这份 App 注册为 `flotilla` scheme 的处理者
     func applicationDidFinishLaunching(_: Notification) {
-        NSApp.mainMenu = makeMainMenu()
+        // 主菜单与状态栏共用一份设置窗口控制器，两个入口都显示当前这一个窗口
+        let settingsWindowController = SettingsWindowController(
+            dockTileSynchronizer: dockTileSynchronizer
+        )
+
+        NSApp.mainMenu = makeMainMenu(settingsWindowController: settingsWindowController)
 
         appIconController.start()
 
         statusBarController = StatusBarController(
-            settingsWindowController: SettingsWindowController(
-                dockTileSynchronizer: dockTileSynchronizer
-            )
+            settingsWindowController: settingsWindowController
         )
 
         registerAsURLHandler()
@@ -113,31 +171,6 @@ extension AppDelegate: NSApplicationDelegate {
 // MARK: - Private
 
 extension AppDelegate {
-    /// 构建最小主菜单：App 菜单只有 “退出”；“编辑” 菜单让设置窗口里的文本框响应标准快捷键
-    private func makeMainMenu() -> NSMenu {
-        let appMenu = NSMenu()
-        appMenu.items = [
-            NSMenuItem(
-                title: String(
-                    localized: "mainMenu.quit",
-                    comment: "App 菜单的 “退出归帆”"
-                ),
-                action: #selector(NSApplication.terminate(_:)),
-                keyEquivalent: "q"
-            ),
-        ]
-
-        // 主菜单的每一项只是子菜单的容器，App 菜单的标题由系统显示为 App 名称
-        let mainMenu = NSMenu()
-        for submenu in [appMenu, makeEditMenu()] {
-            let item = NSMenuItem()
-            item.submenu = submenu
-            mainMenu.addItem(item)
-        }
-
-        return mainMenu
-    }
-
     /// “编辑” 菜单：撤销、重做、剪切、复制、粘贴、全选，动作沿响应链交给当前的文本框
     private func makeEditMenu() -> NSMenu {
         let redoItem = NSMenuItem(

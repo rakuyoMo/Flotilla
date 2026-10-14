@@ -8,13 +8,15 @@
 "mainMenu.paste" = "Paste";
 "mainMenu.selectAll" = "Select All";
 
-/* 状态栏菜单 */
-"statusBar.settings" = "Settings…";
-
 /* 状态栏图标的无障碍描述：旁白读出的 App 名 */
 "statusBar.iconDescription" = "Flotilla";
 
+/* 关于面板 */
+"about.menuTitle" = "About Flotilla";
+"about.website" = "Official Website";
+
 /* 设置窗口 */
+"settings.menuTitle" = "Settings…";
 "settings.windowTitle" = "Settings";
 
 /* 设置窗口的组区 */

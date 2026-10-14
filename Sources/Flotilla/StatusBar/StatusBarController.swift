@@ -29,13 +29,15 @@ extension StatusBarController {
     private func makeMenu() -> NSMenu {
         let settingsItem = NSMenuItem(
             title: String(
-                localized: "statusBar.settings",
-                comment: "状态栏菜单的 “设置…”，打开设置窗口"
+                localized: "settings.menuTitle",
+                comment: "App 名称菜单与状态栏菜单共用的 “设置…” 入口"
             ),
-            action: #selector(openSettings),
+            action: #selector(SettingsWindowController.show),
             keyEquivalent: ","
         )
-        settingsItem.target = self
+
+        // 状态栏入口与 App 菜单指向同一窗口，控制器由本对象持续持有
+        settingsItem.target = settingsWindowController
 
         let menu = NSMenu()
         menu.items = [
@@ -52,11 +54,5 @@ extension StatusBarController {
         ]
 
         return menu
-    }
-
-    /// 打开设置窗口并把它带到最前
-    @objc
-    private func openSettings() {
-        settingsWindowController.show()
     }
 }
