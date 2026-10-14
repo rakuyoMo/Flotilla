@@ -36,6 +36,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: 2
           persist-credentials: false
 
       - name: 校验版本号
@@ -50,18 +51,27 @@ jobs:
 
           version="${PR_TITLE#release: }"
 
-          # Info.plist 的两个版本号都要与标题一致
-          for key in CFBundleShortVersionString CFBundleVersion; do
-            value="$(
-              /usr/libexec/PlistBuddy -c "Print :$key" Sources/Flotilla/Info.plist 2> /dev/null \
-                || true
-            )"
+          # 展示版本与标题一致，整数构建号须比合并前的 main 增加一次
+          info_plist="Sources/Flotilla/Info.plist"
+          value="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$info_plist")"
 
-            if [[ "$value" != "$version" ]]; then
-              echo "::error::Info.plist 的 ${key} 须为 ${version}，实际为 ${value}"
-              exit 1
-            fi
-          done
+          if [[ "$value" != "$version" ]]; then
+            echo "::error::展示版本须为 ${version}，实际为 ${value}"
+            exit 1
+          fi
+
+          build="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$info_plist")"
+          previous_build="$(git show "${MERGE_COMMIT_SHA}^:$info_plist" | plutil -extract CFBundleVersion raw -o - -)"
+
+          if [[ ! "$build" =~ ^[1-9][0-9]*$ || ! "$previous_build" =~ ^[1-9][0-9]*$ ]]; then
+            echo "::error::构建号须为正整数"
+            exit 1
+          fi
+
+          if [[ "$build" -ne "$((previous_build + 1))" ]]; then
+            echo "::error::构建号须从 ${previous_build} 增加到 $((previous_build + 1))，实际为 ${build}"
+            exit 1
+          fi
 
           # 查询远端的同名 tag：`--exit-code` 下退出码 0 表示已存在，2 表示不存在，其它表示查询本身失败
           status=0
@@ -85,15 +95,23 @@ jobs:
       - name: 安装 mise
         uses: jdx/mise-action@v4
 
+      # 缺少签名密钥时不发布不能自动安装的版本
+      - name: 检查更新签名配置
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          if [[ -z "$SPARKLE_PRIVATE_KEY" ]]; then
+            echo "::error::请配置 SPARKLE_PRIVATE_KEY 仓库 secret"
+            exit 1
+          fi
+
       - name: 打包
         run: mise run bundle
 
-      # 不带扩展属性：否则 zip 里会有 `._*` 文件，用 unzip 解压时它们落进 .app，签名校验失败
-      - name: 压缩
-        run: |
-          ditto -c -k --norsrc --keepParent \
-            build/Flotilla.app \
-            "Flotilla-$VERSION.zip"
+      - name: 压缩并签名更新清单
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: mise run appcast
 
       # 一步完成打 tag、创建 Release、上传 zip；tag 打在合并提交上
       - name: 创建 Release
@@ -101,6 +119,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "v$VERSION" \
-            "Flotilla-$VERSION.zip" \
+            "build/updates/Flotilla-$VERSION.zip" \
+            "build/updates/appcast.xml" \
             --target "$MERGE_COMMIT_SHA" \
             --generate-notes

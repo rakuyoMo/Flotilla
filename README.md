@@ -105,6 +105,12 @@ If you prefer Terminal, run this command to remove the quarantine attribute, the
 xattr -d com.apple.quarantine /Applications/Flotilla.app
 ```
 
+### Updates
+
+Choose **Flotilla › Check for Updates…** from the menu bar to check GitHub Releases. When an update is available, the update window provides a link to release notes and an installation option.
+
+**Software Update** in Settings offers automatic checks, automatic downloads and installation on quit, and hourly, daily, or weekly checks. Daily checks are enabled by default; automatic downloads and installation are off. The last check time is also shown.
+
 ## Permissions
 
 ### Accessibility
@@ -227,7 +233,7 @@ Settings are stored in the preferences domain `com.rakuyo.flotilla`.
 
 ### Network access
 
-Flotilla only connects to the internet to fetch page titles when you add or edit a web page.
+Flotilla connects to the internet to fetch titles when you add or edit a web page, and to check for and download updates from GitHub Releases. Automatic checks can be turned off in Software Update settings.
 
 ## Building from source
 
@@ -311,6 +317,22 @@ Back up the Dock preferences before modifying them while debugging:
 ```bash
 defaults export com.apple.dock <file>
 ```
+
+### Releases and update signing
+
+In `Sources/Flotilla/Info.plist`, `CFBundleShortVersionString` is the `X.Y.Z` display version and `CFBundleVersion` is a separate positive integer build number. `mise run release X.Y.Z` sets the display version and increments the build number by one. Sparkle compares build numbers to determine which version is newer.
+
+The release workflow uploads `Flotilla-X.Y.Z.zip` and a signed `appcast.xml` to GitHub Releases. The app reads the feed from the latest release and verifies the downloaded archive's Ed25519 signature before extracting and installing it.
+
+The signing key must match `SUPublicEDKey` in `Info.plist`. CI reads it from the `SPARKLE_PRIVATE_KEY` repository secret; local builds use the `com.rakuyo.flotilla` Keychain account. Sparkle's `generate_keys` tool manages the key.
+
+```bash
+# Bundle the app, then generate the update archive and signed feed in build/updates/
+mise run bundle
+mise run appcast
+```
+
+Sparkle's license is included in the app at `Contents/Resources/Sparkle-LICENSE.txt`.
 
 ### Website
 

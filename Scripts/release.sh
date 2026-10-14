@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# 为新版本开 release PR：从 main 切出发布分支，把 Info.plist 的版本号改成新版本，提交、推送并创建 PR
+# 为新版本开 release PR：更新版本号、递增整数构建号，提交、推送并创建 PR
 # 用法：./Scripts/release.sh X.Y.Z
 
 set -euo pipefail
@@ -119,18 +119,26 @@ if remote_has_ref "refs/heads/$BRANCH"; then
   fail "远端已有分支 ${BRANCH}"
 fi
 
+# 构建号跨版本递增，Sparkle 以它判断更新顺序；在创建分支之前校验原值
+current_build="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$INFO_PLIST")"
+
+if [[ ! "$current_build" =~ ^[1-9][0-9]*$ ]]; then
+  fail "构建号须为正整数，实际为 ${current_build}"
+fi
+
+readonly NEXT_BUILD="$((current_build + 1))"
+
 # 版本号的改动提交在发布分支上，经 PR 合并进 main
 git switch --create "$BRANCH"
 
-# 发布流程要求 Info.plist 的两个版本号都等于新版本
-for key in CFBundleShortVersionString CFBundleVersion; do
-  /usr/libexec/PlistBuddy -c "Set :$key $VERSION" "$INFO_PLIST"
-done
+# 展示版本使用 X.Y.Z，构建号每次发布只增加一次，不随展示版本归零
+/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$INFO_PLIST"
+/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $NEXT_BUILD" "$INFO_PLIST"
 
 git add "$INFO_PLIST"
 
-# Info.plist 已是目标版本时（首个版本、发布失败后重发）没有改动，但开 PR 仍需要一个提交
-git commit --allow-empty --message "release: $VERSION"
+# 构建号始终变化，首个版本与失败后重发同样会产生发布提交
+git commit --message "release: $VERSION"
 
 # 推送发布分支，PR 从它发起
 git push --set-upstream origin "$BRANCH" || {

@@ -106,6 +106,12 @@ Dock 自带的文件夹只能放在右侧，而且每个都对应磁盘上的一
 xattr -d com.apple.quarantine /Applications/Flotilla.app
 ```
 
+### 更新
+
+在菜单栏选择 “归帆 › 检查更新…” 可检查 GitHub Release，有新版本时会显示更新说明链接和安装入口。
+
+设置中的 “软件更新” 提供自动检查、自动下载并在退出时安装，以及每小时、每天、每周的检查频率。默认每天自动检查，自动下载安装默认关闭；也会显示上次检查时间。
+
 ## 权限说明
 
 ### 辅助功能
@@ -228,7 +234,7 @@ Dock 上的每个图标对应一个 tile。为了让组能出现在应用区域�
 
 ### 联网
 
-归帆只在获取网页标题时联网，用于添加或编辑网页。
+归帆在添加或编辑网页时联网获取标题，也会连接 GitHub Release 检查和下载更新。自动检查可在 “软件更新” 设置中关闭。
 
 ## 从源码构建
 
@@ -312,6 +318,22 @@ zsh 自带一个 `log` 命令。要查看系统日志，请使用完整路径 `/
 ```bash
 defaults export com.apple.dock <文件>
 ```
+
+### 发布与更新签名
+
+`Sources/Flotilla/Info.plist` 中的 `CFBundleShortVersionString` 是 `X.Y.Z` 格式的展示版本；`CFBundleVersion` 是独立的正整数构建号。`mise run release X.Y.Z` 更新展示版本，并将构建号增加 `1`；Sparkle 按构建号比较新旧版本。
+
+发布 workflow 将 `Flotilla-X.Y.Z.zip` 和签名的 `appcast.xml` 一起上传到 GitHub Release。App 从最新 Release 获取清单，下载后先验证 Ed25519 签名，再解压安装。
+
+签名私钥须与 `Info.plist` 的 `SUPublicEDKey` 配对：CI 从仓库 secret `SPARKLE_PRIVATE_KEY` 读取；本机从钥匙串的 `com.rakuyo.flotilla` 账户读取。私钥由 Sparkle 的 `generate_keys` 工具管理。
+
+```bash
+# 打包后生成更新包与签名清单，输出到 build/updates/
+mise run bundle
+mise run appcast
+```
+
+Sparkle 的许可声明随 App 放在 `Contents/Resources/Sparkle-LICENSE.txt`。
 
 ### 官网
 

@@ -53,6 +53,18 @@
 "general.accessibilityNotGranted" = "未授权";
 "general.openSystemSettings" = "打开系统设置";
 
+/* 设置窗口的更新区 */
+"updates.sectionTitle" = "软件更新";
+"updates.checkForUpdates" = "检查更新…";
+"updates.automaticChecks" = "自动检查更新";
+"updates.automaticInstallation" = "自动下载更新并在退出时安装";
+"updates.checkFrequency" = "检查频率：";
+"updates.hourly" = "每小时";
+"updates.daily" = "每天";
+"updates.weekly" = "每周";
+"updates.lastCheck" = "上次检查：";
+"updates.neverChecked" = "尚未检查";
+
 /* 展开面板 */
 "panel.back" = "返回";
 "panel.openInFinder" = "在访达中打开";

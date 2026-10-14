@@ -53,6 +53,18 @@
 "general.accessibilityNotGranted" = "未許可";
 "general.openSystemSettings" = "システム設定を開く";
 
+/* 设置窗口的更新区 */
+"updates.sectionTitle" = "ソフトウェアアップデート";
+"updates.checkForUpdates" = "アップデートを確認…";
+"updates.automaticChecks" = "アップデートを自動的に確認";
+"updates.automaticInstallation" = "アップデートを自動でダウンロードし、終了時にインストール";
+"updates.checkFrequency" = "確認の頻度：";
+"updates.hourly" = "毎時";
+"updates.daily" = "毎日";
+"updates.weekly" = "毎週";
+"updates.lastCheck" = "前回の確認：";
+"updates.neverChecked" = "未確認";
+
 /* 展开面板 */
 "panel.back" = "戻る";
 "panel.openInFinder" = "Finderで開く";

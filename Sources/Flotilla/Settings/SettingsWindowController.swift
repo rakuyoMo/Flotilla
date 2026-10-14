@@ -1,4 +1,5 @@
 import AppKit
+import Sparkle
 
 // MARK: - SettingsWindowController
 
@@ -8,8 +9,8 @@ final class SettingsWindowController: NSWindowController {
     /// 内容区四边的边距
     static let contentInset: CGFloat = 20
 
-    /// 内容区的最小尺寸：宽度扣除左右边距后，五种语言的组区按钮行都能完整显示
-    static let minimumContentSize = NSSize(width: 570, height: 480)
+    /// 内容区的最小尺寸：容纳五种语言的按钮行，并为组列表、通用与更新设置留足高度
+    static let minimumContentSize = NSSize(width: 570, height: 660)
 
     /// 组区，在窗口上部，随窗口高度伸缩
     private let groupTreeViewController: GroupTreeViewController
@@ -19,16 +20,23 @@ final class SettingsWindowController: NSWindowController {
         preferences: .shared
     )
 
+    /// 更新区，与主菜单共用更新器及其持久化设置
+    private let updateSettingsViewController: UpdateSettingsViewController
+
     /// 创建设置窗口；窗口关闭时只隐藏，不释放
-    /// - Parameter dockTileSynchronizer: Dock tile 同步器；Dock 集成不可用时传 nil
-    init(dockTileSynchronizer: DockTileSynchronizer?) {
+    /// - Parameters:
+    ///   - dockTileSynchronizer: Dock tile 同步器；Dock 集成不可用时传 nil
+    ///   - updater: 主菜单使用的更新器
+    init(dockTileSynchronizer: DockTileSynchronizer?, updater: SPUUpdater) {
         groupTreeViewController = GroupTreeViewController(
             store: .shared,
             dockTileSynchronizer: dockTileSynchronizer
         )
 
+        updateSettingsViewController = UpdateSettingsViewController(updater: updater)
+
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 620, height: 600),
+            contentRect: NSRect(x: 0, y: 0, width: 620, height: 760),
             styleMask: [.titled, .closable, .resizable],
             backing: .buffered,
             defer: true
@@ -106,15 +114,25 @@ extension SettingsWindowController {
         window?.makeKeyAndOrderFront(nil)
     }
 
-    /// 组区在上、通用区在下，中间以分隔线隔开；组区随窗口高度伸缩
+    /// 组区、通用区与更新区依次排列，以分隔线隔开；组区随窗口高度伸缩
     private func makeContentView() -> NSView {
         let groupTreeView = groupTreeViewController.view
         let generalSettingsView = generalSettingsViewController.view
+        let updateSettingsView = updateSettingsViewController.view
 
         let separator = NSBox()
         separator.boxType = .separator
 
-        let stackView = NSStackView(views: [groupTreeView, separator, generalSettingsView])
+        let updateSeparator = NSBox()
+        updateSeparator.boxType = .separator
+
+        let stackView = NSStackView(views: [
+            groupTreeView,
+            separator,
+            generalSettingsView,
+            updateSeparator,
+            updateSettingsView,
+        ])
         stackView.orientation = .vertical
         stackView.alignment = .leading
         stackView.spacing = 16
@@ -132,6 +150,10 @@ extension SettingsWindowController {
                 constant: -2 * Self.contentInset
             ),
             separator.widthAnchor.constraint(
+                equalTo: stackView.widthAnchor,
+                constant: -2 * Self.contentInset
+            ),
+            updateSeparator.widthAnchor.constraint(
                 equalTo: stackView.widthAnchor,
                 constant: -2 * Self.contentInset
             ),
