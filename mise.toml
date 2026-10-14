@@ -34,17 +34,11 @@ description = "组装官网到 build/site/"
 run = "./Scripts/site.sh"
 
 [tasks."site:preview"]
-description = "组装官网并在本机预览，访问路径与线上一样带 /Flotilla/ 前缀"
+description = "组装官网并在本机预览，地址为 http://localhost:8000/"
 depends = ["site:build"]
 run = """
-# 线上是项目页，挂在 /Flotilla/ 下：在临时目录里建指向 build/site 的同名符号链接再起服务，
-# 以 / 开头的错误路径在本机就会失效
-root="$(mktemp -d)"
-trap 'rm -rf "$root"' EXIT
-ln -s "$PWD/build/site" "$root/Flotilla"
-
-echo "官网预览：http://localhost:8000/Flotilla/"
-python3 -m http.server 8000 --bind 127.0.0.1 --directory "$root"
+echo "官网预览：http://localhost:8000/"
+python3 -m http.server 8000 --bind 127.0.0.1 --directory build/site
 """
 
 # ==========================================
