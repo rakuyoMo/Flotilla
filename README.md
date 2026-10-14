@@ -354,6 +354,10 @@ The website build fetches release information with `gh`, so run `gh auth login` 
 - See [AGENTS.md](AGENTS.md) for branch names, commit messages, and other contribution guidelines (in Chinese)
 - See [docs/requirements](docs/requirements) for details of how each feature should work (in Chinese)
 
+## Friends
+
+[LINUX DO](https://linux.do)
+
 ## License
 
 Flotilla is licensed under the [GNU General Public License v3.0](LICENSE).
