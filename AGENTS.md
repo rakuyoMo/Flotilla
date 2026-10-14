@@ -250,7 +250,10 @@ README-ZH.md            README.md 的简体中文版，与它同步修改
 
 ## 发布流程
 
-版本号记在 `Sources/Flotilla/Info.plist` 的 `CFBundleShortVersionString` 与 `CFBundleVersion` 里，两者始终相同，格式为 `X.Y.Z`：三段都是不带前导零的整数，不带 `v`。
+展示版本与构建号记在 `Sources/Flotilla/Info.plist` 中：
+
+- `CFBundleShortVersionString` 是展示版本，格式为 `X.Y.Z`：三段都是不带前导零的非负整数，不带 `v`
+- `CFBundleVersion` 是独立的正整数构建号，每次发布增加 `1`，跨展示版本持续递增；Sparkle 按构建号比较新旧版本
 
 发布一个新版本：
 
@@ -262,7 +265,8 @@ README-ZH.md            README.md 的简体中文版，与它同步修改
    - `gh` 已登录
    - `origin` 是本仓库而不是 fork：fork 的 PR 拿不到发布所需的写权限
    - 本地与远端都没有 `release/X.Y.Z` 分支
-2. 检查通过后，脚本切出 `release/X.Y.Z` 分支，把 Info.plist 的两个版本号改成新版本，提交并推送到 `origin`，再向 `main` 开标题为 `release: X.Y.Z` 的 PR
+   - Info.plist 的当前构建号是正整数
+2. 检查通过后，脚本切出 `release/X.Y.Z` 分支，把 Info.plist 的展示版本改成 `X.Y.Z`，构建号增加 `1`，提交并推送到 `origin`，再向 `main` 开标题为 `release: X.Y.Z` 的 PR
 3. 等 CI 通过后合并 PR
 4. 合并后，GitHub Actions 自动：
    - 在合并提交上打 tag `vX.Y.Z`
@@ -273,7 +277,8 @@ README-ZH.md            README.md 的简体中文版，与它同步修改
 标题以 `release:` 开头（不区分大小写）的 PR 合并后，以下任一情况都会让发布失败：
 
 - 标题不是完整的 `release: X.Y.Z`
-- Info.plist 的两个版本号与标题不一致
+- Info.plist 的展示版本与标题中的版本号不一致
+- Info.plist 的构建号或合并前 `main` 的构建号不是正整数，或本次构建号未比合并前的构建号增加 `1`
 - tag `vX.Y.Z` 已存在
 
 失败时到仓库的 Actions 页面查看原因，修好后再运行一次 `mise run release X.Y.Z`。
