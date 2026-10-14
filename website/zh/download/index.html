@@ -20,7 +20,7 @@
 
   <meta
     name="description"
-    content="下载归帆：支持 macOS 15 或更高版本、Apple 芯片；附安装、第一次打开与授予辅助功能权限的步骤。"
+    content="下载归帆，给 Dock 上的应用分组。支持 Apple 芯片和 macOS 15 或更高版本，这里有安装、首次打开和权限设置的说明。"
   >
 
   <meta
@@ -80,7 +80,7 @@
 
   <meta
     property="og:description"
-    content="下载归帆：支持 macOS 15 或更高版本、Apple 芯片；附安装、第一次打开与授予辅助功能权限的步骤。"
+    content="下载归帆，给 Dock 上的应用分组。支持 Apple 芯片和 macOS 15 或更高版本，这里有安装、首次打开和权限设置的说明。"
   >
 
   <meta
@@ -977,7 +977,7 @@
               data-when="none"
             >
               <h2 class="download-card-title">尚未发布</h2>
-              <p>归帆还没有发布任何版本。可以从源码构建，或在 GitHub 上 Watch 这个仓库，第一个版本发布时就会收到通知。</p>
+              <p>目前还没有发布版本。可以从源码构建，或在 GitHub 上订阅发布通知。</p>
             </div>
 
             <div
@@ -985,7 +985,7 @@
               data-when="unknown"
             >
               <h2 class="download-card-title">最新版本</h2>
-              <p>在 GitHub 的 Releases 页面下载最新版本的 <code>Flotilla-X.Y.Z.zip</code>。</p>
+              <p>前往 GitHub Releases 下载最新版的 <code>Flotilla-X.Y.Z.zip</code>。</p>
             </div>
 
             <div class="download-card-actions">
@@ -1037,7 +1037,7 @@
                   class="icon"
                   aria-hidden="true"
                 ><use href="#i-eye"/></svg>
-                在 GitHub 上 Watch
+                订阅新版本通知
               </a>
             </div>
           </div>
@@ -1047,7 +1047,7 @@
             data-when="latest"
           >
             <a href="#install">
-              接下来，分三步装好归帆
+              接下来，按下面的步骤安装
               <svg
                 class="icon"
                 aria-hidden="true"
@@ -1065,10 +1065,10 @@
                 class="icon"
                 aria-hidden="true"
               ><use href="#i-github"/></svg>
-              GitHub 上的全部版本
+              查看所有版本
             </a>
 
-            <p data-when="none">在 GitHub 上选择 “Watch › Custom › Releases”，有新版本时就会收到通知。</p>
+            <p data-when="none">想收到新版本通知，可以在 GitHub 上选择 “Watch › Custom › Releases”。</p>
           </div>
         </div>
       </div>
@@ -1086,7 +1086,7 @@
           <h2
             class="section-title"
             id="install-title"
-          >分三步装好归帆。</h2>
+          >安装和首次设置。</h2>
         </header>
 
         <ol class="install-steps">
@@ -1096,9 +1096,9 @@
           >
             <div class="install-copy">
               <span class="step-number">1</span>
-              <h3 class="step-title">解压，拖进 “应用程序”</h3>
+              <h3 class="step-title">解压后放入 “应用程序”</h3>
               <p>双击下载好的 <code>Flotilla-X.Y.Z.zip</code> 解压，把 <code>Flotilla.app</code> 拖到 “应用程序” 文件夹。</p>
-              <p class="step-note">访达按系统语言显示它的名称，简体中文下为 “归帆”。</p>
+              <p class="step-note">访达会按系统语言显示应用名称，简体中文下显示为 “归帆”。</p>
             </div>
 
             <div
@@ -1177,9 +1177,9 @@
             <div class="install-copy">
               <span class="step-number">2</span>
               <h3 class="step-title">第一次打开</h3>
-              <p>归帆没有经过 Apple 公证。第一次打开时，系统会提示 Apple 无法验证它是否包含恶意软件，并拒绝打开。</p>
+              <p>归帆尚未经过 Apple 公证，所以第一次打开时，macOS 会拦截它，并提示无法验证它是否包含恶意软件。</p>
 
-              <p>点击 “完成” 关闭提示，然后按以下步骤放行：</p>
+              <p>点击 “完成” 关闭提示，再按下面的步骤允许打开：</p>
 
               <ol class="number-list">
                 <li>
@@ -1188,17 +1188,17 @@
                 </li>
 
                 <li>
-                  向下滚动到 “安全性”，在提示这个 App 已被阻止的那一行点击 “仍要打开”
+                  向下滚动到 “安全性”，找到归帆被阻止的提示，点击 “仍要打开”
                   <span class="list-note">这个按钮只在尝试打开归帆之后的一小时内出现</span>
                 </li>
 
                 <li>按提示输入登录密码确认</li>
               </ol>
 
-              <p>之后归帆就能像其它 App 一样正常打开。</p>
+              <p>之后就能正常打开归帆。</p>
 
               <div class="step-alternative">
-                <p>也可以在终端里移除它的隔离属性，之后直接打开：</p>
+                <p>如果习惯用终端，也可以运行下面的命令，移除隔离属性后再打开归帆：</p>
 
                 <div class="code-block">
                   <pre><code>xattr -d com.apple.quarantine /Applications/Flotilla.app</code></pre>
@@ -1228,12 +1228,12 @@
                 </summary>
 
                 <div class="faq-answer">
-                  <p>归帆使用 ad-hoc 签名，没有经过 Apple 公证，Apple 无法验证它是否包含恶意软件，所以系统第一次会拒绝打开它。</p>
+                  <p>归帆使用 ad-hoc 签名，尚未经过 Apple 公证，因此首次打开时会触发 macOS 的安全提示。</p>
 
                   <p>
-                    macOS 怎样检查要打开的 App、怎样仍要打开，Apple 在
+                    关于 macOS 的安全检查和打开方式，可以参阅 Apple 的说明：
                     <a href="https://support.apple.com/zh-cn/102445">在 Mac 上安全地打开 App</a>
-                    一文里有说明。
+                    。
                   </p>
                 </div>
               </details>
@@ -1283,30 +1283,32 @@
           <li class="install-step reveal">
             <div class="install-copy">
               <span class="step-number">3</span>
-              <h3 class="step-title">授予辅助功能权限</h3>
-              <p>归帆通过辅助功能读取 Dock 的界面信息，用来：</p>
+              <h3 class="step-title">开启辅助功能权限</h3>
+              <p>辅助功能权限让归帆能够读取 Dock 的界面信息，用于：</p>
 
               <ul class="check-list">
-                <li>找到组的 tile（Dock 上的一个图标）在屏幕上的位置，让面板和它的尾巴对准 tile</li>
-                <li>识别鼠标在 tile 上的点击，在抬起的一刻就展开，与系统自带的 Dock 文件夹时机一致</li>
+                <li>确定组图标的位置，让面板准确对齐</li>
+                <li>和 Dock 自带的文件夹一样，在松开鼠标时立即展开面板</li>
               </ul>
 
-              <p>没有这项权限时，每次启动归帆后第一次点击 tile，系统会弹出授权提示。授权的位置是 “系统设置 › 隐私与安全性 › 辅助功能”；macOS 27 里这一页是 “隐私与安全 › 设备控制和数据访问”。</p>
+              <p>尚未授权时，每次启动归帆后首次点击组图标，系统都会提示授权。</p>
+
+              <p>可以在 “系统设置 › 隐私与安全性 › 辅助功能” 中开启；macOS 27 里对应的是 “隐私与安全 › 设备控制和数据访问”。</p>
 
               <div class="step-facts">
                 <div class="step-fact">
-                  <h4>没有这项权限时</h4>
-                  <p>仍然可以使用，区别是：</p>
+                  <h4>不开启也能使用</h4>
+                  <p>只是会有两点区别：</p>
 
                   <ul>
-                    <li>面板以点击时鼠标所在的位置为准摆放，不一定正好对准 tile</li>
-                    <li>要等 Dock 启动 tile 之后面板才会出现，比有权限时稍慢</li>
+                    <li>面板会出现在点击时的鼠标位置附近，可能无法准确对齐组图标</li>
+                    <li>点击后，面板展开会稍慢一些</li>
                   </ul>
                 </div>
 
                 <div class="step-fact">
-                  <h4>换用新版本后</h4>
-                  <p>归帆使用 ad-hoc 签名，换用新版本后，原来的授权可能失效，需要重新授权。</p>
+                  <h4>更新后可能需要重新开启</h4>
+                  <p>归帆使用 ad-hoc 签名，更新后可能需要重新开启这项权限。</p>
                 </div>
               </div>
             </div>
@@ -1365,7 +1367,7 @@
 
           <div class="callout-body">
             <h3>文件与文件夹</h3>
-            <p>访达文件夹如果在 “文稿” “桌面” “下载” 等位置，面板第一次展开它时，系统会先询问是否允许访问。归帆要读取文件夹的内容，才能在面板里展开它。</p>
+            <p>第一次在面板中打开 “文稿” “桌面” “下载” 等位置的文件夹时，macOS 会询问是否允许访问。允许后，归帆才能读取并显示里面的内容。</p>
           </div>
         </aside>
       </div>
@@ -1385,7 +1387,7 @@
             id="get-started-title"
           >创建第一个组。</h2>
 
-          <p class="lead">归帆待在状态栏里，图标是一艘帆船。点击它并选择 “设置…” 打开设置窗口；同一个菜单里还有 “退出归帆”。</p>
+          <p class="lead">点击菜单栏的帆船图标，选择 “设置…” 来管理组。同一菜单里还有 “退出归帆”。</p>
         </header>
 
         <div class="get-started-grid">
@@ -1404,12 +1406,12 @@
               <ol class="number-list">
                 <li>
                   在 “组” 下点击 “新建组”，输入名称后按回车
-                  <span class="list-note">Dock 的 App 区域随即出现这个组的 tile；Dock 会短暂重启来显示它</span>
+                  <span class="list-note">Dock 会短暂重启，然后在左侧的应用区域显示组图标</span>
                 </li>
 
                 <li>选中这个组，点击 “添加…”，选择 “添加 App…” “添加文件…” 或 “添加网页…”</li>
 
-                <li>也可以把 App、文件与访达文件夹拖到设置窗口里的组上，或拖到 Dock 上这个组的 tile 上；网页从浏览器拖到设置窗口里的组上</li>
+                <li>也可以把应用、文件或文件夹拖到设置窗口里的组，或 Dock 上的组图标。网页则从浏览器拖到设置窗口里的组</li>
               </ol>
             </article>
 
@@ -1425,11 +1427,11 @@
               </h3>
 
               <ul class="check-list">
-                <li>点击组的 tile 展开面板，点击其中一项即可打开</li>
-                <li>点击子组或访达文件夹即可进入；返回按钮回到上一层</li>
-                <li>再次点击 tile、点击别处或按 Esc，面板收起</li>
-                <li>在组里拖动一项，调整它的位置</li>
-                <li>把一项拖出面板，停在那里直到浮出 “移除”，松开即从组里删除</li>
+                <li>点击 Dock 上的组图标展开面板，再点击要打开的应用、文件或网页</li>
+                <li>点击子组或文件夹进入，点击返回按钮回到上一级</li>
+                <li>再次点击组图标、点击面板外，或按 Esc，都能收起面板</li>
+                <li>拖动组内的项目来调整顺序</li>
+                <li>要移除某一项，把它拖出面板，等 “移除” 出现后再松手</li>
               </ul>
             </article>
 
@@ -1456,7 +1458,7 @@
 
               <img
                 src="../../assets/img/screenshot-settings-zh-light.png"
-                alt="设置窗口：“组” 下展开了 “常用” 组，下方是 “通用” 区"
+                alt="设置窗口中展开了 “常用” 组，下方是 “通用” 设置"
                 width="732"
                 height="672"
                 loading="lazy"
@@ -1479,9 +1481,9 @@
           <h2
             class="section-title"
             id="build-title"
-          >自己动手构建。</h2>
+          >构建步骤</h2>
 
-          <p class="lead">只需要 Xcode Command Line Tools 与 mise，不需要安装 Xcode。</p>
+          <p class="lead">构建需要 Xcode Command Line Tools 和 mise，不用安装完整的 Xcode。</p>
         </header>
 
         <div class="build-grid">
@@ -1496,7 +1498,7 @@
 
               <div>
                 <h3>Xcode Command Line Tools 26 或更高版本</h3>
-                <p>26 版带有 Swift 6.2 与 macOS 26 SDK；面板在 macOS 26 上用到的 <code>NSGlassEffectView</code> 只在这个 SDK 里才有。</p>
+                <p>26 版包含 Swift 6.2 和 macOS 26 SDK。面板使用了 <code>NSGlassEffectView</code>，构建时需要这个 SDK。</p>
               </div>
             </li>
 
@@ -1510,7 +1512,7 @@
 
               <div>
                 <h3><a href="https://mise.jdx.dev">mise</a></h3>
-                <p>构建命令都是 <code>mise.toml</code> 里的任务。</p>
+                <p>用来运行 <code>mise.toml</code> 中定义的构建命令。</p>
               </div>
             </li>
           </ul>
@@ -1541,8 +1543,8 @@ open build/Flotilla.app</code></pre>
             </div>
 
             <ul class="build-notes">
-              <li>编译时的两条 <code>ld: warning: search path ... not found</code> 可以忽略：它们指向 Command Line Tools 里本来就没有的目录。</li>
-              <li>启动 <code>build/Flotilla.app</code> 之前，先退出已安装的归帆：归帆已在运行时，新启动的那一份会激活已在运行的那一份，然后立即退出。</li>
+              <li>构建时会出现两条 <code>ld: warning: search path ... not found</code> 警告，可以忽略。它们指向的是 Command Line Tools 没有提供的目录。</li>
+              <li>启动 <code>build/Flotilla.app</code> 前，请先退出已安装的归帆。如果已有归帆在运行，再次启动只会激活原来的实例。</li>
             </ul>
 
             <p>

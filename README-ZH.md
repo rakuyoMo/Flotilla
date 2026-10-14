@@ -9,7 +9,7 @@
 
 [English](README.md) | 简体中文
 
-在 macOS 的 Dock 上增加 “组”：把 App、文件、访达文件夹与网页分类收纳进去，点击组即在 Dock 上方以网格展开，与原生 Dock 文件夹一样。
+在 Dock 上给应用分组，文件、文件夹和网页也能放进去。
 
 [![官网](https://img.shields.io/badge/website-flotilla.rakuyo.dev-0089C2)](https://flotilla.rakuyo.dev/zh/)
 [![CI](https://github.com/rakuyoMo/Flotilla/actions/workflows/ci.yml/badge.svg)](https://github.com/rakuyoMo/Flotilla/actions/workflows/ci.yml)
@@ -23,7 +23,7 @@
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/resources/screenshot-panel-zh-dark.jpg">
     <img
-      alt="“常用” 组在 Dock 上方以网格展开，里面是几个 App 与一个访达文件夹，尾巴指向组的 tile"
+      alt="Dock 上方展开了 “常用” 组，应用和文件夹以网格排列，面板底部的箭头指向组图标"
       src="docs/resources/screenshot-panel-zh-light.jpg"
       width="482"
     >
@@ -32,33 +32,45 @@
 
 ## 简介
 
-原生的 Dock 文件夹只能放在 Dock 右侧，而且每一个都是磁盘上的一个文件夹。
+Dock 自带的文件夹只能放在右侧，而且每个都对应磁盘上的一个文件夹。
 
-归帆（Flotilla）把 “组” 放进 Dock 左侧的 App 区域。组由归帆自己保存，不对应磁盘上的文件夹，收纳进去的 App 都留在原处。像 Dock 右侧区域那样，组里也可以放文件、访达文件夹与网页。
+归帆（Flotilla）的组可以放在 Dock 左侧，和应用并排显示。应用、文件、文件夹和网页都能加入同一个组。
 
-点击组，它会在 Dock 上方以网格展开；外观、动效与位置一比一还原原生 Dock 文件夹的网格样式。
+分组不会移动原来的应用和文件，也不需要在磁盘上新建文件夹。
 
-App 名在简体中文下显示为 “归帆”，繁体中文下为 “歸帆”，日文下为 “帰帆”，其它语言下为 “Flotilla”。
+点击组图标，组里的内容会以网格形式展开，外观和动画与 Dock 自带的文件夹一致。
+
+应用名称会随系统语言变化：简体中文显示 “归帆”，繁体中文显示 “歸帆”，日文显示 “帰帆”，其它语言显示 “Flotilla”。
 
 ## 功能
 
-- **与 App 并排的组**：每个顶层的组在 Dock 的 App 区域里都有自己的 tile，名称就是组名
-- **App、文件、访达文件夹与网页**：在一个组里随意混放；文件用默认 App 打开，网页用默认浏览器打开
-- **组可以嵌套**：组里还能放组；在面板里点击子组即可进入，返回按钮回到上一层
-- **与 Dock 文件夹一样的网格**：点击 tile，组在 Dock 上方展开，尾巴指向 tile
-- **访达文件夹像叠放那样展开**：点击访达文件夹，在同一个面板里浏览其中的内容，文件显示内容缩略图，网格末尾是 “在访达中打开”；设置里可以打开显示隐藏文件
-- **实时渲染的组图标**：tile 显示组内前几项的图标，数量可选，最多 4 个；底板跟随系统的浅色、深色外观
-- **拖进来就加入**：把 App、文件与访达文件夹拖到 Dock 上组的 tile 上，或把它们连同网页拖到设置窗口的组上
-- **在面板里直接整理**：拖动调整顺序；把一项拖出面板，停到浮出 “移除” 再松开，即从组里删除，就像把图标拖离 Dock
-- **跟随移动与更新**：App 与文件移动或改名后，组里的这一项自动跟到新位置；App 更新后仍打开装好的那一份
-- **不打扰**：归帆在后台运行，只有一个状态栏图标；展开面板时 Dock 上不出现归帆，也不抢走当前 App 的焦点
-- **五种语言**：英文、简体中文、繁体中文、日文、韩文，跟随系统语言；其它语言显示英文
+- **和应用并排显示**：每个顶层组都有自己的名称和图标，和应用并排显示在 Dock 左侧
+
+- **应用、文件和网页**：应用、文件、文件夹和网页可以放在一起。文件用默认应用打开，网页用默认浏览器打开
+
+- **组里还能分组**：点击子组进入下一层，点击返回按钮回到上一层
+
+- **原生风格的面板**：组会在 Dock 上方以网格展开，面板与组图标对齐
+
+- **直接浏览文件夹**：文件夹可以直接在当前面板里展开，并显示文件缩略图。网格末尾有 “在访达中打开”，设置里也可以开启 “显示隐藏文件”
+
+- **预览组内图标**：组图标会显示前几项的图标，最多 4 个，数量可在设置中调整。底板随系统切换浅色和深色外观
+
+- **拖放添加**：把应用、文件或文件夹拖到 Dock 上的组图标，或拖到设置窗口里的组。网页也可以拖到设置窗口里添加
+
+- **拖动排序和移除**：在面板里拖动项目可以排序。要移除某一项，把它拖出面板，等 “移除” 提示出现后松手
+
+- **移动或改名后仍能打开**：移动或改名后，应用和文件仍能从组里打开。应用更新后也会打开已安装的新版本
+
+- **在后台运行**：归帆在菜单栏运行。展开面板时不会抢走当前应用的焦点，也不会在 Dock 上多出归帆的图标
+
+- **支持五种语言**：英文、简体中文、繁体中文、日文和韩文，自动跟随系统语言。其它语言环境下显示英文
 
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/resources/screenshot-stack-zh-dark.jpg">
     <img
-      alt="访达文件夹 “壁纸” 在面板里展开，显示其中图片的缩略图，末尾是 “在访达中打开”"
+      alt="面板中打开了 “壁纸” 文件夹，显示图片缩略图，末尾有 “在访达中打开”"
       src="docs/resources/screenshot-stack-zh-light.jpg"
       width="738"
     >
@@ -67,70 +79,68 @@ App 名在简体中文下显示为 “归帆”，繁体中文下为 “歸帆�
 
 ## 安装
 
-归帆需要 macOS 15 或更高版本，以及搭载 Apple 芯片的 Mac。
+归帆支持搭载 Apple 芯片、运行 macOS 15 或更高版本的 Mac。
 
 1. 在 [官网](https://flotilla.rakuyo.dev/zh/download/) 或 [Releases](https://github.com/rakuyoMo/Flotilla/releases) 页面下载最新版本的 `Flotilla-X.Y.Z.zip`
 2. 双击解压，把 `Flotilla.app` 拖到 “应用程序” 文件夹
-   - 访达按系统语言显示它的名称，简体中文下为 “归帆”
+   - 访达会按系统语言显示应用名称，简体中文下显示为 “归帆”
 3. 打开归帆
 
 ### 第一次打开
 
-归帆没有经过 Apple 公证。第一次打开时，系统会提示 Apple 无法验证它是否包含恶意软件，并拒绝打开。
+归帆尚未经过 Apple 公证，所以第一次打开时，macOS 会拦截它，并提示无法验证它是否包含恶意软件。
 
-点击 “完成” 关闭提示，然后按以下步骤放行：
+点击 “完成” 关闭提示，再按下面的步骤允许打开：
 
 1. 打开 “系统设置 › 隐私与安全性”
    - macOS 27 里这一页是 “隐私与安全”
-2. 向下滚动到 “安全性”，在提示这个 App 已被阻止的那一行点击 “仍要打开”
+2. 向下滚动到 “安全性”，找到归帆被阻止的提示，点击 “仍要打开”
    - 这个按钮只在尝试打开归帆之后的一小时内出现
 3. 按提示输入登录密码确认
 
-之后归帆就能像其它 App 一样正常打开。
+之后就能正常打开归帆。
 
-也可以在终端里移除它的隔离属性，之后直接打开：
+如果习惯用终端，也可以运行下面的命令，移除隔离属性后再打开归帆：
 
 ```bash
 xattr -d com.apple.quarantine /Applications/Flotilla.app
 ```
 
-## 需要的权限
+## 权限说明
 
 ### 辅助功能
 
-归帆通过辅助功能读取 Dock 的界面信息，用来：
+辅助功能权限让归帆能够读取 Dock 的界面信息，用于：
 
-- 找到组的 tile（Dock 上的一个图标）在屏幕上的位置，让面板和它的尾巴对准 tile
-- 识别鼠标在 tile 上的点击，在抬起的一刻就展开，与系统自带的 Dock 文件夹时机一致
+- 确定组图标的位置，让面板准确对齐
+- 和 Dock 自带的文件夹一样，在松开鼠标时立即展开面板
 
-没有这项权限时仍然可以使用，区别是：
+不开启这项权限也能使用，但会有两点区别：
 
-- 面板以点击时鼠标所在的位置为准摆放，不一定正好对准 tile
-- 要等 Dock 启动 tile 之后面板才会出现，比有权限时稍慢
+- 面板会出现在点击时的鼠标位置附近，可能无法准确对齐组图标
+- 点击后，面板展开会稍慢一些
 
-授权：
+开启方式：
 
-- 没有这项权限时，每次启动归帆后第一次点击 tile，系统会弹出授权提示
-- 授权的位置是 “系统设置 › 隐私与安全性 › 辅助功能”
+- 尚未授权时，每次启动归帆后首次点击组图标，系统都会提示授权
+- 在 “系统设置 › 隐私与安全性 › 辅助功能” 中为归帆开启权限
   - macOS 27 里这一页是 “隐私与安全 › 设备控制和数据访问”
 
-归帆使用 ad-hoc 签名，换用新版本后，原来的授权可能失效，需要重新授权。
+归帆使用 ad-hoc 签名，更新后可能需要重新开启这项权限。
 
 ### 文件与文件夹
 
-访达文件夹如果在 “文稿” “桌面” “下载” 等位置，面板第一次展开它时，系统会先询问是否允许访问。
-
-归帆要读取文件夹的内容，才能在面板里展开它。
+第一次在面板中打开 “文稿” “桌面” “下载” 等位置的文件夹时，macOS 会询问是否允许访问。允许后，归帆才能读取并显示里面的内容。
 
 ## 快速上手
 
-归帆待在状态栏里，图标是一艘帆船。点击它并选择 “设置…” 打开设置窗口；同一个菜单里还有 “退出归帆”。
+点击菜单栏的帆船图标，选择 “设置…” 来管理组。同一菜单里还有 “退出归帆”。
 
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/resources/screenshot-settings-zh-dark.png">
     <img
-      alt="设置窗口：“组” 下展开了 “常用” 组，下方是 “通用” 区"
+      alt="设置窗口中展开了 “常用” 组，下方是 “通用” 设置"
       src="docs/resources/screenshot-settings-zh-light.png"
       width="732"
     >
@@ -140,67 +150,69 @@ xattr -d com.apple.quarantine /Applications/Flotilla.app
 ### 新建组
 
 1. 在 “组” 下点击 “新建组”，输入名称后按回车
-   - Dock 的 App 区域随即出现这个组的 tile；Dock 会短暂重启来显示它
-   - 要在某个组里新建子组，先选中那个组；子组出现在上一级的面板里，不单独占一个 tile
-2. 选中这个组，点击 “添加…”，选择要添加的内容：
-   - “添加 App…”：选择 App
-   - “添加文件…”：选择文件与访达文件夹
-   - “添加网页…”：输入网址与可选的标题；标题留空时，归帆自动获取网页的标题
-3. 也可以拖进来：
-   - 从访达拖 App、文件与访达文件夹，或从浏览器拖网页，放到设置窗口里的组上
-   - 把 App、文件与访达文件夹拖到 Dock 上这个组的 tile 上；网页只能在设置窗口里添加
+   - Dock 会短暂重启，然后在左侧的应用区域显示组图标
+   - 想在某个组里继续分组，先选中它再新建。子组会显示在上一级的面板里，不会单独占用 Dock 图标
+
+2. 选中组，点击 “添加…”，选择要放进去的内容：
+   - “添加 App…”：选择应用
+   - “添加文件…”：选择文件或文件夹
+   - “添加网页…”：输入网址，也可以填写标题。留空时，归帆会自动获取网页标题
+
+3. 也可以直接拖入内容：
+   - 把访达里的应用、文件或文件夹，或者浏览器里的网页，拖到设置窗口中的组上
+   - 应用、文件和文件夹也能直接拖到 Dock 上的组图标。网页需要在设置窗口里添加
 
 ### 使用面板
 
-- 点击组的 tile 展开面板，点击其中一项即可打开
-- 点击子组或访达文件夹即可进入；返回按钮回到上一层
-- 再次点击 tile、点击别处或按 Esc，面板收起
-- 在组里拖动一项，调整它的位置
-- 把一项拖出面板，停在那里直到浮出 “移除”，松开即从组里删除
-  - 变的只是组，App 或文件本身不动
-  - “移除” 浮出之前松开，这一项落回原位
+- 点击 Dock 上的组图标展开面板，再点击要打开的应用、文件或网页
+- 点击子组或文件夹进入，点击返回按钮回到上一级
+- 再次点击组图标、点击面板外，或按 Esc，都能收起面板
+- 拖动组内的项目来调整顺序
+- 要移除某一项，把它拖出面板，等 “移除” 出现后再松手
+  - 这只会把它从组里移除，应用或文件本身仍留在原处
+  - 如果提前松手，它会回到原位
 
 ### 管理组
 
 在设置窗口里：
 
 - 双击组即可重命名
-- 拖动行来调整顺序，或移进其它组
-- 右键点按或按住 Control 点按一行，弹出更多操作：
+- 拖动列表中的项目可以调整顺序，也可以把它移到其它组里
+- 右键点击一项，或按住 Control 点击，可以看到更多操作：
   - 组：“添加到 Dock” “删除”
-  - App、文件或访达文件夹：“在访达中显示” “删除”
+  - 应用、文件或文件夹：“在访达中显示” “删除”
   - 网页：“在默认浏览器中打开” “编辑…” “删除”
-- “删除” 会把组连同其中的内容一起删除，不弹确认
-- 访达文件夹在名称后标出所在位置，网页在名称后标出网址
+- 删除组时，组和里面的条目会一起删除，不会再次询问；原来的应用和文件不受影响
+- 文件夹名称后会显示所在位置，网页名称后会显示网址
 
-要去掉组的 tile，像其它 App 那样把它拖出 Dock 即可。归帆不会自己把它加回去：这个组标出 “不在 Dock 上”，在它的右键菜单里点 “添加到 Dock” 即可加回。
+想从 Dock 移除组图标，直接把它拖出去即可。组会保留在设置窗口里，并标记为 “不在 Dock 上”，不会自动加回。需要时，右键点击这个组，选择 “添加到 Dock” 就能恢复图标。
 
 ### 设置
 
-“通用” 下：
+在 “通用” 中可以调整：
 
-- “组图标内显示的图标数量”：tile 显示几项的图标，0–4；为 0 时 tile 只显示组图标本身
-- “访达文件夹：显示隐藏文件”：访达文件夹在面板里展开时显示隐藏文件
-- “辅助功能权限”：是否已授权，旁边有 “打开系统设置” 按钮；见 [辅助功能](#辅助功能)
+- “组图标内显示的图标数量”：选择预览多少项内容，范围为 0–4。设为 0 时只显示组图标
+- “访达文件夹：显示隐藏文件”：浏览文件夹时，一并显示隐藏文件
+- “辅助功能权限”：查看授权状态，点击 “打开系统设置” 可以前往授权。详见 [辅助功能](#辅助功能)
 
 ## 工作原理
 
 ### Dock tile
 
-Dock 只能放 App 与文件，所以归帆为每个顶层的组生成一个占位 App，放进 Dock；它的图标就是组图标。
+Dock 上的每个图标对应一个 tile。为了让组能出现在应用区域，归帆会为每个顶层组生成一个占位 App，再把它加入 Dock，使用组的名称和图标。
 
-点击 tile 时 Dock 启动占位 App。它不把任何 App 带到前台，打开一个 `flotilla://` URL 后随即退出，归帆据此展开或收起面板。归帆没有运行时，系统会先启动它。
+点击图标后，Dock 会启动这个占位 App。它通过 `flotilla://` URL 通知归帆展开或收起面板，然后退出，整个过程不会把其它应用带到前台。如果归帆还没运行，系统会先启动它。
 
-拖到 tile 上的项也经同样的途径交给归帆。
+拖到组图标上的内容也由占位 App 转交给归帆。
 
 ### Dock 偏好
 
-归帆通过修改 Dock 偏好（`com.apple.dock`）把 tile 加到 Dock 上：
+归帆通过修改 Dock 偏好（`com.apple.dock`）来管理组图标：
 
-- 只增删改归帆自己的 tile，位于 `persistent-apps`，即 Dock 左侧的 App 区域；其它 tile 与 Dock 的其它设置都不动
-- 每次改动后结束 Dock 进程，由系统自动重新启动 Dock，改动随之生效
-  - 更新 tile 的图标也是这样的改动，所以组的预览变化、系统切换浅色与深色外观时，Dock 都会重启
-- 每次运行中第一次改动之前，先把整个 `com.apple.dock` 偏好导出备份
+- 只修改归帆自己的 tile，它们位于 `persistent-apps`，也就是 Dock 左侧的应用区域。其它图标和 Dock 设置不受影响
+- 修改后会结束 Dock 进程，macOS 随即自动重启 Dock，让改动生效
+  - 图标更新也需要重启 Dock，包括组内预览变化，以及系统切换浅色或深色外观时
+- 每次启动归帆后，首次修改 Dock 偏好之前，都会先导出完整的 `com.apple.dock` 备份
   - 位置：`~/Library/Application Support/Flotilla/Backups/com.apple.dock-<yyyyMMdd-HHmmss>.plist`
   - 最多保留最新的 5 份
 
@@ -209,27 +221,26 @@ Dock 只能放 App 与文件，所以归帆为每个顶层的组生成一个占�
 数据保存在 `~/Library/Application Support/Flotilla`：
 
 - `folders.json`：组的数据
-- `DockTiles/`：代表每个根组放进 Dock 的占位 App
+- `DockTiles/`：各个顶层组对应的占位 App
 - `Backups/`：Dock 偏好的备份
 
 设置保存在偏好设置域 `com.rakuyo.flotilla`。
 
 ### 联网
 
-归帆只在 “添加网页…” 与 “编辑…” 的提示框里获取网页标题时联网。
+归帆只在获取网页标题时联网，用于添加或编辑网页。
 
 ## 从源码构建
 
-只需要 Xcode Command Line Tools 与 [mise](https://mise.jdx.dev)，不需要安装 Xcode。
+构建需要 Xcode Command Line Tools 和 [mise](https://mise.jdx.dev)，不用安装完整的 Xcode。
 
-Command Line Tools 需要 26 或更高版本，即 Swift 6.2 与 macOS 26 SDK：`Package.swift` 声明的是 `swift-tools-version: 6.1`，但面板在 macOS 26 上用到的 `NSGlassEffectView` 只在 macOS 26 SDK 里才有。
+Command Line Tools 需要 26 或更高版本，包含 Swift 6.2 和 macOS 26 SDK。虽然 `Package.swift` 声明的工具版本是 6.1，但面板在 macOS 26 上使用了 `NSGlassEffectView`，构建时需要 macOS 26 SDK。
 
-受 Command Line Tools 的限制，工程这样组织：
+项目使用 Swift Package Manager 管理。为了能只用 Command Line Tools 开发：
 
-- 由 Swift Package Manager 管理
-- 界面全部用 AppKit 代码构建：没有 SwiftUI 宏的实现插件
-- 测试用 Swift Testing：没有 XCTest
-- 不用 asset catalog、storyboard 与 xib：没有 `actool` 与 `ibtool`
+- 界面用 AppKit 代码编写，因为工具链没有附带 SwiftUI 宏插件
+- 测试使用 Swift Testing，因为工具链没有附带 XCTest
+- 不使用 asset catalog、storyboard 和 xib，因为工具链没有 `actool` 和 `ibtool`
 
 详见 [AGENTS.md](AGENTS.md) 的 “Command Line Tools 的限制”。
 
@@ -244,7 +255,7 @@ mise run bundle
 open build/Flotilla.app
 ```
 
-编译时的两条 `ld: warning: search path ... not found` 可以忽略：它们指向 Command Line Tools 里本来就没有的目录。
+构建时会出现两条 `ld: warning: search path ... not found` 警告，可以忽略。它们指向的是 Command Line Tools 没有提供的目录。
 
 ## 开发
 
@@ -254,8 +265,8 @@ open build/Flotilla.app
 swift test
 ```
 
-- 偶尔报 `plugin for module 'TestingMacros' not found` 而编译失败时，重跑即可；刚跑过 `mise run swift:format` 之后更容易出现
-- 在 git worktree 里每次都会报，要显式给出插件目录：
+- 偶尔会因 `plugin for module 'TestingMacros' not found` 编译失败，重新运行即可。刚运行过 `mise run swift:format` 时更容易遇到
+- 在 git worktree 中运行时，需要显式指定插件目录：
 
   ```bash
   swift test -Xswiftc -plugin-path -Xswiftc /Library/Developer/CommandLineTools/usr/lib/swift/host/plugins/testing
@@ -275,7 +286,7 @@ mise run swift:lint
 
 ### 日志
 
-zsh 里的 `log` 是内建命令，查看系统日志要写全路径 `/usr/bin/log`：
+zsh 自带一个 `log` 命令。要查看系统日志，请使用完整路径 `/usr/bin/log`：
 
 ```bash
 /usr/bin/log show --last 5m --predicate 'subsystem == "com.rakuyo.flotilla"'
@@ -283,14 +294,14 @@ zsh 里的 `log` 是内建命令，查看系统日志要写全路径 `/usr/bin/l
 
 ### 开发时的辅助功能权限
 
-- 打包产物是 ad-hoc 签名，重新打包后原来的辅助功能授权可能失效，需要重新授权
-- 两种启动方式的权限判定不同，可以分别用来验证有权限、无权限两条路径：
-  - 从终端直接运行 `build/Flotilla.app/Contents/MacOS/Flotilla` 时，进程沿用终端的辅助功能授权
-  - 用 `open build/Flotilla.app` 启动时，按归帆自己的授权判定
+- 本地打包使用 ad-hoc 签名，重新打包后可能需要再次授予辅助功能权限
+- 可以用下面两种启动方式，分别测试有权限和无权限时的行为：
+  - 在终端直接运行 `build/Flotilla.app/Contents/MacOS/Flotilla`，会使用终端的辅助功能权限
+  - 用 `open build/Flotilla.app` 启动，会使用归帆自己的权限
 
 ### 单实例
 
-同一 bundle id 的归帆已在运行时，新启动的那一份会激活已在运行的那一份，然后立即退出。
+同一 bundle ID 的归帆只能同时运行一份。如果已有实例在运行，再次启动只会激活原来的实例，新进程会随即退出。
 
 启动 `build/Flotilla.app` 之前，先退出已安装的归帆。
 
@@ -304,7 +315,7 @@ defaults export com.apple.dock <文件>
 
 ### 官网
 
-[官网](https://flotilla.rakuyo.dev/zh/) 由 `website/` 组装而成，部署在 GitHub Pages 上，详见 [AGENTS.md](AGENTS.md) 的 “官网”。
+[官网](https://flotilla.rakuyo.dev/zh/) 的源码在 `website/`，构建后部署到 GitHub Pages。详细说明见 [AGENTS.md](AGENTS.md) 的 “官网” 一节。
 
 ```bash
 # 组装官网到 build/site/
@@ -314,13 +325,13 @@ mise run site:build
 mise run site:preview
 ```
 
-组装时用 `gh` 取 Release 数据，要先用 `gh auth login` 登录。
+构建官网时会用 `gh` 获取版本信息，请先运行 `gh auth login` 登录。
 
 ## 参与贡献
 
-- 提交 PR 之前，确认 `mise run swift:lint` 与 `swift test` 都通过；CI 也会运行它们，并编译与打包
-- 分支命名、commit message 等协作规范见 [AGENTS.md](AGENTS.md)
-- 各功能的行为由 [docs/requirements](docs/requirements) 里的需求文档规定
+- 提交 PR 前，请运行 `mise run swift:lint` 和 `swift test`，确认都能通过。CI 也会运行这两项检查，并编译、打包应用
+- 分支命名和提交信息等约定见 [AGENTS.md](AGENTS.md)
+- 各项功能的具体要求见 [docs/requirements](docs/requirements)
 
 ## 许可证
 

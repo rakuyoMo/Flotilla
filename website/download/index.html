@@ -43,7 +43,7 @@
 
   <meta
     name="description"
-    content="Download Flotilla for macOS 15 or later on Apple silicon, then install it, open it for the first time, and grant the Accessibility permission."
+    content="Download Flotilla to group apps in your Dock. For Macs with Apple silicon and macOS 15 or later, with help for installation, first launch, and permissions."
   >
 
   <meta
@@ -103,7 +103,7 @@
 
   <meta
     property="og:description"
-    content="Download Flotilla for macOS 15 or later on Apple silicon, then install it, open it for the first time, and grant the Accessibility permission."
+    content="Download Flotilla to group apps in your Dock. For Macs with Apple silicon and macOS 15 or later, with help for installation, first launch, and permissions."
   >
 
   <meta
@@ -1000,7 +1000,7 @@
               data-when="none"
             >
               <h2 class="download-card-title">Not released yet</h2>
-              <p>Flotilla hasn’t published a release yet. Build it from source, or watch the repository on GitHub to be notified when the first version is out.</p>
+              <p>There are no releases yet. You can build Flotilla from source or subscribe to release notifications on GitHub.</p>
             </div>
 
             <div
@@ -1060,7 +1060,7 @@
                   class="icon"
                   aria-hidden="true"
                 ><use href="#i-eye"/></svg>
-                Watch on GitHub
+                Get release notifications
               </a>
             </div>
           </div>
@@ -1070,7 +1070,7 @@
             data-when="latest"
           >
             <a href="#install">
-              Next, install Flotilla in three steps
+              Next, follow the installation steps below
               <svg
                 class="icon"
                 aria-hidden="true"
@@ -1088,10 +1088,10 @@
                 class="icon"
                 aria-hidden="true"
               ><use href="#i-github"/></svg>
-              All versions on GitHub
+              View all versions
             </a>
 
-            <p data-when="none">On GitHub, choose <strong>Watch › Custom › Releases</strong> to be notified of new versions.</p>
+            <p data-when="none">To hear about new versions, choose <strong>Watch › Custom › Releases</strong> on GitHub.</p>
           </div>
         </div>
       </div>
@@ -1109,7 +1109,7 @@
           <h2
             class="section-title"
             id="install-title"
-          >Install Flotilla in three steps.</h2>
+          >Install Flotilla and get it set up.</h2>
         </header>
 
         <ol class="install-steps">
@@ -1119,9 +1119,9 @@
           >
             <div class="install-copy">
               <span class="step-number">1</span>
-              <h3 class="step-title">Unzip it and drag it into Applications</h3>
+              <h3 class="step-title">Unzip and move to Applications</h3>
               <p>Double-click the downloaded <code>Flotilla-X.Y.Z.zip</code> to unzip it, then drag <code>Flotilla.app</code> into the Applications folder.</p>
-              <p class="step-note">Finder shows it under its name for the system language, such as 归帆 in Simplified Chinese.</p>
+              <p class="step-note">Finder uses the app’s name in your system language, such as 归帆 in Simplified Chinese.</p>
             </div>
 
             <div
@@ -1200,25 +1200,25 @@
             <div class="install-copy">
               <span class="step-number">2</span>
               <h3 class="step-title">Open it for the first time</h3>
-              <p>Flotilla is not notarized by Apple. The first time you open it, macOS says that Apple cannot verify it is free of malware, and refuses to open it.</p>
+              <p>Flotilla hasn’t been notarized by Apple, so macOS blocks it the first time you try to open it. The alert says Apple cannot verify that it is free of malware.</p>
 
-              <p>Click <strong>Done</strong> to close the alert, then allow the app to open:</p>
+              <p>Click <strong>Done</strong> to dismiss the alert, then follow these steps to open Flotilla:</p>
 
               <ol class="number-list">
                 <li>Open <strong>System Settings › Privacy &amp; Security</strong></li>
 
                 <li>
-                  Scroll down to <strong>Security</strong>, and click <strong>Open Anyway</strong> on the line saying the app was blocked
+                  Scroll down to <strong>Security</strong>, find the message about Flotilla being blocked, and click <strong>Open Anyway</strong>
                   <span class="list-note">This button only appears for an hour after you try to open Flotilla</span>
                 </li>
 
                 <li>Confirm with your login password when prompted</li>
               </ol>
 
-              <p>After that, Flotilla opens like any other app.</p>
+              <p>You can now open Flotilla normally.</p>
 
               <div class="step-alternative">
-                <p>Alternatively, remove the quarantine attribute in Terminal, then open it directly:</p>
+                <p>If you prefer Terminal, run this command to remove the quarantine attribute, then open Flotilla:</p>
 
                 <div class="code-block">
                   <pre><code>xattr -d com.apple.quarantine /Applications/Flotilla.app</code></pre>
@@ -1248,10 +1248,10 @@
                 </summary>
 
                 <div class="faq-answer">
-                  <p>Flotilla is ad-hoc signed and not notarized by Apple, so Apple cannot verify that it is free of malware, and macOS refuses to open it the first time.</p>
+                  <p>Flotilla uses ad-hoc signing and hasn’t been notarized by Apple. This triggers a macOS security alert on first launch.</p>
 
                   <p>
-                    Apple explains how macOS checks the apps you open, and how to open one anyway, in
+                    For more about these checks and how to allow an app to open, see Apple’s guide,
                     <a href="https://support.apple.com/102445">Safely open apps on your Mac</a>.
                   </p>
                 </div>
@@ -1302,30 +1302,32 @@
           <li class="install-step reveal">
             <div class="install-copy">
               <span class="step-number">3</span>
-              <h3 class="step-title">Grant the Accessibility permission</h3>
-              <p>Flotilla uses Accessibility to read the Dock’s interface, in order to:</p>
+              <h3 class="step-title">Enable Accessibility access</h3>
+              <p>Accessibility access lets Flotilla read the Dock’s interface so it can:</p>
 
               <ul class="check-list">
-                <li>Find where a group’s tile (its icon in the Dock) is on screen, so the panel and its tail line up with the tile</li>
-                <li>Detect clicks on a tile and expand on mouse-up, with the same timing as the Dock’s built-in folders</li>
+                <li>Locate the group icon so the panel can line up with it</li>
+                <li>Open the panel as soon as you release the mouse button, just like a Dock folder</li>
               </ul>
 
-              <p>Without the permission, macOS prompts for it the first time a tile is clicked after each launch of Flotilla. It is granted in <strong>System Settings › Privacy &amp; Security › Accessibility</strong>; on macOS 27, this page is <strong>Privacy &amp; Security › Device Control and Data Access</strong>.</p>
+              <p>If access hasn’t been granted, macOS prompts you the first time you click a group icon after each launch of Flotilla.</p>
+
+              <p>You can enable it in <strong>System Settings › Privacy &amp; Security › Accessibility</strong>. On macOS 27, go to <strong>Privacy &amp; Security › Device Control and Data Access</strong>.</p>
 
               <div class="step-facts">
                 <div class="step-fact">
-                  <h4>Without the permission</h4>
-                  <p>Flotilla still works, except that:</p>
+                  <h4>It works without this too</h4>
+                  <p>There are just two differences:</p>
 
                   <ul>
-                    <li>The panel is placed at the mouse location of the click, and may not line up exactly with the tile</li>
-                    <li>The panel appears only after the Dock launches the tile, slightly later than with the permission</li>
+                    <li>The panel appears near the pointer and may not line up exactly with the group icon</li>
+                    <li>The panel takes a little longer to open after a click</li>
                   </ul>
                 </div>
 
                 <div class="step-fact">
-                  <h4>After updating</h4>
-                  <p>Flotilla is ad-hoc signed. After switching to a new version, the previous grant may stop working, and the permission needs to be granted again.</p>
+                  <h4>You may need to enable it again</h4>
+                  <p>Because Flotilla uses ad-hoc signing, you may need to enable this permission again after an update.</p>
                 </div>
               </div>
             </div>
@@ -1384,7 +1386,7 @@
 
           <div class="callout-body">
             <h3>Files and folders</h3>
-            <p>The first time the panel expands a Finder folder in Documents, Desktop, Downloads, or a similar location, macOS asks whether to allow access. Flotilla needs to read a folder’s contents to expand it in the panel.</p>
+            <p>The first time you open a folder in Documents, Desktop, Downloads, or another protected location through Flotilla, macOS asks for access. Flotilla needs your permission to read and display the folder’s contents.</p>
           </div>
         </aside>
       </div>
@@ -1404,7 +1406,7 @@
             id="get-started-title"
           >Create your first group.</h2>
 
-          <p class="lead">Flotilla lives in the menu bar as a sailing ship icon. Click it and choose <strong>Settings…</strong> to open the settings window; <strong>Quit Flotilla</strong> is in the same menu.</p>
+          <p class="lead">Click the sailing ship in the menu bar and choose <strong>Settings…</strong> to manage your groups. <strong>Quit Flotilla</strong> is in the same menu.</p>
         </header>
 
         <div class="get-started-grid">
@@ -1423,12 +1425,12 @@
               <ol class="number-list">
                 <li>
                   Under <strong>Groups</strong>, click <strong>New Group</strong>, type a name, and press Return
-                  <span class="list-note">A tile for the group appears in the app section of the Dock; the Dock restarts briefly to show it</span>
+                  <span class="list-note">The Dock briefly restarts, then shows the group icon in the app section on the left</span>
                 </li>
 
                 <li>Select the group, click <strong>Add…</strong>, and choose <strong>Add Apps…</strong>, <strong>Add Files…</strong>, or <strong>Add Web Page…</strong></li>
 
-                <li>Or drag apps, files, and Finder folders onto the group in the settings window or onto its tile in the Dock; drag a web page from your browser onto the group in the settings window</li>
+                <li>You can also drop apps, files, or folders onto a group in the settings window or its Dock icon. For web pages, drag them from your browser into a group in the settings window</li>
               </ol>
             </article>
 
@@ -1444,11 +1446,11 @@
               </h3>
 
               <ul class="check-list">
-                <li>Click a group’s tile to open the panel, and click an item to open it</li>
-                <li>Click a sub-group or a Finder folder to step into it; the back button takes you up one level</li>
-                <li>Click the tile again, click anywhere else, or press Esc to close the panel</li>
-                <li>Drag an item within a group to reorder it</li>
-                <li>Drag an item out of the panel and hold it there until <strong>Remove</strong> appears, then let go to take it out of the group</li>
+                <li>Click a group icon in the Dock, then select the app, file, or web page you want to open</li>
+                <li>Click a subgroup or folder to open it. Use the back button to go up one level</li>
+                <li>Click the group icon again, click outside the panel, or press Esc to close it</li>
+                <li>Drag items within a group to change their order</li>
+                <li>To remove an item, drag it out of the panel, wait for <strong>Remove</strong> to appear, and let go</li>
               </ul>
             </article>
 
@@ -1475,7 +1477,7 @@
 
               <img
                 src="../assets/img/screenshot-settings-en-light.png"
-                alt="The settings window, with the Essentials group expanded under Groups and the General section below"
+                alt="The settings window with the Essentials group expanded and General settings below"
                 width="732"
                 height="672"
                 loading="lazy"
@@ -1498,9 +1500,9 @@
           <h2
             class="section-title"
             id="build-title"
-          >Build it yourself.</h2>
+          >Build instructions</h2>
 
-          <p class="lead">Only the Xcode Command Line Tools and mise are needed; Xcode is not required.</p>
+          <p class="lead">Building Flotilla requires the Xcode Command Line Tools and mise. You don’t need the full Xcode app.</p>
         </header>
 
         <div class="build-grid">
@@ -1515,7 +1517,7 @@
 
               <div>
                 <h3>Xcode Command Line Tools 26 or later</h3>
-                <p>Version 26 ships with Swift 6.2 and the macOS 26 SDK; <code>NSGlassEffectView</code>, which the panel uses on macOS 26, is only available in that SDK.</p>
+                <p>Version 26 includes Swift 6.2 and the macOS 26 SDK. The panel uses <code>NSGlassEffectView</code>, so this SDK is needed to build it.</p>
               </div>
             </li>
 
@@ -1529,7 +1531,7 @@
 
               <div>
                 <h3><a href="https://mise.jdx.dev">mise</a></h3>
-                <p>The build commands are tasks in <code>mise.toml</code>.</p>
+                <p>Runs the build commands defined in <code>mise.toml</code>.</p>
               </div>
             </li>
           </ul>
@@ -1560,8 +1562,8 @@ open build/Flotilla.app</code></pre>
             </div>
 
             <ul class="build-notes">
-              <li>The two <code>ld: warning: search path ... not found</code> warnings during the build can be ignored: they point to directories that the Command Line Tools don’t include.</li>
-              <li>Quit any installed Flotilla before launching <code>build/Flotilla.app</code>: when an instance is already running, a newly launched copy activates it and quits immediately.</li>
+              <li>You can ignore the two <code>ld: warning: search path ... not found</code> warnings during the build. They refer to directories that aren’t included in the Command Line Tools.</li>
+              <li>Quit the installed copy of Flotilla before launching <code>build/Flotilla.app</code>. If a copy is already running, launching another only activates the existing one.</li>
             </ul>
 
             <p>
@@ -1607,7 +1609,7 @@ open build/Flotilla.app</code></pre>
           <span>Flotilla</span>
         </a>
 
-        <p>Group therapy for your Dock.</p>
+        <p>Keep your Dock organized.</p>
       </div>
 
       <nav
