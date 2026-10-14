@@ -8,13 +8,15 @@
 "mainMenu.paste" = "붙이기";
 "mainMenu.selectAll" = "전체 선택";
 
-/* 状态栏菜单 */
-"statusBar.settings" = "설정…";
-
 /* 状态栏图标的无障碍描述：旁白读出的 App 名 */
 "statusBar.iconDescription" = "Flotilla";
 
+/* 关于面板 */
+"about.menuTitle" = "Flotilla 정보";
+"about.website" = "공식 웹사이트";
+
 /* 设置窗口 */
+"settings.menuTitle" = "설정…";
 "settings.windowTitle" = "설정";
 
 /* 设置窗口的组区 */
