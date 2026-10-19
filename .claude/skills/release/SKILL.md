@@ -5,6 +5,7 @@ when_to_use: 用户要发布新版本时，例如 “发布 1.2.0” “发个 1
 argument-hint: "[X.Y.Z]"
 allowed-tools:
   - Bash(./Scripts/check-release-notes.sh *)
+  - Bash(git fetch origin)
   - Bash(git describe *)
   - Bash(git log *)
   - Bash(mise run release *)
