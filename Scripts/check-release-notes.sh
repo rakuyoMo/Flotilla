@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # 检查某个版本的更新说明是否齐全：docs/release-notes/<X.Y.Z>/ 下每种语言一份 .md，都存在且有内容
-# 发版脚本、更新清单脚本、CI 与发布 workflow 都调用这一份检查
+# 发版脚本、更新清单脚本，以及 “更新说明” 与 “发布” 两个 workflow 都调用这一份检查
 # 用法：./Scripts/check-release-notes.sh X.Y.Z
 
 set -euo pipefail

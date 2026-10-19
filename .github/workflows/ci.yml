@@ -1,4 +1,4 @@
-# 向 main 提 PR 与推送到 main 时，检查代码规范、编译、测试并打包；release PR 另外检查这一版的更新说明
+# 向 main 提 PR 与推送到 main 时，检查代码规范、编译、测试并打包
 
 name: CI
 
@@ -27,18 +27,16 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v7
 
-      # release PR 合并后就要发布，与 release.yml 一样按标题前缀识别；版本号取 Info.plist 里将要发布的展示版本
-      - name: 检查更新说明
-        if: startsWith(github.event.pull_request.title, 'release:')
-        run: |
-          version="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' Sources/Flotilla/Info.plist)"
-          ./Scripts/check-release-notes.sh "$version"
-
       - name: 安装 mise
         uses: jdx/mise-action@v4
 
       - name: 检查代码规范
         run: mise run swift:lint
+
+      # 更新清单脚本只在发版时运行，CI 的 Swift 编译器又比本机旧
+      # 在 PR 上先用 CI 的工具链做类型检查，编译问题不必等到发版才暴露
+      - name: 检查更新清单脚本
+        run: swiftc -typecheck Scripts/embed-release-notes.swift
 
       - name: 编译
         run: mise run build
