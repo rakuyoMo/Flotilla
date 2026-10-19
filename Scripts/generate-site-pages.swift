@@ -296,6 +296,8 @@ func languageOption(_ language: Language, href: String, isCurrent: Bool) -> Stri
 /// - 默认语言，即语言清单的第一项
 ///
 /// 首选语言不往列表后面找：繁体环境下 Chrome 的列表常是 `zh-TW, zh, en-US, en`，往后找会被 `zh` 带到简体中文页
+///
+/// 读取 `localStorage` 抛错时不跳转：这时记不住语言菜单里的选择，留在本页，菜单才能切换语言
 func headScript(languages: [Language], prefix: String, pagePath: String) -> String {
     // 每种语言的代码与本页在这种语言下的相对地址，按语言清单的顺序写成脚本里的数组
     let pages = languages
@@ -316,15 +318,17 @@ func headScript(languages: [Language], prefix: String, pagePath: String) -> Stri
               \(indented(pages, by: "      "))
             ];
 
-            // 在语言菜单里选过的语言；值不在清单里或读取失败时，当作没选过
-            const saved = (() => {
-              try {
-                const code = localStorage.getItem("flotilla.language");
-                return pages.find((page) => page.code === code);
-              } catch {
-                return undefined;
-              }
-            })();
+            // 读取 localStorage 抛错时记不住语言菜单里的选择：留在本页，菜单才能切换语言
+            let code;
+
+            try {
+              code = localStorage.getItem("flotilla.language");
+            } catch {
+              return;
+            }
+
+            // 在语言菜单里选过的语言；值不在清单里时，当作没选过
+            const saved = pages.find((page) => page.code === code);
 
             // 浏览器的首选语言：只看第一项，补全文字后按 “语言 + 文字” 比对；
             // 标签无效或浏览器不支持 Intl.Locale 时，当作没有匹配
