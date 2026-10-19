@@ -51,27 +51,36 @@
     | Dock 上 tile 的预览格 | 179.2 pt × 2：512 pt 的画布 × 0.35，iconset 最大一档 1024 px | 512 px |
 
   - 任何一档取不出（QuickLook 报错、文件夹已删除）：退回 `NSWorkspace` 的图标；与缩略图一样，取不出是常态，不记日志
+  - 每换进一张新图，这个访达文件夹的图就换一个版本（图标库里递增的整数）：外观变了、深浅外观或图标样式切换后重取，都换
+  - 一次取图超过 2 s 没有结果：不再算作取图中，发出通知；之后结果到了、又没有被更新的一次取图顶替，照常换进缓存、换版本、发通知
+    - 依据：各档串行取图通常在 0.3 s 内结束（见 “平台事实”）；2 s 是给 Dock 同步推迟设的上限，QuickLook 迟迟不回（如没有响应的网络卷）时，所有根组的同步不跟着一起卡住
 - 对外：
   - `icon(of:)`：按 `FileReference` 同步取图，缓存里有就用，没有就是 `FileReference.icon`；不是访达文件夹的文件同样给 `FileReference.icon`
-  - `iconAppearance(of:)`：当前所用图的标识，即取图时读到的外观；用 `NSWorkspace` 的图标时为 nil
-  - `isLoadingIcon(of:)`：是否还在取图
-  - `didUpdateIconNotification`：一个访达文件夹取图结束时在主线程发出，`userInfo` 的 `folderPathKey` 是它的路径；换上新图、退回 `NSWorkspace` 的图标、取不出都算取图结束
+  - `iconVersion(of:)`：当前所用图的版本；用 `NSWorkspace` 的图标时为 nil
+  - `isLoadingIcon(of:)`：是否还在取图；取图超过 2 s 还没有结果的不再算
+  - `didUpdateIconNotification`：一个访达文件夹取图结束，或取图超过 2 s 还没有结果时在主线程发出，`userInfo` 的 `folderPathKey` 是它的路径；换上新图、退回 `NSWorkspace` 的图标、取不出都算取图结束
 - `start()`：按当前的组树开始监听、取图；macOS 26 之前什么也不做
 
 ### 需求 37 外观变了随即更新
 
 - 跟着组树走：组树变化时，取全部层级（含子组）里的访达文件夹，按路径增删监听
   - 新加入的：开始监听，读出外观，要用 QuickLook 的随即取图
+  - 已在监听的：核对一次路径上的文件夹（见下文 “换了文件夹”）；路径上原来没有文件夹（没有监听，收不到事件），或新文件夹放到原路径上晚于事件之后的那次核对时，靠这里发现
   - 不在组树里的：停止监听、关掉描述符，丢掉缓存，还没结束的取图作废
   - 同一个访达文件夹放进几个组，按路径只监听、只取一次
-- 监听：每个访达文件夹一个 kqueue（`Sources/Flotilla/Model/FinderFolderWatcher.swift`），`open(_, O_EVTONLY)` 加 `DispatchSource.makeFileSystemObjectSource`，只要 `.attrib`
+- 监听：每个访达文件夹一个 kqueue（`Sources/Flotilla/Model/FinderFolderWatcher.swift`），`open(_, O_EVTONLY)` 加 `DispatchSource.makeFileSystemObjectSource`，要 `.attrib`、`.delete` 与 `.rename`
   - 事件源在主队列上，回调就在主线程；释放即取消，取消时关掉描述符
   - 文件夹打不开时没有监听，外观照样读
-- 收到事件：合并约 0.2 s 内的事件后重读外观
+  - 接上监听时记下路径上文件夹的身份（`Sources/Flotilla/Model/FileIdentity.swift`：`stat` 的设备号与 inode），先记身份、再打开；不用 `URL` 的资源值，它会被缓存
+- 收到事件：合并约 0.2 s 内的事件后核对这个路径：身份与接上监听时的不同，按 “换了文件夹” 处理；相同才重读外观
   - 外观没变（只是权限、时间戳等其它属性变了）：什么也不做，不取图、不通知
   - 变了、要用 QuickLook：重新取图；旧图留到新图取到再换，期间仍按旧图显示
   - 变了、不用 QuickLook（去掉了颜色与 emoji、符号，或换上了自定义图标）：丢掉旧图，退回 `NSWorkspace` 的图标，发出通知
   - 被更新的一次取图顶替、或已从组树里拿掉之后才到的结果，丢掉
+- 换了文件夹：同一路径上的文件夹被换掉，如访达里拷贝同名文件夹时选了 “替换”、删掉后在原处新建同名的；原来有、现在没有，原来没有、现在有，都算
+  - 丢掉旧的监听，在这个路径上重新接上监听、重读外观
+  - 要用 QuickLook 的：重新取图，旧图留到新图取到再换
+  - 不用的：丢掉旧图，退回 `NSWorkspace` 的图标，发出通知
 - 系统深浅外观（KVO 观察 `NSApplication.shared.effectiveAppearance`）、图标样式（`NSWorkspaceIconAppearanceConfigurationDidChangeNotification`，见 [01](01-foundation.md)）变了：要用 QuickLook 的全部重取
 - QuickLook 的结果在它自己的队列上，回到主线程再动缓存
 - 面板（`GroupGridView`）开着时收到通知：
@@ -80,14 +89,15 @@
 - 设置窗口（`GroupTreeViewController`）开着时收到通知：已经创建出来的行里，这个访达文件夹的行按当前的图重新填充
   - 不重建树：选中、展开与正在编辑的组名都不受影响
 - Dock 同步（`DockTileSynchronizer`，见 [02](02-dock-tile.md)）：
-  - 图标的输入加上预览里各访达文件夹所用图的标识（`GroupIconInputs.previewFinderFolderIconAppearances`），与 `previewItems` 一一对应
-    - 预览里的访达文件夹取到新图，输入变了：重画、比对，图标变了就改写 stub、换 `GUID`、Dock 重启一次
+  - 图标的输入加上预览里各访达文件夹所用图的版本（`GroupIconInputs.previewFinderFolderIconVersions`），与 `previewItems` 一一对应
+    - 预览里的访达文件夹换进新图（外观变了、深浅外观或图标样式切换后重取），输入变了：重画、按像素比对；在容差内就不改写 stub、Dock 不重启，图标变了就改写 stub、换 `GUID`、Dock 重启一次
     - 只换了预览之外的访达文件夹的图，输入不变：不重画、不改写，Dock 不重启
   - 订阅 `didUpdateIconNotification`，与组树的变更一样走 0.5 s 的防抖
   - 根组的预览里有还在取图的访达文件夹时，推迟这次同步，等取完的通知再同步；QuickLook 取不出也算取完
     - 目的：不先按 `NSWorkspace` 的蓝色文件夹改写 stub、取到后再按实际外观改写，让 Dock 连着重启两次
+    - 最多推迟 2 s：一次取图到 2 s 还没有结果，发出的通知让推迟了的同步补上，按当前的图（旧图，或 `FileReference.icon`）渲染；结果之后到了，再按新图同步一次
     - 刚加进组的上色访达文件夹：组树变化先安排一次同步，取图结束再安排一次；取图在防抖间隔内结束时两次合成一次，晚于防抖间隔时前一次同步推迟
-  - 启动时同理：`applicationWillFinishLaunching` 在 `updateItemLocations()` 之后、Dock 同步开始之前调用 `FinderFolderIconStore.shared.start()`，第一次同步等预览里的访达文件夹取完
+  - 启动时同理：`applicationWillFinishLaunching` 在 `updateItemLocations()` 之后、Dock 同步开始之前调用 `FinderFolderIconStore.shared.start()`，第一次同步等预览里的访达文件夹取完，同样最多等 2 s
   - Flotilla 没运行时变的外观：启动后第一次同步本来就渲染并按像素比对，不另做处理
 
 ### 需求 38 访达文件夹层级里的子文件夹
@@ -117,7 +127,7 @@ macOS 27.0.1 实测。
 - 出图的像素边长取不小于请求的标准档：20 pt × 1 → 24 px，20 pt × 2 → 48 px，101 pt × 1 → 128 px，101 pt × 2 → 256 px，179 pt × 2 → 512 px，512 pt × 2 → 1024 px
 - 结果的 `nsImage` 总按 2 倍出图：20 pt × 1 的请求，`cgImage` 是 24 px，`nsImage` 里的位图却是 48 px；要按倍率取位图，用 `cgImage`
 - 一张 `NSImage` 里放几张像素不同、点尺寸相同的位图，绘制时挑出像素不小于所需的最小那张：20 pt 的 1 倍、2 倍取 24、48 px，101 pt 的 1 倍、2 倍取 128、256 px，179 pt 的 2 倍取 512 px
-- 耗时：某种外观、某种尺寸第一次取 17–51 ms；同一种之后再取约 0–1 ms
+- 耗时：某种外观、某种尺寸第一次取 17–51 ms；同一种之后再取约 0–1 ms；5 档串行取图通常在 0.3 s 内结束
 - 完成回调在 QuickLook 自己的队列上
 
 ### 扩展属性
@@ -145,7 +155,9 @@ macOS 27.0.1 实测。
   - 改一次 `tagNames` 会在约 15 ms 内连着来 3 个 `.attrib`
   - 同一卷内改名后，旧的描述符照样收到事件；改名本身是 `.rename`
   - 文件夹里新建文件是 `.write`，不是 `.attrib`
+  - 删除文件夹来的是 `.delete`，同卷内挪走、改名来的是 `.rename`，两者都不带 `.attrib`
 - `.attrib` 也会因权限、时间戳等其它属性的变化而来，不一定是外观变了
+- 事件源不取消就释放：之后不再回调，但取消处理不执行，描述符一直开着
 
 ### 系统版本
 
@@ -153,7 +165,8 @@ macOS 27.0.1 实测。
 
 ## 单元测试
 
-- 读外观（`FinderFolderAppearanceTests`，临时目录里建文件夹、直接写扩展属性）：
+- 依赖 macOS 26 取图与监听的用例按 `.enabled(if: FinderFolderAppearance.isSupported)` 启用：测试目标里的扩展，`#available(macOS 26, *)`；之前的系统上 `needsQuickLookIcon` 恒为 false，图标库的 `start()` 什么也不做
+- 读外观（`FinderFolderAppearanceTests`，临时目录里建文件夹、直接写扩展属性）：两种系统上都跑，`needsQuickLookIcon` 的期望按系统版本给出
   - 没有扩展属性：没有颜色、emoji 与符号，不用 QuickLook
   - 无色标签（颜色号 0、只有名称）：没有颜色
   - 单个颜色：取它的颜色号，用 QuickLook
@@ -165,16 +178,22 @@ macOS 27.0.1 实测。
   - 打了红色标签的：设置窗口与面板的 1 倍、2 倍下，文件夹正面中央是红色
   - 没上色的、换过自定义图标的：不取图，与 `NSWorkspace` 的图标逐像素相同
   - 只有 emoji 的：取图，与 `NSWorkspace` 的图标不同
+  - 走真的 QuickLook 的用例（这里的，以及 `GroupTreeCellViewTests`、`FileThumbnailLoaderTests` 的）最多等约 10 s：CI 上 QuickLook 冷启动加各档串行请求，2 s 可能不够
+  - 经图标库取图的，等到图换上为止，不按通知的次数等：取图慢过 2 s 时，先到的是 “不再等” 的通知
 - 监听（`FinderFolderIconStoreTests`，取图换成假实现，标签照常写在临时目录的文件夹上）：
   - 取完之前还在取图，取完之后不是
+  - 取图迟迟不回：2 s 后不再算取图中、发出通知；结果之后到了照常换上，再通知一次
   - 子组里的访达文件夹同样监听、取图
-  - 改了标签：1 s 内换上新图、发出通知，标识换成新的外观
+  - 改了标签：1 s 内换上新图、发出通知，图的版本换成新的
   - 去掉标签：退回 `NSWorkspace` 的图标，同样通知
   - 只改了无关的属性（`chmod`）：不重取图、不通知，图还是原来那张
   - 从组树里拿掉之后：再改标签不取图、不通知
+  - 原路径上换了文件夹（挪走后在原处放了打着别的颜色标签的新文件夹）：换上新文件夹的图，之后改新文件夹的标签照样察觉
+  - 挪走后原路径上没有东西：丢掉旧图；之后在原处放了新文件夹，组树一变就核对出来，接上监听、换上它的图
   - 取不出：退回 `NSWorkspace` 的图标，也算取完，照样通知
   - 等通知按轮数而不按时钟：整套测试一起跑时，回到主线程的任务排在其它测试后面，会晚到几秒（同 `GroupGridDragTests` 的 `waitUntil`）
-- 图标的输入（`GroupIconInputsTests`）：预览里的访达文件夹换了图，输入不同；预览之外的换了图，输入相同
+- 监听器（`FinderFolderWatcherTests`）：释放之后改扩展属性不再回调，打开着这个文件夹的描述符随之关掉；文件夹被删除、改名都回调
+- 图标的输入（`GroupIconInputsTests`）：预览里的访达文件夹换了图，输入不同；外观没变、只是重取换进新图（模拟样式切换），同样不同；预览之外的换了图，输入相同
 - 设置窗口：
   - `GroupTreeCellViewTests`：打了红色标签的访达文件夹，这一行的图标在 1 倍、2 倍下都是红色（真的 QuickLook）
   - `GroupTreeViewControllerTests`：收到通知后这一行换上新图；选中、展开与正在编辑的组名都不变

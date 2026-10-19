@@ -167,7 +167,8 @@ enum GroupIconRenderer {
         group: Group,
         previewIconCount: Int,
         pointSize: CGFloat,
-        appearance: GroupIconAppearance
+        appearance: GroupIconAppearance,
+        finderFolderIcons: FinderFolderIconStore
     ) -> NSImage
 }
 ```
@@ -194,6 +195,7 @@ enum GroupIconRenderer {
   - 深色取自 [macos-dock-folders](https://github.com/wjvalue/macos-dock-folders)（MIT）的 `glass-dark` 样式，换算到上面的结构：它的渐变两端是同一灰度色彩空间里的 0.20、0.08，不透明度同为 0.96，分别作为渐变两端的灰度与底板整体的不透明度；边线的白色、不透明度 0.16 照搬，宽度与浅色相同
   - 深色取值还没有与系统深色图标实测对照
 - 预览：取 `group.items` 里前 `previewIconCount` 项（保持顺序，只跳过子组；App、文件与网页都算，见 07）的图标，按 2 × 2 网格放在底板上
+  - 访达文件夹的图标经 `finderFolderIcons` 取，按访达里的实际外观（见 [13](13-finder-folder-appearance.md)）
   - `previewIconCount` 为 0 或组内只有子组、没有其它项时只画底板。
 - 网格几何：
   - App 图标自带四边各 100 / 1024 的透明边，网格按可见底板定：每个预览的可见底板边长约 0.28，相邻两个间距约 0.064，整体居中，可见范围约 [0.186, 0.814]

@@ -98,7 +98,8 @@ App 的代码在 `Sources/Flotilla/` 下，按职责分子目录；stub 的可�
 | `Model/` | `AppReference` | 对一个 App bundle 的引用；带书签，App 移动或改名后据此找到新位置 | 01、08 |
 | `Model/` | `FileReference` | 对一个文件的引用，包括文件包、访达文件夹与卷；带书签，文件移动或改名后据此找到新位置；`icon` 是 `NSWorkspace` 给的图标，访达文件夹的实际外观经 `FinderFolderIconStore` 取 | 06、07、13 |
 | `Model/` | `FinderFolderAppearance` | 访达文件夹在访达里的外观：标签的颜色、emoji 或符号、是否换过自定义图标；从扩展属性读出，决定图标要不要向 QuickLook 取 | 13 |
-| `Model/` | `FinderFolderWatcher` | 用 kqueue 监听一个访达文件夹的属性变化，释放即停止监听 | 13 |
+| `Model/` | `FinderFolderWatcher` | 用 kqueue 监听一个访达文件夹的属性变化与删除、改名，释放即停止监听 | 13 |
+| `Model/` | `FileIdentity` | 一个路径上的文件在文件系统里的身份：设备号与 inode；同一路径上的访达文件夹被换掉时据此察觉 | 13 |
 | `Model/` | `BookmarkedReference` | App 与文件共用的书签规则：规整 URL、按书签找到当前位置 | 08 |
 | `Model/` | `WebPageReference` | 对一个网页的引用：网址与网页标题；显示的名称与网址，网址里的中文按解码后的文字显示 | 06、12 |
 | `Model/` | `GroupStore` | 组树的唯一数据源：增删改查、持久化、变更通知；按书签更新 App 项与文件项的位置；给不带标题加入的网页补上标题；改网页的网址与标题 | 01、07、08、09、10 |
@@ -106,7 +107,7 @@ App 的代码在 `Sources/Flotilla/` 下，按职责分子目录；stub 的可�
 | `Rendering/` | `GroupIconRenderer` | 把组渲染成图标（需求 2、17）；给出参与预览的项，渲染与 `GroupIconInputs` 共用这一条规则 | 01、02、07 |
 | `Rendering/` | `GroupIconInputs` | 组图标的输入：底板的外观、按顺序参与预览的项与预览里各访达文件夹所用的图；输入没变的根组，同步时不重新渲染图标 | 02、13 |
 | `Rendering/` | `YellowFolderIconRenderer` | 设置窗口里组这一行的黄色文件夹：系统的通用文件夹图标按亮度换成系统黄色标签的颜色（需求 35） | 12 |
-| `Rendering/` | `FinderFolderIconStore` | 组里访达文件夹的图标（需求 36、37）：按实际外观向 QuickLook 取图、缓存；跟着组树监听，外观变了重取并通知；面板、设置窗口与 Dock 同步器共用 | 13 |
+| `Rendering/` | `FinderFolderIconStore` | 组里访达文件夹的图标（需求 36、37）：按实际外观向 QuickLook 取图、缓存；跟着组树监听，外观变了重取并通知，原路径上换了文件夹时改为监听新的；面板、设置窗口与 Dock 同步器共用 | 13 |
 | `StatusBar/` | `StatusBarController` | 状态栏图标与菜单（需求 7） | 01 |
 | `Settings/` | `SettingsWindowController` 等 | 设置窗口 | 01 |
 | `Settings/` | `WebPageAlert` | 网页的提示框，“添加网页…” 与网页的 “编辑…” 共用：输入网址与可选的标题，确认后得到要加入的网页或改好的网页；标题留空时自动获取 | 09、10 |
