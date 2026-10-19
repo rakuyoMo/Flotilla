@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 # 将已打包的 App 压缩、签名，并生成 GitHub Release 使用的 Sparkle 更新清单
+# 清单里嵌入这一版每种语言的更新说明，“版本历史记录” 按语言指向官网的更新日志页
 
 set -euo pipefail
 
@@ -13,6 +14,12 @@ readonly RELEASES_URL="https://github.com/rakuyoMo/Flotilla/releases"
 
 VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP_PATH/Contents/Info.plist")"
 readonly VERSION
+
+# 这一版的更新说明所在目录，其中每种语言的说明都要嵌进清单
+readonly NOTES_DIR="docs/release-notes/$VERSION"
+
+# 说明不齐全时报错退出，不生成任何产物；缺了哪些由检查脚本列出
+./Scripts/check-release-notes.sh "$VERSION"
 
 # 每份清单只包含本次发布的完整安装包，复用目录时先移除上次生成的产物
 rm -rf "$UPDATES_PATH"
@@ -31,7 +38,14 @@ fi
 printf '%s' "${SPARKLE_PRIVATE_KEY:-}" | "$SPARKLE_TOOLS/generate_appcast" \
     "${signing_options[@]}" \
     --download-url-prefix "$RELEASES_URL/download/v$VERSION/" \
-    --full-release-notes-url "$RELEASES_URL/tag/v$VERSION" \
     --link "https://flotilla.rakuyo.dev/" \
     --maximum-deltas 0 \
     "$UPDATES_PATH"
+
+# 把每种语言的说明与更新日志页链接加进清单唯一的条目
+swift Scripts/embed-release-notes.swift "$UPDATES_PATH/appcast.xml" "$NOTES_DIR"
+
+# 改写让 generate_appcast 签下的清单签名失效：sign_update 先去掉旧的签名块再重签，取私钥的方式与上面相同
+printf '%s' "${SPARKLE_PRIVATE_KEY:-}" | "$SPARKLE_TOOLS/sign_update" \
+    "${signing_options[@]}" \
+    "$UPDATES_PATH/appcast.xml"

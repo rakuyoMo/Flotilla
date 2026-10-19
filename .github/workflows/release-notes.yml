@@ -1,0 +1,46 @@
+# 标题以 `release:` 开头的 PR，检查这一版的更新说明是否齐全
+# PR 改名为 release PR 时同样检查，不必等到合并后发布才暴露
+
+name: 更新说明
+
+on:
+  pull_request:
+    branches:
+      - main
+
+    # 默认的触发类型不含 edited：已通过 CI 的 PR 只改标题、不推新提交时，也要检查
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - edited
+
+permissions:
+  contents: read
+
+# 同一 PR 的新推送与改标题取消旧运行
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: 检查更新说明
+
+    # 与 release.yml 一样按标题前缀识别 release PR，`startsWith` 不区分大小写
+    if: startsWith(github.event.pull_request.title, 'release:')
+
+    # 读 Info.plist 要用 macOS 自带的 PlistBuddy
+    runs-on: macos-26
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      # 版本号取 Info.plist 里将要发布的展示版本，不从标题取
+      - name: 检查更新说明
+        run: |
+          version="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' Sources/Flotilla/Info.plist)"
+          ./Scripts/check-release-notes.sh "$version"

@@ -38,10 +38,14 @@ remote_has_ref() {
 
 # 推送或开 PR 失败时收回发布分支，失败后重试不会被 “分支已存在” 拦住
 discard_release_branch() {
+  # 撤掉发布提交：其中的更新说明退回工作区，修好后重试时不必重写；版本号的改动丢弃
+  git reset --quiet main
+  git restore "$INFO_PLIST"
+
   git switch main
 
-  # 发布提交没有合并进 main，普通删除会被拒绝
-  git branch --delete --force "$BRANCH"
+  # 发布分支已退回 main 所在的提交，普通删除即可
+  git branch --delete "$BRANCH"
 
   # 推送本身没成功时远端本来就没有这个分支，删除失败可以忽略
   git push origin --delete "$BRANCH" 2> /dev/null \
@@ -62,6 +66,9 @@ readonly VERSION="$1"
 readonly BRANCH="release/$VERSION"
 readonly TAG="v$VERSION"
 
+# 这一版的更新说明所在目录，其中的新增与改动随版本号一起进发布提交
+readonly NOTES_DIR="docs/release-notes/$VERSION"
+
 # 发布分支要从 main 切出
 current_branch="$(git branch --show-current)"
 
@@ -69,11 +76,20 @@ if [[ "$current_branch" != "main" ]]; then
   fail "须在 main 分支上运行，当前分支：${current_branch:-无（游离的 HEAD）}"
 fi
 
-# 未提交的改动会混进发布提交
-worktree_changes="$(git status --porcelain)"
+# 更新说明以外的未提交改动会混进发布提交
+# 逐个列出未跟踪的文件：docs/release-notes/ 整个未跟踪时，也能按这一版的目录排除
+worktree_changes="$(
+  git status --porcelain --untracked-files=all \
+    -- . ":(exclude)$NOTES_DIR"
+)"
 
 if [[ -n "$worktree_changes" ]]; then
-  fail "工作区有未提交的改动或未跟踪的文件，请先处理"
+  fail "除 ${NOTES_DIR}/ 外，工作区有未提交的改动或未跟踪的文件，请先处理"
+fi
+
+# 每种语言的更新说明都要齐全，缺了哪些由检查脚本列出
+if ! ./Scripts/check-release-notes.sh "$VERSION"; then
+  fail "请先在 ${NOTES_DIR}/ 补齐这一版的更新说明"
 fi
 
 # 本地 main 须与远端一致：落后会漏掉已合并的改动，超前会把没审过的提交带进发布
@@ -128,7 +144,7 @@ fi
 
 readonly NEXT_BUILD="$((current_build + 1))"
 
-# 版本号的改动提交在发布分支上，经 PR 合并进 main
+# 版本号与更新说明的改动提交在发布分支上，经 PR 合并进 main；工作区里的更新说明随切换带到发布分支
 git switch --create "$BRANCH"
 
 # 展示版本使用 X.Y.Z，构建号每次发布只增加一次，不随展示版本归零
@@ -136,6 +152,9 @@ git switch --create "$BRANCH"
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $NEXT_BUILD" "$INFO_PLIST"
 
 git add "$INFO_PLIST"
+
+# 更新说明已在 main 上且没有改动时，这一步不加入任何内容，发布提交只改 Info.plist
+git add "$NOTES_DIR"
 
 # 构建号始终变化，首个版本与失败后重发同样会产生发布提交
 git commit --message "release: $VERSION"
@@ -152,7 +171,7 @@ pr_url="$(
     --base main \
     --head "$BRANCH" \
     --title "release: $VERSION" \
-    --body "发布 ${VERSION}：合并后由 GitHub Actions 打包并创建 Release。"
+    --body "发布 ${VERSION}：合并后由 GitHub Actions 打包并创建 Release。这一版的更新说明在 \`${NOTES_DIR}/\`。"
 )" || {
   discard_release_branch
   fail "创建 PR 失败"

@@ -33,6 +33,11 @@ jobs:
       - name: 检查代码规范
         run: mise run swift:lint
 
+      # 更新清单脚本只在发版时运行，CI 的 Swift 编译器又比本机旧
+      # 在 PR 上先用 CI 的工具链做类型检查，编译问题不必等到发版才暴露
+      - name: 检查更新清单脚本
+        run: swiftc -typecheck Scripts/embed-release-notes.swift
+
       - name: 编译
         run: mise run build
 
