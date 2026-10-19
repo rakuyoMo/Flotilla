@@ -1,7 +1,7 @@
 <!doctype html>
 <html
-  lang="en"
-  data-root="./"
+  lang="{{@lang}}"
+  data-root="{{@root}}"
 >
 <head>
   <meta charset="utf-8">
@@ -11,39 +11,13 @@
     content="width=device-width, initial-scale=1"
   >
 
-  <!-- 浏览器首选简体中文、又没在语言切换里选过时，跳到中文页；先于渲染执行，避免先闪一下英文 -->
-  <script>
-    (() => {
-      document.documentElement.classList.add("js");
+  {{@headScript}}
 
-      let saved = null;
-
-      try {
-        saved = localStorage.getItem("flotilla.language");
-      } catch {
-        saved = null;
-      }
-
-      const preferred = (
-        navigator.languages?.[0]
-        ?? navigator.language
-        ?? ""
-      ).toLowerCase();
-
-      const isSimplifiedChinese = ["zh", "zh-cn", "zh-sg"].includes(preferred)
-        || preferred.startsWith("zh-hans");
-
-      if (saved === null && isSimplifiedChinese) {
-        location.replace("zh/" + location.hash);
-      }
-    })();
-  </script>
-
-  <title>Flotilla — Keep your Dock organized.</title>
+  <title>{{home.meta.title}}</title>
 
   <meta
     name="description"
-    content="Group apps, files, folders, and web pages in your Mac’s Dock."
+    content="{{home.meta.description}}"
   >
 
   <meta
@@ -65,26 +39,10 @@
 
   <link
     rel="canonical"
-    href="https://flotilla.rakuyo.dev/"
+    href="{{@url}}"
   >
 
-  <link
-    rel="alternate"
-    hreflang="en"
-    href="https://flotilla.rakuyo.dev/"
-  >
-
-  <link
-    rel="alternate"
-    hreflang="zh-Hans"
-    href="https://flotilla.rakuyo.dev/zh/"
-  >
-
-  <link
-    rel="alternate"
-    hreflang="x-default"
-    href="https://flotilla.rakuyo.dev/"
-  >
+  {{@alternates}}
 
   <meta
     property="og:type"
@@ -93,27 +51,27 @@
 
   <meta
     property="og:site_name"
-    content="Flotilla"
+    content="{{common.appName}}"
   >
 
   <meta
     property="og:title"
-    content="Flotilla — Keep your Dock organized."
+    content="{{home.meta.title}}"
   >
 
   <meta
     property="og:description"
-    content="Group apps, files, folders, and web pages in your Mac’s Dock."
+    content="{{home.meta.description}}"
   >
 
   <meta
     property="og:url"
-    content="https://flotilla.rakuyo.dev/"
+    content="{{@url}}"
   >
 
   <meta
     property="og:image"
-    content="https://flotilla.rakuyo.dev/assets/img/og-en.png"
+    content="{{@siteURL}}assets/img/og-{{@imageLanguage}}.png"
   >
 
   <meta
@@ -128,7 +86,7 @@
 
   <meta
     property="og:locale"
-    content="en_US"
+    content="{{@ogLocale}}"
   >
 
   <meta
@@ -138,39 +96,39 @@
 
   <link
     rel="icon"
-    href="assets/img/favicon-light.png"
+    href="{{@assets}}img/favicon-light.png"
     type="image/png"
     media="(prefers-color-scheme: light)"
   >
 
   <link
     rel="icon"
-    href="assets/img/favicon-dark.png"
+    href="{{@assets}}img/favicon-dark.png"
     type="image/png"
     media="(prefers-color-scheme: dark)"
   >
 
   <link
     rel="apple-touch-icon"
-    href="assets/img/apple-touch-icon.png"
+    href="{{@assets}}img/apple-touch-icon.png"
   >
 
   <link
     rel="stylesheet"
-    href="assets/css/site.css"
+    href="{{@assets}}css/site.css"
   >
 
   <link
     rel="stylesheet"
-    href="assets/css/home.css"
+    href="{{@assets}}css/home.css"
   >
 
   <script
-    src="assets/js/site.js"
+    src="{{@assets}}js/site.js"
     defer
   ></script>
   <script
-    src="assets/js/releases.js"
+    src="{{@assets}}js/releases.js"
     defer
   ></script>
 </head>
@@ -733,7 +691,7 @@
   <a
     class="skip-link"
     href="#main"
-  >Skip to content</a>
+  >{{common.skipLink}}</a>
 
   <header
     class="site-header"
@@ -741,7 +699,7 @@
   >
     <nav
       class="nav container"
-      aria-label="Main"
+      aria-label="{{common.nav.label}}"
     >
       <a
         class="brand"
@@ -749,19 +707,19 @@
       >
         <picture>
           <source
-            srcset="assets/img/app-icon-dark-64.png"
+            srcset="{{@assets}}img/app-icon-dark-64.png"
             media="(prefers-color-scheme: dark)"
           >
 
           <img
-            src="assets/img/app-icon-light-64.png"
+            src="{{@assets}}img/app-icon-light-64.png"
             alt=""
             width="32"
             height="32"
           >
         </picture>
 
-        <span>Flotilla</span>
+        <span>{{common.appName}}</span>
       </a>
 
       <button
@@ -769,7 +727,7 @@
         type="button"
         aria-expanded="false"
         aria-controls="nav-menu"
-        aria-label="Menu"
+        aria-label="{{common.nav.menu}}"
         data-nav-toggle
       >
         <svg
@@ -787,18 +745,18 @@
             <a
               href="#features"
               data-nav-section="features"
-            >Features</a>
+            >{{common.nav.features}}</a>
           </li>
 
           <li>
             <a
               href="#how-it-works"
               data-nav-section="how-it-works"
-            >How it works</a>
+            >{{common.nav.howItWorks}}</a>
           </li>
 
           <li>
-            <a href="releases/">Release notes</a>
+            <a href="releases/">{{common.nav.releaseNotes}}</a>
           </li>
 
           <li>
@@ -815,13 +773,13 @@
         <details class="language-menu">
           <summary
             class="language-switch"
-            aria-label="Select language"
+            aria-label="{{common.languageMenu.label}}"
           >
             <svg
               class="icon"
               aria-hidden="true"
             ><use href="#i-globe"/></svg>
-            <span>English</span>
+            <span>{{@languageName}}</span>
 
             <svg
               class="icon language-chevron"
@@ -830,32 +788,7 @@
           </summary>
 
           <ul class="language-options">
-            <li>
-              <a
-                href="./"
-                hreflang="en"
-                lang="en"
-                data-language-switch="en"
-                aria-current="true"
-              >
-                English
-                <svg
-                  class="icon"
-                  aria-hidden="true"
-                ><use href="#i-check"/></svg>
-              </a>
-            </li>
-
-            <li>
-              <a
-                href="zh/"
-                hreflang="zh-Hans"
-                lang="zh-Hans"
-                data-language-switch="zh-Hans"
-              >
-                简体中文
-              </a>
-            </li>
+            {{@languageOptions}}
           </ul>
         </details>
       </div>
@@ -863,7 +796,7 @@
       <a
         class="button button-primary button-small nav-download"
         href="download/"
-      >Download</a>
+      >{{common.nav.download}}</a>
     </nav>
   </header>
 
@@ -882,10 +815,10 @@
           <h1
             class="hero-title"
             id="hero-title"
-          >Keep your Dock organized.</h1>
+          >{{home.hero.title}}</h1>
 
           <p class="hero-lead">
-            Group apps, files, folders, and web pages in your Mac’s Dock.
+            {{home.hero.lead}}
           </p>
 
           <div class="hero-actions">
@@ -899,7 +832,7 @@
                 class="icon"
                 aria-hidden="true"
               ><use href="#i-download"/></svg>
-              Download for Mac
+              {{home.hero.download}}
               <span
                 class="version-chip"
                 data-when="latest"
@@ -916,7 +849,7 @@
                 class="icon"
                 aria-hidden="true"
               ><use href="#i-github"/></svg>
-              View on GitHub
+              {{common.viewOnGitHub}}
             </a>
 
             <a
@@ -928,7 +861,7 @@
                 class="icon"
                 aria-hidden="true"
               ><use href="#i-github"/></svg>
-              View on GitHub
+              {{common.viewOnGitHub}}
             </a>
 
             <a
@@ -940,14 +873,14 @@
                 class="icon"
                 aria-hidden="true"
               ><use href="#i-terminal"/></svg>
-              Build from source
+              {{common.buildFromSource}}
             </a>
           </div>
 
           <p class="meta-line hero-meta">
-            <span>macOS 15 or later</span>
-            <span>Apple silicon</span>
-            <span>Free and open source (GPL-3.0)</span>
+            <span>{{common.requirements.macOS}}</span>
+            <span>{{common.requirements.appleSilicon}}</span>
+            <span>{{common.requirements.openSource}}</span>
           </p>
 
           <p
@@ -957,7 +890,7 @@
             <a
               href="releases/"
               data-release-notes-link
-            >What’s new in <span data-release-version></span> →</a>
+            >{{home.hero.whatsNew}}</a>
           </p>
         </div>
 
@@ -969,14 +902,14 @@
 
           <picture>
             <source
-              srcset="assets/img/screenshot-panel-en-dark.jpg"
+              srcset="{{@assets}}img/screenshot-panel-{{@imageLanguage}}-dark.jpg"
               media="(prefers-color-scheme: dark)"
             >
 
             <img
               class="hero-shot"
-              src="assets/img/screenshot-panel-en-light.jpg"
-              alt="The Essentials group open above the Dock, showing apps and a folder in a grid, with an arrow pointing to the group icon"
+              src="{{@assets}}img/screenshot-panel-{{@imageLanguage}}-light.jpg"
+              alt="{{home.hero.screenshotAlt}}"
               width="482"
               height="556"
               fetchpriority="high"
@@ -1014,14 +947,13 @@
       aria-labelledby="about-title"
     >
       <div class="container">
-        <p class="eyebrow reveal">About</p>
+        <p class="eyebrow reveal">{{home.about.eyebrow}}</p>
 
         <h2
           class="about-statement reveal"
           id="about-title"
         >
-          <span class="about-statement-muted">The Dock’s own folders sit on the right.</span>
-          Flotilla lets you group your apps on the left.
+          {{home.about.statement}}
         </h2>
 
         <figure
@@ -1285,13 +1217,13 @@
 
           <div class="dock-diagram-labels">
             <p class="dock-diagram-label dock-diagram-label-groups">
-              <strong>Flotilla’s groups</strong>
-              <span>In the app section, on the left</span>
+              <strong>{{home.about.groups.title}}</strong>
+              <span>{{home.about.groups.position}}</span>
             </p>
 
             <p class="dock-diagram-label dock-diagram-label-folders">
-              <strong>The Dock’s own folders</strong>
-              <span>Only on the right side</span>
+              <strong>{{home.about.dockFolders.title}}</strong>
+              <span>{{home.about.dockFolders.position}}</span>
             </p>
           </div>
         </figure>
@@ -1305,7 +1237,7 @@
               ><use href="#i-nested"/></svg>
             </span>
 
-            <p>Grouping doesn’t move your apps or files, and you don’t need to create any folders on disk.</p>
+            <p>{{home.about.highlights.noFolders}}</p>
           </li>
 
           <li class="reveal">
@@ -1316,7 +1248,7 @@
               ><use href="#i-items"/></svg>
             </span>
 
-            <p>Apps, files, Finder folders, and web pages can all share the same group.</p>
+            <p>{{home.about.highlights.mixedItems}}</p>
           </li>
 
           <li class="reveal">
@@ -1327,7 +1259,7 @@
               ><use href="#i-grid"/></svg>
             </span>
 
-            <p>Click a group icon to open a grid with the same look and animations as the Dock’s built-in folders.</p>
+            <p>{{home.about.highlights.nativeGrid}}</p>
           </li>
         </ul>
       </div>
@@ -1340,12 +1272,12 @@
     >
       <div class="container">
         <header class="section-header reveal">
-          <p class="eyebrow">Features</p>
+          <p class="eyebrow">{{home.features.eyebrow}}</p>
 
           <h2
             class="section-title"
             id="features-title"
-          >Organize apps, files, and web pages.</h2>
+          >{{home.features.title}}</h2>
         </header>
 
         <article class="feature-row reveal">
@@ -1357,26 +1289,26 @@
               ><use href="#i-stack"/></svg>
             </span>
 
-            <h3 class="feature-title">Browse folders in the panel</h3>
-            <p>Folders open in the same panel, with file thumbnails. To switch to Finder, choose <strong>Open in Finder</strong> at the end of the grid.</p>
+            <h3 class="feature-title">{{home.features.folders.title}}</h3>
+            <p>{{home.features.folders.description}}</p>
 
             <ul class="check-list">
-              <li>Use the back button to go up one level</li>
-              <li>Turn on <strong>Show hidden files</strong> in settings</li>
+              <li>{{home.features.folders.backButton}}</li>
+              <li>{{home.features.folders.hiddenFiles}}</li>
             </ul>
           </div>
 
           <figure class="feature-media feature-media-stack">
             <picture>
               <source
-                srcset="assets/img/screenshot-stack-en-dark.jpg"
+                srcset="{{@assets}}img/screenshot-stack-{{@imageLanguage}}-dark.jpg"
                 media="(prefers-color-scheme: dark)"
               >
 
               <img
                 class="screenshot"
-                src="assets/img/screenshot-stack-en-light.jpg"
-                alt="The Wallpapers folder open in the panel, showing image thumbnails and Open in Finder at the end"
+                src="{{@assets}}img/screenshot-stack-{{@imageLanguage}}-light.jpg"
+                alt="{{home.features.folders.screenshotAlt}}"
                 width="738"
                 height="428"
                 loading="lazy"
@@ -1394,29 +1326,29 @@
               ><use href="#i-drop"/></svg>
             </span>
 
-            <h3 class="feature-title">Drag and drop</h3>
-            <p>Drop apps, files, or folders onto a group icon in the Dock or a group in the settings window. You can drop web pages into the settings window too.</p>
+            <h3 class="feature-title">{{home.features.dragAndDrop.title}}</h3>
+            <p>{{home.features.dragAndDrop.description}}</p>
 
-            <h4 class="feature-subtitle">Manage groups in the settings window</h4>
+            <h4 class="feature-subtitle">{{home.features.settings.title}}</h4>
 
             <ul class="check-list">
-              <li>Click <strong>Add…</strong> to choose apps, files, folders, or web pages</li>
-              <li>Double-click a group to rename it</li>
-              <li>Drag items in the list to reorder them or move them into another group</li>
-              <li>Right-click or Control-click an item for more options</li>
+              <li>{{home.features.settings.add}}</li>
+              <li>{{home.features.settings.rename}}</li>
+              <li>{{home.features.settings.reorder}}</li>
+              <li>{{home.features.settings.moreOptions}}</li>
             </ul>
           </div>
 
           <figure class="feature-media feature-media-settings">
             <picture>
               <source
-                srcset="assets/img/screenshot-settings-en-dark.png"
+                srcset="{{@assets}}img/screenshot-settings-{{@imageLanguage}}-dark.png"
                 media="(prefers-color-scheme: dark)"
               >
 
               <img
-                src="assets/img/screenshot-settings-en-light.png"
-                alt="The settings window with the Essentials group expanded and General settings below"
+                src="{{@assets}}img/screenshot-settings-{{@imageLanguage}}-light.png"
+                alt="{{common.settingsScreenshotAlt}}"
                 width="732"
                 height="672"
                 loading="lazy"
@@ -1434,8 +1366,8 @@
               ><use href="#i-dock"/></svg>
             </span>
 
-            <h3>Groups alongside your apps</h3>
-            <p>Each top-level group appears on the left side of the Dock with its own name and icon.</p>
+            <h3>{{home.features.alongsideApps.title}}</h3>
+            <p>{{home.features.alongsideApps.description}}</p>
           </li>
 
           <li class="feature-card reveal">
@@ -1446,8 +1378,8 @@
               ><use href="#i-items"/></svg>
             </span>
 
-            <h3>Apps, files, and web pages</h3>
-            <p>Keep apps, files, folders, and web pages together. Files open in their default app, and web pages open in your default browser.</p>
+            <h3>{{home.features.mixedItems.title}}</h3>
+            <p>{{home.features.mixedItems.description}}</p>
           </li>
 
           <li class="feature-card reveal">
@@ -1458,8 +1390,8 @@
               ><use href="#i-nested"/></svg>
             </span>
 
-            <h3>Groups within groups</h3>
-            <p>You can add groups inside other groups. Open a subgroup to browse it, then use the back button to return.</p>
+            <h3>{{home.features.nestedGroups.title}}</h3>
+            <p>{{home.features.nestedGroups.description}}</p>
           </li>
 
           <li class="feature-card reveal">
@@ -1470,8 +1402,8 @@
               ><use href="#i-grid"/></svg>
             </span>
 
-            <h3>Grid view</h3>
-            <p>Groups open in a grid above the Dock, aligned with their icons.</p>
+            <h3>{{home.features.gridView.title}}</h3>
+            <p>{{home.features.gridView.description}}</p>
           </li>
 
           <li class="feature-card reveal">
@@ -1482,8 +1414,8 @@
               ><use href="#i-group-icon"/></svg>
             </span>
 
-            <h3>Group icon previews</h3>
-            <p>The group icon previews the first few items, up to four. You can adjust the number in settings. Its background follows your Mac’s light or dark appearance.</p>
+            <h3>{{home.features.iconPreviews.title}}</h3>
+            <p>{{home.features.iconPreviews.description}}</p>
           </li>
 
           <li class="feature-card reveal">
@@ -1494,8 +1426,8 @@
               ><use href="#i-move"/></svg>
             </span>
 
-            <h3>Reorder and remove</h3>
-            <p>Drag items in the panel to reorder them. To remove one, drag it outside, wait for <strong>Remove</strong> to appear, then let go.</p>
+            <h3>{{home.features.reorderAndRemove.title}}</h3>
+            <p>{{home.features.reorderAndRemove.description}}</p>
           </li>
 
           <li class="feature-card reveal">
@@ -1506,8 +1438,8 @@
               ><use href="#i-route"/></svg>
             </span>
 
-            <h3>Keeps track of your items</h3>
-            <p>Apps and files still open from a group after you move or rename them. After an app update, Flotilla opens the newly installed version.</p>
+            <h3>{{home.features.tracking.title}}</h3>
+            <p>{{home.features.tracking.description}}</p>
           </li>
 
           <li class="feature-card reveal">
@@ -1518,8 +1450,8 @@
               ><use href="#i-menubar"/></svg>
             </span>
 
-            <h3>Runs in the background</h3>
-            <p>Flotilla runs in the menu bar and stays out of the Dock, even when a panel is open. Panels don’t take focus away from your current app.</p>
+            <h3>{{home.features.background.title}}</h3>
+            <p>{{home.features.background.description}}</p>
           </li>
 
           <li class="feature-card reveal">
@@ -1530,8 +1462,8 @@
               ><use href="#i-languages"/></svg>
             </span>
 
-            <h3>Five languages</h3>
-            <p>English, Simplified Chinese, Traditional Chinese, Japanese, and Korean. The app uses your system language, or English if that language isn’t supported.</p>
+            <h3>{{home.features.languages.title}}</h3>
+            <p>{{home.features.languages.description}}</p>
           </li>
         </ul>
       </div>
@@ -1544,14 +1476,14 @@
     >
       <div class="container">
         <header class="section-header reveal">
-          <p class="eyebrow">How it works</p>
+          <p class="eyebrow">{{home.howItWorks.eyebrow}}</p>
 
           <h2
             class="section-title"
             id="how-title"
-          >How does a group get into the Dock?</h2>
+          >{{home.howItWorks.title}}</h2>
 
-          <p class="lead">To give a group a place in the Dock’s app section, Flotilla creates a placeholder app for each top-level group and adds it with the group’s name and icon.</p>
+          <p class="lead">{{home.howItWorks.lead}}</p>
         </header>
 
         <ol class="how-steps">
@@ -1665,8 +1597,8 @@
             </svg>
 
             <span class="how-number">1</span>
-            <h3>Click a group icon</h3>
-            <p>The Dock launches the placeholder app for that group.</p>
+            <h3>{{home.howItWorks.click.title}}</h3>
+            <p>{{home.howItWorks.click.description}}</p>
           </li>
 
           <li class="how-step reveal">
@@ -1748,8 +1680,8 @@
             </svg>
 
             <span class="how-number">2</span>
-            <h3>The placeholder opens a <code>flotilla://</code> URL</h3>
-            <p>It uses this URL to notify Flotilla, then quits without bringing another app to the front.</p>
+            <h3>{{home.howItWorks.openURL.title}}</h3>
+            <p>{{home.howItWorks.openURL.description}}</p>
           </li>
 
           <li class="how-step reveal">
@@ -1909,8 +1841,8 @@
             </svg>
 
             <span class="how-number">3</span>
-            <h3>Flotilla opens or closes the panel</h3>
-            <p>If Flotilla isn’t running, macOS launches it first. The placeholder also forwards items dropped onto the group icon to Flotilla.</p>
+            <h3>{{home.howItWorks.panel.title}}</h3>
+            <p>{{home.howItWorks.panel.description}}</p>
           </li>
         </ol>
 
@@ -1923,7 +1855,7 @@
               ><use href="#i-shield"/></svg>
             </span>
 
-            <h3 class="subsection-title">What does Flotilla change on your Mac?</h3>
+            <h3 class="subsection-title">{{home.howItWorks.changes.title}}</h3>
           </header>
 
           <ul class="change-grid">
@@ -1933,11 +1865,11 @@
                   class="icon"
                   aria-hidden="true"
                 ><use href="#i-dock"/></svg>
-                Only Flotilla’s group icons
+                {{home.howItWorks.changes.dockIcons.title}}
               </h4>
 
-              <p>Flotilla manages group icons through the Dock preferences (<code>com.apple.dock</code>).</p>
-              <p>It changes only its own entries in <code>persistent-apps</code>, the group icons on the left side of the Dock. Other icons and Dock settings stay as they are.</p>
+              <p>{{home.howItWorks.changes.dockIcons.preferences}}</p>
+              <p>{{home.howItWorks.changes.dockIcons.scope}}</p>
             </li>
 
             <li class="change-card reveal">
@@ -1946,10 +1878,10 @@
                   class="icon"
                   aria-hidden="true"
                 ><use href="#i-refresh"/></svg>
-                The Dock restarts after each change
+                {{home.howItWorks.changes.dockRestart.title}}
               </h4>
 
-              <p>After a change to the Dock preferences, Flotilla ends the Dock process. macOS automatically restarts it so the change can take effect.</p>
+              <p>{{home.howItWorks.changes.dockRestart.description}}</p>
             </li>
 
             <li class="change-card reveal">
@@ -1958,10 +1890,10 @@
                   class="icon"
                   aria-hidden="true"
                 ><use href="#i-archive"/></svg>
-                Backed up before changes
+                {{home.howItWorks.changes.backup.title}}
               </h4>
 
-              <p>Each time Flotilla launches, it exports a full backup of <code>com.apple.dock</code> before making its first change. It keeps the five most recent backups.</p>
+              <p>{{home.howItWorks.changes.backup.description}}</p>
               <p><code>~/Library/<wbr>Application Support/<wbr>Flotilla/<wbr>Backups/<wbr>com.apple.dock-&lt;yyyyMMdd-HHmmss&gt;.plist</code></p>
             </li>
 
@@ -1971,18 +1903,18 @@
                   class="icon"
                   aria-hidden="true"
                 ><use href="#i-folder"/></svg>
-                Data and settings
+                {{home.howItWorks.changes.data.title}}
               </h4>
 
-              <p>Data is stored in <code>~/Library/<wbr>Application Support/<wbr>Flotilla</code>:</p>
+              <p>{{home.howItWorks.changes.data.location}}</p>
 
               <ul>
-                <li><code>folders.json</code>: the group data</li>
-                <li><code>DockTiles/</code>: the placeholder apps for top-level groups</li>
-                <li><code>Backups/</code>: backups of the Dock preferences</li>
+                <li>{{home.howItWorks.changes.data.groups}}</li>
+                <li>{{home.howItWorks.changes.data.dockTiles}}</li>
+                <li>{{home.howItWorks.changes.data.backups}}</li>
               </ul>
 
-              <p>Settings are stored in the preferences domain <code>com.rakuyo.flotilla</code>.</p>
+              <p>{{home.howItWorks.changes.data.settings}}</p>
             </li>
 
             <li class="change-card reveal">
@@ -1991,10 +1923,10 @@
                   class="icon"
                   aria-hidden="true"
                 ><use href="#i-globe"/></svg>
-                Network access
+                {{home.howItWorks.changes.network.title}}
               </h4>
 
-              <p>Flotilla connects to the internet to fetch page titles and to check for and download updates from GitHub Releases. Automatic checks can be turned off in Software Update settings.</p>
+              <p>{{home.howItWorks.changes.network.description}}</p>
             </li>
           </ul>
         </div>
@@ -2012,12 +1944,12 @@
       >
         <picture>
           <source
-            srcset="assets/img/sailing-ship-moon.jpg"
+            srcset="{{@assets}}img/sailing-ship-moon.jpg"
             media="(prefers-color-scheme: dark)"
           >
 
           <img
-            src="assets/img/sailing-ship-sun.jpg"
+            src="{{@assets}}img/sailing-ship-sun.jpg"
             alt=""
             width="1000"
             height="1000"
@@ -2028,14 +1960,14 @@
 
       <div class="container open-source-inner">
         <header class="section-header reveal">
-          <p class="eyebrow">Open source</p>
+          <p class="eyebrow">{{home.openSource.eyebrow}}</p>
 
           <h2
             class="section-title"
             id="open-source-title"
-          >Code and discussions on GitHub.</h2>
+          >{{home.openSource.title}}</h2>
 
-          <p class="lead">Flotilla is free and open source. You can browse the code, report a problem, or help with development on GitHub.</p>
+          <p class="lead">{{home.openSource.lead}}</p>
         </header>
 
         <ul class="github-grid">
@@ -2048,8 +1980,8 @@
             </span>
 
             <div class="github-card-body">
-              <h3>Follow the project</h3>
-              <p>If you like Flotilla, give it a star on GitHub. To hear about new versions, choose <strong>Watch › Custom › Releases</strong>.</p>
+              <h3>{{home.openSource.follow.title}}</h3>
+              <p>{{home.openSource.follow.description}}</p>
             </div>
 
             <a
@@ -2072,8 +2004,8 @@
               ><use href="#i-issue"/></svg>
             </span>
 
-            <h3>Report a problem</h3>
-            <p>Something not working? You can report it in GitHub Issues.</p>
+            <h3>{{home.openSource.issues.title}}</h3>
+            <p>{{home.openSource.issues.description}}</p>
 
             <a
               class="card-link"
@@ -2095,15 +2027,11 @@
               ><use href="#i-pull-request"/></svg>
             </span>
 
-            <h3>Contribute</h3>
-            <p>Before opening a pull request, run <code>mise run swift:lint</code> and <code>swift test</code> and make sure both pass.</p>
+            <h3>{{home.openSource.contribute.title}}</h3>
+            <p>{{home.openSource.contribute.description}}</p>
 
             <p>
-              Contribution guidelines are in
-              <a href="https://github.com/rakuyoMo/Flotilla/blob/main/AGENTS.md">AGENTS.md</a>,
-              and feature requirements are in
-              <a href="https://github.com/rakuyoMo/Flotilla/tree/main/docs/requirements">docs/requirements</a>;
-              both are in Chinese.
+              {{home.openSource.contribute.guidelines}}
             </p>
           </li>
 
@@ -2115,14 +2043,14 @@
               ><use href="#i-terminal"/></svg>
             </span>
 
-            <h3>Build from source</h3>
-            <p>Building Flotilla requires the Xcode Command Line Tools and mise. You don’t need the full Xcode app.</p>
+            <h3>{{home.openSource.build.title}}</h3>
+            <p>{{common.buildRequirements}}</p>
 
             <a
               class="card-link"
               href="download/#build"
             >
-              Build instructions
+              {{home.openSource.build.link}}
               <svg
                 class="icon"
                 aria-hidden="true"
@@ -2139,7 +2067,7 @@
             </span>
 
             <h3>GPL-3.0</h3>
-            <p>Flotilla is licensed under the GNU General Public License v3.0.</p>
+            <p>{{home.openSource.license.description}}</p>
 
             <a
               class="card-link"
@@ -2149,7 +2077,7 @@
                 class="icon"
                 aria-hidden="true"
               ><use href="#i-github"/></svg>
-              License
+              {{home.openSource.license.link}}
             </a>
           </li>
         </ul>
@@ -2163,23 +2091,23 @@
     >
       <div class="container faq-inner">
         <header class="section-header faq-header reveal">
-          <p class="eyebrow">FAQ</p>
+          <p class="eyebrow">{{home.faq.eyebrow}}</p>
 
           <h2
             class="section-title"
             id="faq-title"
-          >Installing and using Flotilla</h2>
+          >{{home.faq.title}}</h2>
 
           <p class="lead">
-            For more details, see the
-            <a href="https://github.com/rakuyoMo/Flotilla#readme">README</a>.
+            {{home.faq.readmeBefore}}
+            <a href="{{@links.readme}}">README</a>{{home.faq.readmeAfter}}
           </p>
         </header>
 
         <div class="faq-list">
           <details class="faq-item reveal">
             <summary>
-              Why does macOS block Flotilla the first time I open it?
+              {{home.faq.blocked.question}}
               <svg
                 class="icon faq-chevron"
                 aria-hidden="true"
@@ -2187,15 +2115,15 @@
             </summary>
 
             <div class="faq-answer">
-              <p>Flotilla hasn’t been notarized by Apple, so macOS blocks it the first time you try to open it. The alert says Apple cannot verify that it is free of malware.</p>
-              <p>Click <strong>Done</strong>, then open <strong>System Settings › Privacy &amp; Security</strong> and click <strong>Open Anyway</strong> under <strong>Security</strong>. The button is available for an hour after you try to open Flotilla.</p>
-              <p><a href="download/#install">See the installation guide →</a></p>
+              <p>{{common.firstLaunchBlocked}}</p>
+              <p>{{home.faq.blocked.openAnyway}}</p>
+              <p><a href="download/#install">{{home.faq.blocked.guideLink}}</a></p>
             </div>
           </details>
 
           <details class="faq-item reveal">
             <summary>
-              Can I use Flotilla without Accessibility access?
+              {{home.faq.withoutAccessibility.question}}
               <svg
                 class="icon faq-chevron"
                 aria-hidden="true"
@@ -2203,18 +2131,18 @@
             </summary>
 
             <div class="faq-answer">
-              <p>Yes, with two differences:</p>
+              <p>{{home.faq.withoutAccessibility.answer}}</p>
 
               <ul>
-                <li>The panel appears near the pointer and may not line up exactly with the group icon</li>
-                <li>The panel takes a little longer to open after a click</li>
+                <li>{{common.withoutAccessibility.nearPointer}}</li>
+                <li>{{common.withoutAccessibility.slower}}</li>
               </ul>
             </div>
           </details>
 
           <details class="faq-item reveal">
             <summary>
-              Why might I need to enable Accessibility again after an update?
+              {{home.faq.reenable.question}}
               <svg
                 class="icon faq-chevron"
                 aria-hidden="true"
@@ -2222,14 +2150,14 @@
             </summary>
 
             <div class="faq-answer">
-              <p>Because Flotilla uses ad-hoc signing, you may need to enable this permission again after an update.</p>
-              <p>You can enable it in <strong>System Settings › Privacy &amp; Security › Accessibility</strong>. On macOS 27, go to <strong>Privacy &amp; Security › Device Control and Data Access</strong>.</p>
+              <p>{{common.accessibility.reenable}}</p>
+              <p>{{common.accessibility.settingsPath}}</p>
             </div>
           </details>
 
           <details class="faq-item reveal">
             <summary>
-              Why does the Dock restart?
+              {{home.faq.dockRestart.question}}
               <svg
                 class="icon faq-chevron"
                 aria-hidden="true"
@@ -2237,14 +2165,14 @@
             </summary>
 
             <div class="faq-answer">
-              <p>Flotilla changes the Dock preferences to add or update group icons. It then ends the Dock process, and macOS automatically restarts it so the change can take effect.</p>
-              <p>Group previews and switches between light and dark appearance also update the icons, so they trigger a Dock restart too.</p>
+              <p>{{home.faq.dockRestart.reason}}</p>
+              <p>{{home.faq.dockRestart.triggers}}</p>
             </div>
           </details>
 
           <details class="faq-item reveal">
             <summary>
-              How do I remove a group icon from the Dock and add it back?
+              {{home.faq.removeIcon.question}}
               <svg
                 class="icon faq-chevron"
                 aria-hidden="true"
@@ -2252,14 +2180,14 @@
             </summary>
 
             <div class="faq-answer">
-              <p>Drag the group icon out of the Dock to remove it.</p>
-              <p>The group stays in the settings window, marked <strong>Not in Dock</strong>, and won’t return to the Dock automatically. To bring the icon back, right-click the group and choose <strong>Add to Dock</strong>.</p>
+              <p>{{home.faq.removeIcon.remove}}</p>
+              <p>{{home.faq.removeIcon.addBack}}</p>
             </div>
           </details>
 
           <details class="faq-item reveal">
             <summary>
-              Which Macs does Flotilla run on?
+              {{home.faq.requirements.question}}
               <svg
                 class="icon faq-chevron"
                 aria-hidden="true"
@@ -2267,13 +2195,13 @@
             </summary>
 
             <div class="faq-answer">
-              <p>Flotilla runs on Macs with Apple silicon and macOS 15 or later.</p>
+              <p>{{home.faq.requirements.answer}}</p>
             </div>
           </details>
 
           <details class="faq-item reveal">
             <summary>
-              Which languages does Flotilla support?
+              {{home.faq.languages.question}}
               <svg
                 class="icon faq-chevron"
                 aria-hidden="true"
@@ -2281,8 +2209,8 @@
             </summary>
 
             <div class="faq-answer">
-              <p>English, Simplified Chinese, Traditional Chinese, Japanese, and Korean. The app uses your system language, or English if that language isn’t supported.</p>
-              <p>The app’s name follows your system language too: 归帆 in Simplified Chinese, 歸帆 in Traditional Chinese, 帰帆 in Japanese, and Flotilla in other languages.</p>
+              <p>{{home.faq.languages.answer}}</p>
+              <p>{{home.faq.languages.appName}}</p>
             </div>
           </details>
         </div>
@@ -2297,13 +2225,13 @@
         <div class="closing-card reveal">
           <picture>
             <source
-              srcset="assets/img/app-icon-dark-256.png"
+              srcset="{{@assets}}img/app-icon-dark-256.png"
               media="(prefers-color-scheme: dark)"
             >
 
             <img
               class="closing-icon"
-              src="assets/img/app-icon-light-256.png"
+              src="{{@assets}}img/app-icon-light-256.png"
               alt=""
               width="128"
               height="128"
@@ -2314,7 +2242,7 @@
           <h2
             class="closing-title"
             id="closing-title"
-          >Keep your Dock organized.</h2>
+          >{{home.hero.title}}</h2>
 
           <div class="closing-actions">
             <a
@@ -2327,7 +2255,7 @@
                 class="icon"
                 aria-hidden="true"
               ><use href="#i-download"/></svg>
-              Download for Mac
+              {{home.hero.download}}
               <span
                 class="version-chip"
                 data-when="latest"
@@ -2344,7 +2272,7 @@
                 class="icon"
                 aria-hidden="true"
               ><use href="#i-github"/></svg>
-              View on GitHub
+              {{common.viewOnGitHub}}
             </a>
 
             <a
@@ -2356,14 +2284,14 @@
                 class="icon"
                 aria-hidden="true"
               ><use href="#i-terminal"/></svg>
-              Build from source
+              {{common.buildFromSource}}
             </a>
           </div>
 
           <p class="meta-line">
-            <span>macOS 15 or later</span>
-            <span>Apple silicon</span>
-            <span>Free and open source (GPL-3.0)</span>
+            <span>{{common.requirements.macOS}}</span>
+            <span>{{common.requirements.appleSilicon}}</span>
+            <span>{{common.requirements.openSource}}</span>
           </p>
         </div>
       </div>
@@ -2379,12 +2307,12 @@
         >
           <picture>
             <source
-              srcset="assets/img/app-icon-dark-64.png"
+              srcset="{{@assets}}img/app-icon-dark-64.png"
               media="(prefers-color-scheme: dark)"
             >
 
             <img
-              src="assets/img/app-icon-light-64.png"
+              src="{{@assets}}img/app-icon-light-64.png"
               alt=""
               width="32"
               height="32"
@@ -2392,34 +2320,34 @@
             >
           </picture>
 
-          <span>Flotilla</span>
+          <span>{{common.appName}}</span>
         </a>
 
-        <p>Keep your Dock organized.</p>
+        <p>{{common.footer.tagline}}</p>
       </div>
 
       <nav
         class="footer-columns"
-        aria-label="Footer"
+        aria-label="{{common.footer.label}}"
       >
         <div class="footer-column">
-          <h2>Product</h2>
+          <h2>{{common.footer.product}}</h2>
 
           <ul>
-            <li><a href="#features">Features</a></li>
-            <li><a href="download/">Download</a></li>
-            <li><a href="releases/">Release notes</a></li>
+            <li><a href="#features">{{common.nav.features}}</a></li>
+            <li><a href="download/">{{common.nav.download}}</a></li>
+            <li><a href="releases/">{{common.nav.releaseNotes}}</a></li>
           </ul>
         </div>
 
         <div class="footer-column">
-          <h2>Resources</h2>
+          <h2>{{common.footer.resources}}</h2>
 
           <ul>
             <li><a href="https://github.com/rakuyoMo/Flotilla">GitHub</a></li>
             <li><a href="https://github.com/rakuyoMo/Flotilla/issues">Issues</a></li>
-            <li><a href="https://github.com/rakuyoMo/Flotilla#readme">README</a></li>
-            <li><a href="https://github.com/rakuyoMo/Flotilla/blob/main/LICENSE">License</a></li>
+            <li><a href="{{@links.readme}}">README</a></li>
+            <li><a href="https://github.com/rakuyoMo/Flotilla/blob/main/LICENSE">{{common.footer.license}}</a></li>
           </ul>
         </div>
       </nav>
@@ -2431,13 +2359,13 @@
       <details class="language-menu">
         <summary
           class="language-switch"
-          aria-label="Select language"
+          aria-label="{{common.languageMenu.label}}"
         >
           <svg
             class="icon"
             aria-hidden="true"
           ><use href="#i-globe"/></svg>
-          <span>English</span>
+          <span>{{@languageName}}</span>
 
           <svg
             class="icon language-chevron"
@@ -2446,32 +2374,7 @@
         </summary>
 
         <ul class="language-options">
-          <li>
-            <a
-              href="./"
-              hreflang="en"
-              lang="en"
-              data-language-switch="en"
-              aria-current="true"
-            >
-              English
-              <svg
-                class="icon"
-                aria-hidden="true"
-              ><use href="#i-check"/></svg>
-            </a>
-          </li>
-
-          <li>
-            <a
-              href="zh/"
-              hreflang="zh-Hans"
-              lang="zh-Hans"
-              data-language-switch="zh-Hans"
-            >
-              简体中文
-            </a>
-          </li>
+          {{@languageOptions}}
         </ul>
       </details>
     </div>
@@ -2485,13 +2388,13 @@
     <div class="toast-header">
       <picture>
         <source
-          srcset="assets/img/app-icon-dark-80.png"
+          srcset="{{@assets}}img/app-icon-dark-80.png"
           media="(prefers-color-scheme: dark)"
         >
 
         <img
           class="toast-icon"
-          src="assets/img/app-icon-light-80.png"
+          src="{{@assets}}img/app-icon-light-80.png"
           alt=""
           width="40"
           height="40"
@@ -2500,18 +2403,18 @@
       </picture>
 
       <div class="toast-heading">
-        <p class="toast-app">Flotilla</p>
+        <p class="toast-app">{{common.appName}}</p>
 
         <h2
           class="toast-title"
           id="download-toast-title"
-        >Download started</h2>
+        >{{common.downloadStarted}}</h2>
       </div>
 
       <button
         class="toast-close"
         type="button"
-        aria-label="Close"
+        aria-label="{{home.toast.close}}"
         data-toast-close
       >
         <svg
@@ -2522,16 +2425,16 @@
     </div>
 
     <ol class="toast-steps">
-      <li>Unzip the download and drag <code>Flotilla.app</code> into Applications</li>
-      <li>Click <strong>Open Anyway</strong> in Privacy &amp; Security</li>
-      <li>Enable Accessibility in System Settings</li>
+      <li>{{home.toast.steps.unzip}}</li>
+      <li>{{home.toast.steps.openAnyway}}</li>
+      <li>{{home.toast.steps.accessibility}}</li>
     </ol>
 
     <a
       class="toast-link"
       href="download/#install"
     >
-      View the installation guide
+      {{home.toast.guide}}
       <svg
         class="icon"
         aria-hidden="true"

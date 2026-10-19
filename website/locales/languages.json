@@ -1,0 +1,29 @@
+[
+  {
+    "code": "en",
+    "directory": "",
+    "name": "English",
+    "ogLocale": "en_US",
+    "imageLanguage": "en",
+
+    "links": {
+      "readme": "https://github.com/rakuyoMo/Flotilla#readme",
+      "readmeGettingStarted": "https://github.com/rakuyoMo/Flotilla#getting-started",
+      "readmeDevelopment": "https://github.com/rakuyoMo/Flotilla#development"
+    }
+  },
+
+  {
+    "code": "zh-Hans",
+    "directory": "zh/",
+    "name": "简体中文",
+    "ogLocale": "zh_CN",
+    "imageLanguage": "zh",
+
+    "links": {
+      "readme": "https://github.com/rakuyoMo/Flotilla/blob/main/README-ZH.md",
+      "readmeGettingStarted": "https://github.com/rakuyoMo/Flotilla/blob/main/README-ZH.md#快速上手",
+      "readmeDevelopment": "https://github.com/rakuyoMo/Flotilla/blob/main/README-ZH.md#开发"
+    }
+  }
+]

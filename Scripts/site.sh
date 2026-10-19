@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-# 组装官网到 build/site/：拷入 website/ 的源码，从母版生成位图，取 GitHub 上的全部 Release 写成 releases.json
+# 组装官网到 build/site/：由模板与各语言文案生成页面，拷入 404 页与样式、脚本，从母版生成位图，
+# 取 GitHub 上的全部 Release 写成 releases.json
 
 set -euo pipefail
 
@@ -20,10 +21,13 @@ readonly ICON_DARK="Sources/Flotilla/Resources/AppIconDark.png"
 # README 的头图、截图与帆船画稿
 readonly RESOURCE_DIR="docs/resources"
 
-# 1. 清空并重建产物目录，拷入手写的页面、样式与脚本
+# 1. 清空并重建产物目录，按 website/pages/ 的模板与 website/locales/ 的文案生成每种语言的页面，
+#    再拷入 404 页与样式、脚本；模板与文案的源文件不进产物
 rm -rf "$SITE_DIR"
 mkdir -p "$SITE_DIR"
-cp -R website/. "$SITE_DIR/"
+swift Scripts/generate-site-pages.swift website "$SITE_DIR"
+cp website/404.html "$SITE_DIR/"
+cp -R website/assets "$SITE_DIR/"
 mkdir -p "$IMAGE_DIR"
 
 # 2. 从母版生成位图
