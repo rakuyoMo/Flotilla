@@ -57,8 +57,11 @@ Sources/Flotilla/       App 源码
   Info.plist            App 包的 Info.plist，不参与编译，由打包脚本拷入 .app
 Sources/FlotillaDockTile/  Dock tile 的 stub 可执行文件，由打包脚本拷入 .app
 Tests/FlotillaTests/    单元测试（Swift Testing）
+Scripts/appcast.sh      更新清单脚本：压缩打包好的 App，生成嵌入更新说明的签名更新清单，输出到 build/updates/
 Scripts/bundle.sh       打包脚本：组装 .app 并签名
-Scripts/release.sh      发版脚本：改版本号并开 release PR
+Scripts/check-release-notes.sh  检查某个版本的更新说明是否齐全，发版脚本、更新清单脚本与两个 workflow 共用
+Scripts/embed-release-notes.swift  把每种语言的更新说明与更新日志页链接嵌进更新清单，由 appcast.sh 调用
+Scripts/release.sh      发版脚本：改版本号，连同这一版的更新说明开 release PR
 Scripts/site.sh         官网组装脚本：拷入 website/、生成位图、取 Release 数据，输出到 build/site/
 docs/release-notes/     每个版本的更新说明：X.Y.Z/ 下每种语言一份 <语言>.md，见 “更新说明”
 docs/requirements/      需求文档：00 为总览，01–13 为按实现顺序拆分的阶段
