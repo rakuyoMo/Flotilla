@@ -57,8 +57,11 @@ final class FinderFolderIconStore {
     /// 各访达文件夹最近一次读到的外观，按路径；收到事件后与它比较，外观变了才重新取图
     private var appearances: [String: FinderFolderAppearance] = [:]
 
-    /// 向 QuickLook 取到的图标与取图时的外观，按路径；没有的访达文件夹用 `NSWorkspace` 的图标
-    private var icons: [String: (image: NSImage, appearance: FinderFolderAppearance)] = [:]
+    /// 向 QuickLook 取到的图标与它的版本，按路径；没有的访达文件夹用 `NSWorkspace` 的图标
+    private var icons: [String: (image: NSImage, version: Int)] = [:]
+
+    /// 最近一张换进缓存的图标的版本：每换进一张新图加 1，各访达文件夹、各次换图的版本都不相同
+    private var latestIconVersion = 0
 
     /// 还在取图的访达文件夹：每次取图的编号，按路径；取图结束时移除，被更新的一次取图顶替后，旧的结果丢掉
     private var loadingIDs: [String: UUID] = [:]
@@ -141,18 +144,29 @@ final class FinderFolderIconStore {
         icons[Self.folderPath(of: file)]?.image ?? file.icon
     }
 
-    /// 访达文件夹当前所用图标的标识：用的是 QuickLook 取到的图时为取图时的外观，用 `FileReference.icon` 时为 nil
+    /// 访达文件夹当前所用图标的版本：每换进一张 QuickLook 取到的新图就换一个，用 `FileReference.icon` 时为 nil
     ///
-    /// 组图标的输入据此判断预览里的访达文件夹换没换图
+    /// 组图标的输入据此判断预览里的访达文件夹换没换图：外观变了、深浅外观或图标样式切换后重取，换进新图都换版本
     /// - Parameter file: 组里的文件
-    func iconAppearance(of file: FileReference) -> FinderFolderAppearance? {
-        icons[Self.folderPath(of: file)]?.appearance
+    func iconVersion(of file: FileReference) -> Int? {
+        icons[Self.folderPath(of: file)]?.version
     }
 
     /// 访达文件夹是否还在取图：取完（含取不出）之前，Dock 同步要等它
     /// - Parameter file: 组里的文件
     func isLoadingIcon(of file: FileReference) -> Bool {
         loadingIDs[Self.folderPath(of: file)] != nil
+    }
+
+    /// 系统外观或图标样式变了：要用 QuickLook 的访达文件夹全部重取，旧图留到新图取到再换
+    ///
+    /// 由 `start()` 里的观察调用；测试里直接调用，模拟样式切换
+    func reloadAllIcons() {
+        #warning("TODO: 未能实测 切换深浅外观与 “图标与小组件样式” 之后，QuickLook 马上重取的访达文件夹图标是否已是新的样子")
+
+        for (path, appearance) in appearances where appearance.needsQuickLookIcon {
+            loadIcon(atPath: path)
+        }
     }
 }
 
@@ -185,7 +199,7 @@ extension FinderFolderIconStore {
             appearances[path] = appearance
 
             if appearance.needsQuickLookIcon {
-                loadIcon(atPath: path, appearance: appearance)
+                loadIcon(atPath: path)
             }
         }
     }
@@ -224,16 +238,7 @@ extension FinderFolderIconStore {
         }
 
         // 旧图留到新图取到再换，期间仍按旧图显示
-        loadIcon(atPath: path, appearance: appearance)
-    }
-
-    /// 系统外观或图标样式变了：要用 QuickLook 的访达文件夹全部重取，旧图留到新图取到再换
-    private func reloadAllIcons() {
-        #warning("TODO: 未能实测 切换深浅外观与 “图标与小组件样式” 之后，QuickLook 马上重取的访达文件夹图标是否已是新的样子")
-
-        for (path, appearance) in appearances where appearance.needsQuickLookIcon {
-            loadIcon(atPath: path, appearance: appearance)
-        }
+        loadIcon(atPath: path)
     }
 
     /// 全部层级里访达文件夹的路径，含子组里的
@@ -258,10 +263,8 @@ extension FinderFolderIconStore {
 
 extension FinderFolderIconStore {
     /// 向 QuickLook 取一个访达文件夹的图标；结果回到主线程，换进缓存后发出通知
-    /// - Parameters:
-    ///   - path: 文件夹的路径
-    ///   - appearance: 取图时读到的外观，记作这张图的标识
-    private func loadIcon(atPath path: String, appearance: FinderFolderAppearance) {
+    /// - Parameter path: 文件夹的路径
+    private func loadIcon(atPath path: String) {
         let loadingID = UUID()
         loadingIDs[path] = loadingID
 
@@ -273,23 +276,20 @@ extension FinderFolderIconStore {
                 self?.finishLoading(
                     atPath: path,
                     loadingID: loadingID,
-                    appearance: appearance,
                     image: image
                 )
             }
         }
     }
 
-    /// 一次取图有了结果：取到了就换进缓存，取不出就退回 `NSWorkspace` 的图标；都发出通知
+    /// 一次取图有了结果：取到了就换进缓存、换一个版本，取不出就退回 `NSWorkspace` 的图标；都发出通知
     /// - Parameters:
     ///   - path: 文件夹的路径
     ///   - loadingID: 这次取图的编号
-    ///   - appearance: 取图时读到的外观
     ///   - image: 取到的图标；取不出时为 nil
     private func finishLoading(
         atPath path: String,
         loadingID: UUID,
-        appearance: FinderFolderAppearance,
         image: NSImage?
     ) {
         // 已被更新的一次取图顶替，或文件夹已从组树里拿掉：晚到的结果丢掉
@@ -299,7 +299,9 @@ extension FinderFolderIconStore {
 
         // 取不出是常态（文件夹刚被删除、没有权限），不记日志
         if let image {
-            icons[path] = (image, appearance)
+            // 外观没变、只是重取（深浅外观或图标样式切换）时同样换版本：取到的图可能已经不同，交给 Dock 同步按像素比对
+            latestIconVersion += 1
+            icons[path] = (image, latestIconVersion)
         } else {
             icons[path] = nil
         }

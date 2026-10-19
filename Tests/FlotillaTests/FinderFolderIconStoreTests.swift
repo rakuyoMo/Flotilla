@@ -55,7 +55,7 @@ extension FinderFolderIconStoreTests {
 
         #expect(color.red - color.green > 100)
         #expect(color.red - color.blue > 100)
-        #expect(iconStore.iconAppearance(of: folder)?.tagColor == 6)
+        #expect(iconStore.iconVersion(of: folder) != nil)
     }
 
     /// 没上色的、换过自定义图标的访达文件夹：不向 QuickLook 取，与 `NSWorkspace` 的图标逐像素相同
@@ -82,7 +82,7 @@ extension FinderFolderIconStoreTests {
             let workspaceIcon = NSWorkspace.shared.icon(forFile: folder.url.path(percentEncoded: false))
 
             #expect(!iconStore.isLoadingIcon(of: folder))
-            #expect(iconStore.iconAppearance(of: folder) == nil)
+            #expect(iconStore.iconVersion(of: folder) == nil)
 
             for scale: CGFloat in [1, 2] {
                 #expect(
@@ -106,7 +106,7 @@ extension FinderFolderIconStoreTests {
         iconStore.start()
 
         #expect(await updates.wait(forUpdatesAt: FinderFolderIconStore.folderPath(of: folder)))
-        #expect(iconStore.iconAppearance(of: folder)?.symbolOrEmoji != nil)
+        #expect(iconStore.iconVersion(of: folder) != nil)
 
         let workspaceIcon = NSWorkspace.shared.icon(forFile: folder.url.path(percentEncoded: false))
 
@@ -150,7 +150,7 @@ extension FinderFolderIconStoreTests {
         #expect(generator.requestedURLs.count == 1)
     }
 
-    /// 运行中改了标签：1 s 内换上新图、通知带上这个文件夹，标识换成新的外观
+    /// 运行中改了标签：1 s 内换上新图、通知带上这个文件夹，图的版本随之换掉
     @Test
     func tagChangeReloadsIcon() async throws {
         let folder = try addFolder(named: "红色", tags: ["红色\n6"])
@@ -163,14 +163,18 @@ extension FinderFolderIconStoreTests {
         try #require(await updates.wait(forUpdatesAt: path))
 
         let redIcon = iconStore.icon(of: folder)
+        let redVersion = try #require(iconStore.iconVersion(of: folder))
 
         try FinderFolderAttributes.setTags(["绿色\n2"], of: folder.url)
 
         // 50 轮至少 1 s：单独跑时就是 1 s 之内
         #expect(await updates.wait(forUpdatesAt: path, count: 2, rounds: 50))
         #expect(iconStore.icon(of: folder) !== redIcon)
-        #expect(iconStore.iconAppearance(of: folder)?.tagColor == 2)
         #expect(generator.requestedURLs.count == 2)
+
+        let greenVersion = try #require(iconStore.iconVersion(of: folder))
+
+        #expect(greenVersion != redVersion)
     }
 
     /// 去掉标签：不再向 QuickLook 取，退回 `NSWorkspace` 的图标，同样通知
@@ -188,7 +192,7 @@ extension FinderFolderIconStoreTests {
         try FinderFolderAttributes.setTags([], of: folder.url)
 
         #expect(await updates.wait(forUpdatesAt: path, count: 2, rounds: 50))
-        #expect(iconStore.iconAppearance(of: folder) == nil)
+        #expect(iconStore.iconVersion(of: folder) == nil)
         #expect(generator.requestedURLs.count == 1)
     }
 
@@ -237,7 +241,7 @@ extension FinderFolderIconStoreTests {
         #expect(await !updates.wait(forUpdatesAt: path, count: 2, rounds: 30))
         #expect(updates.paths == [path])
         #expect(generator.requestedURLs.count == 1)
-        #expect(iconStore.iconAppearance(of: folder) == nil)
+        #expect(iconStore.iconVersion(of: folder) == nil)
     }
 
     /// QuickLook 取不出：退回 `NSWorkspace` 的图标，也算取完，照样通知
@@ -252,7 +256,7 @@ extension FinderFolderIconStoreTests {
 
         #expect(await updates.wait(forUpdatesAt: FinderFolderIconStore.folderPath(of: folder)))
         #expect(!iconStore.isLoadingIcon(of: folder))
-        #expect(iconStore.iconAppearance(of: folder) == nil)
+        #expect(iconStore.iconVersion(of: folder) == nil)
     }
 }
 

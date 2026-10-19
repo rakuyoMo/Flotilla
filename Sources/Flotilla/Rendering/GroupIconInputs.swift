@@ -11,11 +11,11 @@ struct GroupIconInputs: Equatable {
     /// 按顺序参与预览的项，见 `GroupIconRenderer.previewItems(of:previewIconCount:)`
     let previewItems: [GroupItem]
 
-    /// 预览里各项所用访达文件夹图标的标识，与 `previewItems` 一一对应，见 `FinderFolderIconStore.iconAppearance(of:)`
+    /// 预览里各项所用访达文件夹图标的版本，与 `previewItems` 一一对应，见 `FinderFolderIconStore.iconVersion(of:)`
     ///
-    /// 访达文件夹用的是 QuickLook 取到的图时为取图时的外观；用 `NSWorkspace` 的图标，或不是文件时为 nil。
-    /// 访达文件夹换了图，这一项的值没变，输入也跟着变
-    let previewFinderFolderIconAppearances: [FinderFolderAppearance?]
+    /// 访达文件夹用的是 QuickLook 取到的图时为这张图的版本；用 `NSWorkspace` 的图标，或不是文件时为 nil。
+    /// 访达文件夹每换进一张新图，这一项的值没变，输入也跟着变
+    let previewFinderFolderIconVersions: [Int?]
 
     /// 按组图标的渲染参数取出它的输入
     /// - Parameters:
@@ -38,10 +38,10 @@ struct GroupIconInputs: Equatable {
         )
 
         // 只有文件可能是访达文件夹；不是访达文件夹的文件在图标库里查不到，同样为 nil
-        previewFinderFolderIconAppearances = previewItems.map {
+        previewFinderFolderIconVersions = previewItems.map {
             guard case .file(let file) = $0 else { return nil }
 
-            return finderFolderIcons.iconAppearance(of: file)
+            return finderFolderIcons.iconVersion(of: file)
         }
     }
 }

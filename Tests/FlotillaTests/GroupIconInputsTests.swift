@@ -193,6 +193,41 @@ extension GroupIconInputsTests {
 
         #expect(try rootInputs(of: store, finderFolderIcons: iconStore) == previewChanged)
     }
+
+    /// 外观没变、只是重取换进了新图（深浅外观或 “图标与小组件样式” 切换后）：预览里的访达文件夹换了版本，输入同样不同，
+    /// 同步器才会重画、按像素比对
+    @Test
+    func reloadedFinderFolderIconChangesInputs() async throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appending(path: "FlotillaTests-\(UUID().uuidString)")
+
+        defer {
+            try? FileManager.default.removeItem(at: directory)
+        }
+
+        let store = GroupStore(fileURL: directory.appending(path: "folders.json"))
+        let folder = try makeFinderFolder(named: "红色", in: directory)
+
+        store.addItems([.file(folder)], to: store.addRootGroup(named: "资料").id)
+
+        let generator = FinderFolderIconGeneratorStub()
+        let iconStore = generator.makeIconStore(following: store)
+        let updates = FinderFolderIconUpdateRecorder(of: iconStore)
+        let path = FinderFolderIconStore.folderPath(of: folder)
+
+        iconStore.start()
+
+        try #require(await updates.wait(forUpdatesAt: path))
+
+        let original = try rootInputs(of: store, finderFolderIcons: iconStore)
+
+        // 模拟样式切换：外观没变，全部重取
+        iconStore.reloadAllIcons()
+
+        try #require(await updates.wait(forUpdatesAt: path, count: 2))
+
+        #expect(try rootInputs(of: store, finderFolderIcons: iconStore) != original)
+    }
 }
 
 // MARK: - Private
