@@ -92,9 +92,10 @@
   - 不用的：丢掉旧图，退回 `NSWorkspace` 的图标，发出通知
 - 系统深浅外观（KVO 观察 `NSApplication.shared.effectiveAppearance`）、图标样式（`NSWorkspaceIconAppearanceConfigurationDidChangeNotification`，见 [01](01-foundation.md)）变了：要用 QuickLook 的全部重取
 - QuickLook 的结果在它自己的队列上，回到主线程再动缓存
-- 面板（`GroupGridView`）开着时收到通知：
+- 面板（`GroupGridView`）开着时收到通知，只对组的层级：
   - 已建的格里，这个访达文件夹换上当前的图；之后才建的格建的时候就取当前的图
   - 预览里有这个访达文件夹的子组，重画它的组图标；预览里没有它的子组不重画
+  - 访达文件夹的层级照需求 38，格不随通知改写：子文件夹恰好也在组树里时，图标库 “没有新图” 的通知会把缩略图加载器换上的图改回 `FileReference.icon`
 - 设置窗口（`GroupTreeViewController`）开着时收到通知：已经创建出来的行里，这个访达文件夹的行按当前的图重新填充
   - 不重建树：选中、展开与正在编辑的组名都不受影响
 - Dock 同步（`DockTileSynchronizer`，见 [02](02-dock-tile.md)）：
@@ -118,7 +119,7 @@
   - 请求 `.icon`，不是 `.thumbnail`；边长 101 pt（`GroupPanelMetrics.iconSize`），倍率取面板所在屏幕的
   - 画满 101 pt 的图标画布，与其它格的图标一样大；不像缩略图那样放进 100 pt 的画布居中
   - 按路径新建 URL 去取，理由同上
-- 不监听：回到这一层时重建网格，照常重新读
+- 不监听：回到这一层时重建网格，照常重新读；图标库的通知不改写这一层的格（见需求 37）
 - 其余的子文件夹与文件照旧：请求 `.thumbnail`，子文件夹生成不出缩略图，保持图标
 
 ## 平台事实
@@ -210,7 +211,7 @@ macOS 27.0.1 实测。
   - `GroupTreeViewControllerTests`：收到通知后这一行换上新图；选中、展开与正在编辑的组名都不变
 - 面板：
   - `GroupGridFinderFolderIconTests`：网格建好之后才取到图，访达文件夹的格换上新图；预览里有它的子组重画，预览格里画的正是新图；只有 App 的子组不重画
-  - `GroupGridThumbnailTests`：访达文件夹的层级里，上了色的、有 emoji 的子文件夹请求 `.icon`，没上色的子文件夹与文件请求 `.thumbnail`；结果换上发起请求的那一格
+  - `GroupGridThumbnailTests`：访达文件夹的层级里，上了色的、有 emoji 的子文件夹请求 `.icon`，没上色的子文件夹与文件请求 `.thumbnail`；结果换上发起请求的那一格；子文件夹也在组树里时，加载器换上的图在图标库发出 “没有新图” 的通知后保持不变
   - `FileThumbnailLoaderTests`：子文件夹的 `.icon` 画满 101 pt 的图标画布，与 QuickLook 按 101 pt 给的图标逐像素相同（真的 QuickLook）
 - 不写会走到 `DockTileSynchronizer.synchronize()`、`start()` 或 `DockPreferences.restartDock` 的测试：`restartDock` 按进程名结束真实的 Dock；同步器的推迟与订阅由屏上验收覆盖
 - 只在临时目录里建文件夹、打标签；不在 `~/Library/Application Support/Flotilla` 写东西
