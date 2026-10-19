@@ -7,7 +7,8 @@ import QuickLookThumbnailing
 ///
 /// 面板的单元格、子组与 Dock 上 tile 的组图标、设置窗口的行都经这里取访达文件夹的图标。
 /// 上了色、有 emoji 或符号的访达文件夹向 QuickLook 取系统画好的图标，其余的用 `NSWorkspace` 的图标。
-/// 跟着组树监听全部层级里的访达文件夹，外观变了重新取图，取到后发出 `didUpdateIconNotification`
+/// 跟着组树监听全部层级里的访达文件夹，外观变了重新取图，取到后发出 `didUpdateIconNotification`；
+/// 原路径上换了文件夹时，改为监听新的那个
 @MainActor
 final class FinderFolderIconStore {
     /// 一个访达文件夹取图结束，或取图超过 `loadingWaitLimit` 还没有结果时在主线程发出，
@@ -59,6 +60,11 @@ final class FinderFolderIconStore {
     /// 正在监听的访达文件夹，按路径
     private var watchers: [String: FinderFolderWatcher] = [:]
 
+    /// 接上监听时各路径上文件夹的身份，按路径；那时路径上没有东西的没有这一项
+    ///
+    /// 收到事件、组树变化时与路径上现在的身份比较，对不上就是换了文件夹，要重新接上监听
+    private var identities: [String: FileIdentity] = [:]
+
     /// 各访达文件夹最近一次读到的外观，按路径；收到事件后与它比较，外观变了才重新取图
     private var appearances: [String: FinderFolderAppearance] = [:]
 
@@ -73,8 +79,8 @@ final class FinderFolderIconStore {
     /// 取图结束时移除；被更新的一次取图顶替后，旧的结果丢掉。超过上限的照常等结果，只是 Dock 同步不再等它
     private var iconLoads: [String: (id: UUID, isOverdue: Bool)] = [:]
 
-    /// 收到事件后等着重读外观的任务，按路径；合并间隔内再来事件时取消并替换
-    private var pendingReads: [String: Task<Void, Never>] = [:]
+    /// 收到事件后等着核对的任务，按路径；合并间隔内再来事件时取消并替换
+    private var pendingChecks: [String: Task<Void, Never>] = [:]
 
     /// 对 “图标与小组件样式” 变化的观察
     private var iconStyleObservation: (any NSObjectProtocol)? = nil
@@ -182,67 +188,117 @@ final class FinderFolderIconStore {
 // MARK: - Watching
 
 extension FinderFolderIconStore {
-    /// 组树变化：按全部层级（含子组）里的访达文件夹增删监听；新加入的读出外观，要用 QuickLook 的随即取图
+    /// 组树变化：按全部层级（含子组）里的访达文件夹增删监听；新加入的读出外观，要用 QuickLook 的随即取图；
+    /// 已在监听的核对一次路径上的文件夹，换了的重新接上
     @objc
     private func updateWatchedFolders() {
-        #warning("TODO: 未能实测 “文稿” “桌面” “下载” 等受保护位置里的访达文件夹，启动时读扩展属性、打开监听会不会比面板里第一次打开它更早弹出隐私授权框")
+        #warning("TODO: 未能实测 “文稿” “桌面” “下载” 等受保护位置里的访达文件夹，启动时读扩展属性与文件身份、打开监听会不会比面板里第一次打开它更早弹出隐私授权框")
 
         let paths = finderFolderPaths(in: store.rootGroups.map { .group($0) })
 
         // 不在组树里的访达文件夹：停止监听，丢掉缓存；还没结束的取图随之作废
         for path in Set(appearances.keys).subtracting(paths) {
             watchers[path] = nil
+            identities[path] = nil
             appearances[path] = nil
             icons[path] = nil
             iconLoads[path] = nil
-            pendingReads.removeValue(forKey: path)?.cancel()
+            pendingChecks.removeValue(forKey: path)?.cancel()
+        }
+
+        // 已在监听的也核对一次：路径上原来没有文件夹（没有监听，收不到事件），
+        // 或新文件夹放到原路径上晚于事件之后的那次核对时，靠这里发现
+        let replacedPaths = paths
+            .intersection(appearances.keys)
+            .filter { FileIdentity(path: $0) != identities[$0] }
+
+        for path in replacedPaths {
+            rewatchFolder(atPath: path)
         }
 
         for path in paths.subtracting(appearances.keys) {
-            // 文件夹打不开时没有监听，外观照样读：读不到的当作没有，用 `NSWorkspace` 的图标
-            watchers[path] = FinderFolderWatcher(path: path) { [weak self] in
-                self?.scheduleRead(atPath: path)
-            }
-
-            let appearance = FinderFolderAppearance(folderAt: URL(filePath: path))
-            appearances[path] = appearance
-
-            if appearance.needsQuickLookIcon {
-                loadIcon(atPath: path)
-            }
+            startWatching(atPath: path)
         }
     }
 
-    /// 文件夹的属性变了：合并间隔之后重读外观，间隔内再来的事件并进同一次
-    private func scheduleRead(atPath path: String) {
-        pendingReads[path]?.cancel()
-        pendingReads[path] = Task { [weak self] in
+    /// 在一个路径上接上监听：记下路径上文件夹的身份，打开监听，读出外观；要用 QuickLook 的随即取图
+    ///
+    /// 先记身份、再打开：两步之间文件夹被换掉时，下一次核对身份对不上，重新接上，不会一直监听着被换走的那个
+    /// - Parameter path: 访达文件夹的路径
+    /// - Returns: 读到的外观
+    @discardableResult
+    private func startWatching(atPath path: String) -> FinderFolderAppearance {
+        identities[path] = FileIdentity(path: path)
+
+        // 文件夹打不开时没有监听，外观照样读：读不到的当作没有，用 `NSWorkspace` 的图标
+        watchers[path] = FinderFolderWatcher(path: path) { [weak self] in
+            self?.scheduleCheck(atPath: path)
+        }
+
+        let appearance = FinderFolderAppearance(folderAt: URL(filePath: path))
+        appearances[path] = appearance
+
+        if appearance.needsQuickLookIcon {
+            loadIcon(atPath: path)
+        }
+
+        return appearance
+    }
+
+    /// 路径上换了文件夹（含原来有、现在没有，原来没有、现在有）：丢掉旧的监听，在这个路径上重新接上、重读外观
+    ///
+    /// 要用 QuickLook 的重新取图，旧图留到新图取到再换；不用的丢掉旧图，退回 `NSWorkspace` 的图标
+    /// - Parameter path: 访达文件夹的路径
+    private func rewatchFolder(atPath path: String) {
+        // 旧的监听绑定的是被换走的那个文件夹：先停掉，关掉描述符
+        watchers[path] = nil
+
+        guard !startWatching(atPath: path).needsQuickLookIcon else { return }
+
+        dropIcon(atPath: path)
+    }
+
+    /// 文件夹有了事件：合并间隔之后核对这个路径，间隔内再来的事件并进同一次
+    private func scheduleCheck(atPath path: String) {
+        pendingChecks[path]?.cancel()
+        pendingChecks[path] = Task { [weak self] in
             try? await Task.sleep(for: Self.eventCoalescingInterval)
             guard !Task.isCancelled else { return }
 
-            self?.rereadAppearance(atPath: path)
+            self?.checkFolder(atPath: path)
         }
     }
 
-    /// 重读外观：没变（只是权限、时间戳等其它属性变了）就什么也不做；变了按新外观取图，或退回 `NSWorkspace` 的图标
-    private func rereadAppearance(atPath path: String) {
-        pendingReads[path] = nil
+    /// 核对一个路径：路径上换了文件夹就重新接上监听，还是原来那个就重读外观
+    private func checkFolder(atPath path: String) {
+        pendingChecks[path] = nil
 
         // 等待期间已从组树里拿掉
         guard let oldAppearance = appearances[path] else { return }
 
+        // 文件夹被删除、挪走后，原路径上可能已是另一个文件夹，之后的事件要从它那里来
+        guard FileIdentity(path: path) == identities[path] else {
+            rewatchFolder(atPath: path)
+            return
+        }
+
+        rereadAppearance(atPath: path, oldAppearance: oldAppearance)
+    }
+
+    /// 重读外观：没变（只是权限、时间戳等其它属性变了）就什么也不做；变了按新外观取图，或退回 `NSWorkspace` 的图标
+    /// - Parameters:
+    ///   - path: 访达文件夹的路径
+    ///   - oldAppearance: 上一次读到的外观
+    private func rereadAppearance(atPath path: String, oldAppearance: FinderFolderAppearance) {
         let appearance = FinderFolderAppearance(folderAt: URL(filePath: path))
 
         guard appearance != oldAppearance else { return }
 
         appearances[path] = appearance
 
+        // 去掉了颜色与 emoji、符号，或换上了自定义图标
         guard appearance.needsQuickLookIcon else {
-            // 去掉了颜色与 emoji、符号，或换上了自定义图标：丢掉旧图，还没结束的取图作废
-            icons[path] = nil
-            iconLoads[path] = nil
-
-            postIconUpdate(atPath: path)
+            dropIcon(atPath: path)
             return
         }
 
@@ -336,6 +392,15 @@ extension FinderFolderIconStore {
         } else {
             icons[path] = nil
         }
+
+        postIconUpdate(atPath: path)
+    }
+
+    /// 访达文件夹不再用 QuickLook 取到的图：丢掉旧图，还没结束的取图作废，发出通知；之后用 `NSWorkspace` 的图标
+    /// - Parameter path: 文件夹的路径
+    private func dropIcon(atPath path: String) {
+        icons[path] = nil
+        iconLoads[path] = nil
 
         postIconUpdate(atPath: path)
     }

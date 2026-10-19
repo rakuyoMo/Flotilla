@@ -271,6 +271,71 @@ extension FinderFolderIconStoreTests {
         #expect(iconStore.iconVersion(of: folder) == nil)
     }
 
+    /// 原路径上的文件夹被换掉（挪走后在原处放了打着别的颜色标签的新文件夹）：换上新文件夹的图；
+    /// 之后改的是新文件夹的标签，照样察觉得到
+    @Test
+    func replacedFolderIsWatchedInstead() async throws {
+        let folder = try addFolder(named: "红色", tags: ["红色\n6"])
+        let path = FinderFolderIconStore.folderPath(of: folder)
+        let iconStore = generator.makeIconStore(following: store)
+        let updates = FinderFolderIconUpdateRecorder(of: iconStore)
+
+        iconStore.start()
+
+        try #require(await updates.wait(forUpdatesAt: path))
+
+        let redVersion = try #require(iconStore.iconVersion(of: folder))
+
+        try moveAway(folder)
+        try makeFolder(at: folder.url, tags: ["绿色\n2"])
+
+        #expect(await updates.wait(forUpdatesAt: path, count: 2))
+        #expect(generator.requestedURLs.count == 2)
+
+        let greenVersion = try #require(iconStore.iconVersion(of: folder))
+
+        #expect(greenVersion != redVersion)
+
+        // 监听的已是新文件夹
+        try FinderFolderAttributes.setTags(["紫色\n3"], of: folder.url)
+
+        #expect(await updates.wait(forUpdatesAt: path, count: 3))
+        #expect(generator.requestedURLs.count == 3)
+    }
+
+    /// 文件夹挪走后原路径上没有东西：丢掉旧图；之后在原处放了新文件夹，没有监听、收不到事件，
+    /// 组树一变就核对出来，接上监听、换上新文件夹的图
+    @Test
+    func folderAppearingAtPathIsWatchedOnTreeChange() async throws {
+        let folder = try addFolder(named: "红色", tags: ["红色\n6"])
+        let path = FinderFolderIconStore.folderPath(of: folder)
+        let iconStore = generator.makeIconStore(following: store)
+        let updates = FinderFolderIconUpdateRecorder(of: iconStore)
+
+        iconStore.start()
+
+        try #require(await updates.wait(forUpdatesAt: path))
+
+        try moveAway(folder)
+
+        #expect(await updates.wait(forUpdatesAt: path, count: 2))
+        #expect(iconStore.iconVersion(of: folder) == nil)
+
+        try makeFolder(at: folder.url, tags: ["绿色\n2"])
+
+        store.rename(groupID: try #require(store.rootGroups.first).id, to: "资料夹")
+
+        #expect(await updates.wait(forUpdatesAt: path, count: 3))
+        #expect(iconStore.iconVersion(of: folder) != nil)
+        #expect(generator.requestedURLs.count == 2)
+
+        // 接上了新文件夹的监听
+        try FinderFolderAttributes.setTags(["紫色\n3"], of: folder.url)
+
+        #expect(await updates.wait(forUpdatesAt: path, count: 4))
+        #expect(generator.requestedURLs.count == 3)
+    }
+
     /// QuickLook 取不出：退回 `NSWorkspace` 的图标，也算取完，照样通知
     @Test
     func failedLoadFallsBackAndFinishes() async throws {
@@ -303,8 +368,7 @@ extension FinderFolderIconStoreTests {
     ) throws -> FileReference {
         let url = directory.appending(path: name, directoryHint: .isDirectory)
 
-        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
-        try FinderFolderAttributes.setTags(tags, of: url)
+        try makeFolder(at: url, tags: tags)
 
         let item = try #require(GroupItem(url: url, title: nil))
         let targetID = try groupID ?? #require(store.rootGroups.first).id
@@ -317,5 +381,23 @@ extension FinderFolderIconStoreTests {
         }
 
         return file
+    }
+
+    /// 在给定的位置新建一个文件夹、打上标签
+    /// - Parameters:
+    ///   - url: 文件夹的位置，在本用例的临时目录里
+    ///   - tags: 标签，每项是 “名称\n颜色号”；为空时不打
+    private func makeFolder(at url: URL, tags: [String]) throws {
+        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        try FinderFolderAttributes.setTags(tags, of: url)
+    }
+
+    /// 把组里的访达文件夹挪到临时目录里的另一个位置，原路径上不再有东西
+    /// - Parameter folder: 组里的访达文件夹
+    private func moveAway(_ folder: FileReference) throws {
+        try FileManager.default.moveItem(
+            at: folder.url,
+            to: directory.appending(path: UUID().uuidString, directoryHint: .isDirectory)
+        )
     }
 }
