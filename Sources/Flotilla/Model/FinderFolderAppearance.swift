@@ -17,7 +17,10 @@ struct FinderFolderAppearance: Equatable {
     /// 只当不透明的数据比较，不解析：访达写入的完整格式没有公开
     let symbolOrEmoji: Data?
 
-    /// 是否换过自定义图标：换过的文件夹显示自定义图标，打了颜色标签也不着色
+    /// 是否换过自定义图标：Finder 信息里置了 kHasCustomIcon，且文件夹里有存放图标的 `Icon\r`
+    ///
+    /// 换过的文件夹显示自定义图标，打了颜色标签也不着色。
+    /// 访达给文件夹加 emoji 或符号时同样置上 kHasCustomIcon，但不放 `Icon\r`：这样的文件夹不算
     let hasCustomIcon: Bool
 
     /// 图标是否要向 QuickLook 取：macOS 26 起，没有自定义图标、带颜色或有 emoji 与符号的文件夹
@@ -45,10 +48,14 @@ extension FinderFolderAppearance {
     /// Finder flags 里 “有自定义图标” 的位（kHasCustomIcon）
     private static let customIconFlag: UInt16 = 0x0400
 
+    /// 换过自定义图标的文件夹里存放图标的文件名
+    private static let customIconFileName = "Icon\r"
+
     /// 从文件夹的扩展属性读出外观；读不到的（属性不存在、文件夹已删除、没有权限）都当作没有
     ///
     /// 标签的颜色不读 `URLResourceValues.labelNumber`：它读的是 Finder 信息里旧的标签位，只写了标签扩展属性时是 0；
-    /// 自定义图标不读 `URLResourceValues.customIcon`：它对换过图标的文件夹也给 nil
+    /// 自定义图标不读 `URLResourceValues.customIcon`：它对换过图标的文件夹也给 nil；
+    /// `Icon\r` 按路径 `lstat`，不走 `URL` 的资源值：资源值会被缓存
     /// - Parameter url: 文件夹的 URL
     init(folderAt url: URL) {
         let path = url.path(percentEncoded: false)
@@ -58,8 +65,11 @@ extension FinderFolderAppearance {
 
         symbolOrEmoji = Self.extendedAttribute(Self.symbolOrEmojiAttributeName, ofFileAt: path)
 
-        hasCustomIcon = Self.extendedAttribute(Self.finderInfoAttributeName, ofFileAt: path)
-            .map { Self.isCustomIconFlagSet(in: $0) } ?? false
+        let finderInfo = Self.extendedAttribute(Self.finderInfoAttributeName, ofFileAt: path)
+        let isCustomIconFlagSet = finderInfo.map { Self.isCustomIconFlagSet(in: $0) } ?? false
+
+        // 访达加 emoji 或符号时也置上这一位，只是不放 `Icon\r`：两样都有才是换过自定义图标
+        hasCustomIcon = isCustomIconFlagSet && Self.hasCustomIconFile(inFolderAt: path)
     }
 }
 
@@ -107,6 +117,18 @@ extension FinderFolderAppearance {
         let flags = UInt16(bytes[8]) << 8 | UInt16(bytes[9])
 
         return flags & customIconFlag != 0
+    }
+
+    /// 文件夹里是否有存放自定义图标的 `Icon\r`
+    /// - Parameter path: 文件夹的路径
+    private static func hasCustomIconFile(inFolderAt path: String) -> Bool {
+        let iconFilePath = URL(filePath: path, directoryHint: .isDirectory)
+            .appending(path: customIconFileName)
+            .path(percentEncoded: false)
+
+        var info = stat()
+
+        return lstat(iconFilePath, &info) == 0
     }
 
     /// 读出文件的一个扩展属性

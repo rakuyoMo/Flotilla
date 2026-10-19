@@ -192,7 +192,7 @@ extension FinderFolderIconStore {
     /// 已在监听的核对一次路径上的文件夹，换了的重新接上
     @objc
     private func updateWatchedFolders() {
-        #warning("TODO: 未能实测 “文稿” “桌面” “下载” 等受保护位置里的访达文件夹，启动时读扩展属性与文件身份、打开监听会不会比面板里第一次打开它更早弹出隐私授权框")
+        #warning("TODO: 未能实测 “文稿” “桌面” “下载” 等受保护位置里的访达文件夹，启动时读扩展属性与文件身份、查 `Icon\\r`、打开监听会不会比面板里第一次打开它更早弹出隐私授权框")
 
         let paths = finderFolderPaths(in: store.rootGroups.map { .group($0) })
 

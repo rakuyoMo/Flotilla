@@ -223,6 +223,34 @@ extension FinderFolderIconStoreTests {
         #expect(greenVersion != redVersion)
     }
 
+    /// 访达加了 emoji 的文件夹（置了 kHasCustomIcon、没有 `Icon\r`）同样向 QuickLook 取、有版本；
+    /// 改了颜色版本随之换掉，Dock 上的组图标才会重画
+    @Test(.enabled(if: FinderFolderAppearance.isSupported))
+    func finderEmojiFolderGetsNewVersionOnTagChange() async throws {
+        let folder = try addFolder(named: "红色", tags: ["红色\n6"])
+        let path = FinderFolderIconStore.folderPath(of: folder)
+
+        try FinderFolderAttributes.setSymbolOrEmoji(#"{"emoji":"🫪"}"#, of: folder.url)
+        try FinderFolderAttributes.setCustomIconFlag(of: folder.url)
+
+        let iconStore = generator.makeIconStore(following: store)
+        let updates = FinderFolderIconUpdateRecorder(of: iconStore)
+
+        iconStore.start()
+
+        try #require(await updates.wait(forUpdatesAt: path))
+
+        let redVersion = try #require(iconStore.iconVersion(of: folder))
+
+        try FinderFolderAttributes.setTags(["绿色\n2"], of: folder.url)
+
+        #expect(await updates.wait(forUpdatesAt: path, count: 2))
+
+        let greenVersion = try #require(iconStore.iconVersion(of: folder))
+
+        #expect(greenVersion != redVersion)
+    }
+
     /// 去掉标签：不再向 QuickLook 取，退回 `NSWorkspace` 的图标，同样通知
     @Test(.enabled(if: FinderFolderAppearance.isSupported))
     func removingTagFallsBackToWorkspaceIcon() async throws {

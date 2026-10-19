@@ -96,6 +96,48 @@ final class FinderFolderAppearanceTests {
         #expect(!appearance.needsQuickLookIcon)
     }
 
+    /// 访达加 emoji 时置上 kHasCustomIcon、不放 `Icon\r`：不算换过自定义图标，macOS 26 起图标向 QuickLook 取，
+    /// 改色、换 emoji 才有新图
+    @Test
+    func finderEmojiFlagIsNotCustomIcon() throws {
+        let folder = try makeFolder(tags: ["红色\n6", "绿色\n2"])
+
+        try FinderFolderAttributes.setSymbolOrEmoji(#"{"emoji":"🫪"}"#, of: folder)
+        try FinderFolderAttributes.setCustomIconFlag(of: folder)
+
+        let appearance = FinderFolderAppearance(folderAt: folder)
+
+        #expect(!appearance.hasCustomIcon)
+        #expect(appearance.needsQuickLookIcon == FinderFolderAppearance.isSupported)
+    }
+
+    /// 置了 kHasCustomIcon、又有 `Icon\r`：换过自定义图标，打了颜色标签也不向 QuickLook 取
+    @Test
+    func flagWithIconFileIsCustomIcon() throws {
+        let folder = try makeFolder(tags: ["红色\n6"])
+
+        try FinderFolderAttributes.setCustomIconFlag(of: folder)
+        try FinderFolderAttributes.addCustomIconFile(to: folder)
+
+        let appearance = FinderFolderAppearance(folderAt: folder)
+
+        #expect(appearance.hasCustomIcon)
+        #expect(!appearance.needsQuickLookIcon)
+    }
+
+    /// 只有 `Icon\r`、没有 kHasCustomIcon：不算换过自定义图标
+    @Test
+    func iconFileWithoutFlagIsNotCustomIcon() throws {
+        let folder = try makeFolder(tags: ["红色\n6"])
+
+        try FinderFolderAttributes.addCustomIconFile(to: folder)
+
+        let appearance = FinderFolderAppearance(folderAt: folder)
+
+        #expect(!appearance.hasCustomIcon)
+        #expect(appearance.needsQuickLookIcon == FinderFolderAppearance.isSupported)
+    }
+
     /// 已删除的文件夹读不到扩展属性，当作没有
     @Test
     func deletedFolderHasNoAppearance() {
