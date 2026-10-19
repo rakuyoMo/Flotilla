@@ -71,7 +71,8 @@ docs/resources/         README 的头图 readme-header-<en|zh>-<light|dark>.png�
                         帆船画稿 sailing-ship-*.png；
                         官网组装时从这里取截图与帆船画稿，并由浅色头图生成分享图
 website/                官网源码：pages/ 下是页面模板，locales/ 下是语言清单 languages.json 与每种语言一份的文案 <语言代码>.json，
-                        组装时生成每种语言的页面，英文在根目录，简体中文在 zh/；404.html 只有英文，原样拷贝；
+                        组装时生成每种语言的页面，英文在根目录，简体中文、繁体中文、日文、韩文分别在 zh/ zh-hant/ ja/ ko/；
+                        404.html 只有英文，原样拷贝；
                         assets/ 下是样式与脚本，位图在组装时生成，不进仓库
 .github/workflows/      GitHub Actions：ci.yml 检查与构建，release-notes.yml 检查 release PR 的更新说明，release.yml 发布新版本，pages.yml 组装并部署官网
 .claude/skills/release/ Claude Code 的 release skill：用自然语言发布新版本

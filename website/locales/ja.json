@@ -1,0 +1,495 @@
+{
+  "common": {
+    "appName": "帰帆",
+    "skipLink": "本文へスキップ",
+
+    "nav": {
+      "label": "メインナビゲーション",
+      "menu": "メニュー",
+      "features": "機能",
+      "howItWorks": "仕組み",
+      "releaseNotes": "更新履歴",
+      "download": "ダウンロード"
+    },
+
+    "languageMenu": {
+      "label": "言語を選択"
+    },
+
+    "viewOnGitHub": "GitHubで見る",
+    "buildFromSource": "ソースからビルド",
+
+    "requirements": {
+      "macOS": "macOS 15以降",
+      "appleSilicon": "Appleシリコン",
+      "openSource": "無料のオープンソース（GPL-3.0）"
+    },
+
+    "settingsScreenshotAlt": "「Essentials」グループを展開した設定ウインドウと、その下の「General」の設定",
+    "downloadStarted": "ダウンロードを<wbr>開始しました",
+
+    "noReleases": {
+      "message": "まだリリースはありません。ソースから帰帆をビルドするか、GitHubで新しいリリースの通知を受け取るよう設定できます。",
+      "watchHint": "新しいバージョンの通知を受け取るには、GitHubで<strong>Watch › Custom › Releases</strong>を選択します。"
+    },
+
+    "getReleaseNotifications": "リリースの通知を受け取る",
+    "firstLaunchBlocked": "帰帆はAppleの公証を受けていないため、はじめて開こうとするとmacOSにブロックされます。警告には、マルウェアが含まれていないことをAppleが検証できないと表示されます。",
+
+    "accessibility": {
+      "settingsPath": "この権限は<strong>システム設定 › プライバシーとセキュリティ › アクセシビリティ</strong>で許可できます。macOS 27では<strong>プライバシーとセキュリティ › デバイスの制御とデータへのアクセス</strong>です。",
+      "reenable": "帰帆はアドホック署名のため、アップデート後にこの権限をもう一度許可する必要がある場合があります。"
+    },
+
+    "withoutAccessibility": {
+      "nearPointer": "パネルはポインタの近くに表示され、グループアイコンと正確に揃わないことがあります",
+      "slower": "クリックしてからパネルが開くまで、少し時間がかかります"
+    },
+
+    "buildRequirements": "帰帆のビルドには、Xcode Command Line Toolsとmiseが必要です。Xcodeアプリ本体は必要ありません。",
+
+    "footer": {
+      "tagline": "Dockを、すっきり整理。",
+      "label": "フッター",
+      "product": "製品",
+      "resources": "リソース",
+      "license": "ライセンス"
+    }
+  },
+
+  "home": {
+    "meta": {
+      "title": "帰帆 — Dockを、すっきり整理。",
+      "description": "MacのDockで、アプリ、ファイル、フォルダ、Webページをグループにまとめられます。"
+    },
+
+    "hero": {
+      "title": "Dockを、すっきり<wbr>整理。",
+      "lead": "MacのDockで、アプリ、ファイル、フォルダ、Webページをグループにまとめられます。",
+      "download": "Mac版をダウンロード",
+      "whatsNew": "<span data-release-version></span>の変更内容 →",
+      "screenshotAlt": "Dockの上に開いた「Essentials」グループ。アプリとフォルダがグリッドに並び、矢印がグループアイコンを指している"
+    },
+
+    "about": {
+      "eyebrow": "概要",
+      "statement": "<span class=\"about-statement-muted\">Dock標準のフォルダは右側に並びます。</span>帰帆なら、左側でアプリをグループにまとめられます。",
+
+      "groups": {
+        "title": "帰帆のグループ",
+        "position": "左側のアプリ領域に置ける"
+      },
+
+      "dockFolders": {
+        "title": "Dock標準のフォルダ",
+        "position": "右側にしか置けない"
+      },
+
+      "highlights": {
+        "noFolders": "グループにまとめてもアプリやファイルは移動されず、ディスク上にフォルダを作る必要もありません。",
+        "mixedItems": "アプリ、ファイル、Finderのフォルダ、Webページを、同じグループにまとめられます。",
+        "nativeGrid": "グループアイコンをクリックすると、Dock標準のフォルダと同じ見た目とアニメーションのグリッドが開きます。"
+      }
+    },
+
+    "features": {
+      "eyebrow": "機能",
+      "title": "アプリ、ファイル、<wbr>Webページを<wbr>まとめて整理。",
+
+      "folders": {
+        "title": "フォルダを<wbr>パネルの中で開く",
+        "description": "フォルダは同じパネルの中で開き、ファイルのサムネールが表示されます。Finderに切り替えるには、グリッドの最後にある<strong>Finderで開く</strong>を選択します。",
+        "backButton": "戻るボタンで1つ上の階層に戻れます",
+        "hiddenFiles": "設定で<strong>不可視ファイルを表示</strong>をオンにできます",
+        "screenshotAlt": "パネルで開いた「Wallpapers」フォルダ。画像のサムネールが並び、最後に「Open in Finder」がある"
+      },
+
+      "dragAndDrop": {
+        "title": "ドラッグ＆<wbr>ドロップ",
+        "description": "アプリ、ファイル、フォルダは、Dockのグループアイコンか設定ウインドウのグループにドロップできます。Webページも設定ウインドウにドロップできます。"
+      },
+
+      "settings": {
+        "title": "設定ウインドウで<wbr>グループを管理",
+        "add": "<strong>追加…</strong>をクリックして、アプリ、ファイル、フォルダ、Webページを選択します",
+        "rename": "グループをダブルクリックすると、名前を変更できます",
+        "reorder": "リストの項目をドラッグして、並べ替えたり、ほかのグループに移動したりできます",
+        "moreOptions": "項目を右クリックするか、Controlキーを押したままクリックすると、ほかの操作を選べます"
+      },
+
+      "alongsideApps": {
+        "title": "アプリと並ぶ<wbr>グループ",
+        "description": "最上位のグループは、それぞれ固有の名前とアイコンで、Dockの左側に表示されます。"
+      },
+
+      "mixedItems": {
+        "title": "アプリ、ファイル、<wbr>Webページ",
+        "description": "アプリ、ファイル、フォルダ、Webページをひとまとめにできます。ファイルはデフォルトのアプリで、Webページはデフォルトのブラウザで開きます。"
+      },
+
+      "nestedGroups": {
+        "title": "グループの中に<wbr>グループ",
+        "description": "グループの中にグループを追加できます。サブグループを開いて中を見たあとは、戻るボタンで元の階層に戻ります。"
+      },
+
+      "gridView": {
+        "title": "グリッド表示",
+        "description": "グループはDockの上にグリッドで開き、アイコンの位置に揃います。"
+      },
+
+      "iconPreviews": {
+        "title": "グループアイコンの<wbr>プレビュー",
+        "description": "グループアイコンには最初のいくつかの項目が最大4つまでプレビューされ、数は設定で変更できます。背景はMacの外観モードに合わせて、ライトとダークで切り替わります。"
+      },
+
+      "reorderAndRemove": {
+        "title": "並べ替えと<wbr>削除",
+        "description": "パネルの項目はドラッグで並べ替えられます。削除するには、項目をパネルの外にドラッグし、<strong>削除</strong>が表示されてから離します。"
+      },
+
+      "tracking": {
+        "title": "移動や名前変更にも<wbr>追従",
+        "description": "アプリやファイルを移動したり名前を変更したりしても、グループから開けます。アプリをアップデートしたあとは、新しくインストールされたバージョンを帰帆が開きます。"
+      },
+
+      "background": {
+        "title": "バックグラウンドで<wbr>動作",
+        "description": "帰帆はメニューバーで動作し、パネルを開いているときもDockにアイコンは表示されません。また、パネルが使用中のアプリからフォーカスを奪うこともありません。"
+      },
+
+      "languages": {
+        "title": "5つの言語に<wbr>対応",
+        "description": "英語、簡体字中国語、繁体字中国語、日本語、韓国語に対応しています。アプリはシステムの言語で表示され、対応していない言語の場合は英語で表示されます。"
+      }
+    },
+
+    "howItWorks": {
+      "eyebrow": "仕組み",
+      "title": "グループは<wbr>どのように<wbr>Dockに置かれるのか？",
+      "lead": "Dockのアプリ領域にグループを置くため、帰帆は最上位のグループごとにプレースホルダアプリを作成し、グループの名前とアイコンでDockに追加します。",
+
+      "click": {
+        "title": "グループアイコンを<wbr>クリック",
+        "description": "Dockが、そのグループのプレースホルダアプリを起動します。"
+      },
+
+      "openURL": {
+        "title": "プレースホルダが<wbr><code>flotilla://</code>の<wbr>URLを開く",
+        "description": "このURLで帰帆に通知したあと、ほかのアプリを前面に出さずに終了します。"
+      },
+
+      "panel": {
+        "title": "帰帆が<wbr>パネルを開閉",
+        "description": "帰帆が起動していない場合は、まずmacOSが帰帆を起動します。グループアイコンにドロップされた項目も、プレースホルダが帰帆に渡します。"
+      },
+
+      "changes": {
+        "title": "帰帆は<wbr>Macの何を<wbr>変更するのか？",
+
+        "dockIcons": {
+          "title": "変更するのは<wbr>帰帆のグループアイコンだけ",
+          "preferences": "帰帆は、Dockの環境設定（<code>com.apple.dock</code>）を通じてグループアイコンを管理します。",
+          "scope": "変更するのは<code>persistent-apps</code>のうち帰帆自身の項目、つまりDockの左側にあるグループアイコンだけです。ほかのアイコンやDockの設定はそのまま変わりません。"
+        },
+
+        "dockRestart": {
+          "title": "変更のたびに<wbr>Dockが再起動",
+          "description": "Dockの環境設定を変更したあと、帰帆はDockのプロセスを終了します。macOSがDockを自動的に再起動し、変更が反映されます。"
+        },
+
+        "backup": {
+          "title": "変更の前に<wbr>バックアップ",
+          "description": "帰帆は起動するたびに、最初の変更を行う前に<code>com.apple.dock</code>の完全なバックアップを書き出します。バックアップは最新の5つが保持されます。"
+        },
+
+        "data": {
+          "title": "データと設定",
+          "location": "データは<code>~/Library/<wbr>Application Support/<wbr>Flotilla</code>に保存されます：",
+          "groups": "<code>folders.json</code>：グループのデータ",
+          "dockTiles": "<code>DockTiles/</code>：最上位のグループのプレースホルダアプリ",
+          "backups": "<code>Backups/</code>：Dockの環境設定のバックアップ",
+          "settings": "設定は環境設定ドメイン<code>com.rakuyo.flotilla</code>に保存されます。"
+        },
+
+        "network": {
+          "title": "ネットワークへの<wbr>アクセス",
+          "description": "帰帆は、Webページのタイトルを取得するときと、GitHub Releasesでアップデートを確認・ダウンロードするときにインターネットに接続します。自動確認は、設定の「ソフトウェアアップデート」でオフにできます。"
+        }
+      }
+    },
+
+    "openSource": {
+      "eyebrow": "オープンソース",
+      "title": "コードも議論も<wbr>GitHubで。",
+      "lead": "帰帆は無料のオープンソースです。GitHubでコードを見たり、問題を報告したり、開発に参加したりできます。",
+
+      "follow": {
+        "title": "プロジェクトを<wbr>フォロー",
+        "description": "帰帆を気に入ったら、GitHubでスターを付けてください。新しいバージョンの通知を受け取るには、<strong>Watch › Custom › Releases</strong>を選択します。"
+      },
+
+      "issues": {
+        "title": "問題を報告",
+        "description": "うまく動かないときは、GitHub Issuesで報告できます。"
+      },
+
+      "contribute": {
+        "title": "開発に参加",
+        "description": "プルリクエストを作成する前に、<code>mise run swift:lint</code>と<code>swift test</code>を実行し、どちらも通ることを確認してください。",
+        "guidelines": "コントリビューションのガイドラインは<a href=\"https://github.com/rakuyoMo/Flotilla/blob/main/AGENTS.md\">AGENTS.md</a>に、機能の要件は<a href=\"https://github.com/rakuyoMo/Flotilla/tree/main/docs/requirements\">docs/requirements</a>にあります。どちらも中国語です。"
+      },
+
+      "build": {
+        "title": "ソースから<wbr>ビルド",
+        "link": "ビルド手順"
+      },
+
+      "license": {
+        "description": "帰帆はGNU General Public License v3.0のもとで公開されています。",
+        "link": "ライセンス"
+      }
+    },
+
+    "faq": {
+      "eyebrow": "よくある質問",
+      "title": "帰帆の<wbr>インストールと<wbr>使い方",
+      "readmeBefore": "詳しくは",
+      "readmeAfter": "を参照してください。",
+
+      "blocked": {
+        "question": "はじめて開くとき、帰帆がmacOSにブロックされるのはなぜですか？",
+        "openAnyway": "<strong>完了</strong>をクリックしてから<strong>システム設定 › プライバシーとセキュリティ</strong>を開き、<strong>セキュリティ</strong>の下にある<strong>このまま開く</strong>をクリックします。このボタンは、帰帆を開こうとしてから1時間のあいだ表示されます。",
+        "guideLink": "インストールガイドを見る →"
+      },
+
+      "withoutAccessibility": {
+        "question": "アクセシビリティの権限がなくても使えますか？",
+        "answer": "使えます。ただし、次の2点が異なります："
+      },
+
+      "reenable": {
+        "question": "アップデート後に、アクセシビリティの権限をもう一度許可する必要があるのはなぜですか？"
+      },
+
+      "dockRestart": {
+        "question": "Dockが再起動するのはなぜですか？",
+        "reason": "帰帆は、グループアイコンを追加したり更新したりするためにDockの環境設定を変更します。そのあとDockのプロセスを終了し、macOSがDockを自動的に再起動することで変更が反映されます。",
+        "triggers": "グループのプレビューが変わったときや、外観モードがライトとダークで切り替わったときもアイコンが更新されるため、同じようにDockが再起動します。"
+      },
+
+      "removeIcon": {
+        "question": "Dockのグループアイコンを取り除いたり、元に戻したりするには？",
+        "remove": "グループアイコンをDockの外にドラッグすると取り除けます。",
+        "addBack": "グループは<strong>Dockにありません</strong>と表示されて設定ウインドウに残り、自動的にDockに戻ることはありません。アイコンを戻すには、グループを右クリックして<strong>Dockに追加</strong>を選択します。"
+      },
+
+      "requirements": {
+        "question": "帰帆はどのMacで使えますか？",
+        "answer": "帰帆は、Appleシリコンを搭載し、macOS 15以降を実行しているMacで使えます。"
+      },
+
+      "languages": {
+        "question": "帰帆はどの言語に対応していますか？",
+        "answer": "英語、簡体字中国語、繁体字中国語、日本語、韓国語に対応しています。アプリはシステムの言語で表示され、対応していない言語の場合は英語で表示されます。",
+        "appName": "アプリの名前もシステムの言語に合わせて変わります。簡体字中国語では「归帆」、繁体字中国語では「歸帆」、日本語では「帰帆」、そのほかの言語では「Flotilla」と表示されます。"
+      }
+    },
+
+    "toast": {
+      "close": "閉じる",
+
+      "steps": {
+        "unzip": "ダウンロードしたファイルを展開し、<code>Flotilla.app</code>を「アプリケーション」にドラッグします",
+        "openAnyway": "「プライバシーとセキュリティ」で<strong>このまま開く</strong>をクリックします",
+        "accessibility": "システム設定でアクセシビリティの権限を許可します"
+      },
+
+      "guide": "インストールガイドを見る"
+    }
+  },
+
+  "download": {
+    "meta": {
+      "title": "帰帆をダウンロード",
+      "description": "帰帆をダウンロードして、Dockのアプリをグループにまとめましょう。Appleシリコンを搭載したmacOS 15以降のMacに対応し、インストール、初回起動、権限の設定についても説明しています。"
+    },
+
+    "hero": {
+      "title": "帰帆を<wbr>ダウンロード",
+      "version": "バージョン<span data-release-version></span>",
+      "released": "<time data-release-date></time>リリース"
+    },
+
+    "card": {
+      "label": "ダウンロード",
+      "notReleased": "まだ<wbr>リリースされていません",
+
+      "fallback": {
+        "title": "最新バージョン",
+        "description": "GitHubのReleasesページから、最新の<code>Flotilla-X.Y.Z.zip</code>をダウンロードしてください。"
+      },
+
+      "download": "ダウンロード",
+      "downloadAgain": "もう一度ダウンロード",
+      "openReleases": "Releasesページを開く",
+      "nextSteps": "次に、下のインストール手順に進んでください",
+      "allVersions": "すべてのバージョンを見る"
+    },
+
+    "install": {
+      "eyebrow": "インストール",
+      "title": "インストールと<wbr>初期設定。",
+
+      "unzip": {
+        "title": "展開して<wbr>「アプリケーション」に移動",
+        "description": "ダウンロードした<code>Flotilla-X.Y.Z.zip</code>をダブルクリックして展開し、<code>Flotilla.app</code>を「アプリケーション」フォルダにドラッグします。",
+        "note": "Finderでは、システムの言語に合わせたアプリ名が表示されます。日本語の場合は「帰帆」です。",
+        "applications": "アプリケーション"
+      },
+
+      "firstLaunch": {
+        "title": "はじめて開く",
+        "dismiss": "<strong>完了</strong>をクリックして警告を閉じ、次の手順で帰帆を開きます：",
+        "openSettings": "<strong>システム設定 › プライバシーとセキュリティ</strong>を開きます",
+        "openAnyway": "<strong>セキュリティ</strong>まで下にスクロールし、帰帆がブロックされたというメッセージを見つけて、<strong>このまま開く</strong>をクリックします",
+        "openAnywayNote": "このボタンは、帰帆を開こうとしてから1時間しか表示されません",
+        "password": "確認を求められたら、ログインパスワードを入力します",
+        "done": "これで、帰帆を通常どおり開けるようになります。",
+        "terminal": "ターミナルを使う場合は、次のコマンドで隔離属性を削除してから帰帆を開きます：",
+
+        "why": {
+          "question": "macOSが帰帆をブロックするのはなぜですか？",
+          "answer": "帰帆はアドホック署名で、Appleの公証を受けていません。そのため、初回起動時にmacOSのセキュリティ警告が表示されます。",
+          "appleGuide": "こうしたチェックと、アプリを開けるようにする方法について詳しくは、Appleのサポート記事「<a href=\"https://support.apple.com/ja-jp/102445\">Macでアプリを安全に開く</a>」を参照してください。"
+        },
+
+        "mock": {
+          "done": "完了",
+          "security": "セキュリティ",
+          "openAnyway": "このまま開く"
+        }
+      },
+
+      "accessibility": {
+        "title": "アクセシビリティの<wbr>権限を許可",
+        "purpose": "アクセシビリティの権限があると、帰帆はDockのインターフェイスを読み取って、次のことができます：",
+        "locate": "グループアイコンの位置を特定し、パネルをそこに揃える",
+        "openOnRelease": "Dockのフォルダと同じように、マウスボタンを離した瞬間にパネルを開く",
+        "prompt": "権限が許可されていない場合、帰帆を起動するたびに、最初にグループアイコンをクリックしたときにmacOSが許可を求めます。",
+
+        "optional": {
+          "title": "許可しなくても<wbr>使えます",
+          "differences": "違いは次の2点だけです："
+        },
+
+        "reenable": {
+          "title": "もう一度許可が<wbr>必要になる場合も"
+        },
+
+        "mock": {
+          "heading": "アクセシビリティ"
+        }
+      },
+
+      "files": {
+        "title": "ファイルと<wbr>フォルダ",
+        "description": "「書類」「デスクトップ」「ダウンロード」など、保護された場所にあるフォルダを帰帆ではじめて開くと、macOSがアクセスの許可を求めます。帰帆がフォルダの内容を読み込んで表示するには、この許可が必要です。"
+      }
+    },
+
+    "copyButton": {
+      "copied": "コピーしました。ターミナルにペーストして実行してください",
+      "label": "コピー"
+    },
+
+    "getStarted": {
+      "eyebrow": "はじめに",
+      "title": "最初のグループを<wbr>作ろう。",
+      "lead": "メニューバーの帆船アイコンをクリックして<strong>設定…</strong>を選ぶと、グループを管理できます。<strong>帰帆を終了</strong>も同じメニューにあります。",
+
+      "create": {
+        "title": "グループを作成",
+        "newGroup": "<strong>グループ</strong>の下にある<strong>新規グループ</strong>をクリックし、名前を入力してReturnキーを押します",
+        "newGroupNote": "Dockが一瞬再起動し、左側のアプリ領域にグループアイコンが表示されます",
+        "add": "グループを選択して<strong>追加…</strong>をクリックし、<strong>アプリを追加…</strong>、<strong>ファイルを追加…</strong>、<strong>Webページを追加…</strong>のいずれかを選択します",
+        "drop": "アプリ、ファイル、フォルダは、設定ウインドウのグループやDockのグループアイコンにドロップしても追加できます。Webページは、ブラウザから設定ウインドウのグループにドラッグします"
+      },
+
+      "panel": {
+        "title": "パネルを使う",
+        "open": "Dockのグループアイコンをクリックして、開きたいアプリ、ファイル、Webページを選択します",
+        "browse": "サブグループやフォルダはクリックすると開きます。戻るボタンで1つ上の階層に戻ります",
+        "close": "閉じるには、グループアイコンをもう一度クリックするか、パネルの外をクリックするか、Escキーを押します",
+        "reorder": "グループ内の項目をドラッグすると、順序を変更できます",
+        "remove": "項目を削除するには、パネルの外にドラッグし、<strong>削除</strong>が表示されてから離します"
+      },
+
+      "readme": "詳しい使い方はREADMEにあります"
+    },
+
+    "build": {
+      "eyebrow": "ソースからビルド",
+      "title": "ビルド手順",
+
+      "commandLineTools": {
+        "title": "Xcode Command Line Tools 26以降",
+        "description": "バージョン26にはSwift 6.2とmacOS 26 SDKが含まれます。パネルは<code>NSGlassEffectView</code>を使っているため、ビルドにはこのSDKが必要です。"
+      },
+
+      "mise": {
+        "description": "<code>mise.toml</code>で定義されたビルドコマンドを実行します。"
+      },
+
+      "commands": {
+        "bundleComment": "リリース版をビルドし、build/Flotilla.appとしてパッケージ化してアドホック署名する",
+        "openComment": "パッケージ化したアプリを起動する"
+      },
+
+      "notes": {
+        "ldWarning": "ビルド中に表示される2つの<code>ld: warning: search path ... not found</code>警告は無視してかまいません。これらは、Command Line Toolsに含まれていないディレクトリを指しています。",
+        "quitInstalled": "<code>build/Flotilla.app</code>を起動する前に、インストール済みの帰帆を終了してください。すでに起動している帰帆がある場合、もう一方を起動しても、起動中のものがアクティブになるだけです。"
+      },
+
+      "readme": "テストやコードスタイルなどはREADMEへ"
+    }
+  },
+
+  "releases": {
+    "meta": {
+      "title": "帰帆の更新履歴",
+      "description": "帰帆の各バージョンの変更内容、リリース日、ダウンロードリンクを確認できます。"
+    },
+
+    "hero": {
+      "title": "更新履歴",
+      "lead": "各リリースの変更内容を確認して、必要なバージョンをダウンロードできます。",
+      "atomFeed": "Atomフィード"
+    },
+
+    "list": {
+      "label": "バージョン"
+    },
+
+    "fallback": {
+      "title": "更新履歴は<wbr>GitHubにあります",
+      "description": "GitHub Releasesで、各バージョンの変更内容を読んだりダウンロードしたりできます。",
+      "openReleases": "GitHub Releasesを開く"
+    },
+
+    "empty": {
+      "title": "まだリリースは<wbr>ありません"
+    },
+
+    "toc": {
+      "title": "バージョン",
+      "jump": "バージョンへ移動"
+    },
+
+    "entry": {
+      "copyLink": "このバージョンへのリンクをコピー",
+      "linkCopied": "リンクをコピーしました",
+      "latest": "最新",
+      "prerelease": "プレリリース"
+    }
+  }
+}
