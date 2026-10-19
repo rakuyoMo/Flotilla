@@ -292,10 +292,8 @@ func languageOption(_ language: Language, href: String, isCurrent: Bool) -> Stri
 ///
 /// 目标语言依次取：
 /// - 在语言菜单里选过的语言：site.js 写进 `localStorage` 的 `flotilla.language`，键名与 site.js 的 `LANGUAGE_KEY` 一致
-/// - 浏览器的首选语言：只看列表的第一项，补全文字后按 “语言 + 文字” 与语言清单逐项比对
-/// - 默认语言，即语言清单的第一项
-///
-/// 首选语言不往列表后面找：繁体环境下 Chrome 的列表常是 `zh-TW, zh, en-US, en`，往后找会被 `zh` 带到简体中文页
+/// - 系统语言，即浏览器首选语言列表的第一项：补全文字后按 “语言 + 文字” 与语言清单逐项比对
+/// - 默认语言，即语言清单的第一项：网站没有系统语言的页面时用它，不改用首选语言列表里排在后面的语言
 ///
 /// 读取 `localStorage` 抛错时不跳转：这时记不住语言菜单里的选择，留在本页，菜单才能切换语言
 func headScript(languages: [Language], prefix: String, pagePath: String) -> String {
