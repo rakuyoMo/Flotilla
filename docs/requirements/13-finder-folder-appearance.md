@@ -29,8 +29,10 @@
   - 0 或没写颜色号的标签无色，不算
   - 取最后一个带颜色的标签的颜色号，没有时为 nil
 - emoji 与符号：`com.apple.icon.folder#S` 的原始字节，没有时为 nil
-  - 只当不透明的数据比较、不解析：访达实际写入的完整格式没见过样本
-- 是否换过自定义图标：`com.apple.FinderInfo` 偏移 8 起的 2 字节是大端的 Finder flags，`0x0400`（kHasCustomIcon）置位即有
+  - 只当不透明的数据比较、不解析：访达写入的完整格式没有公开
+- 是否换过自定义图标：`com.apple.FinderInfo` 偏移 8 起的 2 字节是大端的 Finder flags，`0x0400`（kHasCustomIcon）置位，且文件夹里有存放图标的 `Icon\r`
+  - `Icon\r` 按路径 `lstat`，不走 `URL` 的资源值：资源值会被缓存
+  - 访达给文件夹加 emoji 或符号时也置上 kHasCustomIcon，但不放 `Icon\r`：这样的文件夹不算，照样向 QuickLook 取，改色、换 emoji 都有新的版本，Dock 上的组图标照常重画
 - 读不到的（属性不存在、文件夹已删除、没有权限）都当作没有
 - 向 QuickLook 取图的条件（`needsQuickLookIcon`）：macOS 26 及以上，没有自定义图标，且有颜色或有 emoji 与符号
 
@@ -128,12 +130,25 @@ macOS 27.0.1 实测。
 
 ### 取图
 
-- `NSWorkspace.icon(forFile:)` 与 `URLResourceValues.effectiveIcon`：标签的颜色、emoji 与符号一律不画，给默认的蓝色文件夹
+- `NSWorkspace.icon(forFile:)` 与 `URLResourceValues.effectiveIcon`：没有置 kHasCustomIcon 的文件夹，标签的颜色、emoji 与符号一律不画，给默认的蓝色文件夹
 - `QLThumbnailGenerator` 按 `.icon` 取，给系统画好的文件夹：
   - 七种标签颜色各自正确
   - 多个标签时取最后一个带颜色的；无色标签不算，`[红, 无色]` 与 `[无色, 红]` 都是红
   - `com.apple.icon.folder#S` 里的 emoji 与符号画在文件夹正面
-- 换过自定义图标（`NSWorkspace.setIcon`）的文件夹：两种取法都给自定义图标，打了颜色标签也不着色
+- 换过自定义图标（`NSWorkspace.setIcon`：置 kHasCustomIcon、放 `Icon\r`）的文件夹：两种取法都给自定义图标，打了颜色标签也不着色
+- 访达给文件夹加 emoji 或符号：置上 kHasCustomIcon（实测 Finder flags 为 `0x0404`），但不放 `Icon\r`；`com.apple.icon.folder#S` 写的是 `{"emoji":"🫪"}` 这样的 JSON
+- 置了 kHasCustomIcon、没有 `Icon\r` 的文件夹（macOS 27.0.1，看文件夹正面的颜色）：
+
+  | 扩展属性 | `NSWorkspace` | QuickLook `.icon` |
+  |---|---|---|
+  | 只有标志位 | 蓝 | 蓝 |
+  | 标志位 + 红色标签 | 蓝 | 蓝 |
+  | 标志位 + emoji | 蓝，正面另有 emoji | 蓝 |
+  | 标志位 + 红色标签 + emoji | 红 | 红 |
+  | 红色标签 + emoji，没有标志位 | 蓝 | 红 |
+
+  - 置了标志位之后，`NSWorkspace` 也画出标签颜色与 emoji
+  - 标志位 + 标签、没有 `com.apple.icon.folder#S` 时，两种取法都给不上色的文件夹
 - 出图的像素边长取不小于请求的标准档：20 pt × 1 → 24 px，20 pt × 2 → 48 px，101 pt × 1 → 128 px，101 pt × 2 → 256 px，179 pt × 2 → 512 px，512 pt × 2 → 1024 px
 - 结果的 `nsImage` 总按 2 倍出图：20 pt × 1 的请求，`cgImage` 是 24 px，`nsImage` 里的位图却是 48 px；要按倍率取位图，用 `cgImage`
 - 一张 `NSImage` 里放几张像素不同、点尺寸相同的位图，绘制时挑出像素不小于所需的最小那张：20 pt 的 1 倍、2 倍取 24、48 px，101 pt 的 1 倍、2 倍取 128、256 px，179 pt 的 2 倍取 512 px
@@ -147,7 +162,7 @@ macOS 27.0.1 实测。
 - 用 `NSURL.setResourceValue(["绿色"], forKey: .tagNamesKey)` 打标签，写进去的是 “绿色\n0”（无色）：测试里直接写扩展属性
 - emoji 与符号：`com.apple.icon.folder#S`，内容是 JSON，如 `{"emoji":"🍕"}`、`{"sym":"star.fill"}`
   - 按这两种写法写入，QuickLook 照画；同样的数据写成二进制 plist 时 QuickLook 不画
-- 自定义图标：`com.apple.FinderInfo` 共 32 字节，偏移 8 起的 2 字节是大端的 Finder flags，`0x0400`（kHasCustomIcon）置位即有；`URLResourceValues.customIcon` 对这样的文件夹给 nil，不能用
+- 自定义图标：`com.apple.FinderInfo` 共 32 字节，偏移 8 起的 2 字节是大端的 Finder flags，`0x0400`（kHasCustomIcon）置位、文件夹里又有 `Icon\r` 才是；`URLResourceValues.customIcon` 对这样的文件夹给 nil，不能用
 
 ### 旧颜色
 
@@ -182,7 +197,9 @@ macOS 27.0.1 实测。
   - 单个颜色：取它的颜色号，用 QuickLook
   - 多个颜色取最后一个；颜色在前、无色在后时仍是那个颜色
   - 只有 `com.apple.icon.folder#S`：原样记下，用 QuickLook
-  - 有自定义图标：打了红色标签也不用 QuickLook
+  - 有自定义图标（置了 kHasCustomIcon、有 `Icon\r`）：打了红色标签也不用 QuickLook
+  - 访达加 emoji 写下的样子（置了 kHasCustomIcon、没有 `Icon\r`）：不算自定义图标，用 QuickLook
+  - 只有 `Icon\r`、没有 kHasCustomIcon：不算自定义图标
   - 已删除的文件夹：当作没有
 - 取图（`FinderFolderIconStoreTests`，真的 QuickLook）：
   - 打了红色标签的：设置窗口与面板的 1 倍、2 倍下，文件夹正面中央是红色
@@ -195,6 +212,7 @@ macOS 27.0.1 实测。
   - 取图迟迟不回：2 s 后不再算取图中、发出通知；结果之后到了照常换上，再通知一次
   - 子组里的访达文件夹同样监听、取图
   - 改了标签：1 s 内换上新图、发出通知，图的版本换成新的
+  - 访达加了 emoji 的文件夹（置了 kHasCustomIcon、没有 `Icon\r`）：取图、有版本，改了颜色版本换掉
   - 去掉标签：退回 `NSWorkspace` 的图标，同样通知
   - 只改了无关的属性（`chmod`）：不重取图、不通知，图还是原来那张
   - 从组树里拿掉之后：再改标签不取图、不通知
