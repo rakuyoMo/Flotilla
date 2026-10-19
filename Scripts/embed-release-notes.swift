@@ -66,7 +66,7 @@ func embedReleaseNotes(appcastPath: String, notesDirectory: String) {
         item.addChild(releasesPageElement(language: language.code, url: language.releasesPage))
     }
 
-    // 4. 按缩进格式序列化，确认解析结果与原文一致后再落盘
+    // 4. 按缩进格式序列化，确认解析结果与读入的说明一致后再落盘
     let data = document.xmlData(options: .nodePrettyPrint)
 
     verifyDescriptions(in: data, expected: notes)
@@ -80,16 +80,26 @@ func embedReleaseNotes(appcastPath: String, notesDirectory: String) {
 
 // MARK: - Helpers
 
-/// 读取一份说明的原文
+/// 读取一份说明，换行统一为 LF
+///
+/// XML 1.0 规定解析时把 CRLF 与单独的 CR 统一成 LF，NSXMLDocument 却不统一 CDATA 里的换行；
+/// 先统一成 LF，清单里的说明不随解析器是否照做而变，写盘前的校验也按统一后的文本比对
 func readNotes(at path: String) -> String {
+    let content: String
+
     do {
-        return try String(contentsOfFile: path, encoding: .utf8)
+        content = try String(contentsOfFile: path, encoding: .utf8)
     } catch {
         fail("读取 \(path) 失败：\(error.localizedDescription)")
     }
+
+    // 先换 CRLF，再换剩下的单独 CR，CRLF 不会变成两个换行
+    return content
+        .replacingOccurrences(of: "\r\n", with: "\n")
+        .replacingOccurrences(of: "\r", with: "\n")
 }
 
-/// 某种语言的内嵌说明：`<description xml:lang="…" sparkle:format="markdown">`，原文放在 CDATA 里
+/// 某种语言的内嵌说明：`<description xml:lang="…" sparkle:format="markdown">`，说明文本放在 CDATA 里
 func descriptionElement(language: String, content: String) -> XMLElement {
     let element = XMLElement(name: "description")
 
@@ -110,7 +120,7 @@ func releasesPageElement(language: String, url: String) -> XMLElement {
     return element
 }
 
-/// 按 Sparkle 读清单的方式解析序列化结果，确认每种语言恰好一份说明，且与原文逐字节相同
+/// 按 Sparkle 读清单的方式解析序列化结果，确认每种语言恰好一份说明，且与读入的说明逐字节相同
 func verifyDescriptions(in data: Data, expected notes: [String]) {
     guard
         let parsed = try? XMLDocument(data: data, options: .nodeLoadExternalEntitiesNever),
@@ -125,14 +135,14 @@ func verifyDescriptions(in data: Data, expected notes: [String]) {
         }
 
         guard matches.count == 1, matches.first?.stringValue == content else {
-            fail("改写后的清单里，\(language.code) 的说明与原文不一致")
+            fail("改写后的清单里，\(language.code) 的说明与读入的文本不一致")
         }
     }
 }
 
-/// 把原文拆成一组 CDATA 节点，依次拼接即为原文
+/// 把文本拆成一组 CDATA 节点，依次拼接即为原来的文本
 ///
-/// CDATA 段里不能出现 `]]>`：原文每出现一次，就从 `]]` 与 `>` 之间断开，分进前后两段
+/// CDATA 段里不能出现 `]]>`：文本里每出现一次，就从 `]]` 与 `>` 之间断开，分进前后两段
 func cdataNodes(for content: String) -> [XMLNode] {
     var segments = content.components(separatedBy: "]]>")
 

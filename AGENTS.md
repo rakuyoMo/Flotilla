@@ -303,7 +303,7 @@ README-ZH.md            README.md 的简体中文版，与它同步修改
 
 每个版本的更新说明放在 `docs/release-notes/X.Y.Z/`，每种语言一份：`en.md` `zh-Hans.md` `zh-Hant.md` `ja.md` `ko.md`，与 `Sources/Flotilla/Resources/` 下的 `.lproj` 同名。
 
-- `mise run appcast` 把每份原文嵌进签名的更新清单，App 的更新窗口按用户的语言显示其中一份
+- `mise run appcast` 把每份说明嵌进签名的更新清单，App 的更新窗口按用户的语言显示其中一份
 - `en.md` 同时是 GitHub Release 的正文，官网的更新日志显示同一份正文
 - `Scripts/check-release-notes.sh X.Y.Z` 检查每份都存在且有内容：发版脚本、更新清单脚本，以及 “更新说明” 与 “发布” 两个 workflow 都调用它
 
