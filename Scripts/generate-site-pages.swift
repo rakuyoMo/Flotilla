@@ -232,6 +232,8 @@ func alternateLinks(languages: [Language], pagePath: String) -> String {
 }
 
 /// 语言菜单的选项，按语言清单的顺序排列，每个选项链到这种语言的同一页面
+///
+/// 链接末尾带 `?lang=<语言代码>`，由目标页的跳转脚本记下这次的选择：中键或在新标签页打开也算选择
 func languageOptions(
     languages: [Language],
     current: Language,
@@ -239,11 +241,13 @@ func languageOptions(
     pagePath: String
 ) -> String {
     languages
-        .map {
-            languageOption(
-                $0,
-                href: relativePath(prefix: prefix, language: $0, pagePath: pagePath),
-                isCurrent: $0.code == current.code
+        .map { language in
+            let href = relativePath(prefix: prefix, language: language, pagePath: pagePath)
+
+            return languageOption(
+                language,
+                href: href + "?lang=\(language.code)",
+                isCurrent: language.code == current.code
             )
         }
         .joined(separator: "\n\n")
@@ -257,7 +261,7 @@ func languageOption(_ language: Language, href: String, isCurrent: Bool) -> Stri
             href="\(href)"
             hreflang="\(language.code)"
             lang="\(language.code)"
-            data-language-switch="\(language.code)"
+            data-language-switch
         """
 
     let currentAttribute = """
@@ -291,11 +295,15 @@ func languageOption(_ language: Language, href: String, isCurrent: Bool) -> Stri
 /// `<head>` 里先于渲染执行的脚本：标记脚本可用，再算出目标语言，与本页语言不同就跳到目标语言的同一页面，保留锚点
 ///
 /// 目标语言依次取：
-/// - 在语言菜单里选过的语言：site.js 写进 `localStorage` 的 `flotilla.language`，键名与 site.js 的 `LANGUAGE_KEY` 一致
+/// - 这次在语言菜单里选的语言：语言菜单的链接带来的 `lang` 参数；记进 `localStorage` 的 `flotilla.language`，
+///   再从地址里去掉这个参数，保留其它参数与锚点
+/// - 在语言菜单里选过的语言：`localStorage` 里记下的 `flotilla.language`
 /// - 系统语言，即浏览器首选语言列表的第一项：补全文字后按 “语言 + 文字” 与语言清单逐项比对
 /// - 默认语言，即语言清单的第一项：网站没有系统语言的页面时用它，不改用首选语言列表里排在后面的语言
 ///
-/// 读取 `localStorage` 抛错时不跳转：这时记不住语言菜单里的选择，留在本页，菜单才能切换语言
+/// `lang` 参数不是语言清单里的代码时，当作没有这次的选择，原样留在地址里
+///
+/// 没有这次的选择、读取 `localStorage` 又抛错时不跳转：这时不知道选过的语言，按系统语言跳转会把选了别的语言的人带回去
 func headScript(languages: [Language], prefix: String, pagePath: String) -> String {
     // 每种语言的代码与本页在这种语言下的相对地址，按语言清单的顺序写成脚本里的数组
     let pages = languages
@@ -316,7 +324,40 @@ func headScript(languages: [Language], prefix: String, pagePath: String) -> Stri
               \(indented(pages, by: "      "))
             ];
 
-            // 读取 localStorage 抛错时记不住语言菜单里的选择：留在本页，菜单才能切换语言
+            // 目标语言与本页不同时，跳到那种语言的同一页面，保留锚点
+            const switchTo = (page) => {
+              if (page.code !== document.documentElement.lang) {
+                location.replace(page.href + location.hash);
+              }
+            };
+
+            // 地址里的 lang 参数是语言清单里的代码时，就是这次在语言菜单里选的语言
+            const params = new URLSearchParams(location.search);
+            const chosen = pages.find((page) => page.code === params.get("lang"));
+
+            if (chosen) {
+              try {
+                localStorage.setItem("flotilla.language", chosen.code);
+              } catch {
+                // 存不进去时只是以后记不住，这次照样按它选
+              }
+
+              // 从地址里去掉 lang 参数，保留其它参数与锚点
+              params.delete("lang");
+
+              const search = params.toString();
+
+              history.replaceState(
+                history.state,
+                "",
+                location.pathname + (search ? "?" + search : "") + location.hash
+              );
+
+              switchTo(chosen);
+              return;
+            }
+
+            // 读取 localStorage 抛错时不知道选过的语言，留在本页：按系统语言跳转会把选了别的语言的人带回去
             let code;
 
             try {
@@ -330,30 +371,33 @@ func headScript(languages: [Language], prefix: String, pagePath: String) -> Stri
 
             // 浏览器的首选语言：只看第一项，补全文字后按 “语言 + 文字” 比对；
             // 标签无效或浏览器不支持 Intl.Locale 时，当作没有匹配
-            const preferred = (() => {
-              try {
-                const tag = navigator.languages?.[0] ?? navigator.language;
-                const locale = new Intl.Locale(tag).maximize();
+            const preferred = \(indented(preferredPageScript(), by: "    "));
 
-                return pages.find((page) => {
-                  const candidate = new Intl.Locale(page.code).maximize();
-
-                  return candidate.language === locale.language
-                    && candidate.script === locale.script;
-                });
-              } catch {
-                return undefined;
-              }
-            })();
-
-            const target = saved ?? preferred ?? pages[0];
-
-            if (target.code !== document.documentElement.lang) {
-              location.replace(target.href + location.hash);
-            }
+            switchTo(saved ?? preferred ?? pages[0]);
           })();
         </script>
         """
+}
+
+/// 跳转脚本里的一个表达式：浏览器首选语言在 `pages` 里对应的那一项，没有匹配时为 `undefined`
+func preferredPageScript() -> String {
+    """
+    (() => {
+      try {
+        const tag = navigator.languages?.[0] ?? navigator.language;
+        const locale = new Intl.Locale(tag).maximize();
+
+        return pages.find((page) => {
+          const candidate = new Intl.Locale(page.code).maximize();
+
+          return candidate.language === locale.language
+            && candidate.script === locale.script;
+        });
+      } catch {
+        return undefined;
+      }
+    })()
+    """
 }
 
 /// 从本页到某种语言的同一页面的相对地址；目标就是站点根目录时写作 `./`
