@@ -121,7 +121,7 @@ final class GroupGridView: NSView {
 
         super.init(frame: CGRect(origin: .zero, size: layout.gridSize))
 
-        // 访达文件夹的外观变了、取到新图：换上这个文件夹的格，重画预览里有它的子组
+        // 访达文件夹的外观变了、取到新图：组的层级换上这个文件夹的格，重画预览里有它的子组
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(finderFolderIconDidUpdate(_:)),
@@ -362,8 +362,10 @@ extension GroupGridView {
         updateLanding()
     }
 
-    /// 一个访达文件夹取图结束：已建的格里，这个文件夹换上图标库当前的图，预览里有它的子组重画组图标；
+    /// 一个访达文件夹取图结束：组的层级里已建的格，这个文件夹换上图标库当前的图，预览里有它的子组重画组图标；
     /// 之后才建的单元格建的时候就取当前的图
+    ///
+    /// 访达文件夹层级里的格不改写：子文件夹不监听，按建格时读到的外观由缩略图加载器取图（需求 38）
     @objc
     private func finderFolderIconDidUpdate(_ notification: Notification) {
         guard
@@ -372,6 +374,21 @@ extension GroupGridView {
             return
         }
 
+        // 子文件夹恰好也在组树里时，图标库 “没有新图” 的通知会把加载器换上的图改回 `FileReference.icon`，
+        // 这一格之后也不再补取
+        if fileThumbnailLoader == nil {
+            replaceIcons(ofFinderFolderAt: path)
+        }
+
+        // 只重画预览里有这个文件夹的子组：预览之外的项不画进组图标
+        for (group, itemView) in groupItemViews where previews(group, finderFolderAt: path) {
+            itemView.icon = groupIcon(of: group)
+        }
+    }
+
+    /// 组的层级里，已建的格中这个访达文件夹换上图标库当前的图
+    /// - Parameter path: 访达文件夹的路径
+    private func replaceIcons(ofFinderFolderAt path: String) {
         // 同一个访达文件夹可能在这一层出现几次，各格都换
         for (index, itemView) in itemViews {
             guard
@@ -382,11 +399,6 @@ extension GroupGridView {
             }
 
             itemView.icon = finderFolderIcons.icon(of: file)
-        }
-
-        // 只重画预览里有这个文件夹的子组：预览之外的项不画进组图标
-        for (group, itemView) in groupItemViews where previews(group, finderFolderAt: path) {
-            itemView.icon = groupIcon(of: group)
         }
     }
 
