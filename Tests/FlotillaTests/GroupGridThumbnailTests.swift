@@ -114,6 +114,45 @@ struct GroupGridThumbnailTests {
         #expect(icon(at: 1, in: grid) === archiveIcon)
     }
 
+    /// 上了色、有 emoji 或符号的子文件夹按建格时读到的外观请求系统画好的图标，生成后换上；
+    /// 没上色的子文件夹与文件照旧请求缩略图
+    @Test
+    func coloredSubfoldersRequestIcons() async throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appending(path: "FlotillaTests-\(UUID().uuidString)")
+
+        defer {
+            try? FileManager.default.removeItem(at: directory)
+        }
+
+        let red = directory.appending(path: "红色", directoryHint: .isDirectory)
+        let emoji = directory.appending(path: "披萨", directoryHint: .isDirectory)
+        let plain = directory.appending(path: "没上色", directoryHint: .isDirectory)
+        let report = directory.appending(path: "报告.txt")
+
+        for folder in [red, emoji, plain] {
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        }
+
+        try FinderFolderAttributes.setTags(["红色\n6"], of: red)
+        try FinderFolderAttributes.setSymbolOrEmoji(#"{"emoji":"🍕"}"#, of: emoji)
+        try Data("报告".utf8).write(to: report)
+
+        let files = [red, emoji, plain, report].map {
+            FileReference(id: UUID(), url: $0, bookmark: nil)
+        }
+
+        let grid = makeGrid(for: .finderFolder(finderFolder, items: files.map { .file($0) }))
+
+        #expect(generator.requestedURLs == files.map(\.url))
+        #expect(generator.requestedRepresentations == [.icon, .icon, .thumbnail, .thumbnail])
+
+        generator.complete(red, with: thumbnail)
+        await settle()
+
+        #expect(icon(at: 0, in: grid) === thumbnail)
+    }
+
     /// 离开这一层、面板收起时网格离开窗口：还没完成的请求全部取消，之后晚到的结果不换上
     @Test
     func leavingWindowCancelsRequestsAndDropsLateResults() async {

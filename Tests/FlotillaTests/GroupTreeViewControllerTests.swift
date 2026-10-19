@@ -614,6 +614,74 @@ extension GroupTreeViewControllerTests {
     }
 }
 
+// MARK: - Finder Folder Icons
+
+extension GroupTreeViewControllerTests {
+    /// 访达文件夹取到新图：这一行就地换上，不重建树，选中、展开与正在编辑的组名都不受影响
+    @Test
+    func finderFolderRowRefreshesInPlace() async throws {
+        let url = directory.appending(path: "红色", directoryHint: .isDirectory)
+
+        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        try FinderFolderAttributes.setTags(["红色\n6"], of: url)
+
+        let item = try #require(GroupItem(url: url, title: nil))
+
+        guard case .file(let finderFolder) = item else {
+            Issue.record("访达文件夹没有分类成文件")
+            return
+        }
+
+        store.addItems([item], to: try #require(store.rootGroups.first).id)
+
+        let generator = FinderFolderIconGeneratorStub()
+        let iconStore = generator.makeIconStore(following: store)
+        let updates = FinderFolderIconUpdateRecorder(of: iconStore)
+        let path = FinderFolderIconStore.folderPath(of: finderFolder)
+
+        iconStore.start()
+
+        try #require(await updates.wait(forUpdatesAt: path))
+
+        let controller = GroupTreeViewController(
+            store: store,
+            finderFolderIcons: iconStore,
+            dockTileSynchronizer: nil
+        )
+
+        let window = makeWindow(width: Self.minimumWidth)
+
+        window.contentView = controller.view
+
+        // 展开 “工作”：行依次是 工作、开发、Chess、红色
+        let outlineView = try groupTreeView(of: controller)
+
+        outlineView.expandItem(outlineView.item(atRow: 0))
+        controller.view.layoutSubtreeIfNeeded()
+
+        let cell = try #require(
+            outlineView.view(atColumn: 0, row: 3, makeIfNecessary: false) as? GroupTreeCellView
+        )
+
+        let redIcon = try #require(cell.imageView?.image)
+
+        #expect(redIcon === iconStore.icon(of: finderFolder))
+
+        let fieldEditor = try beginEditingWorkName(in: controller)
+        let selectedRow = outlineView.selectedRow
+
+        try FinderFolderAttributes.setTags(["绿色\n2"], of: url)
+
+        try #require(await updates.wait(forUpdatesAt: path, count: 2))
+
+        #expect(cell.imageView?.image === iconStore.icon(of: finderFolder))
+        #expect(cell.imageView?.image !== redIcon)
+        #expect(outlineView.selectedRow == selectedRow)
+        #expect(outlineView.isItemExpanded(outlineView.item(atRow: 0)))
+        #expect(window.firstResponder === fieldEditor)
+    }
+}
+
 // MARK: - Private
 
 extension GroupTreeViewControllerTests {

@@ -130,6 +130,71 @@ struct GroupIconInputsTests {
     }
 }
 
+// MARK: - Finder Folder Icons
+
+extension GroupIconInputsTests {
+    /// 访达文件夹换了图（外观变了、取到新图）：在预览里的，这一项的值没变，输入也变；在预览之外的，输入不变
+    @Test
+    func finderFolderIconChangesOnlyMatterInPreview() async throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appending(path: "FlotillaTests-\(UUID().uuidString)")
+
+        defer {
+            try? FileManager.default.removeItem(at: directory)
+        }
+
+        let store = GroupStore(fileURL: directory.appending(path: "folders.json"))
+        let root = store.addRootGroup(named: "资料")
+
+        // 预览数量为 4：第一项的访达文件夹在预览里，第五项的在预览之外
+        let inPreview = try makeFinderFolder(named: "预览里", in: directory)
+        let beyondPreview = try makeFinderFolder(named: "预览外", in: directory)
+
+        store.addItems(
+            [.file(inPreview)] + Array(apps.prefix(3)) + [.file(beyondPreview)],
+            to: root.id
+        )
+
+        let generator = FinderFolderIconGeneratorStub()
+        let iconStore = generator.makeIconStore(following: store)
+        let updates = FinderFolderIconUpdateRecorder(of: iconStore)
+
+        iconStore.start()
+
+        for folder in [inPreview, beyondPreview] {
+            try #require(await updates.wait(forUpdatesAt: FinderFolderIconStore.folderPath(of: folder)))
+        }
+
+        let original = try rootInputs(of: store, finderFolderIcons: iconStore)
+
+        // 预览里的访达文件夹换了颜色
+        try FinderFolderAttributes.setTags(["绿色\n2"], of: inPreview.url)
+
+        try #require(
+            await updates.wait(
+                forUpdatesAt: FinderFolderIconStore.folderPath(of: inPreview),
+                count: 2
+            )
+        )
+
+        let previewChanged = try rootInputs(of: store, finderFolderIcons: iconStore)
+
+        #expect(previewChanged != original)
+
+        // 预览之外的访达文件夹换了颜色
+        try FinderFolderAttributes.setTags(["绿色\n2"], of: beyondPreview.url)
+
+        try #require(
+            await updates.wait(
+                forUpdatesAt: FinderFolderIconStore.folderPath(of: beyondPreview),
+                count: 2
+            )
+        )
+
+        #expect(try rootInputs(of: store, finderFolderIcons: iconStore) == previewChanged)
+    }
+}
+
 // MARK: - Private
 
 extension GroupIconInputsTests {
@@ -141,6 +206,40 @@ extension GroupIconInputsTests {
             bookmark: nil,
             bundleIdentifier: nil
         ))
+    }
+
+    /// 在临时目录里新建一个打了红色标签的访达文件夹
+    /// - Parameters:
+    ///   - name: 文件夹名
+    ///   - directory: 临时目录
+    private func makeFinderFolder(named name: String, in directory: URL) throws -> FileReference {
+        let url = directory.appending(path: name, directoryHint: .isDirectory)
+
+        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        try FinderFolderAttributes.setTags(["红色\n6"], of: url)
+
+        guard case .file(let file) = try #require(GroupItem(url: url, title: nil)) else {
+            Issue.record("访达文件夹没有分类成文件")
+            throw CancellationError()
+        }
+
+        return file
+    }
+
+    /// 组树里第一个根组在预览数量为 4、浅色外观时的图标输入
+    /// - Parameters:
+    ///   - store: 组树
+    ///   - finderFolderIcons: 访达文件夹的图标
+    private func rootInputs(
+        of store: GroupStore,
+        finderFolderIcons: FinderFolderIconStore
+    ) throws -> GroupIconInputs {
+        GroupIconInputs(
+            group: try #require(store.rootGroups.first),
+            previewIconCount: 4,
+            appearance: .light,
+            finderFolderIcons: finderFolderIcons
+        )
     }
 
     /// 预览数量为 4、浅色外观时，由这些项组成的组的图标输入
