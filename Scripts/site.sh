@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-# 组装官网到 build/site/：拷入 website/ 的源码，从母版生成位图，取 GitHub 上的全部 Release 写成 releases.json
+# 组装官网到 build/site/：由模板与各语言文案生成页面，拷入 404 页与样式、脚本，从母版生成位图，
+# 取 GitHub 上的全部 Release 与各语言的更新说明写成 releases.json
 
 set -euo pipefail
 
@@ -20,10 +21,13 @@ readonly ICON_DARK="Sources/Flotilla/Resources/AppIconDark.png"
 # README 的头图、截图与帆船画稿
 readonly RESOURCE_DIR="docs/resources"
 
-# 1. 清空并重建产物目录，拷入手写的页面、样式与脚本
+# 1. 清空并重建产物目录，按 website/pages/ 的模板与 website/locales/ 的文案生成每种语言的页面，
+#    再拷入 404 页与样式、脚本；模板与文案的源文件不进产物
 rm -rf "$SITE_DIR"
 mkdir -p "$SITE_DIR"
-cp -R website/. "$SITE_DIR/"
+swift Scripts/generate-site-pages.swift website "$SITE_DIR"
+cp website/404.html "$SITE_DIR/"
+cp -R website/assets "$SITE_DIR/"
 mkdir -p "$IMAGE_DIR"
 
 # 2. 从母版生成位图
@@ -89,16 +93,47 @@ RELEASES="$(
         "repos/$REPOSITORY/releases?per_page=100"
 )"
 
-# 分页时每页输出一个数组，先合并；去掉草稿，保留预发布，按发布时间从新到旧
-jq -s 'add | [.[] | select(.draft | not) | {
+# 分页时每页输出一个数组，先合并；去掉草稿，保留预发布，按发布时间从新到旧；
+# 正文按语言代码分开，`en` 是 Release 的正文
+RELEASES="$(jq -s 'add | [.[] | select(.draft | not) | {
     tag: .tag_name,
     name,
     url: .html_url,
     publishedAt: .published_at,
     prerelease,
-    bodyHtml: .body_html,
+    bodyHtml: {en: .body_html},
     assets: [.assets[] | {name, size, url: .browser_download_url}]
-} ] | sort_by(.publishedAt) | reverse' <<< "$RELEASES" > "$SITE_DIR/releases.json"
+} ] | sort_by(.publishedAt) | reverse' <<< "$RELEASES")"
 
-# 4. 打印组装结果
+# 4. 语言清单里的其它语言，正文取 docs/release-notes/<版本号>/<语言代码>.md，请求 GitHub 渲染成 HTML；
+#    没有这份说明的版本不写这种语言，页面退回英文；渲染失败时与取 Release 失败一样报错退出
+for TAG in $(jq -r '.[].tag' <<< "$RELEASES"); do
+    for LANGUAGE in $(jq -r '.[].code | select(. != "en")' website/locales/languages.json); do
+        NOTES_FILE="docs/release-notes/${TAG#v}/$LANGUAGE.md"
+
+        if [[ ! -f "$NOTES_FILE" ]]; then
+            continue
+        fi
+
+        HTML="$(
+            gh api markdown \
+                -f mode=gfm \
+                -f context="$REPOSITORY" \
+                -F text=@"$NOTES_FILE"
+        )"
+
+        RELEASES="$(
+            jq \
+                --arg tag "$TAG" \
+                --arg language "$LANGUAGE" \
+                --arg html "$HTML" \
+                '(.[] | select(.tag == $tag) | .bodyHtml[$language]) = $html' \
+                <<< "$RELEASES"
+        )"
+    done
+done
+
+printf '%s\n' "$RELEASES" > "$SITE_DIR/releases.json"
+
+# 5. 打印组装结果
 echo "官网已组装到 $(pwd)/$SITE_DIR"

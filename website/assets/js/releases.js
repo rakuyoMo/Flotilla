@@ -357,14 +357,15 @@
   }
 
   /**
-   * 把 GitHub 渲染好的正文变成节点；正文里的标题降一级，接在版本号的 h2 之下，保持标题层级连续。
+   * 把页面语言的正文变成节点，没有这种语言的正文时用英文的；
+   * 正文里的标题降一级，接在版本号的 h2 之下，保持标题层级连续。
    *
    * @param {object} release 要渲染的 Release
    * @returns {DocumentFragment} 正文的节点
    */
   function bodyOf(release) {
     const container = document.createElement("template");
-    container.innerHTML = release.bodyHtml ?? "";
+    container.innerHTML = release.bodyHtml[root.lang] ?? release.bodyHtml.en ?? "";
 
     const headings = container.content.querySelectorAll("h1, h2, h3, h4, h5");
 

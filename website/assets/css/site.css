@@ -72,16 +72,12 @@
     0 1px 2px rgb(34 45 62 / 18%),
     0 8px 18px -8px rgb(34 45 62 / 36%);
 
-  /* 字体：只用系统字体 */
-  --font-sans:
+  /* 字体：只用系统字体；无衬线字体先取西文的这一组，汉字与谚文的字体按语言另取，见基础样式里的 `[lang]` */
+  --font-latin:
     -apple-system,
     BlinkMacSystemFont,
     "SF Pro Text",
-    "Helvetica Neue",
-    "PingFang SC",
-    "Hiragino Sans GB",
-    "Microsoft YaHei",
-    sans-serif;
+    "Helvetica Neue";
 
   --font-mono:
     ui-monospace,
@@ -178,6 +174,45 @@ html {
   text-size-adjust: 100%;
 }
 
+/* 同一个汉字在简体中文、繁体中文、日文里字形不同，无衬线字体按语言取：默认用简体中文的字体，
+   繁体中文、日文、韩文各换成自己语言的字体；带 lang 的元素都按自己的语言重新取，语言菜单里的各项也是 */
+[lang] {
+  --font-sans:
+    var(--font-latin),
+    "PingFang SC",
+    "Hiragino Sans GB",
+    "Microsoft YaHei",
+    sans-serif;
+
+  font-family: var(--font-sans);
+}
+
+[lang]:lang(zh-Hant) {
+  --font-sans:
+    var(--font-latin),
+    "PingFang TC",
+    "Microsoft JhengHei",
+    sans-serif;
+}
+
+[lang]:lang(ja) {
+  --font-sans:
+    var(--font-latin),
+    "Hiragino Sans",
+    "Hiragino Kaku Gothic ProN",
+    "Yu Gothic",
+    Meiryo,
+    sans-serif;
+}
+
+[lang]:lang(ko) {
+  --font-sans:
+    var(--font-latin),
+    "Apple SD Gothic Neo",
+    "Malgun Gothic",
+    sans-serif;
+}
+
 /* 内容不满一屏时，页脚仍贴在底部 */
 body {
   display: flex;
@@ -194,8 +229,8 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* 中文的字面更满，行高再放松一些 */
-body:lang(zh) {
+/* 中文、日文、韩文的字面更满，行高再放松一些 */
+body:is(:lang(zh), :lang(ja), :lang(ko)) {
   line-height: 1.8;
 }
 
@@ -234,8 +269,8 @@ summary {
   text-wrap: pretty;
 }
 
-/* 中文标题只在标点与空格处换行，不把一个词拆到两行；一行放不下时才在字间断开 */
-:lang(zh) :is(h1, h2, h3, h4) {
+/* 中文、日文、韩文的标题只在标点、空格与文案里的 <wbr> 处换行，不把一个词拆到两行；一行放不下时才在字间断开 */
+:is(:lang(zh), :lang(ja), :lang(ko)) :is(h1, h2, h3, h4) {
   word-break: keep-all;
   overflow-wrap: anywhere;
 }
@@ -371,8 +406,8 @@ code {
   text-transform: uppercase;
 }
 
-/* 中文没有大小写，也不需要加宽字距 */
-:lang(zh) .eyebrow {
+/* 中文、日文、韩文没有大小写，也不需要加宽字距 */
+:is(:lang(zh), :lang(ja), :lang(ko)) .eyebrow {
   letter-spacing: 0;
 }
 
@@ -384,7 +419,7 @@ code {
   text-wrap: balance;
 }
 
-:lang(zh) .section-title {
+:is(:lang(zh), :lang(ja), :lang(ko)) .section-title {
   line-height: 1.3;
   letter-spacing: 0;
 }
@@ -396,7 +431,7 @@ code {
   letter-spacing: -0.018em;
 }
 
-:lang(zh) .subsection-title {
+:is(:lang(zh), :lang(ja), :lang(ko)) .subsection-title {
   letter-spacing: 0;
 }
 
@@ -407,7 +442,7 @@ code {
   line-height: 1.65;
 }
 
-:lang(zh) .lead {
+:is(:lang(zh), :lang(ja), :lang(ko)) .lead {
   line-height: 1.8;
 }
 
@@ -620,7 +655,7 @@ code {
   letter-spacing: -0.04em;
 }
 
-.page-title:lang(zh) {
+.page-title:is(:lang(zh), :lang(ja), :lang(ko)) {
   font-weight: 760;
   line-height: 1.25;
   letter-spacing: 0.01em;
@@ -633,7 +668,7 @@ code {
   line-height: 1.65;
 }
 
-:lang(zh) .page-lead {
+:is(:lang(zh), :lang(ja), :lang(ko)) .page-lead {
   line-height: 1.8;
 }
 
@@ -1411,7 +1446,7 @@ html:not(.js) .copy-button {
   text-transform: uppercase;
 }
 
-:lang(zh) .toast-app {
+:is(:lang(zh), :lang(ja), :lang(ko)) .toast-app {
   letter-spacing: 0;
 }
 
@@ -1566,7 +1601,7 @@ html:not(.js) .copy-button {
   text-transform: uppercase;
 }
 
-:lang(zh) .footer-column h2 {
+:is(:lang(zh), :lang(ja), :lang(ko)) .footer-column h2 {
   letter-spacing: 0;
 }
 

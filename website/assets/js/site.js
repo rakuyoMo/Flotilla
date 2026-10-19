@@ -3,9 +3,6 @@
 (() => {
   "use strict";
 
-  // 记住语言选择用的 localStorage 键，须与英文页 <head> 里的跳转脚本一致
-  const LANGUAGE_KEY = "flotilla.language";
-
   // 复制成功的提示停留的时长，单位毫秒
   const COPIED_DURATION = 2400;
 
@@ -203,7 +200,7 @@
   }
 
   /**
-   * 导航与页脚的语言菜单：管理展开状态，记住选择，并保留当前页面的锚点。
+   * 导航与页脚的语言菜单：管理展开状态，并保留当前页面的锚点。
    */
   function setUpLanguageSwitch() {
     const menus = [...document.querySelectorAll(".language-menu")];
@@ -220,12 +217,6 @@
 
       if (!link) {
         return;
-      }
-
-      try {
-        localStorage.setItem(LANGUAGE_KEY, link.dataset.languageSwitch);
-      } catch {
-        // 存不进去（如隐私模式）时只是记不住选择，照常跳转
       }
 
       link.hash = location.hash;

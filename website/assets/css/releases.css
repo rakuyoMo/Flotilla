@@ -41,7 +41,7 @@
   text-transform: uppercase;
 }
 
-:lang(zh) .releases-toc-title {
+:is(:lang(zh), :lang(ja), :lang(ko)) .releases-toc-title {
   letter-spacing: 0;
 }
 
@@ -496,7 +496,7 @@ g-emoji {
   letter-spacing: -0.02em;
 }
 
-.releases-empty-title:lang(zh) {
+.releases-empty-title:is(:lang(zh), :lang(ja), :lang(ko)) {
   letter-spacing: 0;
 }
 

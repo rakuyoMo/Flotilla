@@ -9,7 +9,9 @@ on:
     paths:
       - website/**
       - Scripts/site.sh
+      - Scripts/generate-site-pages.swift
       - mise.toml
+      - docs/release-notes/**
       - docs/resources/**
       - Sources/Flotilla/Resources/AppIcon*.png
       - .github/workflows/pages.yml
@@ -20,7 +22,9 @@ on:
     paths:
       - website/**
       - Scripts/site.sh
+      - Scripts/generate-site-pages.swift
       - mise.toml
+      - docs/release-notes/**
       - docs/resources/**
       - Sources/Flotilla/Resources/AppIcon*.png
       - .github/workflows/pages.yml

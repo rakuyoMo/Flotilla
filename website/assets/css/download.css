@@ -89,7 +89,7 @@
   letter-spacing: -0.015em;
 }
 
-.download-card-title:lang(zh) {
+.download-card-title:is(:lang(zh), :lang(ja), :lang(ko)) {
   letter-spacing: 0;
 }
 
@@ -289,7 +289,7 @@ html[data-release="none"] .download-card-actions {
   letter-spacing: -0.02em;
 }
 
-.step-title:lang(zh) {
+.step-title:is(:lang(zh), :lang(ja), :lang(ko)) {
   line-height: 1.35;
   letter-spacing: 0;
 }

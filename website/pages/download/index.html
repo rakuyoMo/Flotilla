@@ -1,7 +1,7 @@
 <!doctype html>
 <html
-  lang="en"
-  data-root="../"
+  lang="{{@lang}}"
+  data-root="{{@root}}"
 >
 <head>
   <meta charset="utf-8">
@@ -11,39 +11,13 @@
     content="width=device-width, initial-scale=1"
   >
 
-  <!-- 浏览器首选简体中文、又没在语言切换里选过时，跳到中文页；先于渲染执行，避免先闪一下英文 -->
-  <script>
-    (() => {
-      document.documentElement.classList.add("js");
+  {{@headScript}}
 
-      let saved = null;
-
-      try {
-        saved = localStorage.getItem("flotilla.language");
-      } catch {
-        saved = null;
-      }
-
-      const preferred = (
-        navigator.languages?.[0]
-        ?? navigator.language
-        ?? ""
-      ).toLowerCase();
-
-      const isSimplifiedChinese = ["zh", "zh-cn", "zh-sg"].includes(preferred)
-        || preferred.startsWith("zh-hans");
-
-      if (saved === null && isSimplifiedChinese) {
-        location.replace("../zh/download/" + location.hash);
-      }
-    })();
-  </script>
-
-  <title>Download Flotilla</title>
+  <title>{{download.meta.title}}</title>
 
   <meta
     name="description"
-    content="Download Flotilla to group apps in your Dock. For Macs with Apple silicon and macOS 15 or later, with help for installation, first launch, and permissions."
+    content="{{download.meta.description}}"
   >
 
   <meta
@@ -65,26 +39,10 @@
 
   <link
     rel="canonical"
-    href="https://flotilla.rakuyo.dev/download/"
+    href="{{@url}}"
   >
 
-  <link
-    rel="alternate"
-    hreflang="en"
-    href="https://flotilla.rakuyo.dev/download/"
-  >
-
-  <link
-    rel="alternate"
-    hreflang="zh-Hans"
-    href="https://flotilla.rakuyo.dev/zh/download/"
-  >
-
-  <link
-    rel="alternate"
-    hreflang="x-default"
-    href="https://flotilla.rakuyo.dev/download/"
-  >
+  {{@alternates}}
 
   <meta
     property="og:type"
@@ -93,27 +51,27 @@
 
   <meta
     property="og:site_name"
-    content="Flotilla"
+    content="{{common.appName}}"
   >
 
   <meta
     property="og:title"
-    content="Download Flotilla"
+    content="{{download.meta.title}}"
   >
 
   <meta
     property="og:description"
-    content="Download Flotilla to group apps in your Dock. For Macs with Apple silicon and macOS 15 or later, with help for installation, first launch, and permissions."
+    content="{{download.meta.description}}"
   >
 
   <meta
     property="og:url"
-    content="https://flotilla.rakuyo.dev/download/"
+    content="{{@url}}"
   >
 
   <meta
     property="og:image"
-    content="https://flotilla.rakuyo.dev/assets/img/og-en.png"
+    content="{{@siteURL}}assets/img/og-{{@imageLanguage}}.png"
   >
 
   <meta
@@ -128,7 +86,7 @@
 
   <meta
     property="og:locale"
-    content="en_US"
+    content="{{@ogLocale}}"
   >
 
   <meta
@@ -138,39 +96,39 @@
 
   <link
     rel="icon"
-    href="../assets/img/favicon-light.png"
+    href="{{@assets}}img/favicon-light.png"
     type="image/png"
     media="(prefers-color-scheme: light)"
   >
 
   <link
     rel="icon"
-    href="../assets/img/favicon-dark.png"
+    href="{{@assets}}img/favicon-dark.png"
     type="image/png"
     media="(prefers-color-scheme: dark)"
   >
 
   <link
     rel="apple-touch-icon"
-    href="../assets/img/apple-touch-icon.png"
+    href="{{@assets}}img/apple-touch-icon.png"
   >
 
   <link
     rel="stylesheet"
-    href="../assets/css/site.css"
+    href="{{@assets}}css/site.css"
   >
 
   <link
     rel="stylesheet"
-    href="../assets/css/download.css"
+    href="{{@assets}}css/download.css"
   >
 
   <script
-    src="../assets/js/site.js"
+    src="{{@assets}}js/site.js"
     defer
   ></script>
   <script
-    src="../assets/js/releases.js"
+    src="{{@assets}}js/releases.js"
     defer
   ></script>
 </head>
@@ -733,7 +691,7 @@
   <a
     class="skip-link"
     href="#main"
-  >Skip to content</a>
+  >{{common.skipLink}}</a>
 
   <header
     class="site-header"
@@ -741,7 +699,7 @@
   >
     <nav
       class="nav container"
-      aria-label="Main"
+      aria-label="{{common.nav.label}}"
     >
       <a
         class="brand"
@@ -749,19 +707,19 @@
       >
         <picture>
           <source
-            srcset="../assets/img/app-icon-dark-64.png"
+            srcset="{{@assets}}img/app-icon-dark-64.png"
             media="(prefers-color-scheme: dark)"
           >
 
           <img
-            src="../assets/img/app-icon-light-64.png"
+            src="{{@assets}}img/app-icon-light-64.png"
             alt=""
             width="32"
             height="32"
           >
         </picture>
 
-        <span>Flotilla</span>
+        <span>{{common.appName}}</span>
       </a>
 
       <button
@@ -769,7 +727,7 @@
         type="button"
         aria-expanded="false"
         aria-controls="nav-menu"
-        aria-label="Menu"
+        aria-label="{{common.nav.menu}}"
         data-nav-toggle
       >
         <svg
@@ -784,15 +742,15 @@
       >
         <ul class="nav-links">
           <li>
-            <a href="../#features">Features</a>
+            <a href="../#features">{{common.nav.features}}</a>
           </li>
 
           <li>
-            <a href="../#how-it-works">How it works</a>
+            <a href="../#how-it-works">{{common.nav.howItWorks}}</a>
           </li>
 
           <li>
-            <a href="../releases/">Release notes</a>
+            <a href="../releases/">{{common.nav.releaseNotes}}</a>
           </li>
 
           <li>
@@ -809,13 +767,13 @@
         <details class="language-menu">
           <summary
             class="language-switch"
-            aria-label="Select language"
+            aria-label="{{common.languageMenu.label}}"
           >
             <svg
               class="icon"
               aria-hidden="true"
             ><use href="#i-globe"/></svg>
-            <span>English</span>
+            <span>{{@languageName}}</span>
 
             <svg
               class="icon language-chevron"
@@ -824,32 +782,7 @@
           </summary>
 
           <ul class="language-options">
-            <li>
-              <a
-                href="../download/"
-                hreflang="en"
-                lang="en"
-                data-language-switch="en"
-                aria-current="true"
-              >
-                English
-                <svg
-                  class="icon"
-                  aria-hidden="true"
-                ><use href="#i-check"/></svg>
-              </a>
-            </li>
-
-            <li>
-              <a
-                href="../zh/download/"
-                hreflang="zh-Hans"
-                lang="zh-Hans"
-                data-language-switch="zh-Hans"
-              >
-                简体中文
-              </a>
-            </li>
+            {{@languageOptions}}
           </ul>
         </details>
       </div>
@@ -858,7 +791,7 @@
         class="button button-primary button-small nav-download"
         href="./"
         aria-current="page"
-      >Download</a>
+      >{{common.nav.download}}</a>
     </nav>
   </header>
 
@@ -876,12 +809,12 @@
         <div class="page-hero-icon">
           <picture>
             <source
-              srcset="../assets/img/app-icon-dark-256.png"
+              srcset="{{@assets}}img/app-icon-dark-256.png"
               media="(prefers-color-scheme: dark)"
             >
 
             <img
-              src="../assets/img/app-icon-light-256.png"
+              src="{{@assets}}img/app-icon-light-256.png"
               alt=""
               width="128"
               height="128"
@@ -893,20 +826,20 @@
         <h1
           class="page-title"
           id="page-title"
-        >Download Flotilla</h1>
+        >{{download.hero.title}}</h1>
 
         <p
           class="meta-line page-meta"
           data-when="latest"
         >
-          <span>Version <span data-release-version></span></span>
-          <span>Released <time data-release-date></time></span>
+          <span>{{download.hero.version}}</span>
+          <span>{{download.hero.released}}</span>
 
           <span>
             <a
               href="../releases/"
               data-release-notes-link
-            >Release notes</a>
+            >{{common.nav.releaseNotes}}</a>
           </span>
         </p>
 
@@ -914,13 +847,13 @@
           class="meta-line page-meta"
           data-when="unknown"
         >
-          <span><a href="../releases/">Release notes</a></span>
+          <span><a href="../releases/">{{common.nav.releaseNotes}}</a></span>
         </p>
 
         <p class="meta-line page-meta">
-          <span>macOS 15 or later</span>
-          <span>Apple silicon</span>
-          <span>Free and open source (GPL-3.0)</span>
+          <span>{{common.requirements.macOS}}</span>
+          <span>{{common.requirements.appleSilicon}}</span>
+          <span>{{common.requirements.openSource}}</span>
         </p>
       </div>
 
@@ -949,7 +882,7 @@
 
     <section
       class="download"
-      aria-label="Download"
+      aria-label="{{download.card.label}}"
     >
       <div class="container">
         <div
@@ -986,8 +919,8 @@
               class="download-card-text"
               data-when="latest"
             >
-              <h2 class="download-card-title when-ready">Flotilla <span data-release-version></span></h2>
-              <h2 class="download-card-title when-started">Download started</h2>
+              <h2 class="download-card-title when-ready">{{common.appName}} <span data-release-version></span></h2>
+              <h2 class="download-card-title when-started">{{common.downloadStarted}}</h2>
 
               <p class="meta-line download-card-file">
                 <span data-release-asset-name></span>
@@ -999,16 +932,16 @@
               class="download-card-text"
               data-when="none"
             >
-              <h2 class="download-card-title">Not released yet</h2>
-              <p>There are no releases yet. You can build Flotilla from source or subscribe to release notifications on GitHub.</p>
+              <h2 class="download-card-title">{{download.card.notReleased}}</h2>
+              <p>{{common.noReleases.message}}</p>
             </div>
 
             <div
               class="download-card-text"
               data-when="unknown"
             >
-              <h2 class="download-card-title">The latest version</h2>
-              <p>Download the latest <code>Flotilla-X.Y.Z.zip</code> from the Releases page on GitHub.</p>
+              <h2 class="download-card-title">{{download.card.fallback.title}}</h2>
+              <p>{{download.card.fallback.description}}</p>
             </div>
 
             <div class="download-card-actions">
@@ -1023,8 +956,8 @@
                   aria-hidden="true"
                 ><use href="#i-download"/></svg>
 
-                <span class="when-ready">Download</span>
-                <span class="when-started">Download again</span>
+                <span class="when-ready">{{download.card.download}}</span>
+                <span class="when-started">{{download.card.downloadAgain}}</span>
               </a>
 
               <a
@@ -1036,7 +969,7 @@
                   class="icon"
                   aria-hidden="true"
                 ><use href="#i-github"/></svg>
-                Open Releases
+                {{download.card.openReleases}}
               </a>
 
               <a
@@ -1048,7 +981,7 @@
                   class="icon"
                   aria-hidden="true"
                 ><use href="#i-terminal"/></svg>
-                Build from source
+                {{common.buildFromSource}}
               </a>
 
               <a
@@ -1060,7 +993,7 @@
                   class="icon"
                   aria-hidden="true"
                 ><use href="#i-eye"/></svg>
-                Get release notifications
+                {{common.getReleaseNotifications}}
               </a>
             </div>
           </div>
@@ -1070,7 +1003,7 @@
             data-when="latest"
           >
             <a href="#install">
-              Next, follow the installation steps below
+              {{download.card.nextSteps}}
               <svg
                 class="icon"
                 aria-hidden="true"
@@ -1088,10 +1021,10 @@
                 class="icon"
                 aria-hidden="true"
               ><use href="#i-github"/></svg>
-              View all versions
+              {{download.card.allVersions}}
             </a>
 
-            <p data-when="none">To hear about new versions, choose <strong>Watch › Custom › Releases</strong> on GitHub.</p>
+            <p data-when="none">{{common.noReleases.watchHint}}</p>
           </div>
         </div>
       </div>
@@ -1104,12 +1037,12 @@
     >
       <div class="container">
         <header class="section-header reveal">
-          <p class="eyebrow">Installation</p>
+          <p class="eyebrow">{{download.install.eyebrow}}</p>
 
           <h2
             class="section-title"
             id="install-title"
-          >Install Flotilla and get it set up.</h2>
+          >{{download.install.title}}</h2>
         </header>
 
         <ol class="install-steps">
@@ -1119,9 +1052,9 @@
           >
             <div class="install-copy">
               <span class="step-number">1</span>
-              <h3 class="step-title">Unzip and move to Applications</h3>
-              <p>Double-click the downloaded <code>Flotilla-X.Y.Z.zip</code> to unzip it, then drag <code>Flotilla.app</code> into the Applications folder.</p>
-              <p class="step-note">Finder uses the app’s name in your system language, such as 归帆 in Simplified Chinese.</p>
+              <h3 class="step-title">{{download.install.unzip.title}}</h3>
+              <p>{{download.install.unzip.description}}</p>
+              <p class="step-note">{{download.install.unzip.note}}</p>
             </div>
 
             <div
@@ -1139,12 +1072,12 @@
                   <div class="mock-item">
                     <picture>
                       <source
-                        srcset="../assets/img/app-icon-dark-256.png"
+                        srcset="{{@assets}}img/app-icon-dark-256.png"
                         media="(prefers-color-scheme: dark)"
                       >
 
                       <img
-                        src="../assets/img/app-icon-light-256.png"
+                        src="{{@assets}}img/app-icon-light-256.png"
                         alt=""
                         width="72"
                         height="72"
@@ -1152,7 +1085,7 @@
                       >
                     </picture>
 
-                    <span class="mock-label">Flotilla</span>
+                    <span class="mock-label">{{common.appName}}</span>
 
                     <svg
                       class="mock-cursor"
@@ -1189,7 +1122,7 @@
                       />
                     </svg>
 
-                    <span class="mock-label">Applications</span>
+                    <span class="mock-label">{{download.install.unzip.applications}}</span>
                   </div>
                 </div>
               </div>
@@ -1199,26 +1132,28 @@
           <li class="install-step reveal">
             <div class="install-copy">
               <span class="step-number">2</span>
-              <h3 class="step-title">Open it for the first time</h3>
-              <p>Flotilla hasn’t been notarized by Apple, so macOS blocks it the first time you try to open it. The alert says Apple cannot verify that it is free of malware.</p>
+              <h3 class="step-title">{{download.install.firstLaunch.title}}</h3>
+              <p>{{common.firstLaunchBlocked}}</p>
 
-              <p>Click <strong>Done</strong> to dismiss the alert, then follow these steps to open Flotilla:</p>
+              <p>{{download.install.firstLaunch.dismiss}}</p>
 
               <ol class="number-list">
-                <li>Open <strong>System Settings › Privacy &amp; Security</strong></li>
-
                 <li>
-                  Scroll down to <strong>Security</strong>, find the message about Flotilla being blocked, and click <strong>Open Anyway</strong>
-                  <span class="list-note">This button only appears for an hour after you try to open Flotilla</span>
+                  {{download.install.firstLaunch.openSettings}}
                 </li>
 
-                <li>Confirm with your login password when prompted</li>
+                <li>
+                  {{download.install.firstLaunch.openAnyway}}
+                  <span class="list-note">{{download.install.firstLaunch.openAnywayNote}}</span>
+                </li>
+
+                <li>{{download.install.firstLaunch.password}}</li>
               </ol>
 
-              <p>You can now open Flotilla normally.</p>
+              <p>{{download.install.firstLaunch.done}}</p>
 
               <div class="step-alternative">
-                <p>If you prefer Terminal, run this command to remove the quarantine attribute, then open Flotilla:</p>
+                <p>{{download.install.firstLaunch.terminal}}</p>
 
                 <div class="code-block">
                   <pre><code>xattr -d com.apple.quarantine /Applications/Flotilla.app</code></pre>
@@ -1227,20 +1162,20 @@
                     class="copy-button"
                     type="button"
                     data-copy
-                    data-copied-label="Copied — paste it into Terminal to run"
+                    data-copied-label="{{download.copyButton.copied}}"
                   >
                     <svg
                       class="icon"
                       aria-hidden="true"
                     ><use href="#i-copy"/></svg>
-                    Copy
+                    {{download.copyButton.label}}
                   </button>
                 </div>
               </div>
 
               <details class="faq-item">
                 <summary>
-                  Why does macOS block Flotilla?
+                  {{download.install.firstLaunch.why.question}}
                   <svg
                     class="icon faq-chevron"
                     aria-hidden="true"
@@ -1248,11 +1183,10 @@
                 </summary>
 
                 <div class="faq-answer">
-                  <p>Flotilla uses ad-hoc signing and hasn’t been notarized by Apple. This triggers a macOS security alert on first launch.</p>
+                  <p>{{download.install.firstLaunch.why.answer}}</p>
 
                   <p>
-                    For more about these checks and how to allow an app to open, see Apple’s guide,
-                    <a href="https://support.apple.com/102445">Safely open apps on your Mac</a>.
+                    {{download.install.firstLaunch.why.appleGuide}}
                   </p>
                 </div>
               </details>
@@ -1265,12 +1199,12 @@
               <div class="mock-alert">
                 <picture>
                   <source
-                    srcset="../assets/img/app-icon-dark-256.png"
+                    srcset="{{@assets}}img/app-icon-dark-256.png"
                     media="(prefers-color-scheme: dark)"
                   >
 
                   <img
-                    src="../assets/img/app-icon-light-256.png"
+                    src="{{@assets}}img/app-icon-light-256.png"
                     alt=""
                     width="56"
                     height="56"
@@ -1281,11 +1215,11 @@
                 <span class="mock-line mock-line-strong"></span>
                 <span class="mock-line"></span>
                 <span class="mock-line mock-line-short"></span>
-                <span class="mock-button mock-button-default">Done</span>
+                <span class="mock-button mock-button-default">{{download.install.firstLaunch.mock.done}}</span>
               </div>
 
               <div class="mock-panel">
-                <span class="mock-heading">Security</span>
+                <span class="mock-heading">{{download.install.firstLaunch.mock.security}}</span>
 
                 <div class="mock-row">
                   <span class="mock-lines">
@@ -1293,7 +1227,7 @@
                     <span class="mock-line mock-line-short"></span>
                   </span>
 
-                  <span class="mock-button mock-button-accent">Open Anyway</span>
+                  <span class="mock-button mock-button-accent">{{download.install.firstLaunch.mock.openAnyway}}</span>
                 </div>
               </div>
             </div>
@@ -1302,32 +1236,32 @@
           <li class="install-step reveal">
             <div class="install-copy">
               <span class="step-number">3</span>
-              <h3 class="step-title">Enable Accessibility access</h3>
-              <p>Accessibility access lets Flotilla read the Dock’s interface so it can:</p>
+              <h3 class="step-title">{{download.install.accessibility.title}}</h3>
+              <p>{{download.install.accessibility.purpose}}</p>
 
               <ul class="check-list">
-                <li>Locate the group icon so the panel can line up with it</li>
-                <li>Open the panel as soon as you release the mouse button, just like a Dock folder</li>
+                <li>{{download.install.accessibility.locate}}</li>
+                <li>{{download.install.accessibility.openOnRelease}}</li>
               </ul>
 
-              <p>If access hasn’t been granted, macOS prompts you the first time you click a group icon after each launch of Flotilla.</p>
+              <p>{{download.install.accessibility.prompt}}</p>
 
-              <p>You can enable it in <strong>System Settings › Privacy &amp; Security › Accessibility</strong>. On macOS 27, go to <strong>Privacy &amp; Security › Device Control and Data Access</strong>.</p>
+              <p>{{common.accessibility.settingsPath}}</p>
 
               <div class="step-facts">
                 <div class="step-fact">
-                  <h4>It works without this too</h4>
-                  <p>There are just two differences:</p>
+                  <h4>{{download.install.accessibility.optional.title}}</h4>
+                  <p>{{download.install.accessibility.optional.differences}}</p>
 
                   <ul>
-                    <li>The panel appears near the pointer and may not line up exactly with the group icon</li>
-                    <li>The panel takes a little longer to open after a click</li>
+                    <li>{{common.withoutAccessibility.nearPointer}}</li>
+                    <li>{{common.withoutAccessibility.slower}}</li>
                   </ul>
                 </div>
 
                 <div class="step-fact">
-                  <h4>You may need to enable it again</h4>
-                  <p>Because Flotilla uses ad-hoc signing, you may need to enable this permission again after an update.</p>
+                  <h4>{{download.install.accessibility.reenable.title}}</h4>
+                  <p>{{common.accessibility.reenable}}</p>
                 </div>
               </div>
             </div>
@@ -1337,7 +1271,7 @@
               aria-hidden="true"
             >
               <div class="mock-panel mock-panel-list">
-                <span class="mock-heading">Accessibility</span>
+                <span class="mock-heading">{{download.install.accessibility.mock.heading}}</span>
 
                 <div class="mock-row mock-row-muted">
                   <span class="mock-app"></span>
@@ -1348,13 +1282,13 @@
                 <div class="mock-row">
                   <picture>
                     <source
-                      srcset="../assets/img/app-icon-dark-64.png"
+                      srcset="{{@assets}}img/app-icon-dark-64.png"
                       media="(prefers-color-scheme: dark)"
                     >
 
                     <img
                       class="mock-app-icon"
-                      src="../assets/img/app-icon-light-64.png"
+                      src="{{@assets}}img/app-icon-light-64.png"
                       alt=""
                       width="32"
                       height="32"
@@ -1362,7 +1296,7 @@
                     >
                   </picture>
 
-                  <span class="mock-name">Flotilla</span>
+                  <span class="mock-name">{{common.appName}}</span>
                   <span class="mock-switch is-on"></span>
                 </div>
 
@@ -1385,8 +1319,8 @@
           </span>
 
           <div class="callout-body">
-            <h3>Files and folders</h3>
-            <p>The first time you open a folder in Documents, Desktop, Downloads, or another protected location through Flotilla, macOS asks for access. Flotilla needs your permission to read and display the folder’s contents.</p>
+            <h3>{{download.install.files.title}}</h3>
+            <p>{{download.install.files.description}}</p>
           </div>
         </aside>
       </div>
@@ -1399,14 +1333,14 @@
     >
       <div class="container">
         <header class="section-header reveal">
-          <p class="eyebrow">Getting started</p>
+          <p class="eyebrow">{{download.getStarted.eyebrow}}</p>
 
           <h2
             class="section-title"
             id="get-started-title"
-          >Create your first group.</h2>
+          >{{download.getStarted.title}}</h2>
 
-          <p class="lead">Click the sailing ship in the menu bar and choose <strong>Settings…</strong> to manage your groups. <strong>Quit Flotilla</strong> is in the same menu.</p>
+          <p class="lead">{{download.getStarted.lead}}</p>
         </header>
 
         <div class="get-started-grid">
@@ -1419,18 +1353,18 @@
                     aria-hidden="true"
                   ><use href="#i-group-icon"/></svg>
                 </span>
-                Create a group
+                {{download.getStarted.create.title}}
               </h3>
 
               <ol class="number-list">
                 <li>
-                  Under <strong>Groups</strong>, click <strong>New Group</strong>, type a name, and press Return
-                  <span class="list-note">The Dock briefly restarts, then shows the group icon in the app section on the left</span>
+                  {{download.getStarted.create.newGroup}}
+                  <span class="list-note">{{download.getStarted.create.newGroupNote}}</span>
                 </li>
 
-                <li>Select the group, click <strong>Add…</strong>, and choose <strong>Add Apps…</strong>, <strong>Add Files…</strong>, or <strong>Add Web Page…</strong></li>
+                <li>{{download.getStarted.create.add}}</li>
 
-                <li>You can also drop apps, files, or folders onto a group in the settings window or its Dock icon. For web pages, drag them from your browser into a group in the settings window</li>
+                <li>{{download.getStarted.create.drop}}</li>
               </ol>
             </article>
 
@@ -1442,24 +1376,24 @@
                     aria-hidden="true"
                   ><use href="#i-grid"/></svg>
                 </span>
-                Use the panel
+                {{download.getStarted.panel.title}}
               </h3>
 
               <ul class="check-list">
-                <li>Click a group icon in the Dock, then select the app, file, or web page you want to open</li>
-                <li>Click a subgroup or folder to open it. Use the back button to go up one level</li>
-                <li>Click the group icon again, click outside the panel, or press Esc to close it</li>
-                <li>Drag items within a group to change their order</li>
-                <li>To remove an item, drag it out of the panel, wait for <strong>Remove</strong> to appear, and let go</li>
+                <li>{{download.getStarted.panel.open}}</li>
+                <li>{{download.getStarted.panel.browse}}</li>
+                <li>{{download.getStarted.panel.close}}</li>
+                <li>{{download.getStarted.panel.reorder}}</li>
+                <li>{{download.getStarted.panel.remove}}</li>
               </ul>
             </article>
 
             <p class="guide-more reveal">
               <a
                 class="card-link"
-                href="https://github.com/rakuyoMo/Flotilla#getting-started"
+                href="{{@links.readmeGettingStarted}}"
               >
-                The full guide is in the README
+                {{download.getStarted.readme}}
                 <svg
                   class="icon"
                   aria-hidden="true"
@@ -1471,13 +1405,13 @@
           <figure class="feature-media get-started-media reveal">
             <picture>
               <source
-                srcset="../assets/img/screenshot-settings-en-dark.png"
+                srcset="{{@assets}}img/screenshot-settings-{{@imageLanguage}}-dark.png"
                 media="(prefers-color-scheme: dark)"
               >
 
               <img
-                src="../assets/img/screenshot-settings-en-light.png"
-                alt="The settings window with the Essentials group expanded and General settings below"
+                src="{{@assets}}img/screenshot-settings-{{@imageLanguage}}-light.png"
+                alt="{{common.settingsScreenshotAlt}}"
                 width="732"
                 height="672"
                 loading="lazy"
@@ -1495,14 +1429,14 @@
     >
       <div class="container">
         <header class="section-header reveal">
-          <p class="eyebrow">Build from source</p>
+          <p class="eyebrow">{{download.build.eyebrow}}</p>
 
           <h2
             class="section-title"
             id="build-title"
-          >Build instructions</h2>
+          >{{download.build.title}}</h2>
 
-          <p class="lead">Building Flotilla requires the Xcode Command Line Tools and mise. You don’t need the full Xcode app.</p>
+          <p class="lead">{{common.buildRequirements}}</p>
         </header>
 
         <div class="build-grid">
@@ -1516,8 +1450,8 @@
               </span>
 
               <div>
-                <h3>Xcode Command Line Tools 26 or later</h3>
-                <p>Version 26 includes Swift 6.2 and the macOS 26 SDK. The panel uses <code>NSGlassEffectView</code>, so this SDK is needed to build it.</p>
+                <h3>{{download.build.commandLineTools.title}}</h3>
+                <p>{{download.build.commandLineTools.description}}</p>
               </div>
             </li>
 
@@ -1531,7 +1465,7 @@
 
               <div>
                 <h3><a href="https://mise.jdx.dev">mise</a></h3>
-                <p>Runs the build commands defined in <code>mise.toml</code>.</p>
+                <p>{{download.build.mise.description}}</p>
               </div>
             </li>
           </ul>
@@ -1541,37 +1475,37 @@
               <pre><code>git clone https://github.com/rakuyoMo/Flotilla.git
 cd Flotilla
 
-<span class="code-comment"># Build the release version, bundle it as build/Flotilla.app, and ad-hoc sign it</span>
+<span class="code-comment"># {{download.build.commands.bundleComment}}</span>
 mise run bundle
 
-<span class="code-comment"># Launch the bundled app</span>
+<span class="code-comment"># {{download.build.commands.openComment}}</span>
 open build/Flotilla.app</code></pre>
 
               <button
                 class="copy-button"
                 type="button"
                 data-copy
-                data-copied-label="Copied — paste it into Terminal to run"
+                data-copied-label="{{download.copyButton.copied}}"
               >
                 <svg
                   class="icon"
                   aria-hidden="true"
                 ><use href="#i-copy"/></svg>
-                Copy
+                {{download.copyButton.label}}
               </button>
             </div>
 
             <ul class="build-notes">
-              <li>You can ignore the two <code>ld: warning: search path ... not found</code> warnings during the build. They refer to directories that aren’t included in the Command Line Tools.</li>
-              <li>Quit the installed copy of Flotilla before launching <code>build/Flotilla.app</code>. If a copy is already running, launching another only activates the existing one.</li>
+              <li>{{download.build.notes.ldWarning}}</li>
+              <li>{{download.build.notes.quitInstalled}}</li>
             </ul>
 
             <p>
               <a
                 class="card-link"
-                href="https://github.com/rakuyoMo/Flotilla#development"
+                href="{{@links.readmeDevelopment}}"
               >
-                Tests, code style, and more in the README
+                {{download.build.readme}}
                 <svg
                   class="icon"
                   aria-hidden="true"
@@ -1593,12 +1527,12 @@ open build/Flotilla.app</code></pre>
         >
           <picture>
             <source
-              srcset="../assets/img/app-icon-dark-64.png"
+              srcset="{{@assets}}img/app-icon-dark-64.png"
               media="(prefers-color-scheme: dark)"
             >
 
             <img
-              src="../assets/img/app-icon-light-64.png"
+              src="{{@assets}}img/app-icon-light-64.png"
               alt=""
               width="32"
               height="32"
@@ -1606,34 +1540,34 @@ open build/Flotilla.app</code></pre>
             >
           </picture>
 
-          <span>Flotilla</span>
+          <span>{{common.appName}}</span>
         </a>
 
-        <p>Keep your Dock organized.</p>
+        <p>{{common.footer.tagline}}</p>
       </div>
 
       <nav
         class="footer-columns"
-        aria-label="Footer"
+        aria-label="{{common.footer.label}}"
       >
         <div class="footer-column">
-          <h2>Product</h2>
+          <h2>{{common.footer.product}}</h2>
 
           <ul>
-            <li><a href="../#features">Features</a></li>
-            <li><a href="./">Download</a></li>
-            <li><a href="../releases/">Release notes</a></li>
+            <li><a href="../#features">{{common.nav.features}}</a></li>
+            <li><a href="./">{{common.nav.download}}</a></li>
+            <li><a href="../releases/">{{common.nav.releaseNotes}}</a></li>
           </ul>
         </div>
 
         <div class="footer-column">
-          <h2>Resources</h2>
+          <h2>{{common.footer.resources}}</h2>
 
           <ul>
             <li><a href="https://github.com/rakuyoMo/Flotilla">GitHub</a></li>
             <li><a href="https://github.com/rakuyoMo/Flotilla/issues">Issues</a></li>
-            <li><a href="https://github.com/rakuyoMo/Flotilla#readme">README</a></li>
-            <li><a href="https://github.com/rakuyoMo/Flotilla/blob/main/LICENSE">License</a></li>
+            <li><a href="{{@links.readme}}">README</a></li>
+            <li><a href="https://github.com/rakuyoMo/Flotilla/blob/main/LICENSE">{{common.footer.license}}</a></li>
           </ul>
         </div>
       </nav>
@@ -1645,13 +1579,13 @@ open build/Flotilla.app</code></pre>
       <details class="language-menu">
         <summary
           class="language-switch"
-          aria-label="Select language"
+          aria-label="{{common.languageMenu.label}}"
         >
           <svg
             class="icon"
             aria-hidden="true"
           ><use href="#i-globe"/></svg>
-          <span>English</span>
+          <span>{{@languageName}}</span>
 
           <svg
             class="icon language-chevron"
@@ -1660,32 +1594,7 @@ open build/Flotilla.app</code></pre>
         </summary>
 
         <ul class="language-options">
-          <li>
-            <a
-              href="../download/"
-              hreflang="en"
-              lang="en"
-              data-language-switch="en"
-              aria-current="true"
-            >
-              English
-              <svg
-                class="icon"
-                aria-hidden="true"
-              ><use href="#i-check"/></svg>
-            </a>
-          </li>
-
-          <li>
-            <a
-              href="../zh/download/"
-              hreflang="zh-Hans"
-              lang="zh-Hans"
-              data-language-switch="zh-Hans"
-            >
-              简体中文
-            </a>
-          </li>
+          {{@languageOptions}}
         </ul>
       </details>
     </div>

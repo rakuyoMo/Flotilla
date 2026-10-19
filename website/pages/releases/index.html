@@ -1,7 +1,7 @@
 <!doctype html>
 <html
-  lang="en"
-  data-root="../"
+  lang="{{@lang}}"
+  data-root="{{@root}}"
 >
 <head>
   <meta charset="utf-8">
@@ -11,39 +11,13 @@
     content="width=device-width, initial-scale=1"
   >
 
-  <!-- 浏览器首选简体中文、又没在语言切换里选过时，跳到中文页；先于渲染执行，避免先闪一下英文 -->
-  <script>
-    (() => {
-      document.documentElement.classList.add("js");
+  {{@headScript}}
 
-      let saved = null;
-
-      try {
-        saved = localStorage.getItem("flotilla.language");
-      } catch {
-        saved = null;
-      }
-
-      const preferred = (
-        navigator.languages?.[0]
-        ?? navigator.language
-        ?? ""
-      ).toLowerCase();
-
-      const isSimplifiedChinese = ["zh", "zh-cn", "zh-sg"].includes(preferred)
-        || preferred.startsWith("zh-hans");
-
-      if (saved === null && isSimplifiedChinese) {
-        location.replace("../zh/releases/" + location.hash);
-      }
-    })();
-  </script>
-
-  <title>Flotilla release notes</title>
+  <title>{{releases.meta.title}}</title>
 
   <meta
     name="description"
-    content="Browse Flotilla’s release notes, release dates, and download links."
+    content="{{releases.meta.description}}"
   >
 
   <meta
@@ -65,26 +39,10 @@
 
   <link
     rel="canonical"
-    href="https://flotilla.rakuyo.dev/releases/"
+    href="{{@url}}"
   >
 
-  <link
-    rel="alternate"
-    hreflang="en"
-    href="https://flotilla.rakuyo.dev/releases/"
-  >
-
-  <link
-    rel="alternate"
-    hreflang="zh-Hans"
-    href="https://flotilla.rakuyo.dev/zh/releases/"
-  >
-
-  <link
-    rel="alternate"
-    hreflang="x-default"
-    href="https://flotilla.rakuyo.dev/releases/"
-  >
+  {{@alternates}}
 
   <meta
     property="og:type"
@@ -93,27 +51,27 @@
 
   <meta
     property="og:site_name"
-    content="Flotilla"
+    content="{{common.appName}}"
   >
 
   <meta
     property="og:title"
-    content="Flotilla release notes"
+    content="{{releases.meta.title}}"
   >
 
   <meta
     property="og:description"
-    content="Browse Flotilla’s release notes, release dates, and download links."
+    content="{{releases.meta.description}}"
   >
 
   <meta
     property="og:url"
-    content="https://flotilla.rakuyo.dev/releases/"
+    content="{{@url}}"
   >
 
   <meta
     property="og:image"
-    content="https://flotilla.rakuyo.dev/assets/img/og-en.png"
+    content="{{@siteURL}}assets/img/og-{{@imageLanguage}}.png"
   >
 
   <meta
@@ -128,7 +86,7 @@
 
   <meta
     property="og:locale"
-    content="en_US"
+    content="{{@ogLocale}}"
   >
 
   <meta
@@ -138,39 +96,39 @@
 
   <link
     rel="icon"
-    href="../assets/img/favicon-light.png"
+    href="{{@assets}}img/favicon-light.png"
     type="image/png"
     media="(prefers-color-scheme: light)"
   >
 
   <link
     rel="icon"
-    href="../assets/img/favicon-dark.png"
+    href="{{@assets}}img/favicon-dark.png"
     type="image/png"
     media="(prefers-color-scheme: dark)"
   >
 
   <link
     rel="apple-touch-icon"
-    href="../assets/img/apple-touch-icon.png"
+    href="{{@assets}}img/apple-touch-icon.png"
   >
 
   <link
     rel="stylesheet"
-    href="../assets/css/site.css"
+    href="{{@assets}}css/site.css"
   >
 
   <link
     rel="stylesheet"
-    href="../assets/css/releases.css"
+    href="{{@assets}}css/releases.css"
   >
 
   <script
-    src="../assets/js/site.js"
+    src="{{@assets}}js/site.js"
     defer
   ></script>
   <script
-    src="../assets/js/releases.js"
+    src="{{@assets}}js/releases.js"
     defer
   ></script>
 </head>
@@ -733,7 +691,7 @@
   <a
     class="skip-link"
     href="#main"
-  >Skip to content</a>
+  >{{common.skipLink}}</a>
 
   <header
     class="site-header"
@@ -741,7 +699,7 @@
   >
     <nav
       class="nav container"
-      aria-label="Main"
+      aria-label="{{common.nav.label}}"
     >
       <a
         class="brand"
@@ -749,19 +707,19 @@
       >
         <picture>
           <source
-            srcset="../assets/img/app-icon-dark-64.png"
+            srcset="{{@assets}}img/app-icon-dark-64.png"
             media="(prefers-color-scheme: dark)"
           >
 
           <img
-            src="../assets/img/app-icon-light-64.png"
+            src="{{@assets}}img/app-icon-light-64.png"
             alt=""
             width="32"
             height="32"
           >
         </picture>
 
-        <span>Flotilla</span>
+        <span>{{common.appName}}</span>
       </a>
 
       <button
@@ -769,7 +727,7 @@
         type="button"
         aria-expanded="false"
         aria-controls="nav-menu"
-        aria-label="Menu"
+        aria-label="{{common.nav.menu}}"
         data-nav-toggle
       >
         <svg
@@ -784,18 +742,18 @@
       >
         <ul class="nav-links">
           <li>
-            <a href="../#features">Features</a>
+            <a href="../#features">{{common.nav.features}}</a>
           </li>
 
           <li>
-            <a href="../#how-it-works">How it works</a>
+            <a href="../#how-it-works">{{common.nav.howItWorks}}</a>
           </li>
 
           <li>
             <a
               href="./"
               aria-current="page"
-            >Release notes</a>
+            >{{common.nav.releaseNotes}}</a>
           </li>
 
           <li>
@@ -812,13 +770,13 @@
         <details class="language-menu">
           <summary
             class="language-switch"
-            aria-label="Select language"
+            aria-label="{{common.languageMenu.label}}"
           >
             <svg
               class="icon"
               aria-hidden="true"
             ><use href="#i-globe"/></svg>
-            <span>English</span>
+            <span>{{@languageName}}</span>
 
             <svg
               class="icon language-chevron"
@@ -827,32 +785,7 @@
           </summary>
 
           <ul class="language-options">
-            <li>
-              <a
-                href="../releases/"
-                hreflang="en"
-                lang="en"
-                data-language-switch="en"
-                aria-current="true"
-              >
-                English
-                <svg
-                  class="icon"
-                  aria-hidden="true"
-                ><use href="#i-check"/></svg>
-              </a>
-            </li>
-
-            <li>
-              <a
-                href="../zh/releases/"
-                hreflang="zh-Hans"
-                lang="zh-Hans"
-                data-language-switch="zh-Hans"
-              >
-                简体中文
-              </a>
-            </li>
+            {{@languageOptions}}
           </ul>
         </details>
       </div>
@@ -860,7 +793,7 @@
       <a
         class="button button-primary button-small nav-download"
         href="../download/"
-      >Download</a>
+      >{{common.nav.download}}</a>
     </nav>
   </header>
 
@@ -878,9 +811,9 @@
         <h1
           class="page-title"
           id="page-title"
-        >Release notes</h1>
+        >{{releases.hero.title}}</h1>
 
-        <p class="page-lead">Find out what changed in each release and download the version you need.</p>
+        <p class="page-lead">{{releases.hero.lead}}</p>
 
         <div class="page-hero-actions">
           <a
@@ -902,7 +835,7 @@
               class="icon"
               aria-hidden="true"
             ><use href="#i-rss"/></svg>
-            Atom feed
+            {{releases.hero.atomFeed}}
           </a>
         </div>
       </div>
@@ -932,7 +865,7 @@
 
     <section
       class="releases"
-      aria-label="Versions"
+      aria-label="{{releases.list.label}}"
     >
       <div class="container">
         <div
@@ -947,15 +880,15 @@
           </span>
 
           <div class="releases-message-body">
-            <h2>Release notes are on GitHub</h2>
-            <p>Visit GitHub Releases to read the notes for each version and download a copy.</p>
+            <h2>{{releases.fallback.title}}</h2>
+            <p>{{releases.fallback.description}}</p>
           </div>
 
           <a
             class="button button-primary"
             href="https://github.com/rakuyoMo/Flotilla/releases"
           >
-            Open GitHub Releases
+            {{releases.fallback.openReleases}}
             <svg
               class="icon"
               aria-hidden="true"
@@ -974,12 +907,12 @@
           >
             <picture>
               <source
-                srcset="../assets/img/sailing-ship-moon.jpg"
+                srcset="{{@assets}}img/sailing-ship-moon.jpg"
                 media="(prefers-color-scheme: dark)"
               >
 
               <img
-                src="../assets/img/sailing-ship-sun.jpg"
+                src="{{@assets}}img/sailing-ship-sun.jpg"
                 alt=""
                 width="1000"
                 height="1000"
@@ -988,8 +921,8 @@
             </picture>
           </div>
 
-          <h2 class="releases-empty-title">No releases yet</h2>
-          <p>There are no releases yet. You can build Flotilla from source or subscribe to release notifications on GitHub.</p>
+          <h2 class="releases-empty-title">{{releases.empty.title}}</h2>
+          <p>{{common.noReleases.message}}</p>
 
           <div class="releases-empty-actions">
             <a
@@ -1000,7 +933,7 @@
                 class="icon"
                 aria-hidden="true"
               ><use href="#i-terminal"/></svg>
-              Build from source
+              {{common.buildFromSource}}
             </a>
 
             <a
@@ -1011,11 +944,11 @@
                 class="icon"
                 aria-hidden="true"
               ><use href="#i-eye"/></svg>
-              Get release notifications
+              {{common.getReleaseNotifications}}
             </a>
           </div>
 
-          <p class="releases-empty-hint">To hear about new versions, choose <strong>Watch › Custom › Releases</strong> on GitHub.</p>
+          <p class="releases-empty-hint">{{common.noReleases.watchHint}}</p>
         </div>
 
         <div
@@ -1030,13 +963,13 @@
             <h2
               class="releases-toc-title"
               id="releases-toc-title"
-            >Versions</h2>
+            >{{releases.toc.title}}</h2>
 
             <ol data-release-toc></ol>
           </nav>
 
           <div class="releases-jump">
-            <label for="release-jump">Jump to version</label>
+            <label for="release-jump">{{releases.toc.jump}}</label>
 
             <div class="releases-select">
               <select
@@ -1069,10 +1002,10 @@
                 <button
                   class="release-copy"
                   type="button"
-                  aria-label="Copy link to this version"
+                  aria-label="{{releases.entry.copyLink}}"
                   data-field="copy-link"
                   data-copy
-                  data-copied-label="Link copied"
+                  data-copied-label="{{releases.entry.linkCopied}}"
                 >
                   <svg
                     class="icon"
@@ -1085,12 +1018,12 @@
                 <span
                   class="release-badge release-badge-latest"
                   data-field="latest"
-                >Latest</span>
+                >{{releases.entry.latest}}</span>
 
                 <span
                   class="release-badge release-badge-prerelease"
                   data-field="prerelease"
-                >Pre-release</span>
+                >{{releases.entry.prerelease}}</span>
 
                 <time data-field="date"></time>
               </p>
@@ -1134,7 +1067,7 @@
                 class="icon"
                 aria-hidden="true"
               ><use href="#i-github"/></svg>
-              View on GitHub
+              {{common.viewOnGitHub}}
             </a>
           </article>
         </template>
@@ -1151,12 +1084,12 @@
         >
           <picture>
             <source
-              srcset="../assets/img/app-icon-dark-64.png"
+              srcset="{{@assets}}img/app-icon-dark-64.png"
               media="(prefers-color-scheme: dark)"
             >
 
             <img
-              src="../assets/img/app-icon-light-64.png"
+              src="{{@assets}}img/app-icon-light-64.png"
               alt=""
               width="32"
               height="32"
@@ -1164,34 +1097,34 @@
             >
           </picture>
 
-          <span>Flotilla</span>
+          <span>{{common.appName}}</span>
         </a>
 
-        <p>Keep your Dock organized.</p>
+        <p>{{common.footer.tagline}}</p>
       </div>
 
       <nav
         class="footer-columns"
-        aria-label="Footer"
+        aria-label="{{common.footer.label}}"
       >
         <div class="footer-column">
-          <h2>Product</h2>
+          <h2>{{common.footer.product}}</h2>
 
           <ul>
-            <li><a href="../#features">Features</a></li>
-            <li><a href="../download/">Download</a></li>
-            <li><a href="./">Release notes</a></li>
+            <li><a href="../#features">{{common.nav.features}}</a></li>
+            <li><a href="../download/">{{common.nav.download}}</a></li>
+            <li><a href="./">{{common.nav.releaseNotes}}</a></li>
           </ul>
         </div>
 
         <div class="footer-column">
-          <h2>Resources</h2>
+          <h2>{{common.footer.resources}}</h2>
 
           <ul>
             <li><a href="https://github.com/rakuyoMo/Flotilla">GitHub</a></li>
             <li><a href="https://github.com/rakuyoMo/Flotilla/issues">Issues</a></li>
-            <li><a href="https://github.com/rakuyoMo/Flotilla#readme">README</a></li>
-            <li><a href="https://github.com/rakuyoMo/Flotilla/blob/main/LICENSE">License</a></li>
+            <li><a href="{{@links.readme}}">README</a></li>
+            <li><a href="https://github.com/rakuyoMo/Flotilla/blob/main/LICENSE">{{common.footer.license}}</a></li>
           </ul>
         </div>
       </nav>
@@ -1203,13 +1136,13 @@
       <details class="language-menu">
         <summary
           class="language-switch"
-          aria-label="Select language"
+          aria-label="{{common.languageMenu.label}}"
         >
           <svg
             class="icon"
             aria-hidden="true"
           ><use href="#i-globe"/></svg>
-          <span>English</span>
+          <span>{{@languageName}}</span>
 
           <svg
             class="icon language-chevron"
@@ -1218,32 +1151,7 @@
         </summary>
 
         <ul class="language-options">
-          <li>
-            <a
-              href="../releases/"
-              hreflang="en"
-              lang="en"
-              data-language-switch="en"
-              aria-current="true"
-            >
-              English
-              <svg
-                class="icon"
-                aria-hidden="true"
-              ><use href="#i-check"/></svg>
-            </a>
-          </li>
-
-          <li>
-            <a
-              href="../zh/releases/"
-              hreflang="zh-Hans"
-              lang="zh-Hans"
-              data-language-switch="zh-Hans"
-            >
-              简体中文
-            </a>
-          </li>
+          {{@languageOptions}}
         </ul>
       </details>
     </div>
