@@ -85,7 +85,7 @@
   - `icon(forFile:)` 把名称开头的 `.` 后面当成扩展名，`.a`、`.zip` 会是归档、压缩包的图标，`.bundle` 目录会是 bundle 的图标（实测见 “平台事实”）；按类型取，前两个是 `public.data` 的空白文稿，后一个是文件夹
   - 其余用 `icon(forFile:)`：有扩展名的（`.甲.txt`、`.swiftlint.yml`）、名称不以 `.` 开头的、符号链接、文件包；符号链接这样才带替身箭头，文件包按类型取是带 “?” 的文稿
   - 粘贴过自定义图标的这类文件与访达文件夹显示类型的图标，不显示自定义图标
-  - 面板、设置窗口的树、Dock 上 tile 的预览都用 `FileReference.icon`，三处一致，不随 “显示隐藏文件” 变化
+  - 面板、设置窗口的树、Dock 上 tile 的预览都经 `FinderFolderIconStore` 取图，没上色、没有 emoji 或符号的访达文件夹与文件取的就是 `FileReference.icon`，三处一致，不随 “显示隐藏文件” 变化；上了色、有 emoji 或符号的访达文件夹见 [13](13-finder-folder-appearance.md)
 
 ## 数据模型
 
@@ -183,8 +183,9 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
 
 - 范围：只在访达文件夹的层级，网格里的文件显示内容缩略图，与原生叠放一致
   - 由层级内容决定（`GroupPanelLevelContent.showsFileThumbnails`），面板据此把 `FileThumbnailLoader` 交给网格；没有它的网格里文件显示图标
-  - 组的层级、设置窗口、Dock 上 tile 的图标都不变，文件仍是 `FileReference.icon`
+  - 组的层级、设置窗口、Dock 上 tile 不显示内容缩略图，文件仍是图标
   - App 与访达文件夹显示图标；生成不出缩略图的（`.zip` 等没有缩略图扩展的类型、已删除、没有权限）保持图标
+  - 上了色、有 emoji 或符号的子文件夹换上 QuickLook 画好的文件夹图标（需求 38，见 13）
   - 生成不出是常态，不当错误记日志
 - 何时换上：单元格建好时先显示图标；格在看得见附近时请求缩略图，生成后回到主线程换上，只落到发起请求的那一格
   - 看得见附近：可见区域上下各多一行，与 “网格只建看得见的格” 建格的范围相同
@@ -193,7 +194,7 @@ struct AppReference: BookmarkedReference, Codable, Hashable, Identifiable {
   - `prepareContent(in:)` 为预绘区域提前建的格先只建格，进入看得见附近时才请求
   - 首屏：排版时建出的格随即请求
   - 网格离开窗口（离开这一层的转场结束、面板收起、组树变化重建）时，取消还没完成的请求，之后到达的结果丢掉
-- 画法：`QLThumbnailGenerator`，`iconMode = true`，只要 `.thumbnail`
+- 画法：`QLThumbnailGenerator`，`iconMode = true`，文件与其余的子文件夹只要 `.thumbnail`
   - 画布 100 pt（`GroupPanelMetrics.fileThumbnailSize`），`scale` 取面板所在屏幕的倍数
   - 100 pt 的画布居中放进 101 pt 的图标画布，中心与图标相同
   - 圆角、亮边与投影都来自 QuickLook 的图标模式
