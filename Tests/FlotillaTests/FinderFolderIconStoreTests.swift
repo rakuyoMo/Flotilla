@@ -416,6 +416,72 @@ extension FinderFolderIconStoreTests {
         #expect(generator.requestedURLs.count == 3)
     }
 
+    /// 挪走之后赶上全部重取（深浅外观、图标样式切换），按旧路径取不出：取图结束、照样通知，
+    /// 已有的图与版本保留，不退回 `NSWorkspace` 的图标
+    @Test(.enabled(if: FinderFolderAppearance.isSupported))
+    func failedReloadAfterMoveKeepsIcon() async throws {
+        let folder = try addFolder(named: "红色", tags: ["红色\n6"])
+        let path = FinderFolderIconStore.folderPath(of: folder)
+        let iconStore = generator.makeIconStore(following: store)
+        let updates = FinderFolderIconUpdateRecorder(of: iconStore)
+
+        iconStore.start()
+
+        try #require(await updates.wait(forUpdatesAt: path))
+
+        let icon = iconStore.icon(of: folder)
+        let version = try #require(iconStore.iconVersion(of: folder))
+
+        try moveAway(folder)
+
+        // 30 轮至少 0.6 s：挪走引起的那次核对已经过去
+        try #require(await !updates.wait(forUpdatesAt: path, count: 2, rounds: 30))
+
+        generator.generatesIcons = false
+        iconStore.reloadAllIcons()
+
+        #expect(await updates.wait(forUpdatesAt: path, count: 2))
+        #expect(!iconStore.isLoadingIcon(of: folder))
+        #expect(iconStore.icon(of: folder) === icon)
+        #expect(iconStore.iconVersion(of: folder) == version)
+    }
+
+    /// 取图途中被挪走，结果取不出：同样取图结束、照样通知，已有的图与版本保留
+    @Test(.enabled(if: FinderFolderAppearance.isSupported))
+    func failedLoadDuringMoveKeepsIcon() async throws {
+        let folder = try addFolder(named: "红色", tags: ["红色\n6"])
+        let path = FinderFolderIconStore.folderPath(of: folder)
+        let iconStore = generator.makeIconStore(following: store)
+        let updates = FinderFolderIconUpdateRecorder(of: iconStore)
+
+        iconStore.start()
+
+        try #require(await updates.wait(forUpdatesAt: path))
+
+        let icon = iconStore.icon(of: folder)
+        let version = try #require(iconStore.iconVersion(of: folder))
+
+        // 改了颜色，重取的结果先扣下
+        generator.completesImmediately = false
+
+        try FinderFolderAttributes.setTags(["绿色\n2"], of: folder.url)
+
+        try #require(await Polling.wait { iconStore.isLoadingIcon(of: folder) })
+
+        try moveAway(folder)
+
+        // 整套测试一起跑时，扣下的这次取图可能已过了等待上限、先发过一次通知
+        let count = updates.paths.count(where: { $0 == path })
+
+        generator.generatesIcons = false
+        generator.completeHeldRequests()
+
+        #expect(await updates.wait(forUpdatesAt: path, count: count + 1))
+        #expect(!iconStore.isLoadingIcon(of: folder))
+        #expect(iconStore.icon(of: folder) === icon)
+        #expect(iconStore.iconVersion(of: folder) == version)
+    }
+
     /// QuickLook 取不出：退回 `NSWorkspace` 的图标，也算取完，照样通知
     @Test(.enabled(if: FinderFolderAppearance.isSupported))
     func failedLoadFallsBackAndFinishes() async throws {

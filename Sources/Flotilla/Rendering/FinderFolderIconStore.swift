@@ -386,7 +386,8 @@ extension FinderFolderIconStore {
         postIconUpdate(atPath: path)
     }
 
-    /// 一次取图有了结果：取到了就换进缓存、换一个版本，取不出就退回 `NSWorkspace` 的图标；都发出通知
+    /// 一次取图有了结果：取到了就换进缓存、换一个版本；取不出时，路径上还有东西就退回 `NSWorkspace` 的图标，
+    /// 没有东西就保留已有的图与版本；都发出通知
     /// - Parameters:
     ///   - path: 文件夹的路径
     ///   - loadingID: 这次取图的编号
@@ -406,10 +407,13 @@ extension FinderFolderIconStore {
             // 外观没变、只是重取（深浅外观或图标样式切换）时同样换版本：取到的图可能已经不同，交给 Dock 同步按像素比对
             latestIconVersion += 1
             icons[path] = (image, latestIconVersion)
-        } else {
+        } else if FileIdentity(path: path) != nil {
+            // 路径上有东西却取不出：退回 `NSWorkspace` 的图标。
+            // 路径上没有东西（取图途中被改名、挪走或删除）时保留已有的图与版本，理由同 `checkFolder(atPath:)`
             icons[path] = nil
         }
 
+        // 保留原样时同样通知：推迟了的 Dock 同步据此补上，输入没变，不重画
         postIconUpdate(atPath: path)
     }
 
