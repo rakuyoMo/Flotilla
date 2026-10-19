@@ -58,7 +58,8 @@ final class IconFileWriterTests {
             group: Group(id: UUID(), name: "测试", items: apps),
             previewIconCount: 4,
             pointSize: 512,
-            appearance: .light
+            appearance: .light,
+            finderFolderIcons: .unstarted()
         )
     }
 }

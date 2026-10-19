@@ -44,6 +44,7 @@ struct GroupIconAppearanceTests {
             previewIconCount: 4,
             hiddenItemIDs: [],
             fileThumbnailLoader: nil,
+            finderFolderIcons: .unstarted(),
             openInFinderHandler: nil
         ) { _ in }
 
@@ -88,6 +89,7 @@ struct GroupIconAppearanceTests {
             previewIconCount: 4,
             hiddenItemIDs: [],
             fileThumbnailLoader: nil,
+            finderFolderIcons: .unstarted(),
             openInFinderHandler: nil
         ) { _ in }
 
@@ -135,7 +137,8 @@ extension GroupIconAppearanceTests {
             group: subgroup,
             previewIconCount: 4,
             pointSize: pointSize,
-            appearance: appearance
+            appearance: appearance,
+            finderFolderIcons: .unstarted()
         )
         .tiffRepresentation
     }

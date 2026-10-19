@@ -35,11 +35,22 @@ final class DockGroupPresenter: NSObject {
     /// - Parameters:
     ///   - store: 组树的唯一数据源
     ///   - preferences: 用户设置，决定子组图标里的预览数量
+    ///   - finderFolderIcons: 组里访达文件夹的图标
     ///   - locator: 定位 tile
-    init(store: GroupStore, preferences: Preferences, locator: DockTileLocator) {
+    init(
+        store: GroupStore,
+        preferences: Preferences,
+        finderFolderIcons: FinderFolderIconStore,
+        locator: DockTileLocator
+    ) {
         self.store = store
         self.locator = locator
-        panelController = GroupPanelController(store: store, preferences: preferences)
+
+        panelController = GroupPanelController(
+            store: store,
+            preferences: preferences,
+            finderFolderIcons: finderFolderIcons
+        )
 
         super.init()
 

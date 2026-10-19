@@ -1,4 +1,5 @@
 import AppKit
+import QuickLookThumbnailing
 
 @testable import Flotilla
 
@@ -7,8 +8,14 @@ import AppKit
 /// 假的缩略图生成：记下每次请求与取消，由测试决定何时交出什么结果；不经 QuickLook，CI 上同样确定
 @MainActor
 final class ThumbnailGeneratorStub {
-    /// 收到的请求，按先后顺序：文件的 URL，与交出结果的回调
-    private var requests: [(url: URL, completion: @Sendable (NSImage?) -> Void)] = []
+    /// 收到的请求，按先后顺序：文件的 URL、请求的表示，与交出结果的回调
+    private var requests: [
+        (
+            url: URL,
+            representation: QLThumbnailGenerator.Request.RepresentationTypes,
+            completion: @Sendable (NSImage?) -> Void
+        )
+    ] = []
 
     /// 已结束的请求在 `requests` 里的位置：被取消，或已交出结果
     private var finishedRequestIndices = IndexSet()
@@ -21,6 +28,11 @@ final class ThumbnailGeneratorStub {
         requests.map(\.url)
     }
 
+    /// 各次请求的表示，与 `requestedURLs` 一一对应
+    var requestedRepresentations: [QLThumbnailGenerator.Request.RepresentationTypes] {
+        requests.map(\.representation)
+    }
+
     /// 还没交出结果、也没被取消的请求的文件 URL，按请求的先后顺序
     var pendingURLs: [URL] {
         requests.indices
@@ -30,10 +42,10 @@ final class ThumbnailGeneratorStub {
 
     /// 用这个假实现生成缩略图的加载器
     func makeLoader() -> FileThumbnailLoader {
-        FileThumbnailLoader { url, completion in
+        FileThumbnailLoader { url, representation, completion in
             let index = self.requests.count
 
-            self.requests.append((url, completion))
+            self.requests.append((url, representation, completion))
 
             return {
                 self.cancelledURLs.append(url)

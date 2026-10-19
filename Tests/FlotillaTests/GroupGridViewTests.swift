@@ -137,6 +137,7 @@ extension GroupGridViewTests {
             previewIconCount: 0,
             hiddenItemIDs: [],
             fileThumbnailLoader: nil,
+            finderFolderIcons: .unstarted(),
             openInFinderHandler: { }
         ) { _ in }
 

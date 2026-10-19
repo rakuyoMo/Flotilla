@@ -80,7 +80,8 @@ struct GroupIconRendererTests {
             group: makeGroup(appCount: 4),
             previewIconCount: 4,
             pointSize: pointSize,
-            appearance: appearance
+            appearance: appearance,
+            finderFolderIcons: .unstarted()
         )
 
         #expect(image.size == NSSize(width: pointSize, height: pointSize))
@@ -430,7 +431,8 @@ extension GroupIconRendererTests {
             group: group,
             previewIconCount: previewIconCount,
             pointSize: 64,
-            appearance: appearance
+            appearance: appearance,
+            finderFolderIcons: .unstarted()
         )
 
         let bitmap = try rasterize(image, pixelSide: 128)
@@ -444,7 +446,8 @@ extension GroupIconRendererTests {
             group: makeGroup(appCount: 0),
             previewIconCount: 0,
             pointSize: 1024,
-            appearance: appearance
+            appearance: appearance,
+            finderFolderIcons: .unstarted()
         )
 
         return try rasterize(image, pixelSide: 1024)

@@ -76,7 +76,10 @@ final class GroupTreeCellViewTests {
         )
 
         let cell = GroupTreeCellView()
-        cell.configure(with: GroupTreeNode(item: .file(deleted), parent: nil))
+        cell.configure(
+            with: GroupTreeNode(item: .file(deleted), parent: nil),
+            finderFolderIcons: .unstarted()
+        )
 
         #expect(cell.locationText == nil)
     }
@@ -87,7 +90,10 @@ final class GroupTreeCellViewTests {
         let cell = try configuredCell(with: directory.appending(path: "资料"))
         let group = Group(id: UUID(), name: "工作", items: [])
 
-        cell.configure(with: GroupTreeNode(item: .group(group), parent: nil))
+        cell.configure(
+            with: GroupTreeNode(item: .group(group), parent: nil),
+            finderFolderIcons: .unstarted()
+        )
 
         #expect(cell.locationText == nil)
     }
@@ -176,7 +182,10 @@ extension GroupTreeCellViewTests {
 
             try #require(cell.locationText != nil)
 
-            cell.configure(with: GroupTreeNode(item: item, parent: nil))
+            cell.configure(
+                with: GroupTreeNode(item: item, parent: nil),
+                finderFolderIcons: .unstarted()
+            )
 
             #expect(cell.locationText == nil)
         }
@@ -253,6 +262,53 @@ extension GroupTreeCellViewTests {
         #expect(shadowBases.allSatisfy { yellow[$0 ..< $0 + 3].allSatisfy { $0 == 0 } })
     }
 
+    /// 打了红色标签的访达文件夹：这一行是系统画好的红色文件夹，与访达里看到的一样，不是蓝色
+    @Test(
+        .enabled(if: FinderFolderAppearance.isSupported),
+        arguments: [1, 2] as [CGFloat]
+    )
+    func redTaggedFinderFolderRowIsRed(scale: CGFloat) async throws {
+        let url = directory.appending(path: "红色", directoryHint: .isDirectory)
+
+        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        try FinderFolderAttributes.setTags(["红色\n6"], of: url)
+
+        let item = try #require(GroupItem(url: url, title: nil))
+
+        guard case .file(let finderFolder) = item else {
+            Issue.record("访达文件夹没有分类成文件")
+            return
+        }
+
+        // 图标库跟着的组树里要有这个访达文件夹，才会监听、取图
+        let store = GroupStore(fileURL: directory.appending(path: "folders.json"))
+
+        store.addItems([item], to: store.addRootGroup(named: "资料").id)
+
+        let iconStore = FinderFolderIconStore(store: store)
+        let updates = FinderFolderIconUpdateRecorder(of: iconStore)
+
+        iconStore.start()
+
+        try #require(await updates.wait(forIconOf: finderFolder))
+
+        let cell = GroupTreeCellView()
+
+        cell.configure(
+            with: GroupTreeNode(item: item, parent: nil),
+            finderFolderIcons: iconStore
+        )
+
+        let color = try IconPixels.centerColor(
+            of: #require(cell.imageView?.image),
+            side: Self.iconSide,
+            scale: scale
+        )
+
+        #expect(color.red - color.green > 100)
+        #expect(color.red - color.blue > 100)
+    }
+
     /// 访达文件夹这一行仍是系统给的蓝色文件夹，与组这一行的黄色文件夹区分开
     @Test
     func finderFolderRowKeepsSystemIcon() throws {
@@ -284,7 +340,10 @@ extension GroupTreeCellViewTests {
         let item = try #require(GroupItem(url: url, title: title))
 
         let cell = GroupTreeCellView()
-        cell.configure(with: GroupTreeNode(item: item, parent: nil))
+        cell.configure(
+            with: GroupTreeNode(item: item, parent: nil),
+            finderFolderIcons: .unstarted()
+        )
 
         return cell
     }
@@ -308,41 +367,16 @@ extension GroupTreeCellViewTests {
         let group = Group(id: UUID(), name: "工作", items: [])
 
         let cell = GroupTreeCellView()
-        cell.configure(with: GroupTreeNode(item: .group(group), parent: nil))
+        cell.configure(
+            with: GroupTreeNode(item: .group(group), parent: nil),
+            finderFolderIcons: .unstarted()
+        )
 
         return cell
     }
 
-    /// 把图像按行首图标的边长、scale 倍画进 8 位 RGBA、预乘透明度的 sRGB 位图，读出全部字节，自上而下逐行排列
+    /// 把图像按行首图标的边长、scale 倍画进位图，读出全部字节，见 `IconPixels.pixels(of:side:scale:)`
     private func pixels(of image: NSImage, scale: CGFloat) throws -> [UInt8] {
-        let side = Int(Self.iconSide * scale)
-        let colorSpace = try #require(CGColorSpace(name: CGColorSpace.sRGB))
-
-        let context = try #require(
-            CGContext(
-                data: nil,
-                width: side,
-                height: side,
-                bitsPerComponent: 8,
-                bytesPerRow: side * 4,
-                space: colorSpace,
-                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-            )
-        )
-
-        // 按点绘制、按倍率换算像素，与图标显示在这种屏幕上相同
-        context.scaleBy(x: scale, y: scale)
-
-        NSGraphicsContext.saveGraphicsState()
-        NSGraphicsContext.current = NSGraphicsContext(cgContext: context, flipped: false)
-
-        image.draw(in: NSRect(x: 0, y: 0, width: Self.iconSide, height: Self.iconSide))
-
-        NSGraphicsContext.restoreGraphicsState()
-
-        let data = try #require(context.data)
-            .bindMemory(to: UInt8.self, capacity: side * side * 4)
-
-        return Array(UnsafeBufferPointer(start: data, count: side * side * 4))
+        try IconPixels.pixels(of: image, side: Self.iconSide, scale: scale)
     }
 }

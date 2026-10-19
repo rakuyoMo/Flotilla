@@ -81,10 +81,12 @@
     - 已有的 stub（包括旧版本生成的）同样按像素比对，图标没变就不改写
   - 缺少可执行文件、`Contents/Resources/Icon.icns` 或自定义图标的 stub 视为残缺，名称与图标都没变也重新生成
 - 图标的输入没变时不重新渲染（`Sources/Flotilla/Rendering/GroupIconInputs.swift`）：
-  - 图标的输入是底板的外观与按顺序参与预览的项
+  - 图标的输入是底板的外观、按顺序参与预览的项，以及预览里各访达文件夹所用的图
     - 参与预览的项与渲染共用一条规则（`GroupIconRenderer.previewItems(of:previewIconCount:)`）：按顺序取前几个非子组的项，数量夹到 `0...Preferences.maximumPreviewIconCount`
     - 预览数量只通过取到哪几项影响图标，不单独算：只有三项的组，预览数量从 3 改成 4，输入不变
     - 项按整个值比较，含书签、bundle id 与网页标题：这些变了只多渲染一次，再由像素比对判定图标没变
+    - 访达文件夹所用的图记作它的版本（`FinderFolderIconStore.iconVersion(of:)`），用 `NSWorkspace` 的图标时为 nil：每换进一张新图就换一个，外观变了、深浅外观或图标样式切换后重取都换
+    - 预览里的访达文件夹换了图，这一项的值没变，输入也变，重画后按像素比对；只换了预览之外的访达文件夹的图，输入不变（见 [13](13-finder-folder-appearance.md)）
   - 同步器在内存里记下各根组的 stub 图标最近一次写入或核对时的输入，只管本次运行，只留当前的根组
     - `write` 成功（不论改没改写）后记下这次的输入，失败时去掉这一组的记录
     - 组被删除或被拖成子组后 stub 会被删，再成为根组时重新渲染、比对
@@ -157,7 +159,8 @@
   - 先做一次同步：每个根组都有 stub，tile 按 “添加 tile 的条件” 添加；多余的 stub 与 tile 删除
     - tile 按 stub 独占的 `<id>` 目录匹配，stub bundle 已被用户删掉时同样删除条目
     - 多余的 tile 也包括 Dock 偏好里指向 `DockTiles/` 下、目录已不存在的条目
-  - 再订阅 `GroupStore.didChangeNotification` 与 `Preferences.didChangeNotification`，用 KVO 观察 `NSApp.effectiveAppearance`，并用 `DockPreferences.observeTiles(_:)` 观察 Dock 偏好里的 tile
+  - 再订阅 `GroupStore.didChangeNotification`、`Preferences.didChangeNotification` 与 `FinderFolderIconStore.didUpdateIconNotification`，用 KVO 观察 `NSApp.effectiveAppearance`，并用 `DockPreferences.observeTiles(_:)` 观察 Dock 偏好里的 tile
+  - 根组的预览里有还在取图的访达文件夹时，推迟这次同步，等取完的通知再同步，最多推迟 2 s；启动时的第一次同步同样如此（见 13）
 - 变更后合并处理（防抖 0.5 秒）：
   1. 按需更新每个根组 stub 的 icns 与 plist：图标的输入与上次写入或核对时相同就不重新渲染（见上文 “图标的输入没变时不重新渲染”）；渲染时底板按 `NSApp.effectiveAppearance` 取深浅（见 01）
   2. 把各根组 tile 的期望状态写进 Dock 偏好（`apply`）：tile 集合或名称有变化，或 stub 被改写过（条目换新的 `GUID`）
@@ -207,7 +210,7 @@
 - 图标比对：同一个组图标、只差 1 级或正好差 4 级的两份算相同；差 5 级，或预览换顺序、少一项、预览数量变化、换外观、某一格换成别的图标的算不同；解不出图像的算不同
 - stub 的图标只差 1 级时不改写
 - 参与预览的项：跳过子组，按顺序取前几项，数量越界时夹取；`render` 画进单元格的正是这几项
-- 图标的输入：只动预览之外的项（换序、删除、追加）、子组里的改动、预览数量变了而取到的项不变，输入相同；前几项换序、某一格换成别的项、取到的项变了、外观变了，输入不同
+- 图标的输入：只动预览之外的项（换序、删除、追加）、子组里的改动、预览数量变了而取到的项不变，输入相同；前几项换序、某一格换成别的项、取到的项变了、外观变了，输入不同；预览里的访达文件夹换了图（含外观没变、只是重取换进新图），输入不同，预览之外的换了图，输入相同（见 13）
 - `isIconCurrent` 为真：名称没变、stub 齐全时不调用渲染闭包，Info.plist、可执行文件与 `Icon.icns` 的内容和修改时间都不变；改了名，或分别缺可执行文件、`Icon.icns`、自定义图标时照常渲染、改写
 - Dock 重启后的核对：按同一份期望补写被终止写回盖掉的条目，没有写回时不补写；补写是否赶在新 Dock 读取之前（纯逻辑）
 

@@ -131,6 +131,10 @@ extension AppDelegate: NSApplicationDelegate {
         // 没运行期间移动或改名的 App 与文件先跟到新位置，Dock 第一次同步渲染的 tile 图标就用上新位置
         GroupStore.shared.updateItemLocations()
 
+        // 在 Dock 同步之前开始取访达文件夹的图标：第一次同步据此等预览里的访达文件夹取完，
+        // 不先按蓝色文件夹改写 stub、再按实际外观改写
+        FinderFolderIconStore.shared.start()
+
         startDockIntegration()
     }
 
@@ -311,6 +315,7 @@ extension AppDelegate {
         let presenter = DockGroupPresenter(
             store: .shared,
             preferences: .shared,
+            finderFolderIcons: .shared,
             locator: DockTileLocator(builder: builder)
         )
         presenter.start()
@@ -332,6 +337,7 @@ extension AppDelegate {
         let synchronizer = DockTileSynchronizer(
             store: .shared,
             preferences: .shared,
+            finderFolderIcons: .shared,
             builder: builder,
             dockPreferences: dockPreferences
         )

@@ -60,7 +60,7 @@ Tests/FlotillaTests/    单元测试（Swift Testing）
 Scripts/bundle.sh       打包脚本：组装 .app 并签名
 Scripts/release.sh      发版脚本：改版本号并开 release PR
 Scripts/site.sh         官网组装脚本：拷入 website/、生成位图、取 Release 数据，输出到 build/site/
-docs/requirements/      需求文档：00 为总览，01–12 为按实现顺序拆分的阶段
+docs/requirements/      需求文档：00 为总览，01–13 为按实现顺序拆分的阶段
 docs/resources/         README 的头图 readme-header-<en|zh>-<light|dark>.png：英文、中文各一套，各有浅色、深色两版；
                         README 的截图 screenshot-<panel|stack|settings>-<en|zh>-<light|dark>.<jpg|png>，分法同头图；
                         帆船画稿 sailing-ship-*.png；

@@ -101,6 +101,7 @@ struct GroupPanelLevelContentTests {
             previewIconCount: 0,
             hiddenItemIDs: [],
             fileThumbnailLoader: nil,
+            finderFolderIcons: .unstarted(),
             openInFinderHandler: openInFinderHandler
         ) { _ in }
 

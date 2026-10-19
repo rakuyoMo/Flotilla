@@ -114,6 +114,102 @@ struct GroupGridThumbnailTests {
         #expect(icon(at: 1, in: grid) === archiveIcon)
     }
 
+    /// 上了色、有 emoji 或符号的子文件夹按建格时读到的外观请求系统画好的图标，生成后换上；
+    /// 没上色的子文件夹与文件照旧请求缩略图
+    @Test(.enabled(if: FinderFolderAppearance.isSupported))
+    func coloredSubfoldersRequestIcons() async throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appending(path: "FlotillaTests-\(UUID().uuidString)")
+
+        defer {
+            try? FileManager.default.removeItem(at: directory)
+        }
+
+        let red = directory.appending(path: "红色", directoryHint: .isDirectory)
+        let emoji = directory.appending(path: "披萨", directoryHint: .isDirectory)
+        let plain = directory.appending(path: "没上色", directoryHint: .isDirectory)
+        let report = directory.appending(path: "报告.txt")
+
+        for folder in [red, emoji, plain] {
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        }
+
+        try FinderFolderAttributes.setTags(["红色\n6"], of: red)
+        try FinderFolderAttributes.setSymbolOrEmoji(#"{"emoji":"🍕"}"#, of: emoji)
+        try Data("报告".utf8).write(to: report)
+
+        let files = [red, emoji, plain, report].map {
+            FileReference(id: UUID(), url: $0, bookmark: nil)
+        }
+
+        let grid = makeGrid(
+            for: .finderFolder(finderFolder, items: files.map { .file($0) })
+        )
+
+        #expect(generator.requestedURLs == files.map(\.url))
+        #expect(generator.requestedRepresentations == [.icon, .icon, .thumbnail, .thumbnail])
+
+        generator.complete(red, with: thumbnail)
+        await settle()
+
+        #expect(icon(at: 0, in: grid) === thumbnail)
+    }
+
+    /// 访达文件夹层级里的子文件夹恰好也在组树里：加载器换上的图，在图标库发出 “没有新图” 的通知后保持不变；
+    /// 这一层不监听，回到这一层时照常重新读
+    @Test(.enabled(if: FinderFolderAppearance.isSupported))
+    func finderFolderLevelKeepsLoadedIconOnIconStoreUpdate() async throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appending(path: "FlotillaTests-\(UUID().uuidString)")
+
+        defer {
+            try? FileManager.default.removeItem(at: directory)
+        }
+
+        let red = directory.appending(path: "红色", directoryHint: .isDirectory)
+
+        try FileManager.default.createDirectory(at: red, withIntermediateDirectories: true)
+        try FinderFolderAttributes.setTags(["红色\n6"], of: red)
+
+        // 组树里也有这个文件夹；图标库取不出图，只发出取图结束的通知
+        let store = GroupStore(fileURL: directory.appending(path: "folders.json"))
+        let item = try #require(GroupItem(url: red, title: nil))
+
+        guard case .file(let inTree) = item else {
+            Issue.record("访达文件夹没有分类成文件")
+            return
+        }
+
+        store.addItems([item], to: store.addRootGroup(named: "资料").id)
+
+        let iconGenerator = FinderFolderIconGeneratorStub()
+        let iconStore = iconGenerator.makeIconStore(following: store)
+        let updates = FinderFolderIconUpdateRecorder(of: iconStore)
+
+        iconGenerator.generatesIcons = false
+
+        // 访达文件夹的层级里，同一路径的子文件夹
+        let subfolder = FileReference(id: UUID(), url: inTree.url, bookmark: nil)
+
+        let grid = makeGrid(
+            for: .finderFolder(finderFolder, items: [.file(subfolder)]),
+            finderFolderIcons: iconStore
+        )
+
+        generator.complete(subfolder.url, with: thumbnail)
+        await settle()
+
+        try #require(icon(at: 0, in: grid) === thumbnail)
+
+        let path = FinderFolderIconStore.folderPath(of: inTree)
+
+        iconStore.start()
+
+        try #require(await updates.wait(forUpdatesAt: path))
+
+        #expect(icon(at: 0, in: grid) === thumbnail)
+    }
+
     /// 离开这一层、面板收起时网格离开窗口：还没完成的请求全部取消，之后晚到的结果不换上
     @Test
     func leavingWindowCancelsRequestsAndDropsLateResults() async {
@@ -269,8 +365,14 @@ extension GroupGridThumbnailTests {
     }
 
     /// 不在滚动视图里的网格：排版后整个网格都算看得见，单元格全部建出
-    private func makeGrid(for content: GroupPanelLevelContent) -> GroupGridView {
-        let grid = makeGridView(for: content)
+    /// - Parameters:
+    ///   - content: 这一层的内容
+    ///   - finderFolderIcons: 组里访达文件夹的图标；默认是没有开始监听的
+    private func makeGrid(
+        for content: GroupPanelLevelContent,
+        finderFolderIcons: FinderFolderIconStore = .unstarted()
+    ) -> GroupGridView {
+        let grid = makeGridView(for: content, finderFolderIcons: finderFolderIcons)
 
         grid.layoutSubtreeIfNeeded()
 
@@ -297,7 +399,13 @@ extension GroupGridThumbnailTests {
     }
 
     /// 与面板相同的建法：只有访达文件夹的层级有缩略图加载器与 “在访达中打开”；还没排版，一格也没建
-    private func makeGridView(for content: GroupPanelLevelContent) -> GroupGridView {
+    /// - Parameters:
+    ///   - content: 这一层的内容
+    ///   - finderFolderIcons: 组里访达文件夹的图标；默认是没有开始监听的
+    private func makeGridView(
+        for content: GroupPanelLevelContent,
+        finderFolderIcons: FinderFolderIconStore = .unstarted()
+    ) -> GroupGridView {
         let layout = GroupGridLayout(
             itemCount: content.cellCount,
             availableSize: CGSize(width: 2000, height: 2000)
@@ -317,6 +425,7 @@ extension GroupGridThumbnailTests {
             previewIconCount: 0,
             hiddenItemIDs: [],
             fileThumbnailLoader: fileThumbnailLoader,
+            finderFolderIcons: finderFolderIcons,
             openInFinderHandler: openInFinderHandler
         ) { _ in }
     }

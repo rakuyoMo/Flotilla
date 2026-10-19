@@ -45,7 +45,7 @@ final class GroupTreeViewControllerTests {
     /// 展开组后树不得比滚动区宽：outline view 默认会随展开的子层级加宽大纲列，超出的部分被滚动区裁掉
     @Test
     func expandingGroupKeepsOutlineWithinScrollView() throws {
-        let controller = GroupTreeViewController(store: store, dockTileSynchronizer: nil)
+        let controller = makeController()
         let window = makeWindow(width: Self.minimumWidth)
 
         window.contentView = controller.view
@@ -65,7 +65,7 @@ final class GroupTreeViewControllerTests {
     @Test(arguments: LocalizationTests.languages)
     func buttonRowFitsMinimumWidth(language: String) throws {
         let table = try LocalizationTests.table(for: language)
-        let controller = GroupTreeViewController(store: store, dockTileSynchronizer: nil)
+        let controller = makeController()
 
         let row = try buttonRow(of: controller)
         let buttons = row.views.compactMap { $0 as? NSButton }
@@ -116,7 +116,7 @@ final class GroupTreeViewControllerTests {
     /// “添加到 Dock” 与 “删除” 在右键菜单里，不在按钮行
     @Test
     func buttonRowListsNewGroupAndAdd() throws {
-        let controller = GroupTreeViewController(store: store, dockTileSynchronizer: nil)
+        let controller = makeController()
         let controls = try buttonRow(of: controller).views
 
         // 测试进程读不到译文，标题就是键名；pull-down 的标题是它的第一项
@@ -131,7 +131,7 @@ final class GroupTreeViewControllerTests {
     /// “添加…” 的菜单依次是 添加 App…、添加文件…、添加网页…，各自调用对应的方法
     @Test
     func addMenuItemsCallTheirActions() throws {
-        let controller = GroupTreeViewController(store: store, dockTileSynchronizer: nil)
+        let controller = makeController()
         let addPopUp = try addPopUpButton(of: controller)
 
         // 第一项是按钮上显示的 “添加…”，菜单里列出的是其后的各项
@@ -188,7 +188,7 @@ final class GroupTreeViewControllerTests {
     /// 选中项被删掉、树重建后没有选中项：按钮随之变成只能新建根组，不留着删掉之前的状态
     @Test
     func buttonsFollowSelectionRemovedByReload() throws {
-        let controller = GroupTreeViewController(store: store, dockTileSynchronizer: nil)
+        let controller = makeController()
         let window = makeWindow(width: Self.minimumWidth)
 
         window.contentView = controller.view
@@ -230,7 +230,7 @@ final class GroupTreeViewControllerTests {
     /// 没有选中项时 “新建组” 新建的是根组，排在最后
     @Test
     func newGroupWithoutSelectionAddsRootGroup() throws {
-        let controller = GroupTreeViewController(store: store, dockTileSynchronizer: nil)
+        let controller = makeController()
         let window = makeWindow(width: Self.minimumWidth)
 
         window.contentView = controller.view
@@ -246,7 +246,7 @@ final class GroupTreeViewControllerTests {
     /// 选中组时 “新建组” 新建的是这个组的子组，不是它所在的组的
     @Test
     func newGroupWithGroupSelectedAddsItsSubgroup() throws {
-        let controller = GroupTreeViewController(store: store, dockTileSynchronizer: nil)
+        let controller = makeController()
         let window = makeWindow(width: Self.minimumWidth)
 
         window.contentView = controller.view
@@ -280,7 +280,7 @@ final class GroupTreeViewControllerTests {
     /// 没在编辑组名时，取到的网页标题立刻补上
     @Test
     func fillTitleAppliesImmediatelyWhenNotEditing() throws {
-        let controller = GroupTreeViewController(store: store, dockTileSynchronizer: nil)
+        let controller = makeController()
         let window = makeWindow(width: Self.minimumWidth)
 
         window.contentView = controller.view
@@ -297,7 +297,7 @@ final class GroupTreeViewControllerTests {
     /// 编辑结束、名称定下来之后补上
     @Test
     func fillTitleWaitsUntilGroupNameEditingEnds() throws {
-        let controller = GroupTreeViewController(store: store, dockTileSynchronizer: nil)
+        let controller = makeController()
         let window = makeWindow(width: Self.minimumWidth)
 
         window.contentView = controller.view
@@ -324,7 +324,7 @@ final class GroupTreeViewControllerTests {
     /// 按 Esc 取消编辑同样算编辑结束：名称保持原样，取到的标题随后补上
     @Test
     func fillTitleWaitsUntilEscapeCancelsEditing() async throws {
-        let controller = GroupTreeViewController(store: store, dockTileSynchronizer: nil)
+        let controller = makeController()
         let window = makeWindow(width: Self.minimumWidth)
 
         window.contentView = controller.view
@@ -352,7 +352,7 @@ final class GroupTreeViewControllerTests {
     /// 两条都记下，后到的不挤掉先到的；编辑结束后补上的是网址相符的那一条
     @Test
     func pendingTitlesOfSameWebPageAreAllKept() throws {
-        let controller = GroupTreeViewController(store: store, dockTileSynchronizer: nil)
+        let controller = makeController()
         let window = makeWindow(width: Self.minimumWidth)
 
         window.contentView = controller.view
@@ -383,7 +383,7 @@ extension GroupTreeViewControllerTests {
     /// 没有 Dock 集成时没有 “添加到 Dock”，组的菜单只有 “删除”，也没有分隔线
     @Test
     func contextMenuFollowsClickedRowKind() throws {
-        let controller = GroupTreeViewController(store: store, dockTileSynchronizer: nil)
+        let controller = makeController()
         let window = makeWindow(width: Self.minimumWidth)
 
         window.contentView = controller.view
@@ -432,7 +432,7 @@ extension GroupTreeViewControllerTests {
     /// 右键点在没有行的空白处：菜单没有项，不弹出；之前点过某一行留下的项也不留着
     @Test
     func blankAreaContextMenuHasNoItems() throws {
-        let controller = GroupTreeViewController(store: store, dockTileSynchronizer: nil)
+        let controller = makeController()
         let window = makeWindow(width: Self.minimumWidth)
 
         window.contentView = controller.view
@@ -458,7 +458,7 @@ extension GroupTreeViewControllerTests {
         let life = store.addRootGroup(named: "生活")
 
         let synchronizer = try makeSynchronizer(tilesOnDock: [work.id])
-        let controller = GroupTreeViewController(store: store, dockTileSynchronizer: synchronizer)
+        let controller = makeController(dockTileSynchronizer: synchronizer)
         let window = makeWindow(width: Self.minimumWidth)
 
         window.contentView = controller.view
@@ -495,7 +495,7 @@ extension GroupTreeViewControllerTests {
     /// “删除” 删掉的是右键点到的那一项，不是选中项：右键不改变选中项，删除之后选中项仍选中
     @Test
     func removeDeletesClickedItemAndKeepsSelection() throws {
-        let controller = GroupTreeViewController(store: store, dockTileSynchronizer: nil)
+        let controller = makeController()
         let window = makeWindow(width: Self.minimumWidth)
 
         window.contentView = controller.view
@@ -526,7 +526,7 @@ extension GroupTreeViewControllerTests {
     /// 菜单开着时树重建、行号错位：“删除” 仍删掉原来点到的那一项，不删此刻占着那一行的项
     @Test
     func removeAfterTreeReloadDeletesOriginallyClickedItem() throws {
-        let controller = GroupTreeViewController(store: store, dockTileSynchronizer: nil)
+        let controller = makeController()
         let window = makeWindow(width: Self.minimumWidth)
 
         window.contentView = controller.view
@@ -614,6 +614,74 @@ extension GroupTreeViewControllerTests {
     }
 }
 
+// MARK: - Finder Folder Icons
+
+extension GroupTreeViewControllerTests {
+    /// 访达文件夹取到新图：这一行就地换上，不重建树，选中、展开与正在编辑的组名都不受影响
+    @Test(.enabled(if: FinderFolderAppearance.isSupported))
+    func finderFolderRowRefreshesInPlace() async throws {
+        let url = directory.appending(path: "红色", directoryHint: .isDirectory)
+
+        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        try FinderFolderAttributes.setTags(["红色\n6"], of: url)
+
+        let item = try #require(GroupItem(url: url, title: nil))
+
+        guard case .file(let finderFolder) = item else {
+            Issue.record("访达文件夹没有分类成文件")
+            return
+        }
+
+        store.addItems([item], to: try #require(store.rootGroups.first).id)
+
+        let generator = FinderFolderIconGeneratorStub()
+        let iconStore = generator.makeIconStore(following: store)
+        let updates = FinderFolderIconUpdateRecorder(of: iconStore)
+        let path = FinderFolderIconStore.folderPath(of: finderFolder)
+
+        iconStore.start()
+
+        try #require(await updates.wait(forUpdatesAt: path))
+
+        let controller = GroupTreeViewController(
+            store: store,
+            finderFolderIcons: iconStore,
+            dockTileSynchronizer: nil
+        )
+
+        let window = makeWindow(width: Self.minimumWidth)
+
+        window.contentView = controller.view
+
+        // 展开 “工作”：行依次是 工作、开发、Chess、红色
+        let outlineView = try groupTreeView(of: controller)
+
+        outlineView.expandItem(outlineView.item(atRow: 0))
+        controller.view.layoutSubtreeIfNeeded()
+
+        let cell = try #require(
+            outlineView.view(atColumn: 0, row: 3, makeIfNecessary: false) as? GroupTreeCellView
+        )
+
+        let redIcon = try #require(cell.imageView?.image)
+
+        #expect(redIcon === iconStore.icon(of: finderFolder))
+
+        let fieldEditor = try beginEditingWorkName(in: controller)
+        let selectedRow = outlineView.selectedRow
+
+        try FinderFolderAttributes.setTags(["绿色\n2"], of: url)
+
+        try #require(await updates.wait(forUpdatesAt: path, count: 2))
+
+        #expect(cell.imageView?.image === iconStore.icon(of: finderFolder))
+        #expect(cell.imageView?.image !== redIcon)
+        #expect(outlineView.selectedRow == selectedRow)
+        #expect(outlineView.isItemExpanded(outlineView.item(atRow: 0)))
+        #expect(window.firstResponder === fieldEditor)
+    }
+}
+
 // MARK: - Private
 
 extension GroupTreeViewControllerTests {
@@ -633,6 +701,18 @@ extension GroupTreeViewControllerTests {
         ]
 
         return actionNames[title].map(NSSelectorFromString)
+    }
+
+    /// 跟着本用例组树的组区；访达文件夹用 `FileReference.icon`
+    /// - Parameter dockTileSynchronizer: Dock tile 同步器；不关心 tile 状态时为 nil
+    private func makeController(
+        dockTileSynchronizer: DockTileSynchronizer? = nil
+    ) -> GroupTreeViewController {
+        GroupTreeViewController(
+            store: store,
+            finderFolderIcons: .unstarted(),
+            dockTileSynchronizer: dockTileSynchronizer
+        )
     }
 
     /// 组区里的组树
@@ -792,6 +872,7 @@ extension GroupTreeViewControllerTests {
         return DockTileSynchronizer(
             store: store,
             preferences: Preferences(defaults: defaults),
+            finderFolderIcons: .unstarted(),
             builder: builder,
             dockPreferences: dockPreferences
         )
@@ -800,7 +881,7 @@ extension GroupTreeViewControllerTests {
     /// 把组区放进窗口，在 “工作” 末尾加入网页、文件与访达文件夹并展开 “工作”：
     /// 行依次是 工作、开发、Chess、网页、文件、访达文件夹
     private func showWebPageFixtures() throws -> (controller: GroupTreeViewController, window: NSWindow) {
-        let controller = GroupTreeViewController(store: store, dockTileSynchronizer: nil)
+        let controller = makeController()
         let window = makeWindow(width: Self.minimumWidth)
 
         window.contentView = controller.view

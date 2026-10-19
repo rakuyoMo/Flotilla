@@ -146,7 +146,7 @@
 
 - 项的顺序就是 `group.items` 的顺序；访达文件夹的层级按名称排序，见 08。
   - App、文件与网页项显示各自的 `icon` 与 `displayName`
-  - 子组项显示 `GroupIconRenderer.render(group:previewIconCount:pointSize:appearance:)`（数量取 `Preferences.shared.previewIconCount`，外观取网格视图的 `effectiveAppearance`，系统外观变化时立即换图）与 `name`。
+  - 子组项显示 `GroupIconRenderer.render(group:previewIconCount:pointSize:appearance:finderFolderIcons:)`（数量取 `Preferences.shared.previewIconCount`，外观取网格视图的 `effectiveAppearance`，系统外观变化时立即换图；访达文件夹的图标取网格的 `finderFolderIcons`，见 13）与 `name`。
 - 面板主体内：顶部是高 32 pt 的标题区，其下是网格；网格左右各留 17 pt、底部留 12 pt。
   - 单元格 128 × 128 pt，彼此紧贴、没有间距。
 - 面板主体尺寸：宽 = 128 × 列数 + 34，高 = 128 × 显示行数 + 44；尾巴另占 8 pt。

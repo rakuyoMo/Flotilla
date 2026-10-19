@@ -1,8 +1,8 @@
 // MARK: - GroupIconInputs
 
-/// 组图标的输入：底板的外观与按顺序参与预览的项
+/// 组图标的输入：底板的外观、按顺序参与预览的项，以及预览里各访达文件夹所用的图
 ///
-/// 输入相同的两次渲染，底板与每一格画的都是同一项；同步器据此跳过输入没变的根组，不重新渲染、比对它的图标。
+/// 输入相同的两次渲染，底板与每一格画的都是同一张图；同步器据此跳过输入没变的根组，不重新渲染、比对它的图标。
 /// 预览数量只通过取到哪几项影响图标，不单独记
 struct GroupIconInputs: Equatable {
     /// 底板按哪种外观取色
@@ -11,15 +11,24 @@ struct GroupIconInputs: Equatable {
     /// 按顺序参与预览的项，见 `GroupIconRenderer.previewItems(of:previewIconCount:)`
     let previewItems: [GroupItem]
 
+    /// 预览里各项所用访达文件夹图标的版本，与 `previewItems` 一一对应，见 `FinderFolderIconStore.iconVersion(of:)`
+    ///
+    /// 访达文件夹用的是 QuickLook 取到的图时为这张图的版本；用 `NSWorkspace` 的图标，或不是文件时为 nil。
+    /// 访达文件夹每换进一张新图，这一项的值没变，输入也跟着变
+    let previewFinderFolderIconVersions: [Int?]
+
     /// 按组图标的渲染参数取出它的输入
     /// - Parameters:
     ///   - group: 要渲染的组
     ///   - previewIconCount: 预览数量上限，与渲染时传给 `GroupIconRenderer` 的相同
     ///   - appearance: 底板按哪种外观取色
+    ///   - finderFolderIcons: 访达文件夹的图标，与渲染时传给 `GroupIconRenderer` 的相同
+    @MainActor
     init(
         group: Group,
         previewIconCount: Int,
-        appearance: GroupIconAppearance
+        appearance: GroupIconAppearance,
+        finderFolderIcons: FinderFolderIconStore
     ) {
         self.appearance = appearance
 
@@ -27,5 +36,12 @@ struct GroupIconInputs: Equatable {
             of: group,
             previewIconCount: previewIconCount
         )
+
+        // 只有文件可能是访达文件夹；不是访达文件夹的文件在图标库里查不到，同样为 nil
+        previewFinderFolderIconVersions = previewItems.map {
+            guard case .file(let file) = $0 else { return nil }
+
+            return finderFolderIcons.iconVersion(of: file)
+        }
     }
 }

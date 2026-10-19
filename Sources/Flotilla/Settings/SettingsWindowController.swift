@@ -30,6 +30,7 @@ final class SettingsWindowController: NSWindowController {
     init(dockTileSynchronizer: DockTileSynchronizer?, updater: SPUUpdater) {
         groupTreeViewController = GroupTreeViewController(
             store: .shared,
+            finderFolderIcons: .shared,
             dockTileSynchronizer: dockTileSynchronizer
         )
 
