@@ -317,6 +317,7 @@ extension GroupGridThumbnailTests {
             previewIconCount: 0,
             hiddenItemIDs: [],
             fileThumbnailLoader: fileThumbnailLoader,
+            finderFolderIcons: .unstarted(),
             openInFinderHandler: openInFinderHandler
         ) { _ in }
     }

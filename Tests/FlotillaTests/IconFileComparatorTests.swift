@@ -126,7 +126,8 @@ final class IconFileComparatorTests {
             group: Group(id: UUID(), name: "测试", items: apps),
             previewIconCount: previewIconCount,
             pointSize: 512,
-            appearance: appearance
+            appearance: appearance,
+            finderFolderIcons: .unstarted()
         )
     }
 }

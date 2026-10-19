@@ -105,8 +105,10 @@ final class GroupTreeCellView: NSTableCellView {
     }
 
     /// 用节点内容填充这一行
-    /// - Parameter node: 这一行对应的节点
-    func configure(with node: GroupTreeNode) {
+    /// - Parameters:
+    ///   - node: 这一行对应的节点
+    ///   - finderFolderIcons: 访达文件夹的图标，按访达里的实际外观
+    func configure(with node: GroupTreeNode, finderFolderIcons: FinderFolderIconStore) {
         // 只有组名可编辑：App、文件与网页的名称来自访达或浏览器
         textField?.isEditable = node.group != nil
 
@@ -121,13 +123,13 @@ final class GroupTreeCellView: NSTableCellView {
             imageView?.image = app.icon
             textField?.stringValue = app.displayName
 
-        // 根组与子组都是固定的黄色文件夹：设置窗口里不渲染组的预览，与蓝色的访达文件夹区分开
+        // 根组与子组都是固定的黄色文件夹：设置窗口里不渲染组的预览，与没上色的访达文件夹区分开
         case .group(let group):
             imageView?.image = Self.groupIcon
             textField?.stringValue = group.name
 
         case .file(let file):
-            imageView?.image = file.icon
+            imageView?.image = finderFolderIcons.icon(of: file)
             textField?.stringValue = file.displayName
 
         case .webPage(let webPage):

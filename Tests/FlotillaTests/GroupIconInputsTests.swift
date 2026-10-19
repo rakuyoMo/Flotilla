@@ -8,9 +8,13 @@ import Testing
 /// 组图标的输入：只有改变预览的改动才让输入变化
 ///
 /// 输入没变的根组，同步时不重新渲染图标、不改写 stub，Dock 也不因此重启
+@MainActor
 struct GroupIconInputsTests {
     /// 组里的六个 App，预览数量为 4 时前四个参与预览
     private let apps = (0 ..< 6).map { Self.makeApp(index: $0) }
+
+    /// 没有开始监听的图标库：只有 App 的组用不到访达文件夹的图标
+    private let finderFolderIcons = FinderFolderIconStore.unstarted()
 
     /// 只动预览之外的项：调整第 5 项之后的顺序、删除或追加预览之外的项，输入都不变
     @Test
@@ -50,8 +54,19 @@ struct GroupIconInputsTests {
     func previewCountTakingSameItemsKeepsInputs() {
         let group = Group(id: UUID(), name: "三项", items: Array(apps.prefix(3)))
 
-        let three = GroupIconInputs(group: group, previewIconCount: 3, appearance: .light)
-        let four = GroupIconInputs(group: group, previewIconCount: 4, appearance: .light)
+        let three = GroupIconInputs(
+            group: group,
+            previewIconCount: 3,
+            appearance: .light,
+            finderFolderIcons: finderFolderIcons
+        )
+
+        let four = GroupIconInputs(
+            group: group,
+            previewIconCount: 4,
+            appearance: .light,
+            finderFolderIcons: finderFolderIcons
+        )
 
         #expect(three == four)
     }
@@ -75,8 +90,19 @@ struct GroupIconInputsTests {
     func previewCountTakingOtherItemsChangesInputs() {
         let group = Group(id: UUID(), name: "六项", items: apps)
 
-        let three = GroupIconInputs(group: group, previewIconCount: 3, appearance: .light)
-        let four = GroupIconInputs(group: group, previewIconCount: 4, appearance: .light)
+        let three = GroupIconInputs(
+            group: group,
+            previewIconCount: 3,
+            appearance: .light,
+            finderFolderIcons: finderFolderIcons
+        )
+
+        let four = GroupIconInputs(
+            group: group,
+            previewIconCount: 4,
+            appearance: .light,
+            finderFolderIcons: finderFolderIcons
+        )
 
         #expect(three != four)
     }
@@ -86,8 +112,19 @@ struct GroupIconInputsTests {
     func appearanceChangesInputs() {
         let group = Group(id: UUID(), name: "六项", items: apps)
 
-        let light = GroupIconInputs(group: group, previewIconCount: 4, appearance: .light)
-        let dark = GroupIconInputs(group: group, previewIconCount: 4, appearance: .dark)
+        let light = GroupIconInputs(
+            group: group,
+            previewIconCount: 4,
+            appearance: .light,
+            finderFolderIcons: finderFolderIcons
+        )
+
+        let dark = GroupIconInputs(
+            group: group,
+            previewIconCount: 4,
+            appearance: .dark,
+            finderFolderIcons: finderFolderIcons
+        )
 
         #expect(light != dark)
     }
@@ -111,7 +148,8 @@ extension GroupIconInputsTests {
         GroupIconInputs(
             group: Group(id: UUID(), name: "测试", items: items),
             previewIconCount: 4,
-            appearance: .light
+            appearance: .light,
+            finderFolderIcons: finderFolderIcons
         )
     }
 }

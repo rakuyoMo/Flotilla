@@ -45,17 +45,19 @@ enum GroupIconRenderer {
     ///   - previewIconCount: 叠加的图标数量上限，超出 `0...Preferences.maximumPreviewIconCount` 时夹取
     ///   - pointSize: 输出图像的边长（pt）
     ///   - appearance: 底板按哪种外观取色
+    ///   - finderFolderIcons: 预览里访达文件夹的图标，按访达里的实际外观
     /// - Returns: 用绘制闭包构造的图像，与分辨率无关，调用方可按任意像素尺寸栅格化；
-    ///   底板颜色在这里就已定下，不随绘制时的外观变化，外观变了要重新渲染
+    ///   底板颜色与预览的图标在这里就已定下，不随绘制时的外观变化，外观变了、访达文件夹换了图都要重新渲染
     @MainActor
     static func render(
         group: Group,
         previewIconCount: Int,
         pointSize: CGFloat,
-        appearance: GroupIconAppearance
+        appearance: GroupIconAppearance,
+        finderFolderIcons: FinderFolderIconStore
     ) -> NSImage {
         let previewIcons = previewItems(of: group, previewIconCount: previewIconCount)
-            .compactMap { previewIcon(of: $0) }
+            .compactMap { previewIcon(of: $0, finderFolderIcons: finderFolderIcons) }
 
         // 绘制闭包在每次栅格化时按目标分辨率重新执行；翻转坐标系，让几何按 y 轴自上而下计算
         return NSImage(
@@ -190,9 +192,15 @@ extension GroupIconRenderer {
         context.strokePath()
     }
 
-    /// 一项在预览里的图标：App、文件与网页用各自的图标；子组不参与预览，为 nil
+    /// 一项在预览里的图标：App、文件与网页用各自的图标，访达文件夹按访达里的实际外观；子组不参与预览，为 nil
+    /// - Parameters:
+    ///   - item: 参与预览的项
+    ///   - finderFolderIcons: 访达文件夹的图标
     @MainActor
-    private static func previewIcon(of item: GroupItem) -> NSImage? {
+    private static func previewIcon(
+        of item: GroupItem,
+        finderFolderIcons: FinderFolderIconStore
+    ) -> NSImage? {
         switch item {
         case .app(let app):
             app.icon
@@ -201,7 +209,7 @@ extension GroupIconRenderer {
             nil
 
         case .file(let file):
-            file.icon
+            finderFolderIcons.icon(of: file)
 
         case .webPage(let webPage):
             webPage.icon

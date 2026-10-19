@@ -586,6 +586,7 @@ extension GroupGridDragTests {
             previewIconCount: 0,
             hiddenItemIDs: [],
             fileThumbnailLoader: nil,
+            finderFolderIcons: .unstarted(),
             openInFinderHandler: nil,
             dragActions: isDraggable ? dragActions : nil
         ) { [weak self] in

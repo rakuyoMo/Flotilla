@@ -17,7 +17,7 @@ final class AppIconController: NSObject {
     private static let iconThemeKey = "AppleIconAppearanceTheme"
 
     /// “图标与小组件样式” 变化时 `NSWorkspace` 的通知中心发出的通知；名称不在公开头文件里，macOS 27 实测
-    private static let iconAppearanceDidChangeNotification = Notification.Name(
+    static let iconAppearanceDidChangeNotification = Notification.Name(
         "NSWorkspaceIconAppearanceConfigurationDidChangeNotification"
     )
 

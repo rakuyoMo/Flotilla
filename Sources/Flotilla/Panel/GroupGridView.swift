@@ -1,9 +1,12 @@
 import AppKit
+import QuickLookThumbnailing
 
 // MARK: - GroupGridView
 
 /// 一个层级的网格：按 `GroupGridLayout` 摆放每一项的单元格，作为滚动视图的文档视图；
-/// 访达文件夹的层级在末尾另有一格 “在访达中打开”，其中的文件换上内容缩略图
+/// 访达文件夹的层级在末尾另有一格 “在访达中打开”，其中的文件换上内容缩略图，上了色、有 emoji 或符号的子文件夹换上系统画好的图标
+///
+/// 组里的访达文件夹按访达里的实际外观显示，图标库取到新图时就地换上，预览里有它的子组随之重画组图标
 ///
 /// 只为与可见区域相交的行（上下各多一行）建单元格，滚动时按需补建，建过的不删：
 /// 访达文件夹可能有上千项，一次建齐会让展开明显卡顿。缩略图请求也只为这个范围里的格保留，
@@ -30,6 +33,9 @@ final class GroupGridView: NSView {
 
     /// 为文件请求内容缩略图；只有访达文件夹的层级有，为 nil 时文件显示图标
     private let fileThumbnailLoader: FileThumbnailLoader?
+
+    /// 组里访达文件夹的图标：单元格与子组图标的预览都按它取
+    private let finderFolderIcons: FinderFolderIconStore
 
     /// 点击 “在访达中打开” 后执行；为 nil 时没有这一格
     private let openInFinderHandler: (() -> Void)?
@@ -58,7 +64,11 @@ final class GroupGridView: NSView {
     private var groupItemViews: [(group: Group, itemView: GroupGridItemView)] = []
 
     /// 已建、还没换上缩略图的文件格，按格序号；只在有缩略图加载器时记，格在看得见附近时为它请求缩略图
-    private var cellsAwaitingThumbnails: [Int: GroupGridItemView] = [:]
+    ///
+    /// 连同建格时定下的请求表示：上了色、有 emoji 或符号的子文件夹要 `.icon`，其余要 `.thumbnail`
+    private var cellsAwaitingThumbnails: [
+        Int: (itemView: GroupGridItemView, representation: QLThumbnailGenerator.Request.RepresentationTypes)
+    ] = [:]
 
     /// 在看得见附近为文件格发出的缩略图请求，按格序号记请求编号：拿到缩略图时移除，格滚出看得见附近时取消并移除
     ///
@@ -77,6 +87,7 @@ final class GroupGridView: NSView {
     ///   - previewIconCount: 子组图标里叠加的预览图标数量
     ///   - hiddenItemIDs: 隐藏的项的 id，这些项半透明
     ///   - fileThumbnailLoader: 为文件请求内容缩略图；只有访达文件夹的层级传入，为 nil 时文件显示图标
+    ///   - finderFolderIcons: 组里访达文件夹的图标，取到新图时网格就地换上
     ///   - openInFinderHandler: 点击 “在访达中打开” 后执行；为 nil 时没有这一格
     ///   - dragActions: 拖动各项时的判定与动作；只有组的层级传入，为 nil 时各项不能拖动
     ///   - selectionHandler: 点击某一项后执行
@@ -86,6 +97,7 @@ final class GroupGridView: NSView {
         previewIconCount: Int,
         hiddenItemIDs: Set<UUID>,
         fileThumbnailLoader: FileThumbnailLoader?,
+        finderFolderIcons: FinderFolderIconStore,
         openInFinderHandler: (() -> Void)?,
         dragActions: GroupGridDragActions? = nil,
         selectionHandler: @escaping (GroupItem) -> Void
@@ -94,6 +106,7 @@ final class GroupGridView: NSView {
         self.previewIconCount = previewIconCount
         self.hiddenItemIDs = hiddenItemIDs
         self.fileThumbnailLoader = fileThumbnailLoader
+        self.finderFolderIcons = finderFolderIcons
         self.openInFinderHandler = openInFinderHandler
         self.dragActions = dragActions
         self.selectionHandler = selectionHandler
@@ -104,6 +117,14 @@ final class GroupGridView: NSView {
         columnCount = layout.columnCount
 
         super.init(frame: CGRect(origin: .zero, size: layout.gridSize))
+
+        // 访达文件夹的外观变了、取到新图：换上这个文件夹的格，重画预览里有它的子组
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(finderFolderIconDidUpdate(_:)),
+            name: FinderFolderIconStore.didUpdateIconNotification,
+            object: finderFolderIcons
+        )
     }
 
     /// 网格完全由代码构建，不支持从归档解码
@@ -338,6 +359,34 @@ extension GroupGridView {
         updateLanding()
     }
 
+    /// 一个访达文件夹取图结束：已建的格里，这个文件夹换上图标库当前的图，预览里有它的子组重画组图标；
+    /// 之后才建的单元格建的时候就取当前的图
+    @objc
+    private func finderFolderIconDidUpdate(_ notification: Notification) {
+        guard
+            let path = notification.userInfo?[FinderFolderIconStore.folderPathKey] as? String
+        else {
+            return
+        }
+
+        // 同一个访达文件夹可能在这一层出现几次，各格都换
+        for (index, itemView) in itemViews {
+            guard
+                case .file(let file) = items[index],
+                FinderFolderIconStore.folderPath(of: file) == path
+            else {
+                continue
+            }
+
+            itemView.icon = finderFolderIcons.icon(of: file)
+        }
+
+        // 只重画预览里有这个文件夹的子组：预览之外的项不画进组图标
+        for (group, itemView) in groupItemViews where previews(group, finderFolderAt: path) {
+            itemView.icon = groupIcon(of: group)
+        }
+    }
+
     /// 为与给定区域相交的行建单元格，上下各多一行；已建的跳过
     private func buildCells(near rect: CGRect) {
         let area = nearbyArea(of: rect)
@@ -390,9 +439,10 @@ extension GroupGridView {
             groupItemViews.append((group, itemView))
         }
 
-        // 访达文件夹的层级里，文件先显示图标；缩略图由 `updateThumbnailRequests()` 在格处于看得见附近时请求
-        if case .file = item, fileThumbnailLoader != nil {
-            cellsAwaitingThumbnails[index] = itemView
+        // 访达文件夹的层级里，文件先显示图标；缩略图由 `updateThumbnailRequests()` 在格处于看得见附近时请求。
+        // 子文件夹的外观在建格时读：不监听，回到这一层时重建网格，照常重新读
+        if case .file(let file) = item, fileThumbnailLoader != nil {
+            cellsAwaitingThumbnails[index] = (itemView, Self.thumbnailRepresentation(of: file))
         }
     }
 
@@ -428,20 +478,28 @@ extension GroupGridView {
     ///   - index: 格序号
     ///   - loader: 缩略图加载器
     private func requestThumbnail(at index: Int, with loader: FileThumbnailLoader) {
-        guard case .file(let file) = items[index] else { return }
+        guard
+            case .file(let file) = items[index],
+            let representation = cellsAwaitingThumbnails[index]?.representation
+        else {
+            return
+        }
 
         // 网格持有加载器，加载器持有回调：回调弱引用网格，不形成循环
-        thumbnailRequestIDs[index] = loader.loadThumbnail(of: file.url) { [weak self] thumbnail in
+        thumbnailRequestIDs[index] = loader.loadThumbnail(
+            of: file.url,
+            representation: representation
+        ) { [weak self] thumbnail in
             guard let self else { return }
 
             thumbnailRequestIDs[index] = nil
 
             // 结果只落到发起请求的这一格；换上之后不再等缩略图
-            cellsAwaitingThumbnails.removeValue(forKey: index)?.icon = thumbnail
+            cellsAwaitingThumbnails.removeValue(forKey: index)?.itemView.icon = thumbnail
         }
     }
 
-    /// 一项显示的名称与图标：App、文件与网页用各自的图标与显示名，子组用渲染出的组图标与组名
+    /// 一项显示的名称与图标：App、文件与网页用各自的图标与显示名，访达文件夹按访达里的实际外观，子组用渲染出的组图标与组名
     private func content(of item: GroupItem) -> (title: String, icon: NSImage) {
         switch item {
         case .app(let app):
@@ -451,7 +509,7 @@ extension GroupGridView {
             (group.name, groupIcon(of: group))
 
         case .file(let file):
-            (file.displayName, file.icon)
+            (file.displayName, finderFolderIcons.icon(of: file))
 
         case .webPage(let webPage):
             (webPage.displayName, webPage.icon)
@@ -464,8 +522,22 @@ extension GroupGridView {
             group: group,
             previewIconCount: previewIconCount,
             pointSize: GroupPanelMetrics.iconSize,
-            appearance: GroupIconAppearance(effectiveAppearance)
+            appearance: GroupIconAppearance(effectiveAppearance),
+            finderFolderIcons: finderFolderIcons
         )
+    }
+
+    /// 子组的组图标预览里是否有这个访达文件夹
+    /// - Parameters:
+    ///   - group: 子组
+    ///   - path: 访达文件夹的路径
+    private func previews(_ group: Group, finderFolderAt path: String) -> Bool {
+        GroupIconRenderer.previewItems(of: group, previewIconCount: previewIconCount)
+            .contains {
+                guard case .file(let file) = $0 else { return false }
+
+                return FinderFolderIconStore.folderPath(of: file) == path
+            }
     }
 
     /// 加上 “在访达中打开” 的单元格；没有这一格时什么也不做
@@ -788,5 +860,27 @@ extension GroupGridView {
         )
 
         return symbol ?? NSImage(size: CGSize(width: 1, height: 1))
+    }
+
+    /// 访达文件夹的层级里，一项向 QuickLook 请求哪种表示（需求 38）
+    ///
+    /// 上了色、有 emoji 或符号的子文件夹要 `.icon`：系统画好的文件夹图标，`NSWorkspace` 的图标里没有这些；
+    /// 其余的子文件夹与文件照旧要 `.thumbnail`，子文件夹生成不出缩略图，保持图标
+    /// - Parameter file: 这一层里的文件
+    private static func thumbnailRepresentation(
+        of file: FileReference
+    ) -> QLThumbnailGenerator.Request.RepresentationTypes {
+        // macOS 26 之前访达不按标签上色，也没有 emoji 与符号，不必读；
+        // 再看 URL 是不是目录：读目录时已按是不是目录规整，文件不多读一次资源属性与扩展属性
+        guard
+            #available(macOS 26, *),
+            file.url.hasDirectoryPath,
+            file.isFinderFolder,
+            FinderFolderAppearance(folderAt: file.url).needsQuickLookIcon
+        else {
+            return .thumbnail
+        }
+
+        return .icon
     }
 }

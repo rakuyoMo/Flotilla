@@ -36,6 +36,9 @@ final class GroupPanelController {
     /// 用户设置，决定子组图标里的预览数量，以及访达文件夹是否显示隐藏文件
     private let preferences: Preferences
 
+    /// 组里访达文件夹的图标，交给每个层级的网格
+    private let finderFolderIcons: FinderFolderIconStore
+
     /// 本次展开的定位依据
     private var anchor: DockTileAnchor? = nil
 
@@ -67,9 +70,15 @@ final class GroupPanelController {
     /// - Parameters:
     ///   - store: 组树的唯一数据源
     ///   - preferences: 用户设置，决定子组图标里的预览数量，以及访达文件夹是否显示隐藏文件
-    init(store: GroupStore, preferences: Preferences) {
+    ///   - finderFolderIcons: 组里访达文件夹的图标
+    init(
+        store: GroupStore,
+        preferences: Preferences,
+        finderFolderIcons: FinderFolderIconStore
+    ) {
         self.store = store
         self.preferences = preferences
+        self.finderFolderIcons = finderFolderIcons
 
         containerView.wantsLayer = true
         panel.contentView = containerView
@@ -524,6 +533,7 @@ extension GroupPanelController {
             previewIconCount: preferences.previewIconCount,
             hiddenItemIDs: finderFolderContents.hiddenItemIDs,
             fileThumbnailLoader: fileThumbnailLoader,
+            finderFolderIcons: finderFolderIcons,
             openInFinderHandler: openInFinderHandler,
             dragActions: dragActions
         ) { [weak self] in

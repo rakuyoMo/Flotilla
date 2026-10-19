@@ -76,7 +76,10 @@ final class GroupTreeCellViewTests {
         )
 
         let cell = GroupTreeCellView()
-        cell.configure(with: GroupTreeNode(item: .file(deleted), parent: nil))
+        cell.configure(
+            with: GroupTreeNode(item: .file(deleted), parent: nil),
+            finderFolderIcons: .unstarted()
+        )
 
         #expect(cell.locationText == nil)
     }
@@ -87,7 +90,10 @@ final class GroupTreeCellViewTests {
         let cell = try configuredCell(with: directory.appending(path: "资料"))
         let group = Group(id: UUID(), name: "工作", items: [])
 
-        cell.configure(with: GroupTreeNode(item: .group(group), parent: nil))
+        cell.configure(
+            with: GroupTreeNode(item: .group(group), parent: nil),
+            finderFolderIcons: .unstarted()
+        )
 
         #expect(cell.locationText == nil)
     }
@@ -176,7 +182,10 @@ extension GroupTreeCellViewTests {
 
             try #require(cell.locationText != nil)
 
-            cell.configure(with: GroupTreeNode(item: item, parent: nil))
+            cell.configure(
+                with: GroupTreeNode(item: item, parent: nil),
+                finderFolderIcons: .unstarted()
+            )
 
             #expect(cell.locationText == nil)
         }
@@ -284,7 +293,10 @@ extension GroupTreeCellViewTests {
         let item = try #require(GroupItem(url: url, title: title))
 
         let cell = GroupTreeCellView()
-        cell.configure(with: GroupTreeNode(item: item, parent: nil))
+        cell.configure(
+            with: GroupTreeNode(item: item, parent: nil),
+            finderFolderIcons: .unstarted()
+        )
 
         return cell
     }
@@ -308,7 +320,10 @@ extension GroupTreeCellViewTests {
         let group = Group(id: UUID(), name: "工作", items: [])
 
         let cell = GroupTreeCellView()
-        cell.configure(with: GroupTreeNode(item: .group(group), parent: nil))
+        cell.configure(
+            with: GroupTreeNode(item: .group(group), parent: nil),
+            finderFolderIcons: .unstarted()
+        )
 
         return cell
     }

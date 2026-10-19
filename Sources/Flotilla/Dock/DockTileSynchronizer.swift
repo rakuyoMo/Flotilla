@@ -40,6 +40,9 @@ final class DockTileSynchronizer: NSObject {
     /// 用户设置，决定图标里的预览数量
     private let preferences: Preferences
 
+    /// 组里访达文件夹的图标：预览里的访达文件夹按访达里的实际外观画
+    private let finderFolderIcons: FinderFolderIconStore
+
     /// 生成、更新、删除 stub
     private let builder: DockTileBundleBuilder
 
@@ -65,16 +68,19 @@ final class DockTileSynchronizer: NSObject {
     /// - Parameters:
     ///   - store: 组树的唯一数据源
     ///   - preferences: 用户设置，决定图标里的预览数量
+    ///   - finderFolderIcons: 组里访达文件夹的图标，已经开始取图
     ///   - builder: 生成、更新、删除 stub
     ///   - dockPreferences: 读写 Dock 偏好
     init(
         store: GroupStore,
         preferences: Preferences,
+        finderFolderIcons: FinderFolderIconStore,
         builder: DockTileBundleBuilder,
         dockPreferences: DockPreferences
     ) {
         self.store = store
         self.preferences = preferences
+        self.finderFolderIcons = finderFolderIcons
         self.builder = builder
         self.dockPreferences = dockPreferences
 
@@ -84,7 +90,9 @@ final class DockTileSynchronizer: NSObject {
         )
     }
 
-    /// 先同步一次，再订阅组树、设置、系统外观与 Dock 偏好的变更
+    /// 先同步一次，再订阅组树、设置、访达文件夹的图标、系统外观与 Dock 偏好的变更
+    ///
+    /// 根组的预览里有还在取图的访达文件夹时，这一次同步推迟到取完
     func start() {
         synchronize()
 
@@ -100,6 +108,14 @@ final class DockTileSynchronizer: NSObject {
             selector: #selector(scheduleSynchronization),
             name: Preferences.didChangeNotification,
             object: preferences
+        )
+
+        // 访达文件夹取图结束：预览里有它的根组，图标的输入变了才重画；推迟了的同步也在这时补上
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(scheduleSynchronization),
+            name: FinderFolderIconStore.didUpdateIconNotification,
+            object: finderFolderIcons
         )
 
         // 观察渲染 stub 图标时读取的同一个值：App 没有固定外观，这个值跟随系统的深浅；
@@ -171,8 +187,13 @@ extension DockTileSynchronizer {
     /// 按当前的根组同步：更新 stub，把 tile 的期望状态写进 Dock 偏好；
     /// 偏好有改动时重启 Dock，等新 Dock 读到期望状态后才算同步结束；
     /// 结束时清理多余的 stub 并发出 `didSynchronizeNotification`
+    ///
+    /// 根组的预览里有还在取图的访达文件夹时什么也不做，等取完的通知再同步
     private func synchronize() {
         let rootGroups = store.rootGroups
+
+        // 先按 `NSWorkspace` 的蓝色文件夹改写 stub、取到后再按实际外观改写，Dock 会连着重启两次
+        guard !rootGroups.contains(where: isLoadingPreviewIcons(of:)) else { return }
 
         // 缺少 tile 的根组里，只有新出现的与用户要求添加的才添加；其余是被用户拖出 Dock 的
         let groupIDsToAdd = additionTracker.groupIDsToAdd(
@@ -309,6 +330,16 @@ extension DockTileSynchronizer {
     private func rootGroupIDsOnDock() -> Set<UUID> {
         dockPreferences.groupIDs(ofTilesIn: builder.directory)
     }
+
+    /// 根组的预览里是否有还在取图的访达文件夹；QuickLook 取不出也算取完
+    private func isLoadingPreviewIcons(of group: Group) -> Bool {
+        GroupIconRenderer.previewItems(of: group, previewIconCount: preferences.previewIconCount)
+            .contains {
+                guard case .file(let file) = $0 else { return false }
+
+                return finderFolderIcons.isLoadingIcon(of: file)
+            }
+    }
 }
 
 // MARK: - Stubs
@@ -371,7 +402,8 @@ extension DockTileSynchronizer {
         let iconInputs = GroupIconInputs(
             group: group,
             previewIconCount: previewIconCount,
-            appearance: appearance
+            appearance: appearance,
+            finderFolderIcons: finderFolderIcons
         )
 
         do {
@@ -383,7 +415,8 @@ extension DockTileSynchronizer {
                     group: group,
                     previewIconCount: previewIconCount,
                     pointSize: Self.iconPointSize,
-                    appearance: appearance
+                    appearance: appearance,
+                    finderFolderIcons: finderFolderIcons
                 )
             }
 

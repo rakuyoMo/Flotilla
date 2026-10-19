@@ -18,6 +18,9 @@ final class GroupTreeViewController: NSViewController {
     /// 组树的唯一数据源
     private let store: GroupStore
 
+    /// 组里访达文件夹的图标：行首图标按它取，取到新图时就地换上
+    private let finderFolderIcons: FinderFolderIconStore
+
     /// Dock tile 同步器；Dock 集成不可用时为 nil，此时不显示 tile 的状态，也没有 “添加到 Dock”
     private let dockTileSynchronizer: DockTileSynchronizer?
 
@@ -68,9 +71,15 @@ final class GroupTreeViewController: NSViewController {
     /// 创建组区
     /// - Parameters:
     ///   - store: 组树的唯一数据源
+    ///   - finderFolderIcons: 组里访达文件夹的图标
     ///   - dockTileSynchronizer: Dock tile 同步器；Dock 集成不可用时传 nil
-    init(store: GroupStore, dockTileSynchronizer: DockTileSynchronizer?) {
+    init(
+        store: GroupStore,
+        finderFolderIcons: FinderFolderIconStore,
+        dockTileSynchronizer: DockTileSynchronizer?
+    ) {
         self.store = store
+        self.finderFolderIcons = finderFolderIcons
         self.dockTileSynchronizer = dockTileSynchronizer
         dataSource = GroupTreeDataSource(store: store)
 
@@ -83,7 +92,8 @@ final class GroupTreeViewController: NSViewController {
         fatalError("不支持从归档解码")
     }
 
-    /// 搭建界面；组树变化时重建，每次同步 Dock tile 之后与 Dock 偏好里的 tile 变化时刷新 tile 的状态
+    /// 搭建界面；组树变化时重建，访达文件夹取到新图时换上这一行的图标，
+    /// 每次同步 Dock tile 之后与 Dock 偏好里的 tile 变化时刷新 tile 的状态
     override func loadView() {
         configureOutlineView()
         view = makeContentView()
@@ -95,6 +105,13 @@ final class GroupTreeViewController: NSViewController {
             selector: #selector(reloadTree),
             name: GroupStore.didChangeNotification,
             object: store
+        )
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(refreshFinderFolderIcon(_:)),
+            name: FinderFolderIconStore.didUpdateIconNotification,
+            object: finderFolderIcons
         )
 
         guard let dockTileSynchronizer else { return }
@@ -178,7 +195,7 @@ extension GroupTreeViewController: NSOutlineViewDelegate {
             owner: self
         )
         let cell = reusedCell as? GroupTreeCellView ?? GroupTreeCellView()
-        cell.configure(with: node)
+        cell.configure(with: node, finderFolderIcons: finderFolderIcons)
         cell.showsNotOnDockLabel = isRemovedFromDock(node)
         cell.textField?.delegate = self
 
@@ -480,6 +497,31 @@ extension GroupTreeViewController {
         )
 
         updateButtonRow()
+    }
+
+    /// 一个访达文件夹取图结束：已经创建出来的行里，这个文件夹的行按图标库当前的图重新填充
+    ///
+    /// 不重建树：选中、展开与正在编辑的组名都不受影响；其余行在出现时按新的图配置
+    @objc
+    private func refreshFinderFolderIcon(_ notification: Notification) {
+        guard
+            let path = notification.userInfo?[FinderFolderIconStore.folderPathKey] as? String
+        else {
+            return
+        }
+
+        outlineView.enumerateAvailableRowViews {
+            guard
+                let cell = $0.view(atColumn: 0) as? GroupTreeCellView,
+                let node = outlineView.item(atRow: $1) as? GroupTreeNode,
+                case .file(let file) = node.item,
+                FinderFolderIconStore.folderPath(of: file) == path
+            else {
+                return
+            }
+
+            cell.configure(with: node, finderFolderIcons: finderFolderIcons)
+        }
     }
 }
 

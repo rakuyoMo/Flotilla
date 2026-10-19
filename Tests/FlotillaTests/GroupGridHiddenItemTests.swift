@@ -68,6 +68,7 @@ extension GroupGridHiddenItemTests {
             previewIconCount: 0,
             hiddenItemIDs: [items[0].id],
             fileThumbnailLoader: nil,
+            finderFolderIcons: .unstarted(),
             openInFinderHandler: nil
         ) { _ in }
 

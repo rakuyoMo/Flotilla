@@ -327,7 +327,8 @@ final class DockTileBundleBuilderTests {
             group: group,
             previewIconCount: previewIconCount,
             pointSize: 512,
-            appearance: .light
+            appearance: .light,
+            finderFolderIcons: .unstarted()
         )
     }
 
