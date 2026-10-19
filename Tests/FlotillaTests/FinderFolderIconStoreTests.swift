@@ -49,13 +49,12 @@ extension FinderFolderIconStoreTests {
 
         iconStore.start()
 
-        #expect(await updates.wait(forUpdatesAt: FinderFolderIconStore.folderPath(of: folder)))
+        #expect(await updates.wait(forIconOf: folder))
 
         let color = try IconPixels.centerColor(of: iconStore.icon(of: folder), side: side, scale: scale)
 
         #expect(color.red - color.green > 100)
         #expect(color.red - color.blue > 100)
-        #expect(iconStore.iconVersion(of: folder) != nil)
     }
 
     /// 没上色的、换过自定义图标的访达文件夹：不向 QuickLook 取，与 `NSWorkspace` 的图标逐像素相同
@@ -105,8 +104,7 @@ extension FinderFolderIconStoreTests {
 
         iconStore.start()
 
-        #expect(await updates.wait(forUpdatesAt: FinderFolderIconStore.folderPath(of: folder)))
-        #expect(iconStore.iconVersion(of: folder) != nil)
+        #expect(await updates.wait(forIconOf: folder))
 
         let workspaceIcon = NSWorkspace.shared.icon(forFile: folder.url.path(percentEncoded: false))
 
@@ -131,6 +129,35 @@ extension FinderFolderIconStoreTests {
 
         #expect(iconStore.isLoadingIcon(of: folder))
         #expect(await updates.wait(forUpdatesAt: FinderFolderIconStore.folderPath(of: folder)))
+        #expect(!iconStore.isLoadingIcon(of: folder))
+    }
+
+    /// QuickLook 迟迟不回：2 s 后不再算取图中，发出通知，让推迟了的 Dock 同步按当前的图补上；
+    /// 结果之后到了照常换上，再发一次通知
+    @Test
+    func slowLoadStopsBlockingAfterLimit() async throws {
+        let folder = try addFolder(named: "红色", tags: ["红色\n6"])
+        let path = FinderFolderIconStore.folderPath(of: folder)
+        let iconStore = generator.makeIconStore(following: store)
+        let updates = FinderFolderIconUpdateRecorder(of: iconStore)
+        let startedAt = ContinuousClock.now
+
+        generator.completesImmediately = false
+        iconStore.start()
+
+        #expect(iconStore.isLoadingIcon(of: folder))
+
+        // 250 轮至少 5 s，比上限长得多
+        try #require(await updates.wait(forUpdatesAt: path, rounds: 250))
+
+        #expect(ContinuousClock.now - startedAt >= .seconds(2))
+        #expect(!iconStore.isLoadingIcon(of: folder))
+        #expect(iconStore.iconVersion(of: folder) == nil)
+
+        generator.completeHeldRequests()
+
+        #expect(await updates.wait(forUpdatesAt: path, count: 2))
+        #expect(iconStore.iconVersion(of: folder) != nil)
         #expect(!iconStore.isLoadingIcon(of: folder))
     }
 

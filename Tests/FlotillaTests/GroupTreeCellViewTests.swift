@@ -287,7 +287,7 @@ extension GroupTreeCellViewTests {
 
         iconStore.start()
 
-        try #require(await updates.wait(forUpdatesAt: FinderFolderIconStore.folderPath(of: finderFolder)))
+        try #require(await updates.wait(forIconOf: finderFolder))
 
         let cell = GroupTreeCellView()
 

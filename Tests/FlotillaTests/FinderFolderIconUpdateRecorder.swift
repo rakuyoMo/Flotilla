@@ -4,15 +4,20 @@ import Foundation
 
 // MARK: - FinderFolderIconUpdateRecorder
 
-/// 记下图标库发出的取图结束通知：测试据此等取图结束，或确认没有发出
+/// 记下图标库发出的取图结束通知：测试据此等取图结束、等换上取到的图，或确认没有发出
 @MainActor
 final class FinderFolderIconUpdateRecorder: NSObject {
     /// 收到的通知里的文件夹路径，按先后
     private(set) var paths: [String] = []
 
+    /// 记下的是这个图标库的通知
+    private let iconStore: FinderFolderIconStore
+
     /// 开始记下这个图标库的通知；记录器释放时自动停止
     /// - Parameter iconStore: 图标库
     init(of iconStore: FinderFolderIconStore) {
+        self.iconStore = iconStore
+
         super.init()
 
         NotificationCenter.default.addObserver(
@@ -33,13 +38,23 @@ final class FinderFolderIconUpdateRecorder: NSObject {
     ///   - rounds: 最多等几轮；默认 100 轮，总共至少 2 s
     /// - Returns: 等到了为 true，轮数用完为 false
     func wait(forUpdatesAt path: String, count: Int = 1, rounds: Int = 100) async -> Bool {
-        for _ in 0 ..< rounds {
-            guard paths.count(where: { $0 == path }) < count else { return true }
-
-            try? await Task.sleep(for: .milliseconds(20))
+        await wait(rounds: rounds) {
+            paths.count(where: { $0 == path }) >= count
         }
+    }
 
-        return paths.count(where: { $0 == path }) >= count
+    /// 等到这个访达文件夹换上取到的图，最多等 rounds 轮、每轮至少 20 ms
+    ///
+    /// 真的 QuickLook 取图慢过 `FinderFolderIconStore` 的等待上限时，先到的是 “不再等” 的通知，图还没换上：
+    /// 这样的用例按图等，不按通知的次数等
+    /// - Parameters:
+    ///   - file: 组里的访达文件夹
+    ///   - rounds: 最多等几轮；默认 100 轮，总共至少 2 s
+    /// - Returns: 等到了为 true，轮数用完为 false
+    func wait(forIconOf file: FileReference, rounds: Int = 100) async -> Bool {
+        await wait(rounds: rounds) {
+            iconStore.iconVersion(of: file) != nil
+        }
     }
 
     /// 记下一条通知里的路径
@@ -52,5 +67,20 @@ final class FinderFolderIconUpdateRecorder: NSObject {
         }
 
         paths.append(path)
+    }
+
+    /// 等到条件成立，最多等 rounds 轮、每轮至少 20 ms
+    /// - Parameters:
+    ///   - rounds: 最多等几轮
+    ///   - condition: 要等的条件
+    /// - Returns: 等到了为 true，轮数用完为 false
+    private func wait(rounds: Int, until condition: () -> Bool) async -> Bool {
+        for _ in 0 ..< rounds {
+            guard !condition() else { return true }
+
+            try? await Task.sleep(for: .milliseconds(20))
+        }
+
+        return condition()
     }
 }

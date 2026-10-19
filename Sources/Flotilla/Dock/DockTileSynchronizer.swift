@@ -92,7 +92,7 @@ final class DockTileSynchronizer: NSObject {
 
     /// 先同步一次，再订阅组树、设置、访达文件夹的图标、系统外观与 Dock 偏好的变更
     ///
-    /// 根组的预览里有还在取图的访达文件夹时，这一次同步推迟到取完
+    /// 根组的预览里有还在取图的访达文件夹时，这一次同步推迟到取完，最多推迟 2 s
     func start() {
         synchronize()
 
@@ -110,7 +110,8 @@ final class DockTileSynchronizer: NSObject {
             object: preferences
         )
 
-        // 访达文件夹取图结束：预览里有它的根组，图标的输入变了才重画；推迟了的同步也在这时补上
+        // 访达文件夹取图结束，或取图超过 2 s 还没有结果：预览里有它的根组，图标的输入变了才重画；
+        // 推迟了的同步也在这时补上
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(scheduleSynchronization),
@@ -188,7 +189,7 @@ extension DockTileSynchronizer {
     /// 偏好有改动时重启 Dock，等新 Dock 读到期望状态后才算同步结束；
     /// 结束时清理多余的 stub 并发出 `didSynchronizeNotification`
     ///
-    /// 根组的预览里有还在取图的访达文件夹时什么也不做，等取完的通知再同步
+    /// 根组的预览里有还在取图的访达文件夹时什么也不做，等取完、或取图超过 2 s 的通知再同步
     private func synchronize() {
         let rootGroups = store.rootGroups
 
@@ -331,7 +332,7 @@ extension DockTileSynchronizer {
         dockPreferences.groupIDs(ofTilesIn: builder.directory)
     }
 
-    /// 根组的预览里是否有还在取图的访达文件夹；QuickLook 取不出也算取完
+    /// 根组的预览里是否有还在取图的访达文件夹；QuickLook 取不出也算取完，取图超过 2 s 还没有结果的不再等
     private func isLoadingPreviewIcons(of group: Group) -> Bool {
         GroupIconRenderer.previewItems(of: group, previewIconCount: preferences.previewIconCount)
             .contains {

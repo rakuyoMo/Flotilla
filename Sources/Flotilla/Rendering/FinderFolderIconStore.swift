@@ -10,7 +10,8 @@ import QuickLookThumbnailing
 /// 跟着组树监听全部层级里的访达文件夹，外观变了重新取图，取到后发出 `didUpdateIconNotification`
 @MainActor
 final class FinderFolderIconStore {
-    /// 一个访达文件夹取图结束后在主线程发出，`object` 为图标库，`userInfo` 的 `folderPathKey` 是文件夹的路径
+    /// 一个访达文件夹取图结束，或取图超过 `loadingWaitLimit` 还没有结果时在主线程发出，
+    /// `object` 为图标库，`userInfo` 的 `folderPathKey` 是文件夹的路径
     ///
     /// 换上了新图、退回 `NSWorkspace` 的图标、QuickLook 取不出来，都算取图结束
     nonisolated static let didUpdateIconNotification = Notification.Name(
@@ -25,6 +26,10 @@ final class FinderFolderIconStore {
 
     /// 合并连续事件的间隔：改一次标签会在约 15 ms 内连着来几次属性变化
     private static let eventCoalescingInterval = Duration.milliseconds(200)
+
+    /// 一次取图最多让 Dock 同步等多久：各档串行取图通常在 0.3 s 内结束，
+    /// QuickLook 迟迟不回（如没有响应的网络卷）时，所有根组的同步不跟着一起卡住
+    private static let loadingWaitLimit = Duration.seconds(2)
 
     /// 取图的各档尺寸：显示时取像素不少于所需的那张位图，都不放大
     ///
@@ -63,8 +68,10 @@ final class FinderFolderIconStore {
     /// 最近一张换进缓存的图标的版本：每换进一张新图加 1，各访达文件夹、各次换图的版本都不相同
     private var latestIconVersion = 0
 
-    /// 还在取图的访达文件夹：每次取图的编号，按路径；取图结束时移除，被更新的一次取图顶替后，旧的结果丢掉
-    private var loadingIDs: [String: UUID] = [:]
+    /// 还没有结果的取图，按路径：这次取图的编号，以及是否已超过 `loadingWaitLimit`
+    ///
+    /// 取图结束时移除；被更新的一次取图顶替后，旧的结果丢掉。超过上限的照常等结果，只是 Dock 同步不再等它
+    private var iconLoads: [String: (id: UUID, isOverdue: Bool)] = [:]
 
     /// 收到事件后等着重读外观的任务，按路径；合并间隔内再来事件时取消并替换
     private var pendingReads: [String: Task<Void, Never>] = [:]
@@ -152,10 +159,12 @@ final class FinderFolderIconStore {
         icons[Self.folderPath(of: file)]?.version
     }
 
-    /// 访达文件夹是否还在取图：取完（含取不出）之前，Dock 同步要等它
+    /// 访达文件夹是否还在取图：取完（含取不出）之前，Dock 同步要等它；取图超过 `loadingWaitLimit` 之后不再算
     /// - Parameter file: 组里的文件
     func isLoadingIcon(of file: FileReference) -> Bool {
-        loadingIDs[Self.folderPath(of: file)] != nil
+        guard let load = iconLoads[Self.folderPath(of: file)] else { return false }
+
+        return !load.isOverdue
     }
 
     /// 系统外观或图标样式变了：要用 QuickLook 的访达文件夹全部重取，旧图留到新图取到再换
@@ -185,7 +194,7 @@ extension FinderFolderIconStore {
             watchers[path] = nil
             appearances[path] = nil
             icons[path] = nil
-            loadingIDs[path] = nil
+            iconLoads[path] = nil
             pendingReads.removeValue(forKey: path)?.cancel()
         }
 
@@ -231,7 +240,7 @@ extension FinderFolderIconStore {
         guard appearance.needsQuickLookIcon else {
             // 去掉了颜色与 emoji、符号，或换上了自定义图标：丢掉旧图，还没结束的取图作废
             icons[path] = nil
-            loadingIDs[path] = nil
+            iconLoads[path] = nil
 
             postIconUpdate(atPath: path)
             return
@@ -263,10 +272,12 @@ extension FinderFolderIconStore {
 
 extension FinderFolderIconStore {
     /// 向 QuickLook 取一个访达文件夹的图标；结果回到主线程，换进缓存后发出通知
+    ///
+    /// 超过 `loadingWaitLimit` 还没有结果时，不再算作取图中，同样发出通知
     /// - Parameter path: 文件夹的路径
     private func loadIcon(atPath path: String) {
         let loadingID = UUID()
-        loadingIDs[path] = loadingID
+        iconLoads[path] = (loadingID, false)
 
         // 按路径新建 URL：同一个 URL 对象取过一次图后，改了标签再取，QuickLook 仍给旧颜色
         let url = URL(filePath: path, directoryHint: .isDirectory)
@@ -280,6 +291,26 @@ extension FinderFolderIconStore {
                 )
             }
         }
+
+        // 到了上限还没有结果：让推迟了的 Dock 同步按当前的图补上
+        Task { [weak self] in
+            try? await Task.sleep(for: Self.loadingWaitLimit)
+
+            self?.stopWaiting(forLoadAtPath: path, loadingID: loadingID)
+        }
+    }
+
+    /// 一次取图到了 `loadingWaitLimit` 还没有结果：不再算作取图中，发出通知；结果之后到了照常换上
+    /// - Parameters:
+    ///   - path: 文件夹的路径
+    ///   - loadingID: 这次取图的编号
+    private func stopWaiting(forLoadAtPath path: String, loadingID: UUID) {
+        // 已有结果、被更新的一次取图顶替，或文件夹已从组树里拿掉：什么也不做
+        guard iconLoads[path]?.id == loadingID else { return }
+
+        iconLoads[path]?.isOverdue = true
+
+        postIconUpdate(atPath: path)
     }
 
     /// 一次取图有了结果：取到了就换进缓存、换一个版本，取不出就退回 `NSWorkspace` 的图标；都发出通知
@@ -292,10 +323,10 @@ extension FinderFolderIconStore {
         loadingID: UUID,
         image: NSImage?
     ) {
-        // 已被更新的一次取图顶替，或文件夹已从组树里拿掉：晚到的结果丢掉
-        guard loadingIDs[path] == loadingID else { return }
+        // 已被更新的一次取图顶替，或文件夹已从组树里拿掉：晚到的结果丢掉；只是超过了等待上限的照常换上
+        guard iconLoads[path]?.id == loadingID else { return }
 
-        loadingIDs[path] = nil
+        iconLoads[path] = nil
 
         // 取不出是常态（文件夹刚被删除、没有权限），不记日志
         if let image {
