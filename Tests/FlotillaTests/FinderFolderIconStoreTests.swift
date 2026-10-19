@@ -54,7 +54,11 @@ extension FinderFolderIconStoreTests {
 
         #expect(await updates.wait(forIconOf: folder))
 
-        let color = try IconPixels.centerColor(of: iconStore.icon(of: folder), side: side, scale: scale)
+        let color = try IconPixels.centerColor(
+            of: iconStore.icon(of: folder),
+            side: side,
+            scale: scale
+        )
 
         #expect(color.red - color.green > 100)
         #expect(color.red - color.blue > 100)
@@ -81,15 +85,20 @@ extension FinderFolderIconStoreTests {
         iconStore.start()
 
         for folder in [plain, custom] {
-            let workspaceIcon = NSWorkspace.shared.icon(forFile: folder.url.path(percentEncoded: false))
+            let workspaceIcon = NSWorkspace.shared.icon(
+                forFile: folder.url.path(percentEncoded: false)
+            )
 
             #expect(!iconStore.isLoadingIcon(of: folder))
             #expect(iconStore.iconVersion(of: folder) == nil)
 
             for scale: CGFloat in [1, 2] {
                 #expect(
-                    try IconPixels.pixels(of: iconStore.icon(of: folder), side: 20, scale: scale)
-                        == IconPixels.pixels(of: workspaceIcon, side: 20, scale: scale)
+                    try IconPixels.pixels(
+                        of: iconStore.icon(of: folder),
+                        side: 20,
+                        scale: scale
+                    ) == IconPixels.pixels(of: workspaceIcon, side: 20, scale: scale)
                 )
             }
         }
@@ -109,11 +118,16 @@ extension FinderFolderIconStoreTests {
 
         #expect(await updates.wait(forIconOf: folder))
 
-        let workspaceIcon = NSWorkspace.shared.icon(forFile: folder.url.path(percentEncoded: false))
+        let workspaceIcon = NSWorkspace.shared.icon(
+            forFile: folder.url.path(percentEncoded: false)
+        )
 
         #expect(
-            try IconPixels.pixels(of: iconStore.icon(of: folder), side: 20, scale: 2)
-                != IconPixels.pixels(of: workspaceIcon, side: 20, scale: 2)
+            try IconPixels.pixels(
+                of: iconStore.icon(of: folder),
+                side: 20,
+                scale: 2
+            ) != IconPixels.pixels(of: workspaceIcon, side: 20, scale: 2)
         )
     }
 }
@@ -125,13 +139,14 @@ extension FinderFolderIconStoreTests {
     @Test(.enabled(if: FinderFolderAppearance.isSupported))
     func loadingUntilIconArrives() async throws {
         let folder = try addFolder(named: "红色", tags: ["红色\n6"])
+        let path = FinderFolderIconStore.folderPath(of: folder)
         let iconStore = generator.makeIconStore(following: store)
         let updates = FinderFolderIconUpdateRecorder(of: iconStore)
 
         iconStore.start()
 
         #expect(iconStore.isLoadingIcon(of: folder))
-        #expect(await updates.wait(forUpdatesAt: FinderFolderIconStore.folderPath(of: folder)))
+        #expect(await updates.wait(forUpdatesAt: path))
         #expect(!iconStore.isLoadingIcon(of: folder))
     }
 
@@ -170,13 +185,14 @@ extension FinderFolderIconStoreTests {
         let root = try #require(store.rootGroups.first)
         let subgroup = try #require(store.addSubgroup(named: "子组", to: root.id))
         let folder = try addFolder(named: "红色", tags: ["红色\n6"], to: subgroup.id)
+        let path = FinderFolderIconStore.folderPath(of: folder)
 
         let iconStore = generator.makeIconStore(following: store)
         let updates = FinderFolderIconUpdateRecorder(of: iconStore)
 
         iconStore.start()
 
-        #expect(await updates.wait(forUpdatesAt: FinderFolderIconStore.folderPath(of: folder)))
+        #expect(await updates.wait(forUpdatesAt: path))
         #expect(generator.requestedURLs.count == 1)
     }
 
@@ -343,13 +359,14 @@ extension FinderFolderIconStoreTests {
     @Test(.enabled(if: FinderFolderAppearance.isSupported))
     func failedLoadFallsBackAndFinishes() async throws {
         let folder = try addFolder(named: "红色", tags: ["红色\n6"])
+        let path = FinderFolderIconStore.folderPath(of: folder)
         let iconStore = generator.makeIconStore(following: store)
         let updates = FinderFolderIconUpdateRecorder(of: iconStore)
 
         generator.generatesIcons = false
         iconStore.start()
 
-        #expect(await updates.wait(forUpdatesAt: FinderFolderIconStore.folderPath(of: folder)))
+        #expect(await updates.wait(forUpdatesAt: path))
         #expect(!iconStore.isLoadingIcon(of: folder))
         #expect(iconStore.iconVersion(of: folder) == nil)
     }

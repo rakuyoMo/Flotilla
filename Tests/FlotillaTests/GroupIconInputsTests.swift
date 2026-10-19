@@ -162,7 +162,9 @@ extension GroupIconInputsTests {
         iconStore.start()
 
         for folder in [inPreview, beyondPreview] {
-            try #require(await updates.wait(forUpdatesAt: FinderFolderIconStore.folderPath(of: folder)))
+            let path = FinderFolderIconStore.folderPath(of: folder)
+
+            try #require(await updates.wait(forUpdatesAt: path))
         }
 
         let original = try rootInputs(of: store, finderFolderIcons: iconStore)

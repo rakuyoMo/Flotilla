@@ -169,7 +169,10 @@ extension FileThumbnailLoader {
 
         // 按路径新建 URL：同一个 URL 对象取过一次图后，改了标签再取，QuickLook 仍给旧颜色
         let request = QLThumbnailGenerator.Request(
-            fileAt: URL(filePath: url.path(percentEncoded: false), directoryHint: .isDirectory),
+            fileAt: URL(
+                filePath: url.path(percentEncoded: false),
+                directoryHint: .isDirectory
+            ),
             size: CGSize(width: side, height: side),
             scale: scale,
             representationTypes: .icon

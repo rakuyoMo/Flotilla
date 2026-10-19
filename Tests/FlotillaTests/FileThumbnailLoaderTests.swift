@@ -63,7 +63,11 @@ extension FileThumbnailLoaderTests {
     ///   - folder: 文件夹的 URL
     ///   - side: 请求与画布的边长（pt）
     ///   - scale: 屏幕倍率
-    private func quickLookIcon(of folder: URL, side: CGFloat, scale: CGFloat) async throws -> NSImage {
+    private func quickLookIcon(
+        of folder: URL,
+        side: CGFloat,
+        scale: CGFloat
+    ) async throws -> NSImage {
         let request = QLThumbnailGenerator.Request(
             fileAt: folder,
             size: CGSize(width: side, height: side),
@@ -77,6 +81,9 @@ extension FileThumbnailLoaderTests {
             }
         }
 
-        return NSImage(cgImage: try #require(bitmap), size: CGSize(width: side, height: side))
+        return NSImage(
+            cgImage: try #require(bitmap),
+            size: CGSize(width: side, height: side)
+        )
     }
 }

@@ -67,7 +67,10 @@ final class GroupGridView: NSView {
     ///
     /// 连同建格时定下的请求表示：上了色、有 emoji 或符号的子文件夹要 `.icon`，其余要 `.thumbnail`
     private var cellsAwaitingThumbnails: [
-        Int: (itemView: GroupGridItemView, representation: QLThumbnailGenerator.Request.RepresentationTypes)
+        Int: (
+            itemView: GroupGridItemView,
+            representation: QLThumbnailGenerator.Request.RepresentationTypes
+        )
     ] = [:]
 
     /// 在看得见附近为文件格发出的缩略图请求，按格序号记请求编号：拿到缩略图时移除，格滚出看得见附近时取消并移除
@@ -442,7 +445,10 @@ extension GroupGridView {
         // 访达文件夹的层级里，文件先显示图标；缩略图由 `updateThumbnailRequests()` 在格处于看得见附近时请求。
         // 子文件夹的外观在建格时读：不监听，回到这一层时重建网格，照常重新读
         if case .file(let file) = item, fileThumbnailLoader != nil {
-            cellsAwaitingThumbnails[index] = (itemView, Self.thumbnailRepresentation(of: file))
+            cellsAwaitingThumbnails[index] = (
+                itemView,
+                Self.thumbnailRepresentation(of: file)
+            )
         }
     }
 
@@ -870,7 +876,7 @@ extension GroupGridView {
     private static func thumbnailRepresentation(
         of file: FileReference
     ) -> QLThumbnailGenerator.Request.RepresentationTypes {
-        // macOS 26 之前访达不按标签上色，也没有 emoji 与符号，不必读；
+        // macOS 26 之前访达不按标签上色，也没有 emoji 与符号：不读外观；
         // 再看 URL 是不是目录：读目录时已按是不是目录规整，文件不多读一次资源属性与扩展属性
         guard
             #available(macOS 26, *),

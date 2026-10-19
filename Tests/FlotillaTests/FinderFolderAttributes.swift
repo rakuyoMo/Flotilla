@@ -42,7 +42,14 @@ enum FinderFolderAttributes {
     /// 写一个扩展属性，失败时抛出 `POSIXError`
     private static func setAttribute(_ name: String, to data: Data, of url: URL) throws {
         let result = data.withUnsafeBytes {
-            setxattr(url.path(percentEncoded: false), name, $0.baseAddress, data.count, 0, 0)
+            setxattr(
+                url.path(percentEncoded: false),
+                name,
+                $0.baseAddress,
+                data.count,
+                0,
+                0
+            )
         }
 
         guard result == 0 else {

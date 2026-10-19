@@ -142,7 +142,9 @@ struct GroupGridThumbnailTests {
             FileReference(id: UUID(), url: $0, bookmark: nil)
         }
 
-        let grid = makeGrid(for: .finderFolder(finderFolder, items: files.map { .file($0) }))
+        let grid = makeGrid(
+            for: .finderFolder(finderFolder, items: files.map { .file($0) })
+        )
 
         #expect(generator.requestedURLs == files.map(\.url))
         #expect(generator.requestedRepresentations == [.icon, .icon, .thumbnail, .thumbnail])

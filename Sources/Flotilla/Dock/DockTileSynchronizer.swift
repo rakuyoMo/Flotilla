@@ -334,12 +334,16 @@ extension DockTileSynchronizer {
 
     /// 根组的预览里是否有还在取图的访达文件夹；QuickLook 取不出也算取完，取图超过 2 s 还没有结果的不再等
     private func isLoadingPreviewIcons(of group: Group) -> Bool {
-        GroupIconRenderer.previewItems(of: group, previewIconCount: preferences.previewIconCount)
-            .contains {
-                guard case .file(let file) = $0 else { return false }
+        let previewItems = GroupIconRenderer.previewItems(
+            of: group,
+            previewIconCount: preferences.previewIconCount
+        )
 
-                return finderFolderIcons.isLoadingIcon(of: file)
-            }
+        return previewItems.contains {
+            guard case .file(let file) = $0 else { return false }
+
+            return finderFolderIcons.isLoadingIcon(of: file)
+        }
     }
 }
 

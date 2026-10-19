@@ -55,7 +55,10 @@ final class GroupGridFinderFolderIconTests {
         let withFolder = try #require(store.addSubgroup(named: "有访达文件夹", to: root.id))
         let withApp = try #require(store.addSubgroup(named: "只有 App", to: root.id))
 
-        store.addItems([try #require(GroupItem(url: url, title: nil))], to: withFolder.id)
+        store.addItems(
+            [try #require(GroupItem(url: url, title: nil))],
+            to: withFolder.id
+        )
         store.addItems([calculator], to: withApp.id)
 
         rootGroup = try #require(store.rootGroups.first)
@@ -79,7 +82,9 @@ final class GroupGridFinderFolderIconTests {
 
         try #require(before.count == 3)
 
-        try #require(await updates.wait(forUpdatesAt: FinderFolderIconStore.folderPath(of: finderFolder)))
+        let path = FinderFolderIconStore.folderPath(of: finderFolder)
+
+        try #require(await updates.wait(forUpdatesAt: path))
 
         let after = icons(in: grid)
 

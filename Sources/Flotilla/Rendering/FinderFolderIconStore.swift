@@ -177,7 +177,7 @@ final class FinderFolderIconStore {
     ///
     /// 由 `start()` 里的观察调用；测试里直接调用，模拟样式切换
     func reloadAllIcons() {
-        #warning("TODO: 未能实测 切换深浅外观与 “图标与小组件样式” 之后，QuickLook 马上重取的访达文件夹图标是否已是新的样子")
+        #warning("TODO: 未能实测切换深浅外观与 “图标与小组件样式” 之后，QuickLook 马上重取的访达文件夹图标是否已是新的样子")
 
         for (path, appearance) in appearances where appearance.needsQuickLookIcon {
             loadIcon(atPath: path)
