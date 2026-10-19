@@ -28,17 +28,14 @@ final class FinderFolderIconUpdateRecorder: NSObject {
         )
     }
 
-    /// 等到这个文件夹的通知累计收到 count 次，最多等 rounds 轮、每轮至少 20 ms
-    ///
-    /// 按轮数而不按时钟等：kqueue 的事件、合并间隔到期与取图的结果回到主线程时，排在其它测试已经排着的任务之后，
-    /// 整套测试一起跑时会晚到几秒；每一轮也排在它之后，轮数够了它一定已经跑过
+    /// 等到这个文件夹的通知累计收到 count 次，最多等 rounds 轮、每轮至少 20 ms，见 `Polling`
     /// - Parameters:
     ///   - path: 文件夹的路径
     ///   - count: 累计的次数
     ///   - rounds: 最多等几轮；默认 100 轮，总共至少 2 s
     /// - Returns: 等到了为 true，轮数用完为 false
     func wait(forUpdatesAt path: String, count: Int = 1, rounds: Int = 100) async -> Bool {
-        await wait(rounds: rounds) {
+        await Polling.wait(rounds: rounds) {
             paths.count(where: { $0 == path }) >= count
         }
     }
@@ -52,7 +49,7 @@ final class FinderFolderIconUpdateRecorder: NSObject {
     ///   - rounds: 最多等几轮；默认 500 轮，总共至少 10 s：CI 上 QuickLook 冷启动，加上各档串行请求，2 s 可能不够
     /// - Returns: 等到了为 true，轮数用完为 false
     func wait(forIconOf file: FileReference, rounds: Int = 500) async -> Bool {
-        await wait(rounds: rounds) {
+        await Polling.wait(rounds: rounds) {
             iconStore.iconVersion(of: file) != nil
         }
     }
@@ -67,20 +64,5 @@ final class FinderFolderIconUpdateRecorder: NSObject {
         }
 
         paths.append(path)
-    }
-
-    /// 等到条件成立，最多等 rounds 轮、每轮至少 20 ms
-    /// - Parameters:
-    ///   - rounds: 最多等几轮
-    ///   - condition: 要等的条件
-    /// - Returns: 等到了为 true，轮数用完为 false
-    private func wait(rounds: Int, until condition: () -> Bool) async -> Bool {
-        for _ in 0 ..< rounds {
-            guard !condition() else { return true }
-
-            try? await Task.sleep(for: .milliseconds(20))
-        }
-
-        return condition()
     }
 }

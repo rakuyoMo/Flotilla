@@ -31,7 +31,7 @@ final class FinderFolderWatcherTests {
 
         try FinderFolderAttributes.setTags(["红色\n6"], of: folder)
 
-        try #require(await wait { eventCount > 0 })
+        try #require(await Polling.wait { eventCount > 0 })
 
         watcher = nil
 
@@ -40,7 +40,7 @@ final class FinderFolderWatcherTests {
         try FinderFolderAttributes.setTags(["绿色\n2"], of: folder)
 
         // 30 轮至少 0.6 s：事件 1 ms 内就到，没停的话这时一定已经回调过
-        #expect(await !wait(rounds: 30) { eventCount > count })
+        #expect(await !Polling.wait(rounds: 30) { eventCount > count })
     }
 
     /// 释放之后，打开着这个文件夹的描述符随之关掉
@@ -56,7 +56,7 @@ final class FinderFolderWatcherTests {
         watcher = nil
 
         // 取消之后，描述符在主队列上关掉
-        #expect(await wait { openDescriptorCount(of: folder) == 0 })
+        #expect(await Polling.wait { openDescriptorCount(of: folder) == 0 })
     }
 
     /// 文件夹被删除：回调
@@ -67,7 +67,7 @@ final class FinderFolderWatcherTests {
 
         try FileManager.default.removeItem(at: folder)
 
-        #expect(await wait { eventCount > 0 })
+        #expect(await Polling.wait { eventCount > 0 })
 
         withExtendedLifetime(watcher) { }
     }
@@ -83,7 +83,7 @@ final class FinderFolderWatcherTests {
             to: directory.appending(path: "改名", directoryHint: .isDirectory)
         )
 
-        #expect(await wait { eventCount > 0 })
+        #expect(await Polling.wait { eventCount > 0 })
 
         withExtendedLifetime(watcher) { }
     }
@@ -122,22 +122,5 @@ extension FinderFolderWatcherTests {
 
             return String(cString: buffer).hasSuffix(suffix)
         }
-    }
-
-    /// 等到条件成立，最多等 rounds 轮、每轮至少 20 ms
-    ///
-    /// 按轮数而不按时钟等，理由同 `FinderFolderIconUpdateRecorder`
-    /// - Parameters:
-    ///   - rounds: 最多等几轮；默认 100 轮，总共至少 2 s
-    ///   - condition: 要等的条件
-    /// - Returns: 等到了为 true，轮数用完为 false
-    private func wait(rounds: Int = 100, until condition: () -> Bool) async -> Bool {
-        for _ in 0 ..< rounds {
-            guard !condition() else { return true }
-
-            try? await Task.sleep(for: .milliseconds(20))
-        }
-
-        return condition()
     }
 }

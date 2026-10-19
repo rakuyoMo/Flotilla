@@ -11,7 +11,8 @@ import Testing
 /// 松开的一刻就请面板按鼠标的位置更新点击穿透；
 /// 拖动途中层级被重建或面板收起时作废，数据不变，落定途中的保存照常进行；落定途中网格滚动时落点跟着目标格
 ///
-/// 窗口从不上屏：事件直接交给单元格，拖动图像只在面板显示时才排进屏幕
+/// 窗口从不上屏：事件直接交给单元格，拖动图像只在面板显示时才排进屏幕。
+/// 等落定与 “移除” 浮出用 `Polling.wait` 的默认 100 轮：总共至少 2 s，比两者的计时都长
 @MainActor
 final class GroupGridDragTests {
     /// 6 个网页：3 列、2 行
@@ -166,7 +167,7 @@ final class GroupGridDragTests {
         #expect(image.landingDuration == GroupPanelMetrics.expandDuration)
         #expect(grid.hitTest(targetInClipView) == nil)
 
-        try await waitUntil { grid.dragImage == nil }
+        await Polling.wait { grid.dragImage == nil }
 
         #expect(ContinuousClock.now - released >= .seconds(GroupPanelMetrics.expandDuration))
         #expect(moves.map(\.itemID) == [items[1].id])
@@ -184,7 +185,7 @@ final class GroupGridDragTests {
 
         try send(.leftMouseUp, to: itemView, at: nearby)
 
-        try await waitUntil { grid.dragImage == nil }
+        await Polling.wait { grid.dragImage == nil }
 
         #expect(grid.dragImage == nil)
         #expect(moves.isEmpty)
@@ -248,7 +249,7 @@ final class GroupGridDragTests {
 
         #expect(grid.dragImage == nil)
 
-        try await waitUntil { !moves.isEmpty }
+        await Polling.wait { !moves.isEmpty }
 
         #expect(moves.map(\.itemID) == [items[1].id])
         #expect(moves.map(\.targetIndex) == [4])
@@ -286,7 +287,7 @@ final class GroupGridDragTests {
         #expect(image.iconCenter != landingPoint)
         #expect(image.iconCenter == screenIconCenter(ofCell: 2, in: grid))
 
-        try await waitUntil { grid.dragImage == nil }
+        await Polling.wait { grid.dragImage == nil }
 
         #expect(moves.map(\.itemID) == [items[0].id])
         #expect(moves.map(\.targetIndex) == [2])
@@ -308,7 +309,7 @@ extension GroupGridDragTests {
 
         #expect(!image.removeLabel.isShowing)
 
-        try await waitUntil { image.removeLabel.isShowing }
+        await Polling.wait { image.removeLabel.isShowing }
 
         #expect(image.removeLabel.isShowing)
         #expect(ContinuousClock.now - began >= .seconds(0.5))
@@ -322,7 +323,7 @@ extension GroupGridDragTests {
         let itemView = try drag(item: 1, to: outsidePoint, in: grid)
         let image = try #require(grid.dragImage)
 
-        try await waitUntil { image.removeLabel.isShowing }
+        await Polling.wait { image.removeLabel.isShowing }
 
         #expect(image.removeLabel.isShowing)
 
@@ -347,7 +348,7 @@ extension GroupGridDragTests {
         let image = try #require(grid.dragImage)
 
         // 等满全部轮数：总时长超过计时，这时计时早已满
-        try await waitUntil { image.removeLabel.isShowing }
+        await Polling.wait { image.removeLabel.isShowing }
 
         #expect(!image.removeLabel.isShowing)
 
@@ -363,7 +364,7 @@ extension GroupGridDragTests {
         let itemView = try drag(item: 1, to: outsidePoint, in: grid)
         let image = try #require(grid.dragImage)
 
-        try await waitUntil { image.removeLabel.isShowing }
+        await Polling.wait { image.removeLabel.isShowing }
 
         #expect(image.removeLabel.isShowing)
 
@@ -376,7 +377,7 @@ extension GroupGridDragTests {
         #expect(removals.isEmpty)
         #expect(image.iconCenter == screenIconCenter(ofCell: 1, in: grid))
 
-        try await waitUntil { grid.dragImage == nil }
+        await Polling.wait { grid.dragImage == nil }
 
         #expect(try cellIndices(in: grid) == [0, 1, 2, 3, 4, 5])
         #expect(!itemView.isContentHidden)
@@ -392,7 +393,7 @@ extension GroupGridDragTests {
         let itemView = try drag(item: 1, to: outsidePoint, in: grid)
         let image = try #require(grid.dragImage)
 
-        try await waitUntil { image.removeLabel.isShowing }
+        await Polling.wait { image.removeLabel.isShowing }
 
         #expect(image.removeLabel.isShowing)
 
@@ -441,7 +442,7 @@ extension GroupGridDragTests {
         #expect(image.landingDuration == 0.32)
         #expect(grid.hitTest(originalCell) == nil)
 
-        try await waitUntil { grid.dragImage == nil }
+        await Polling.wait { grid.dragImage == nil }
 
         #expect(ContinuousClock.now - released >= .seconds(0.32))
         #expect(try cellIndices(in: grid) == [0, 1, 2, 3, 4, 5])
@@ -451,7 +452,7 @@ extension GroupGridDragTests {
         #expect(selections.isEmpty)
 
         // 等满全部轮数：总时长超过计时
-        try await waitUntil { image.removeLabel.isShowing }
+        await Polling.wait { image.removeLabel.isShowing }
 
         #expect(!image.removeLabel.isShowing)
     }
@@ -472,7 +473,7 @@ extension GroupGridDragTests {
         #expect(grid.dragImage?.landingDuration == GroupPanelMetrics.returnDuration)
         #expect(releaseCount == 1)
 
-        try await waitUntil { grid.dragImage == nil }
+        await Polling.wait { grid.dragImage == nil }
 
         #expect(grid.dragImage == nil)
         #expect(releaseCount == 1)
@@ -493,7 +494,7 @@ extension GroupGridDragTests {
         }
 
         // 等满全部轮数：总时长超过计时，作废之前开始的计时若没有停掉，这时已经浮出
-        try await waitUntil { image.removeLabel.isShowing }
+        await Polling.wait { image.removeLabel.isShowing }
 
         #expect(!image.removeLabel.isShowing)
 
@@ -535,7 +536,7 @@ extension GroupGridDragTests {
         #expect(grid.visibleRect.contains(layout.cellFrames[0]))
         #expect(image.iconCenter == screenIconCenter(ofCell: 0, in: grid))
 
-        try await waitUntil { grid.dragImage == nil }
+        await Polling.wait { grid.dragImage == nil }
 
         #expect(removals.isEmpty)
         #expect(moves.isEmpty)
@@ -699,18 +700,5 @@ extension GroupGridDragTests {
     /// 平移一个点
     private func offset(_ point: CGPoint, _ dx: CGFloat, _ dy: CGFloat) -> CGPoint {
         CGPoint(x: point.x + dx, y: point.y + dy)
-    }
-
-    /// 等到条件成立，最多等 100 轮、每轮至少 20 ms：总共至少 2 s，比落定与 “移除” 的计时都长
-    ///
-    /// 按轮数而不按时钟等：落定的收尾回到主线程时排在其它测试已经排着的任务之后，整套测试一起跑时会晚到几十秒；
-    /// 每一轮也排在它之后，轮数够了它一定已经跑过
-    private func waitUntil(_ condition: () -> Bool) async throws {
-        var round = 0
-
-        while !condition(), round < 100 {
-            try await Task.sleep(for: .milliseconds(20))
-            round += 1
-        }
     }
 }
