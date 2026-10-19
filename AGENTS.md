@@ -60,6 +60,7 @@ Tests/FlotillaTests/    单元测试（Swift Testing）
 Scripts/bundle.sh       打包脚本：组装 .app 并签名
 Scripts/release.sh      发版脚本：改版本号并开 release PR
 Scripts/site.sh         官网组装脚本：拷入 website/、生成位图、取 Release 数据，输出到 build/site/
+docs/release-notes/     每个版本的更新说明：X.Y.Z/ 下每种语言一份 <语言>.md，见 “更新说明”
 docs/requirements/      需求文档：00 为总览，01–13 为按实现顺序拆分的阶段
 docs/resources/         README 的头图 readme-header-<en|zh>-<light|dark>.png：英文、中文各一套，各有浅色、深色两版；
                         README 的截图 screenshot-<panel|stack|settings>-<en|zh>-<light|dark>.<jpg|png>，分法同头图；
@@ -240,6 +241,7 @@ README-ZH.md            README.md 的简体中文版，与它同步修改
 - 向 `main` 提 PR、且改动涉及同样的文件时，只组装、不部署，提前发现组装失败
 - “发布” workflow 成功后重新部署，更新下载链接与更新日志
 - 在 GitHub 上改了 release notes 之后，到仓库的 Actions 页面手动运行 “官网” workflow
+  - 这样改正文只影响 GitHub 与官网：App 的更新窗口显示的是发布时签进更新清单的那份说明
 
 ### 维护
 
@@ -257,22 +259,30 @@ README-ZH.md            README.md 的简体中文版，与它同步修改
 
 发布一个新版本：
 
-1. 在 `main` 上运行 `mise run release X.Y.Z`，脚本先检查以下各项，任一不满足就报错退出，不做任何改动：
+1. 写这一版的更新说明，放在 `docs/release-notes/X.Y.Z/`，见 “更新说明”；可以先合并进 `main`，也可以留在工作区，由下一步带进发布提交
+2. 在 `main` 上运行 `mise run release X.Y.Z`，脚本先检查以下各项，任一不满足就报错退出，不做任何改动：
    - 当前在 `main` 分支
-   - 工作区干净
+   - 除 `docs/release-notes/X.Y.Z/` 下的新增或改动外，工作区干净
+   - 这一版的更新说明齐全：每种语言一份，都有内容
    - 本地 `main` 与 `origin/main` 一致
    - tag `vX.Y.Z` 在远端不存在
    - `gh` 已登录
    - `origin` 是本仓库而不是 fork：fork 的 PR 拿不到发布所需的写权限
    - 本地与远端都没有 `release/X.Y.Z` 分支
    - Info.plist 的当前构建号是正整数
-2. 检查通过后，脚本切出 `release/X.Y.Z` 分支，把 Info.plist 的展示版本改成 `X.Y.Z`，构建号增加 `1`，提交并推送到 `origin`，再向 `main` 开标题为 `release: X.Y.Z` 的 PR
-3. 等 CI 通过后合并 PR
-4. 合并后，GitHub Actions 自动：
+3. 检查通过后，脚本切出 `release/X.Y.Z` 分支，把 Info.plist 的展示版本改成 `X.Y.Z`，构建号增加 `1`，连同工作区里这一版的更新说明一起提交并推送到 `origin`，再向 `main` 开标题为 `release: X.Y.Z` 的 PR
+   - 推送或开 PR 失败时，脚本删掉发布分支，更新说明留在工作区
+4. 等 CI 通过后合并 PR；标题以 `release:` 开头的 PR，CI 还会按 Info.plist 的展示版本检查更新说明是否齐全
+5. 合并后，GitHub Actions 自动：
    - 在合并提交上打 tag `vX.Y.Z`
-   - 打包并压缩为 `Flotilla-X.Y.Z.zip`
-   - 创建 GitHub Release，附上 zip 与自动生成的更新说明
+   - 打包并压缩为 `Flotilla-X.Y.Z.zip`，生成签名的更新清单，每种语言的更新说明都嵌在清单里
+   - 创建 GitHub Release：名称为 `vX.Y.Z`，正文是这一版的 `en.md`，附上 zip 与更新清单
    - 官网随后重新部署，更新下载链接与更新日志，见 “官网”
+
+发布后：
+
+- App 的更新窗口按用户的语言显示这一版的更新说明
+- “已是最新版本” 提示框里的 “版本历史记录” 按用户的语言打开官网的英文或中文更新日志页
 
 标题以 `release:` 开头（不区分大小写）的 PR 合并后，以下任一情况都会让发布失败：
 
@@ -280,10 +290,39 @@ README-ZH.md            README.md 的简体中文版，与它同步修改
 - Info.plist 的展示版本与标题中的版本号不一致
 - Info.plist 的构建号或合并前 `main` 的构建号不是正整数，或本次构建号未比合并前的构建号增加 `1`
 - tag `vX.Y.Z` 已存在
+- 这一版的更新说明不全
 
 失败时到仓库的 Actions 页面查看原因，修好后再运行一次 `mise run release X.Y.Z`。
 
-也可以对 Claude Code 说 “发布 X.Y.Z”，由 [`release` skill](.claude/skills/release/SKILL.md) 走完开 PR、等 CI、合并、等发布的全过程。
+也可以对 Claude Code 说 “发布 X.Y.Z”，由 [`release` skill](.claude/skills/release/SKILL.md) 走完起草更新说明、开 PR、等 CI、合并、等发布的全过程。
+
+## 更新说明
+
+每个版本的更新说明放在 `docs/release-notes/X.Y.Z/`，每种语言一份：`en.md` `zh-Hans.md` `zh-Hant.md` `ja.md` `ko.md`，与 `Sources/Flotilla/Resources/` 下的 `.lproj` 同名。
+
+- `mise run appcast` 把每份原文嵌进签名的更新清单，App 的更新窗口按用户的语言显示其中一份
+- `en.md` 同时是 GitHub Release 的正文，官网的更新日志显示同一份正文
+- `Scripts/check-release-notes.sh X.Y.Z` 检查每份都存在且有内容：发版脚本、更新清单脚本、CI 与发布 workflow 都调用它
+
+### 写法
+
+- 写给用户看：只写用户能感知的改动
+  - 不写 PR 编号与链接
+  - 不写文档、CI、测试、重构、官网这类与 App 行为无关的改动
+- 不写顶层标题：更新窗口、GitHub、官网都会显示版本号
+- 按类别分节，节标题用 `###`，取下表中该语言的叫法，只保留有内容的节；每条列表项写一个改动
+- Markdown 只用 `###` 标题、无序列表、粗体、链接
+- App 名照各语言的 `InfoPlist.strings`：`en` `ko` 写 Flotilla，`zh-Hans` 写 “归帆”，`zh-Hant` 写 “歸帆”，`ja` 写 “帰帆”
+- 界面上的叫法与该语言的 `Localizable.strings` 一致
+- `zh-Hans` `zh-Hant` 按 “中文行文” 一节；`ja` `ko` 的引号等写法照各自 `Localizable.strings` 的现有用法
+
+| 语言 | 新增 | 改进 | 修复 |
+|---|---|---|---|
+| `en` | New | Improved | Fixed |
+| `zh-Hans` | 新增 | 改进 | 修复 |
+| `zh-Hant` | 新增 | 改進 | 修正 |
+| `ja` | 新機能 | 改善 | 修正 |
+| `ko` | 새 기능 | 개선 | 수정 |
 
 ## 分支命名
 

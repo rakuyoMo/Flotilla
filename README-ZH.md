@@ -108,7 +108,7 @@ xattr -d com.apple.quarantine /Applications/Flotilla.app
 
 ### 更新
 
-在菜单栏选择 “归帆 › 检查更新…” 可检查 GitHub Release，有新版本时会显示更新说明链接和安装入口。
+在菜单栏选择 “归帆 › 检查更新…” 可检查 GitHub Release。有新版本时，更新窗口会以 App 的语言显示这一版的更新内容，并提供安装入口。
 
 设置中的 “软件更新” 提供自动检查、自动下载并在退出时安装，以及每小时、每天、每周的检查频率。默认每天自动检查，自动下载安装默认关闭；也会显示上次检查时间。
 
@@ -324,6 +324,11 @@ defaults export com.apple.dock <文件>
 `Sources/Flotilla/Info.plist` 中的 `CFBundleShortVersionString` 是 `X.Y.Z` 格式的展示版本；`CFBundleVersion` 是独立的正整数构建号。`mise run release X.Y.Z` 更新展示版本，并将构建号增加 `1`；Sparkle 按构建号比较新旧版本。
 
 发布 workflow 将 `Flotilla-X.Y.Z.zip` 和签名的 `appcast.xml` 一起上传到 GitHub Release。App 从最新 Release 获取清单，下载后先验证 Ed25519 签名，再解压安装。
+
+每个版本的更新说明放在 `docs/release-notes/X.Y.Z/`，App 支持的每种语言一份 Markdown，写法见 [AGENTS.md](AGENTS.md) 的 “更新说明” 一节。
+
+- 更新说明嵌进签名的 `appcast.xml`，GitHub Release 的正文取自其中的 `en.md`
+- 本机运行 `mise run appcast` 也需要已打包版本的更新说明
 
 签名私钥须与 `Info.plist` 的 `SUPublicEDKey` 配对：CI 从仓库 secret `SPARKLE_PRIVATE_KEY` 读取；本机从钥匙串的 `com.rakuyo.flotilla` 账户读取。私钥由 Sparkle 的 `generate_keys` 工具管理。
 

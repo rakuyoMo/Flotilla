@@ -107,7 +107,7 @@ xattr -d com.apple.quarantine /Applications/Flotilla.app
 
 ### Updates
 
-Choose **Flotilla › Check for Updates…** from the menu bar to check GitHub Releases. When an update is available, the update window provides a link to release notes and an installation option.
+Choose **Flotilla › Check for Updates…** from the menu bar to check GitHub Releases. When an update is available, the update window shows what's new in that version in Flotilla's language, along with an installation option.
 
 **Software Update** in Settings offers automatic checks, automatic downloads and installation on quit, and hourly, daily, or weekly checks. Daily checks are enabled by default; automatic downloads and installation are off. The last check time is also shown.
 
@@ -323,6 +323,11 @@ defaults export com.apple.dock <file>
 In `Sources/Flotilla/Info.plist`, `CFBundleShortVersionString` is the `X.Y.Z` display version and `CFBundleVersion` is a separate positive integer build number. `mise run release X.Y.Z` sets the display version and increments the build number by one. Sparkle compares build numbers to determine which version is newer.
 
 The release workflow uploads `Flotilla-X.Y.Z.zip` and a signed `appcast.xml` to GitHub Releases. The app reads the feed from the latest release and verifies the downloaded archive's Ed25519 signature before extracting and installing it.
+
+Release notes for each version are in `docs/release-notes/X.Y.Z/`, one Markdown file for each app language. See the "更新说明" section of [AGENTS.md](AGENTS.md) (in Chinese) for how to write them.
+
+- They're embedded in the signed `appcast.xml`, and the GitHub release description comes from `en.md`
+- Running `mise run appcast` locally also requires the release notes for the bundled version
 
 The signing key must match `SUPublicEDKey` in `Info.plist`. CI reads it from the `SPARKLE_PRIVATE_KEY` repository secret; local builds use the `com.rakuyo.flotilla` Keychain account. Sparkle's `generate_keys` tool manages the key.
 
