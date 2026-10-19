@@ -43,15 +43,15 @@ final class FinderFolderIconUpdateRecorder: NSObject {
         }
     }
 
-    /// 等到这个访达文件夹换上取到的图，最多等 rounds 轮、每轮至少 20 ms
+    /// 等到这个访达文件夹换上取到的图，最多等 rounds 轮、每轮至少 20 ms；给真的 QuickLook 取图的用例用
     ///
     /// 真的 QuickLook 取图慢过 `FinderFolderIconStore` 的等待上限时，先到的是 “不再等” 的通知，图还没换上：
     /// 这样的用例按图等，不按通知的次数等
     /// - Parameters:
     ///   - file: 组里的访达文件夹
-    ///   - rounds: 最多等几轮；默认 100 轮，总共至少 2 s
+    ///   - rounds: 最多等几轮；默认 500 轮，总共至少 10 s：CI 上 QuickLook 冷启动，加上各档串行请求，2 s 可能不够
     /// - Returns: 等到了为 true，轮数用完为 false
-    func wait(forIconOf file: FileReference, rounds: Int = 100) async -> Bool {
+    func wait(forIconOf file: FileReference, rounds: Int = 500) async -> Bool {
         await wait(rounds: rounds) {
             iconStore.iconVersion(of: file) != nil
         }

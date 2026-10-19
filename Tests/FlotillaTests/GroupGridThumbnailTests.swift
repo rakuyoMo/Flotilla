@@ -116,7 +116,7 @@ struct GroupGridThumbnailTests {
 
     /// 上了色、有 emoji 或符号的子文件夹按建格时读到的外观请求系统画好的图标，生成后换上；
     /// 没上色的子文件夹与文件照旧请求缩略图
-    @Test
+    @Test(.enabled(if: FinderFolderAppearance.isSupported))
     func coloredSubfoldersRequestIcons() async throws {
         let directory = FileManager.default.temporaryDirectory
             .appending(path: "FlotillaTests-\(UUID().uuidString)")

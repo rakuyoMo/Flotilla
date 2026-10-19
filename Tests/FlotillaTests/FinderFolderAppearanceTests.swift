@@ -38,13 +38,13 @@ final class FinderFolderAppearanceTests {
         #expect(!appearance.needsQuickLookIcon)
     }
 
-    /// 一个带颜色的标签：取它的颜色号，图标向 QuickLook 取
+    /// 一个带颜色的标签：取它的颜色号；macOS 26 起图标向 QuickLook 取
     @Test
     func singleColoredTagGivesItsColor() throws {
         let appearance = try FinderFolderAppearance(folderAt: makeFolder(tags: ["红色\n6"]))
 
         #expect(appearance.tagColor == 6)
-        #expect(appearance.needsQuickLookIcon)
+        #expect(appearance.needsQuickLookIcon == FinderFolderAppearance.isSupported)
     }
 
     /// 几个带颜色的标签取最后一个；颜色在前、无色在后时仍是那个颜色
@@ -60,7 +60,7 @@ final class FinderFolderAppearanceTests {
         #expect(appearance.tagColor == color)
     }
 
-    /// 只有 emoji 或符号、没有标签：原样记下内容，图标同样向 QuickLook 取
+    /// 只有 emoji 或符号、没有标签：原样记下内容；macOS 26 起图标同样向 QuickLook 取
     @Test(arguments: [#"{"emoji":"🍕"}"#, #"{"sym":"star.fill"}"#])
     func symbolOrEmojiAloneNeedsQuickLook(json: String) throws {
         let folder = try makeFolder(tags: [])
@@ -71,7 +71,7 @@ final class FinderFolderAppearanceTests {
 
         #expect(appearance.symbolOrEmoji == Data(json.utf8))
         #expect(appearance.tagColor == nil)
-        #expect(appearance.needsQuickLookIcon)
+        #expect(appearance.needsQuickLookIcon == FinderFolderAppearance.isSupported)
     }
 
     /// 换过自定义图标的文件夹：打了颜色标签也显示自定义图标，不向 QuickLook 取

@@ -67,7 +67,7 @@ final class GroupGridFinderFolderIconTests {
     }
 
     /// 网格建好时还没取到图；取到之后访达文件夹的格换上新图，预览里有它的子组重画、预览那一格画的是新图
-    @Test
+    @Test(.enabled(if: FinderFolderAppearance.isSupported))
     func newIconReachesCellAndSubgroupPreview() async throws {
         let iconStore = generator.makeIconStore(following: store)
         let updates = FinderFolderIconUpdateRecorder(of: iconStore)

@@ -618,7 +618,7 @@ extension GroupTreeViewControllerTests {
 
 extension GroupTreeViewControllerTests {
     /// 访达文件夹取到新图：这一行就地换上，不重建树，选中、展开与正在编辑的组名都不受影响
-    @Test
+    @Test(.enabled(if: FinderFolderAppearance.isSupported))
     func finderFolderRowRefreshesInPlace() async throws {
         let url = directory.appending(path: "红色", directoryHint: .isDirectory)
 

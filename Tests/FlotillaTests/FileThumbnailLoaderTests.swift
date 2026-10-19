@@ -34,8 +34,9 @@ final class FileThumbnailLoaderTests {
             loadedIcon = $0
         }
 
-        // 按轮数等，最多 250 轮、每轮至少 20 ms：结果回到主线程时排在其它测试已经排着的任务之后
-        for _ in 0 ..< 250 {
+        // 按轮数等，最多 500 轮、每轮至少 20 ms：结果回到主线程时排在其它测试已经排着的任务之后，
+        // CI 上 QuickLook 冷启动也要等得及
+        for _ in 0 ..< 500 {
             guard loadedIcon == nil else { break }
 
             try await Task.sleep(for: .milliseconds(20))

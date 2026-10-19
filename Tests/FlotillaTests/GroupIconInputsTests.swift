@@ -134,7 +134,7 @@ struct GroupIconInputsTests {
 
 extension GroupIconInputsTests {
     /// 访达文件夹换了图（外观变了、取到新图）：在预览里的，这一项的值没变，输入也变；在预览之外的，输入不变
-    @Test
+    @Test(.enabled(if: FinderFolderAppearance.isSupported))
     func finderFolderIconChangesOnlyMatterInPreview() async throws {
         let directory = FileManager.default.temporaryDirectory
             .appending(path: "FlotillaTests-\(UUID().uuidString)")
@@ -196,7 +196,7 @@ extension GroupIconInputsTests {
 
     /// 外观没变、只是重取换进了新图（深浅外观或 “图标与小组件样式” 切换后）：预览里的访达文件夹换了版本，输入同样不同，
     /// 同步器才会重画、按像素比对
-    @Test
+    @Test(.enabled(if: FinderFolderAppearance.isSupported))
     func reloadedFinderFolderIconChangesInputs() async throws {
         let directory = FileManager.default.temporaryDirectory
             .appending(path: "FlotillaTests-\(UUID().uuidString)")

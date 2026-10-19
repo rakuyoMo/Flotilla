@@ -36,12 +36,15 @@ final class FinderFolderIconStoreTests {
 
 extension FinderFolderIconStoreTests {
     /// 打了红色标签的访达文件夹：设置窗口与面板的 1 倍、2 倍下，文件夹正面中央都是红色
-    @Test(arguments: [
-        (20, 1),
-        (20, 2),
-        (GroupPanelMetrics.iconSize, 1),
-        (GroupPanelMetrics.iconSize, 2),
-    ] as [(CGFloat, CGFloat)])
+    @Test(
+        .enabled(if: FinderFolderAppearance.isSupported),
+        arguments: [
+            (20, 1),
+            (20, 2),
+            (GroupPanelMetrics.iconSize, 1),
+            (GroupPanelMetrics.iconSize, 2),
+        ] as [(CGFloat, CGFloat)]
+    )
     func redTaggedFolderIsRed(side: CGFloat, scale: CGFloat) async throws {
         let folder = try addFolder(named: "红色", tags: ["红色\n6"])
         let iconStore = FinderFolderIconStore(store: store)
@@ -93,7 +96,7 @@ extension FinderFolderIconStoreTests {
     }
 
     /// 只有 emoji、没有标签的访达文件夹同样向 QuickLook 取，画出来与 `NSWorkspace` 的蓝色文件夹不同
-    @Test
+    @Test(.enabled(if: FinderFolderAppearance.isSupported))
     func emojiFolderUsesQuickLookIcon() async throws {
         let folder = try addFolder(named: "披萨", tags: [])
 
@@ -119,7 +122,7 @@ extension FinderFolderIconStoreTests {
 
 extension FinderFolderIconStoreTests {
     /// 取完之前还在取图，Dock 同步据此等它；取完后不再是
-    @Test
+    @Test(.enabled(if: FinderFolderAppearance.isSupported))
     func loadingUntilIconArrives() async throws {
         let folder = try addFolder(named: "红色", tags: ["红色\n6"])
         let iconStore = generator.makeIconStore(following: store)
@@ -134,7 +137,7 @@ extension FinderFolderIconStoreTests {
 
     /// QuickLook 迟迟不回：2 s 后不再算取图中，发出通知，让推迟了的 Dock 同步按当前的图补上；
     /// 结果之后到了照常换上，再发一次通知
-    @Test
+    @Test(.enabled(if: FinderFolderAppearance.isSupported))
     func slowLoadStopsBlockingAfterLimit() async throws {
         let folder = try addFolder(named: "红色", tags: ["红色\n6"])
         let path = FinderFolderIconStore.folderPath(of: folder)
@@ -162,7 +165,7 @@ extension FinderFolderIconStoreTests {
     }
 
     /// 子组里的访达文件夹同样监听、取图
-    @Test
+    @Test(.enabled(if: FinderFolderAppearance.isSupported))
     func subgroupFoldersAreWatched() async throws {
         let root = try #require(store.rootGroups.first)
         let subgroup = try #require(store.addSubgroup(named: "子组", to: root.id))
@@ -178,7 +181,7 @@ extension FinderFolderIconStoreTests {
     }
 
     /// 运行中改了标签：1 s 内换上新图、通知带上这个文件夹，图的版本随之换掉
-    @Test
+    @Test(.enabled(if: FinderFolderAppearance.isSupported))
     func tagChangeReloadsIcon() async throws {
         let folder = try addFolder(named: "红色", tags: ["红色\n6"])
         let path = FinderFolderIconStore.folderPath(of: folder)
@@ -205,7 +208,7 @@ extension FinderFolderIconStoreTests {
     }
 
     /// 去掉标签：不再向 QuickLook 取，退回 `NSWorkspace` 的图标，同样通知
-    @Test
+    @Test(.enabled(if: FinderFolderAppearance.isSupported))
     func removingTagFallsBackToWorkspaceIcon() async throws {
         let folder = try addFolder(named: "红色", tags: ["红色\n6"])
         let path = FinderFolderIconStore.folderPath(of: folder)
@@ -224,7 +227,7 @@ extension FinderFolderIconStoreTests {
     }
 
     /// 只是权限变了：外观没变，不重取图、不通知，图还是原来那张
-    @Test
+    @Test(.enabled(if: FinderFolderAppearance.isSupported))
     func unrelatedAttributeChangeKeepsIcon() async throws {
         let folder = try addFolder(named: "红色", tags: ["红色\n6"])
         let path = FinderFolderIconStore.folderPath(of: folder)
@@ -250,7 +253,7 @@ extension FinderFolderIconStoreTests {
     }
 
     /// 从组里拿掉之后停止监听：再改标签不取图、不通知，缓存也已丢掉
-    @Test
+    @Test(.enabled(if: FinderFolderAppearance.isSupported))
     func removedFolderIsNoLongerWatched() async throws {
         let folder = try addFolder(named: "红色", tags: ["红色\n6"])
         let path = FinderFolderIconStore.folderPath(of: folder)
@@ -273,7 +276,7 @@ extension FinderFolderIconStoreTests {
 
     /// 原路径上的文件夹被换掉（挪走后在原处放了打着别的颜色标签的新文件夹）：换上新文件夹的图；
     /// 之后改的是新文件夹的标签，照样察觉得到
-    @Test
+    @Test(.enabled(if: FinderFolderAppearance.isSupported))
     func replacedFolderIsWatchedInstead() async throws {
         let folder = try addFolder(named: "红色", tags: ["红色\n6"])
         let path = FinderFolderIconStore.folderPath(of: folder)
@@ -305,7 +308,7 @@ extension FinderFolderIconStoreTests {
 
     /// 文件夹挪走后原路径上没有东西：丢掉旧图；之后在原处放了新文件夹，没有监听、收不到事件，
     /// 组树一变就核对出来，接上监听、换上新文件夹的图
-    @Test
+    @Test(.enabled(if: FinderFolderAppearance.isSupported))
     func folderAppearingAtPathIsWatchedOnTreeChange() async throws {
         let folder = try addFolder(named: "红色", tags: ["红色\n6"])
         let path = FinderFolderIconStore.folderPath(of: folder)
@@ -337,7 +340,7 @@ extension FinderFolderIconStoreTests {
     }
 
     /// QuickLook 取不出：退回 `NSWorkspace` 的图标，也算取完，照样通知
-    @Test
+    @Test(.enabled(if: FinderFolderAppearance.isSupported))
     func failedLoadFallsBackAndFinishes() async throws {
         let folder = try addFolder(named: "红色", tags: ["红色\n6"])
         let iconStore = generator.makeIconStore(following: store)

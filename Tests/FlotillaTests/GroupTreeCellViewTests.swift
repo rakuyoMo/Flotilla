@@ -263,7 +263,10 @@ extension GroupTreeCellViewTests {
     }
 
     /// 打了红色标签的访达文件夹：这一行是系统画好的红色文件夹，与访达里看到的一样，不是蓝色
-    @Test(arguments: [1, 2] as [CGFloat])
+    @Test(
+        .enabled(if: FinderFolderAppearance.isSupported),
+        arguments: [1, 2] as [CGFloat]
+    )
     func redTaggedFinderFolderRowIsRed(scale: CGFloat) async throws {
         let url = directory.appending(path: "红色", directoryHint: .isDirectory)
 
