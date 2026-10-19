@@ -16,9 +16,9 @@ let sparkleNamespace = "http://www.andymatuschak.org/xml-namespaces/sparkle"
 let languages: [(code: String, releasesPage: String)] = [
     ("en", "https://flotilla.rakuyo.dev/releases/"),
     ("zh-Hans", "https://flotilla.rakuyo.dev/zh/releases/"),
-    ("zh-Hant", "https://flotilla.rakuyo.dev/zh/releases/"),
-    ("ja", "https://flotilla.rakuyo.dev/releases/"),
-    ("ko", "https://flotilla.rakuyo.dev/releases/"),
+    ("zh-Hant", "https://flotilla.rakuyo.dev/zh-hant/releases/"),
+    ("ja", "https://flotilla.rakuyo.dev/ja/releases/"),
+    ("ko", "https://flotilla.rakuyo.dev/ko/releases/"),
 ]
 
 // 参数依次为清单路径与说明目录
