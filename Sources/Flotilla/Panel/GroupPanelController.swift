@@ -336,13 +336,18 @@ extension GroupPanelController {
         fadeIn(parent)
     }
 
-    /// 启动 App，随即请求收起面板
+    /// 按这一项记的路径启动 App，随即请求收起面板
     private func launch(_ app: AppReference) {
         let name = app.displayName
 
+        // 默认设置下，同一 bundle id 的进程在别的路径运行时，系统把这次启动交给那个进程，App 本身不启动，
+        // 例如剪映专业版包内只有状态栏图标的托盘进程
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.allowsRunningApplicationSubstitution = false
+
         NSWorkspace.shared.openApplication(
             at: app.url,
-            configuration: NSWorkspace.OpenConfiguration()
+            configuration: configuration
         ) { _, error in
             guard let error else { return }
 
