@@ -62,7 +62,7 @@ final class FinderFolderIconStore {
 
     /// 接上监听时各路径上文件夹的身份，按路径；那时路径上没有东西的没有这一项
     ///
-    /// 收到事件、组树变化时与路径上现在的身份比较，对不上就是换了文件夹，要重新接上监听
+    /// 收到事件、组树变化时与路径上现在的身份比较：路径上有东西、又对不上，就是换了文件夹，要重新接上监听
     private var identities: [String: FileIdentity] = [:]
 
     /// 各访达文件夹最近一次读到的外观，按路径；收到事件后与它比较，外观变了才重新取图
@@ -210,7 +210,12 @@ extension FinderFolderIconStore {
         // 或新文件夹放到原路径上晚于事件之后的那次核对时，靠这里发现
         let replacedPaths = paths
             .intersection(appearances.keys)
-            .filter { FileIdentity(path: $0) != identities[$0] }
+            .filter { path in
+                // 路径上现在没有东西不算换了文件夹，理由同 `checkFolder(atPath:)`
+                guard let identity = FileIdentity(path: path) else { return false }
+
+                return identity != identities[path]
+            }
 
         for path in replacedPaths {
             rewatchFolder(atPath: path)
@@ -245,7 +250,7 @@ extension FinderFolderIconStore {
         return appearance
     }
 
-    /// 路径上换了文件夹（含原来有、现在没有，原来没有、现在有）：丢掉旧的监听，在这个路径上重新接上、重读外观
+    /// 路径上换成了另一个文件夹（含接上监听时没有、现在有了）：丢掉旧的监听，在这个路径上重新接上、重读外观
     ///
     /// 要用 QuickLook 的重新取图，旧图留到新图取到再换；不用的丢掉旧图，退回 `NSWorkspace` 的图标
     /// - Parameter path: 访达文件夹的路径
@@ -269,15 +274,20 @@ extension FinderFolderIconStore {
         }
     }
 
-    /// 核对一个路径：路径上换了文件夹就重新接上监听，还是原来那个就重读外观
+    /// 核对一个路径：路径上换成了另一个文件夹就重新接上监听，还是原来那个就重读外观，没有东西就保持原样
     private func checkFolder(atPath path: String) {
         pendingChecks[path] = nil
 
         // 等待期间已从组树里拿掉
         guard let oldAppearance = appearances[path] else { return }
 
-        // 文件夹被删除、挪走后，原路径上可能已是另一个文件夹，之后的事件要从它那里来
-        guard FileIdentity(path: path) == identities[path] else {
+        // 路径上现在没有东西：文件夹被改名、挪走或删除，监听、外观与图都保持原样，不通知。
+        // 组里这一项随后由 `GroupStore` 按书签跟到新位置，那时旧路径从组树里拿掉、新路径接上；
+        // 按旧路径读出 “没有外观” 退回 `NSWorkspace` 的图标，Dock 会为改名白白多改写、多重启两次
+        guard let identity = FileIdentity(path: path) else { return }
+
+        // 原路径上已是另一个文件夹，之后的事件要从它那里来
+        guard identity == identities[path] else {
             rewatchFolder(atPath: path)
             return
         }
@@ -307,6 +317,9 @@ extension FinderFolderIconStore {
     }
 
     /// 全部层级里访达文件夹的路径，含子组里的
+    ///
+    /// 已在监听的路径上现在没有东西（文件夹被改名、挪走或删除）时照样算，保持原样，
+    /// 等 `GroupStore` 按书签把这一项跟到新位置：`isFinderFolder` 对这样的路径给 false
     /// - Parameter items: 一个层级的项
     private func finderFolderPaths(in items: [GroupItem]) -> Set<String> {
         items.reduce(into: Set<String>()) {
@@ -314,8 +327,12 @@ extension FinderFolderIconStore {
             case .group(let group):
                 $0.formUnion(finderFolderPaths(in: group.items))
 
-            case .file(let file) where file.isFinderFolder:
-                $0.insert(Self.folderPath(of: file))
+            case .file(let file):
+                let path = Self.folderPath(of: file)
+
+                guard file.isFinderFolder || appearances[path] != nil else { return }
+
+                $0.insert(path)
 
             default:
                 break

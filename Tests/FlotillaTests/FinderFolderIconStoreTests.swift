@@ -322,10 +322,11 @@ extension FinderFolderIconStoreTests {
         #expect(generator.requestedURLs.count == 3)
     }
 
-    /// 文件夹挪走后原路径上没有东西：丢掉旧图；之后在原处放了新文件夹，没有监听、收不到事件，
-    /// 组树一变就核对出来，接上监听、换上新文件夹的图
+    /// 访达文件夹被改名挪走，原路径上没有东西：保持原样，不通知，图与版本都不变；
+    /// 挪走的文件夹之后再有属性变化、组树因别的改动变了，都一样。
+    /// 按书签跟到新位置之后，旧路径停止监听，新路径接上、取到同样外观的图
     @Test(.enabled(if: FinderFolderAppearance.isSupported))
-    func folderAppearingAtPathIsWatchedOnTreeChange() async throws {
+    func movedFolderKeepsIconUntilRelocated() async throws {
         let folder = try addFolder(named: "红色", tags: ["红色\n6"])
         let path = FinderFolderIconStore.folderPath(of: folder)
         let iconStore = generator.makeIconStore(following: store)
@@ -335,23 +336,83 @@ extension FinderFolderIconStoreTests {
 
         try #require(await updates.wait(forUpdatesAt: path))
 
+        let icon = iconStore.icon(of: folder)
+        let version = try #require(iconStore.iconVersion(of: folder))
+        let movedURL = try moveAway(folder)
+
+        // 30 轮至少 0.6 s，等过合并间隔与核对：要发的通知这时一定已经发了
+        #expect(await !updates.wait(forUpdatesAt: path, count: 2, rounds: 30))
+
+        try FileManager.default.setAttributes(
+            [.posixPermissions: 0o700],
+            ofItemAtPath: movedURL.path(percentEncoded: false)
+        )
+
+        // 跟到新位置之前，组树先因别的改动变了一次
+        store.rename(groupID: try #require(store.rootGroups.first).id, to: "资料夹")
+
+        #expect(await !updates.wait(forUpdatesAt: path, count: 2, rounds: 30))
+        #expect(iconStore.icon(of: folder) === icon)
+        #expect(iconStore.iconVersion(of: folder) == version)
+
+        store.updateItemLocations()
+
+        guard case .file(let relocated) = try #require(store.rootGroups.first?.items.first) else {
+            Issue.record("访达文件夹没有分类成文件")
+            return
+        }
+
+        let newPath = FinderFolderIconStore.folderPath(of: relocated)
+
+        try #require(newPath != path)
+
+        #expect(await updates.wait(forUpdatesAt: newPath))
+        #expect(iconStore.iconVersion(of: folder) == nil)
+        #expect(iconStore.iconVersion(of: relocated) != nil)
+        #expect(generator.requestedURLs.count == 2)
+        #expect(updates.paths.count(where: { $0 == path }) == 1)
+
+        // 新路径接上了监听
+        try FinderFolderAttributes.setTags(["绿色\n2"], of: movedURL)
+
+        #expect(await updates.wait(forUpdatesAt: newPath, count: 2))
+    }
+
+    /// 文件夹挪走后原路径上没有东西，保持原样；之后在原处放了新文件夹，挪走的那个没有事件来，
+    /// 组树一变就核对出来，接上新文件夹的监听、换上它的图
+    @Test(.enabled(if: FinderFolderAppearance.isSupported))
+    func folderPlacedAtPathIsWatchedOnTreeChange() async throws {
+        let folder = try addFolder(named: "红色", tags: ["红色\n6"])
+        let path = FinderFolderIconStore.folderPath(of: folder)
+        let iconStore = generator.makeIconStore(following: store)
+        let updates = FinderFolderIconUpdateRecorder(of: iconStore)
+
+        iconStore.start()
+
+        try #require(await updates.wait(forUpdatesAt: path))
+
+        let redVersion = try #require(iconStore.iconVersion(of: folder))
+
         try moveAway(folder)
 
-        #expect(await updates.wait(forUpdatesAt: path, count: 2))
-        #expect(iconStore.iconVersion(of: folder) == nil)
+        // 30 轮至少 0.6 s：挪走引起的那次核对已经过去
+        #expect(await !updates.wait(forUpdatesAt: path, count: 2, rounds: 30))
 
         try makeFolder(at: folder.url, tags: ["绿色\n2"])
 
         store.rename(groupID: try #require(store.rootGroups.first).id, to: "资料夹")
 
-        #expect(await updates.wait(forUpdatesAt: path, count: 3))
-        #expect(iconStore.iconVersion(of: folder) != nil)
+        #expect(await updates.wait(forUpdatesAt: path, count: 2))
         #expect(generator.requestedURLs.count == 2)
+
+        let greenVersion = try #require(iconStore.iconVersion(of: folder))
+
+        #expect(greenVersion != redVersion)
 
         // 接上了新文件夹的监听
         try FinderFolderAttributes.setTags(["紫色\n3"], of: folder.url)
 
-        #expect(await updates.wait(forUpdatesAt: path, count: 4))
+        #expect(await updates.wait(forUpdatesAt: path, count: 3))
         #expect(generator.requestedURLs.count == 3)
     }
 
@@ -414,10 +475,13 @@ extension FinderFolderIconStoreTests {
 
     /// 把组里的访达文件夹挪到临时目录里的另一个位置，原路径上不再有东西
     /// - Parameter folder: 组里的访达文件夹
-    private func moveAway(_ folder: FileReference) throws {
-        try FileManager.default.moveItem(
-            at: folder.url,
-            to: directory.appending(path: UUID().uuidString, directoryHint: .isDirectory)
-        )
+    /// - Returns: 挪到的位置
+    @discardableResult
+    private func moveAway(_ folder: FileReference) throws -> URL {
+        let destination = directory.appending(path: UUID().uuidString, directoryHint: .isDirectory)
+
+        try FileManager.default.moveItem(at: folder.url, to: destination)
+
+        return destination
     }
 }
