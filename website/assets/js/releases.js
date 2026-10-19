@@ -42,8 +42,12 @@
         fillLatest(latest);
       }
 
-      renderReleaseNotes(releases, latest);
+      const target = renderReleaseNotes(releases, latest);
       root.dataset.release = latest ? "latest" : "none";
+
+      // 锚点指向的版本是刚生成的，浏览器加载时跳不过去，渲染完再跳一次；
+      // 要等声明状态后再跳：读取中的提示这时才不再占位，先跳的话版本随后会上移，标题被导航栏挡住
+      target?.scrollIntoView();
     })
     .catch(() => {
       root.dataset.release = "error";
@@ -190,6 +194,7 @@
    *
    * @param {Array<object>} releases 全部 Release
    * @param {object | undefined} latest 最新的正式版本
+   * @returns {HTMLElement | null | undefined} 地址里的锚点指向的元素，留给调用方在声明状态后跳过去；没有时为空
    */
   function renderReleaseNotes(releases, latest) {
     const list = document.querySelector("[data-release-list]");
@@ -212,7 +217,6 @@
     renderNavigation(releases);
     document.querySelector("[data-release-content]").hidden = false;
 
-    // 锚点指向的版本是刚生成的，浏览器加载时跳不过去，渲染完再跳一次；
     // 锚点的百分号编码不合法时解码会抛错，这时不跳，免得整页被当成读取失败
     let targetId;
 
@@ -222,7 +226,7 @@
       return;
     }
 
-    document.getElementById(targetId)?.scrollIntoView();
+    return document.getElementById(targetId);
   }
 
   /**
