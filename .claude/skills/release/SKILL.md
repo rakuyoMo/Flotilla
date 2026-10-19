@@ -1,9 +1,12 @@
 ---
 name: release
-description: 发布 Flotilla 的新版本：用 `mise run release` 开 release PR，等 CI 通过后合并，再等 GitHub Actions 创建 GitHub Release。
+description: 发布 Flotilla 的新版本：准备这一版的更新说明，用 `mise run release` 开 release PR，等 CI 通过后合并，再等 GitHub Actions 创建 GitHub Release。
 when_to_use: 用户要发布新版本时，例如 “发布 1.2.0” “发个 1.2.0” “release 1.2.0”。
 argument-hint: "[X.Y.Z]"
 allowed-tools:
+  - Bash(./Scripts/check-release-notes.sh *)
+  - Bash(git describe *)
+  - Bash(git log *)
   - Bash(mise run release *)
   - Bash(gh pr checks *)
   - Bash(gh pr merge *)
@@ -31,16 +34,61 @@ allowed-tools:
 - 从用户的话或上面的参数里取版本号，格式为 `X.Y.Z`
 - 没有给出版本号时，问用户要；不自行推断 “下一个版本”
 
-## 2. 开 release PR
+## 2. 准备更新说明
+
+这一版的更新说明是 `docs/release-notes/<版本号>/` 下每种语言一份的 Markdown，写法见 `AGENTS.md` 的 “更新说明” 一节。先检查是否已经齐全：
+
+```bash
+./Scripts/check-release-notes.sh <版本号>
+```
+
+- 通过：直接用，进入下一步
+- 不通过：按下面的步骤起草
+
+### 起草
+
+先取得远端最新的 main 与 tag：
+
+```bash
+git fetch origin
+```
+
+找到 `origin/main` 上最近的 `v*` tag：
+
+```bash
+git describe --tags --abbrev=0 --match 'v*' origin/main
+```
+
+列出此后合并进 main 的 PR，提交标题 “Merge pull request #编号 from …” 里是 PR 编号：
+
+```bash
+git log --first-parent --merges --format=%s <tag>..origin/main
+```
+
+逐个读 PR 的标题与描述：
+
+```bash
+gh pr view <PR 编号> --json title,body
+```
+
+然后：
+
+- 按 `AGENTS.md` 的写法写出五份文件，不提交
+- 把 `zh-Hans.md` 的内容给用户看，并说明另外四份的位置
+- 用户确认后再进入下一步；用户提出修改时，同步改到五份文件里
+  - 用户一开始就说了 “不用问” 之类的话，就不问
+
+## 3. 开 release PR
 
 ```bash
 mise run release <版本号>
 ```
 
 - 失败：把脚本的报错原样告诉用户，停止
+  - 起草的更新说明留在工作区，告诉用户它们在 `docs/release-notes/<版本号>/`，修好后重试时照常使用
 - 成功：输出里 “已创建 PR：” 后面是 PR 链接，链接末尾的数字是 PR 编号
 
-## 3. 等 CI
+## 4. 等 CI
 
 ```bash
 gh pr checks <PR 编号> --watch
@@ -49,7 +97,7 @@ gh pr checks <PR 编号> --watch
 - 刚开的 PR 可能还没登记检查，报 `no checks reported` 时等几十秒再运行
 - CI 失败：报告失败的检查项与链接，停止，不合并
 
-## 4. 合并
+## 5. 合并
 
 - CI 通过后，问用户一次是否合并
   - 用户一开始就说了 “直接合并” “不用问” 之类的话，就不问
@@ -59,7 +107,7 @@ gh pr checks <PR 编号> --watch
 gh pr merge <PR 编号> --merge --delete-branch
 ```
 
-## 5. 等发布
+## 6. 等发布
 
 合并后，release workflow 会对这个 PR 运行一次。先取 PR 最后一个提交的 SHA：
 
@@ -80,7 +128,7 @@ gh run list --workflow release.yml --commit <提交 SHA> --json databaseId,url
 gh run watch <运行 ID> --exit-status
 ```
 
-## 6. 报告结果
+## 7. 报告结果
 
 成功：取 Release 链接给用户。
 
