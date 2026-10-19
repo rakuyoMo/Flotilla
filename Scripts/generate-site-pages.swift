@@ -199,7 +199,6 @@ func computedValues(
 
         "headScript": headScript(
             languages: languages,
-            current: language,
             prefix: prefix,
             pagePath: pagePath
         ),
@@ -289,50 +288,66 @@ func languageOption(_ language: Language, href: String, isCurrent: Bool) -> Stri
     return parts.joined(separator: "\n")
 }
 
-/// `<head>` 里先于渲染执行的脚本：标记脚本可用；默认语言的页面在浏览器首选简体中文、又没在语言菜单里选过时，跳到简体中文页
-func headScript(
-    languages: [Language],
-    current: Language,
-    prefix: String,
-    pagePath: String
-) -> String {
-    guard
-        current.code == languages[0].code,
-        let chinese = languages.first(where: { $0.code == "zh-Hans" })
-    else {
-        return """
-            <!-- 标记脚本可用，CSS 据此启用依赖脚本的样式 -->
-            <script>
-              document.documentElement.classList.add("js");
-            </script>
-            """
-    }
+/// `<head>` 里先于渲染执行的脚本：标记脚本可用，再算出目标语言，与本页语言不同就跳到目标语言的同一页面，保留锚点
+///
+/// 目标语言依次取：
+/// - 在语言菜单里选过的语言：site.js 写进 `localStorage` 的 `flotilla.language`，键名与 site.js 的 `LANGUAGE_KEY` 一致
+/// - 浏览器的首选语言：只看列表的第一项，补全文字后按 “语言 + 文字” 与语言清单逐项比对
+/// - 默认语言，即语言清单的第一项
+///
+/// 首选语言不往列表后面找：繁体环境下 Chrome 的列表常是 `zh-TW, zh, en-US, en`，往后找会被 `zh` 带到简体中文页
+func headScript(languages: [Language], prefix: String, pagePath: String) -> String {
+    // 每种语言的代码与本页在这种语言下的相对地址，按语言清单的顺序写成脚本里的数组
+    let pages = languages
+        .map { language in
+            let href = relativePath(prefix: prefix, language: language, pagePath: pagePath)
+            return "{ code: \"\(language.code)\", href: \"\(href)\" },"
+        }
+        .joined(separator: "\n")
 
     return """
-        <!-- 浏览器首选简体中文、又没在语言切换里选过时，跳到中文页；先于渲染执行，避免先闪一下英文 -->
+        <!-- 按选过的语言或浏览器的首选语言跳到对应语言的同一页面；先于渲染执行，避免先闪一下本页 -->
         <script>
           (() => {
             document.documentElement.classList.add("js");
 
-            let saved = null;
+            // 每种语言的代码与本页在这种语言下的地址，第一项是默认语言
+            const pages = [
+              \(indented(pages, by: "      "))
+            ];
 
-            try {
-              saved = localStorage.getItem("flotilla.language");
-            } catch {
-              saved = null;
-            }
+            // 在语言菜单里选过的语言；值不在清单里或读取失败时，当作没选过
+            const saved = (() => {
+              try {
+                const code = localStorage.getItem("flotilla.language");
+                return pages.find((page) => page.code === code);
+              } catch {
+                return undefined;
+              }
+            })();
 
-            const preferred = (
-              navigator.languages?.[0]
-              ?? navigator.language
-              ?? ""
-            ).toLowerCase();
+            // 浏览器的首选语言：只看第一项，补全文字后按 “语言 + 文字” 比对；
+            // 标签无效或浏览器不支持 Intl.Locale 时，当作没有匹配
+            const preferred = (() => {
+              try {
+                const tag = navigator.languages?.[0] ?? navigator.language;
+                const locale = new Intl.Locale(tag).maximize();
 
-            const isSimplifiedChinese = ["zh", "zh-cn", "zh-sg"].includes(preferred)
-              || preferred.startsWith("zh-hans");
+                return pages.find((page) => {
+                  const candidate = new Intl.Locale(page.code).maximize();
 
-            if (saved === null && isSimplifiedChinese) {
-              location.replace("\(relativePath(prefix: prefix, language: chinese, pagePath: pagePath))" + location.hash);
+                  return candidate.language === locale.language
+                    && candidate.script === locale.script;
+                });
+              } catch {
+                return undefined;
+              }
+            })();
+
+            const target = saved ?? preferred ?? pages[0];
+
+            if (target.code !== document.documentElement.lang) {
+              location.replace(target.href + location.hash);
             }
           })();
         </script>

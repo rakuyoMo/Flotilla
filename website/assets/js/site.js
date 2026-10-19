@@ -3,7 +3,7 @@
 (() => {
   "use strict";
 
-  // 记住语言选择用的 localStorage 键，须与英文页 <head> 里的跳转脚本一致
+  // 记住语言选择用的 localStorage 键，须与每页 <head> 里的跳转脚本一致，该脚本由 Scripts/generate-site-pages.swift 生成
   const LANGUAGE_KEY = "flotilla.language";
 
   // 复制成功的提示停留的时长，单位毫秒
