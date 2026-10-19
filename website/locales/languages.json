@@ -25,5 +25,47 @@
       "readmeGettingStarted": "https://github.com/rakuyoMo/Flotilla/blob/main/README-ZH.md#快速上手",
       "readmeDevelopment": "https://github.com/rakuyoMo/Flotilla/blob/main/README-ZH.md#开发"
     }
+  },
+
+  {
+    "code": "zh-Hant",
+    "directory": "zh-hant/",
+    "name": "繁體中文",
+    "ogLocale": "zh_TW",
+    "imageLanguage": "zh",
+
+    "links": {
+      "readme": "https://github.com/rakuyoMo/Flotilla/blob/main/README-ZH.md",
+      "readmeGettingStarted": "https://github.com/rakuyoMo/Flotilla/blob/main/README-ZH.md#快速上手",
+      "readmeDevelopment": "https://github.com/rakuyoMo/Flotilla/blob/main/README-ZH.md#开发"
+    }
+  },
+
+  {
+    "code": "ja",
+    "directory": "ja/",
+    "name": "日本語",
+    "ogLocale": "ja_JP",
+    "imageLanguage": "en",
+
+    "links": {
+      "readme": "https://github.com/rakuyoMo/Flotilla#readme",
+      "readmeGettingStarted": "https://github.com/rakuyoMo/Flotilla#getting-started",
+      "readmeDevelopment": "https://github.com/rakuyoMo/Flotilla#development"
+    }
+  },
+
+  {
+    "code": "ko",
+    "directory": "ko/",
+    "name": "한국어",
+    "ogLocale": "ko_KR",
+    "imageLanguage": "en",
+
+    "links": {
+      "readme": "https://github.com/rakuyoMo/Flotilla#readme",
+      "readmeGettingStarted": "https://github.com/rakuyoMo/Flotilla#getting-started",
+      "readmeDevelopment": "https://github.com/rakuyoMo/Flotilla#development"
+    }
   }
 ]
