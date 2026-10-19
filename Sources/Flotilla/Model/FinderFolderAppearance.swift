@@ -90,21 +90,21 @@ extension FinderFolderAppearance {
         }
 
         // 每项是 “名称\n颜色号”：颜色号在最后一个换行之后，没有换行就没写颜色号
-        return tags
-            .compactMap {
-                let components = $0.split(separator: "\n", omittingEmptySubsequences: false)
+        let colors: [Int] = tags.compactMap {
+            let components = $0.split(separator: "\n", omittingEmptySubsequences: false)
 
-                guard
-                    components.count > 1,
-                    let color = components.last.flatMap({ Int($0) }),
-                    (1 ... 7).contains(color)
-                else {
-                    return nil
-                }
-
-                return color
+            guard
+                components.count > 1,
+                let color = components.last.flatMap({ Int($0) }),
+                (1 ... 7).contains(color)
+            else {
+                return nil
             }
-            .last
+
+            return color
+        }
+
+        return colors.last
     }
 
     /// Finder flags 里 “有自定义图标” 的位是否置位
