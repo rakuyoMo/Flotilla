@@ -230,6 +230,14 @@
 - `toggle(groupID:)`：未展开时展开该组的根层级；已展开同一组时收起；已展开另一个组时直接切换，旧面板立即消失，新面板按展开动画出现。
 - 收起的触发：见 “点击信号”；另有 Esc、点击 App、文件（访达文件夹除外）或网页项（需求 9、14）、点击 “在访达中打开”（需求 20）、屏幕参数变化、正在展示的组被删除。
 - 点击 App 项：`NSWorkspace.shared.openApplication(at:configuration:)`，随即收起面板。
+  - `OpenConfiguration` 的 `allowsRunningApplicationSubstitution` 设为假，按这一项记的路径启动：默认为真时，同一 bundle id 的进程在别的路径运行，系统把这次启动交给那个进程，App 本身不启动。
+  - 同一 App 的另一份拷贝在别的路径运行时，启动的是这一项记的那一份。
+  - 实测（macOS 27）：
+    - 剪映专业版 `/Applications/VideoFusion-macOS.app` 包内的状态栏托盘进程 `Contents/Frameworks/VideoFusion-macOSTrayHelper.app` 与它同为 bundle id `com.lemon.lvpro`，`LSUIElement` 为 1，主 App 退出后仍在运行
+    - 这时按默认设置打开主 App，交回的是托盘进程（`activationPolicy` 为 `.accessory`），没有启动新进程，回调也不带错误；同样情况下从 Dock、访达打开，启动的都是主 App
+    - 默认设置下，App 与包内的辅助进程都在跑时，交回先启动的那一个
+    - 设为假时：只有辅助进程在跑，启动 App 本身；App 已在跑，交回在跑的那一份，不多开，经指向它的符号链接打开也一样
+    - 经符号链接启动的 App，`bundleURL` 是真实路径，之后按真实路径打开交回同一份
 - 点击文件或网页项：`NSWorkspace.shared.open(_:configuration:completionHandler:)`，用默认 App 或默认浏览器打开，随即收起面板（见 06）；访达文件夹在同一个面板里进入（见 08）。
 - 展示期间 `GroupStore` 变化：当前组被删则收起；内容变化则重建网格，能保留当前层级就保留。
 - 展开之后，推迟到下一轮主线程按书签更新这个根组里的 App 与文件的位置；有变化时照上一条重建网格（见 07、08）。
@@ -255,6 +263,7 @@
   - 再次点击收起
   - 点击桌面、其它窗口、Dock 上其它 App 都收起
   - 点击 App 项启动该 App 并收起
+  - App 包内有同 bundle id 的辅助进程在跑、App 本身没跑时，点击 App 项启动 App 本身；App 已在跑时不多开
   - 子组能进入与返回
 - 有、无辅助功能权限两种情况都验证
 - 前台 App 全程保持前台，Dock 上没有 Flotilla 图标
