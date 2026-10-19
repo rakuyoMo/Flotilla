@@ -71,7 +71,7 @@ docs/resources/         README 的头图 readme-header-<en|zh>-<light|dark>.png�
                         官网组装时从这里取截图与帆船画稿，并由浅色头图生成分享图
 website/                官网源码：英文页在根目录，简体中文页在 zh/，404.html 中英双语；
                         assets/ 下是样式与脚本，位图在组装时生成，不进仓库
-.github/workflows/      GitHub Actions：ci.yml 检查与构建，release.yml 发布新版本，pages.yml 组装并部署官网
+.github/workflows/      GitHub Actions：ci.yml 检查与构建，release-notes.yml 检查 release PR 的更新说明，release.yml 发布新版本，pages.yml 组装并部署官网
 .claude/skills/release/ Claude Code 的 release skill：用自然语言发布新版本
 .claude/agents/         Claude Code 的 flotilla-implementer 代理：按阶段需求文档实现功能
 README.md               英文 README：介绍、功能、安装、权限、使用方法、工作原理与对系统的改动、从源码构建、开发与贡献说明
@@ -275,7 +275,7 @@ README-ZH.md            README.md 的简体中文版，与它同步修改
    - Info.plist 的当前构建号是正整数
 3. 检查通过后，脚本切出 `release/X.Y.Z` 分支，把 Info.plist 的展示版本改成 `X.Y.Z`，构建号增加 `1`，连同工作区里这一版的更新说明一起提交并推送到 `origin`，再向 `main` 开标题为 `release: X.Y.Z` 的 PR
    - 推送或开 PR 失败时，脚本删掉发布分支，更新说明留在工作区
-4. 等 CI 通过后合并 PR；标题以 `release:` 开头的 PR，CI 还会按 Info.plist 的展示版本检查更新说明是否齐全
+4. 等 CI 通过后合并 PR；标题以 `release:` 开头的 PR，“更新说明” workflow 按 Info.plist 的展示版本检查更新说明是否齐全，改标题时也会重新检查
 5. 合并后，GitHub Actions 自动：
    - 在合并提交上打 tag `vX.Y.Z`
    - 打包并压缩为 `Flotilla-X.Y.Z.zip`，生成签名的更新清单，每种语言的更新说明都嵌在清单里
@@ -305,7 +305,7 @@ README-ZH.md            README.md 的简体中文版，与它同步修改
 
 - `mise run appcast` 把每份原文嵌进签名的更新清单，App 的更新窗口按用户的语言显示其中一份
 - `en.md` 同时是 GitHub Release 的正文，官网的更新日志显示同一份正文
-- `Scripts/check-release-notes.sh X.Y.Z` 检查每份都存在且有内容：发版脚本、更新清单脚本、CI 与发布 workflow 都调用它
+- `Scripts/check-release-notes.sh X.Y.Z` 检查每份都存在且有内容：发版脚本、更新清单脚本，以及 “更新说明” 与 “发布” 两个 workflow 都调用它
 
 ### 写法
 
