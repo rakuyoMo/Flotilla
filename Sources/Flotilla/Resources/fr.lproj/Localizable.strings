@@ -1,0 +1,71 @@
+/* 主菜单 */
+"mainMenu.quit" = "Quitter Flotilla";
+"mainMenu.edit" = "Édition";
+"mainMenu.undo" = "Annuler";
+"mainMenu.redo" = "Rétablir";
+"mainMenu.cut" = "Couper";
+"mainMenu.copy" = "Copier";
+"mainMenu.paste" = "Coller";
+"mainMenu.selectAll" = "Tout sélectionner";
+
+/* 状态栏图标的无障碍描述：旁白读出的 App 名 */
+"statusBar.iconDescription" = "Flotilla";
+
+/* 关于面板 */
+"about.menuTitle" = "À propos de Flotilla";
+"about.website" = "Site officiel";
+
+/* 设置窗口 */
+"settings.menuTitle" = "Réglages…";
+"settings.windowTitle" = "Réglages";
+
+/* 设置窗口的组区 */
+"groups.sectionTitle" = "Groupes";
+"groups.newGroup" = "Nouveau groupe";
+"groups.untitledGroup" = "Groupe sans titre";
+"groups.add" = "Ajouter…";
+"groups.addApps" = "Ajouter des apps…";
+"groups.addFiles" = "Ajouter des fichiers…";
+"groups.addWebPage" = "Ajouter une page web…";
+"groups.webPageAlert.message" = "Ajouter une page web";
+"groups.webPageAlert.editMessage" = "Modifier la page web";
+"groups.webPageAlert.informative" = "Saisissez l’adresse de la page web. Le titre est facultatif.";
+"groups.webPageAlert.addressPlaceholder" = "Adresse";
+"groups.webPageAlert.titlePlaceholder" = "Titre (facultatif)";
+"groups.webPageAlert.fetchingTitle" = "Récupération du titre…";
+"groups.webPageAlert.add" = "Ajouter";
+"groups.webPageAlert.save" = "Enregistrer";
+"groups.webPageAlert.cancel" = "Annuler";
+"groups.notOnDock" = "Absent du Dock";
+"groups.addToDock" = "Ajouter au Dock";
+"groups.showInFinder" = "Afficher dans le Finder";
+"groups.openInDefaultBrowser" = "Ouvrir dans le navigateur par défaut";
+"groups.editWebPage" = "Modifier…";
+"groups.remove" = "Supprimer";
+
+/* 设置窗口的通用区 */
+"general.sectionTitle" = "Général";
+"general.previewIconCount" = "Icônes affichées dans l’icône du groupe :";
+"general.finderFolders" = "Dossiers du Finder :";
+"general.showHiddenFiles" = "Afficher les fichiers masqués";
+"general.accessibility" = "Autorisation d’accessibilité :";
+"general.accessibilityGranted" = "Accordée";
+"general.accessibilityNotGranted" = "Non accordée";
+"general.openSystemSettings" = "Ouvrir Réglages Système";
+
+/* 设置窗口的更新区 */
+"updates.sectionTitle" = "Mise à jour de logiciels";
+"updates.checkForUpdates" = "Rechercher les mises à jour…";
+"updates.automaticChecks" = "Rechercher automatiquement les mises à jour";
+"updates.automaticInstallation" = "Télécharger automatiquement les mises à jour et les installer en quittant";
+"updates.checkFrequency" = "Fréquence de recherche :";
+"updates.hourly" = "Chaque heure";
+"updates.daily" = "Chaque jour";
+"updates.weekly" = "Chaque semaine";
+"updates.lastCheck" = "Dernière recherche :";
+"updates.neverChecked" = "Jamais";
+
+/* 展开面板 */
+"panel.back" = "Retour";
+"panel.openInFinder" = "Afficher";
+"panel.remove" = "Supprimer";

@@ -3,11 +3,11 @@ import Testing
 
 // MARK: - LocalizationTests
 
-/// 五种语言的界面文字表：进程只选一种语言，缺键时界面显示的是键名而不是英文，
-/// 因此五张表的键必须完全一致、没有空值，并且与代码里引用的键一一对应
+/// 八种语言的界面文字表：进程只选一种语言，缺键时界面显示的是键名而不是英文，
+/// 因此八张表的键必须完全一致、没有空值，并且与代码里引用的键一一对应
 struct LocalizationTests {
     /// 支持的语言，即 `Sources/Flotilla/Resources` 下的 `.lproj` 目录名
-    static let languages = ["en", "zh-Hans", "zh-Hant", "ja", "ko"]
+    static let languages = ["en", "zh-Hans", "zh-Hant", "ja", "ko", "de", "fr", "es"]
 
     /// App 源码目录：本文件位于 `Tests/FlotillaTests/` 下，所在目录向上两级是仓库根目录
     static let sourcesURL = URL(filePath: #filePath)

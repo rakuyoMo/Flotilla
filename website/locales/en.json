@@ -161,8 +161,8 @@
       },
 
       "languages": {
-        "title": "Five languages",
-        "description": "English, Simplified Chinese, Traditional Chinese, Japanese, and Korean. The app uses your system language, or English if that language isn’t supported."
+        "title": "Eight languages",
+        "description": "English, Simplified Chinese, Traditional Chinese, Japanese, Korean, German, French, and Spanish. The app uses your system language, or English if that language isn’t supported."
       }
     },
 
@@ -299,7 +299,7 @@
 
       "languages": {
         "question": "Which languages does Flotilla support?",
-        "answer": "English, Simplified Chinese, Traditional Chinese, Japanese, and Korean. The app uses your system language, or English if that language isn’t supported.",
+        "answer": "English, Simplified Chinese, Traditional Chinese, Japanese, Korean, German, French, and Spanish. The app uses your system language, or English if that language isn’t supported.",
         "appName": "The app’s name follows your system language too: 归帆 in Simplified Chinese, 歸帆 in Traditional Chinese, 帰帆 in Japanese, and Flotilla in other languages."
       }
     },
