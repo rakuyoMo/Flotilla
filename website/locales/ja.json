@@ -491,5 +491,14 @@
       "latest": "最新",
       "prerelease": "プレリリース"
     }
+  },
+
+  "notFound": {
+    "meta": {
+      "title": "ページが見つかりません — 帰帆"
+    },
+
+    "title": "ページが<wbr>見つかりません",
+    "backToHome": "ホームに戻る"
   }
 }

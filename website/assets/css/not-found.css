@@ -1,4 +1,4 @@
-/* 404 页的样式：整屏的天空，中间是帆船画稿与英文说明，底边接海浪 */
+/* 404 页的样式：整屏的天空，中间是帆船画稿与说明，底边接海浪 */
 
 /* 没有导航，天空不必挪到导航底下；内容在一屏里居中 */
 .not-found {
@@ -37,6 +37,10 @@
   font-weight: 780;
   line-height: 1.2;
   letter-spacing: -0.03em;
+}
+
+.not-found-title:is(:lang(zh), :lang(ja), :lang(ko)) {
+  letter-spacing: 0.01em;
 }
 
 .not-found-actions {

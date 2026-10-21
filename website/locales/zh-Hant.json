@@ -500,5 +500,14 @@
       "latest": "最新",
       "prerelease": "預先發布"
     }
+  },
+
+  "notFound": {
+    "meta": {
+      "title": "找不到頁面 —— 歸帆"
+    },
+
+    "title": "找不到這個頁面",
+    "backToHome": "返回首頁"
   }
 }

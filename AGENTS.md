@@ -61,9 +61,9 @@ Scripts/appcast.sh      更新清单脚本：压缩打包好的 App，生成嵌�
 Scripts/bundle.sh       打包脚本：组装 .app 并签名
 Scripts/check-release-notes.sh  检查某个版本的更新说明是否齐全，发版脚本、更新清单脚本与两个 workflow 共用
 Scripts/embed-release-notes.swift  把每种语言的更新说明与更新日志页链接嵌进更新清单，由 appcast.sh 调用
-Scripts/generate-site-pages.swift  官网页面生成脚本：按语言清单与各语言文案，把页面模板生成每种语言的页面，由 site.sh 调用
+Scripts/generate-site-pages.swift  官网页面生成脚本：按语言清单与各语言文案，把页面模板生成每种语言的页面，并生成 404 页，由 site.sh 调用
 Scripts/release.sh      发版脚本：改版本号，连同这一版的更新说明开 release PR
-Scripts/site.sh         官网组装脚本：生成页面、拷入 404 页与样式脚本、生成位图、取 Release 数据与各语言的更新说明，输出到 build/site/
+Scripts/site.sh         官网组装脚本：生成页面与 404 页、拷入样式脚本、生成位图、取 Release 数据与各语言的更新说明，输出到 build/site/
 docs/release-notes/     每个版本的更新说明：X.Y.Z/ 下每种语言一份 <语言>.md，见 “更新说明”
 docs/requirements/      需求文档：00 为总览，01–13 为按实现顺序拆分的阶段
 docs/resources/         README 的头图 readme-header-<en|zh>-<light|dark>.png：英文、中文各一套，各有浅色、深色两版；
@@ -72,7 +72,7 @@ docs/resources/         README 的头图 readme-header-<en|zh>-<light|dark>.png�
                         官网组装时从这里取截图与帆船画稿，并由浅色头图生成分享图
 website/                官网源码：pages/ 下是页面模板，locales/ 下是语言清单 languages.json 与每种语言一份的文案 <语言代码>.json，
                         组装时生成每种语言的页面，英文在根目录，简体中文、繁体中文、日文、韩文分别在 zh/ zh-hant/ ja/ ko/；
-                        404.html 只有英文，原样拷贝；
+                        404.html 是 404 页的模板，只生成站点根目录的一份，带着每种语言的文案；
                         assets/ 下是样式与脚本，位图在组装时生成，不进仓库
 .github/workflows/      GitHub Actions：ci.yml 检查与构建，release-notes.yml 检查 release PR 的更新说明，release.yml 发布新版本，pages.yml 组装并部署官网
 .claude/skills/release/ Claude Code 的 release skill：用自然语言发布新版本
@@ -235,16 +235,17 @@ README-ZH.md            README.md 的简体中文版，与它同步修改
   - `pages/`：页面模板，相对路径即每种语言目录下的输出路径
   - `locales/languages.json`：语言清单，按语言菜单的顺序排列；第一项是英文，兼作默认语言与兜底语言
   - `locales/<语言代码>.json`：这种语言的全部文案，按页面与区块嵌套分组，顺序与页面从上到下一致；几页共用的放 `common`
-  - `404.html` 与 `assets/` 原样拷贝
+  - `404.html`：404 页的模板，只生成站点根目录的一份，见 “维护”
+  - `assets/` 原样拷贝
 - 模板里的占位符有两类，由 `Scripts/generate-site-pages.swift` 替换：
   - `{{home.hero.title}}`：文案，按 HTML 原样插入，可带 `<strong>` `<code>` `<wbr>` 等行内标记；多行的文案在文案文件里写成字符串数组，不写缩进，插入时续行补上占位符所在行的缩进
   - `{{@lang}}`：`@` 开头，按语言清单与页面算出的值或片段，如语言代码、到站点根目录的相对路径、`hreflang` 备选链接、语言菜单、`<head>` 里的跳转脚本；可用的名称见脚本里的 `computedValues`
-  - 模板用到而某种语言缺少的键、文案文件里模板没用到的键、语言清单与文案文件对不上、未知的占位符、用在属性值里的值含 `"` 或换行，都会报错，不生成任何页面
+  - 模板用到而某种语言缺少的键、文案文件里模板没用到的键、语言清单与文案文件对不上、未知的占位符、用在属性值里的值含 `"` 或换行、404 页的文案键与 `data-text` 对不上，都会报错，不生成任何页面
 - 各语言不同的链接写在语言清单每一项的 `links` 里，模板里写作 `{{@links.名称}}`，如 README 与其中章节的链接
   - 它们不放文案文件：翻译只改文案文件，繁体由简体改写时也不会把 `README-ZH.md#开发` 这样的锚点转成繁体而失效
   - 随语言换、又和句子一起翻译的链接留在文案里，如 Apple 支持文章的链接与文章标题
 - `mise run site:build` 运行 `Scripts/site.sh`，组装到 `build/site/`：
-  - 按模板与文案生成每种语言的页面，拷入 `404.html` 与 `assets/`；模板与文案的源文件不进产物
+  - 按模板与文案生成每种语言的页面与 404 页，拷入 `assets/`；模板与文案的源文件不进产物
   - 用 `sips` 从 App 图标母版生成图标与 favicon，从 `docs/resources/` 的浅色头图生成分享图、把帆船画稿转成 JPEG，截图原样拷入
   - 用 `gh api` 取 GitHub 上的全部 Release，整理成 `build/site/releases.json`；`gh` 要先登录
   - `releases.json` 里每个版本的正文按语言代码分开：`en` 是 Release 的正文；语言清单里的其它语言取 `docs/release-notes/<版本号>/<语言代码>.md`，用 `gh api markdown` 渲染成 HTML，没有这份说明的版本不写这种语言
@@ -265,7 +266,7 @@ README-ZH.md            README.md 的简体中文版，与它同步修改
 
 ### 维护
 
-- 改结构改 `pages/` 下的模板；改文案时，每种语言的文案文件同步改，各文件的键保持一致
+- 改结构改 `pages/` 下的模板与 `404.html`；改文案时，每种语言的文案文件同步改，各文件的键保持一致
 - 页面上的事实以 README 为准，文案能照搬就照搬
 - 站内链接一律用相对路径；每页在 `<html data-root>` 上声明自己到站点根目录的相对路径，脚本据此拼地址
   - `404.html` 会在任意不存在的路径下返回，用 `<base href="/">` 固定相对路径的起点
@@ -276,8 +277,10 @@ README-ZH.md            README.md 的简体中文版，与它同步修改
   - 没选过时按浏览器的首选语言：只看 `navigator.languages` 的第一项，补全文字后按 “语言 + 文字” 与语言清单比对，`zh-CN` `zh-SG` 是简体中文，`zh-TW` `zh-HK` 是繁体中文
   - 网站没有这种语言时用英文；目标语言与本页不同时，跳到那种语言的同一页面，保留锚点
   - 地址里没有可用的 `lang` 参数、浏览器又禁止站点存储（读取 `localStorage` 抛错）时不跳转：这时不知道选过的语言，按浏览器语言跳转会把选了别的语言的人带回去
-  - `404.html` 只有英文，不跳转
-- 新增一种语言不用改生成脚本、模板、样式与页面脚本：语言菜单、`hreflang`、跳转与更新日志都按语言清单生成，繁体中文、日文、韩文的字体与排版已在样式里备好。要做的是：
+  - 404 页按同样的规则选语言，但不跳转，就地换成目标语言：GitHub Pages 在任意不存在的路径下都返回站点根目录这一份，跳走会丢掉访客打开的地址
+    - 页面按默认语言生成，`<head>` 里的脚本带着每种语言的这页文案，等正文解析完再换
+    - 带 `data-text` 的元素换成这个文案键在目标语言里的文案，带 `data-home` 的链接改到目标语言的首页；这页的每个文案键都要用 `data-text` 标出
+- 新增一种语言不用改生成脚本、模板、样式与页面脚本：语言菜单、`hreflang`、跳转、404 页与更新日志都按语言清单生成，繁体中文、日文、韩文的字体与排版已在样式里备好。要做的是：
   1. 在语言清单登记一项：语言代码与 `Sources/Flotilla/Resources/` 下的 `.lproj` 同名；目录用小写的语言代码加 `/`，如 `zh-hant/` `ja/` `ko/`，简体中文保持 `zh/`，README-ZH 与已发布的更新清单都链到它；`links` 照已有的语言写全
   2. 截图与分享图：`imageLanguage` 繁体中文用 `zh`，其余用 `en`
   3. 新建 `locales/<语言代码>.json`，键与 `en.json` 一致：繁体由简体中文改写，其余由英文翻译；术语与该语言的 `Localizable.strings` 一致，App 名照 `InfoPlist.strings`；简繁中文按 “中文行文”，日文、韩文的引号等照各自 `Localizable.strings` 的用法
