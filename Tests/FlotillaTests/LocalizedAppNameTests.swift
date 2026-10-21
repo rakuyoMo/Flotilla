@@ -12,6 +12,9 @@ struct LocalizedAppNameTests {
         "zh-Hant": "歸帆",
         "ja": "帰帆",
         "ko": "Flotilla",
+        "de": "Flotilla",
+        "fr": "Flotilla",
+        "es": "Flotilla",
     ]
 
     /// `InfoPlist.strings` 里给出 App 名的键：访达与 Dock 取显示名，App 菜单取短名

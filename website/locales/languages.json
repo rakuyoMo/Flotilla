@@ -67,5 +67,47 @@
       "readmeGettingStarted": "https://github.com/rakuyoMo/Flotilla#getting-started",
       "readmeDevelopment": "https://github.com/rakuyoMo/Flotilla#development"
     }
+  },
+
+  {
+    "code": "de",
+    "directory": "de/",
+    "name": "Deutsch",
+    "ogLocale": "de_DE",
+    "imageLanguage": "en",
+
+    "links": {
+      "readme": "https://github.com/rakuyoMo/Flotilla#readme",
+      "readmeGettingStarted": "https://github.com/rakuyoMo/Flotilla#getting-started",
+      "readmeDevelopment": "https://github.com/rakuyoMo/Flotilla#development"
+    }
+  },
+
+  {
+    "code": "fr",
+    "directory": "fr/",
+    "name": "Français",
+    "ogLocale": "fr_FR",
+    "imageLanguage": "en",
+
+    "links": {
+      "readme": "https://github.com/rakuyoMo/Flotilla#readme",
+      "readmeGettingStarted": "https://github.com/rakuyoMo/Flotilla#getting-started",
+      "readmeDevelopment": "https://github.com/rakuyoMo/Flotilla#development"
+    }
+  },
+
+  {
+    "code": "es",
+    "directory": "es/",
+    "name": "Español",
+    "ogLocale": "es_ES",
+    "imageLanguage": "en",
+
+    "links": {
+      "readme": "https://github.com/rakuyoMo/Flotilla#readme",
+      "readmeGettingStarted": "https://github.com/rakuyoMo/Flotilla#getting-started",
+      "readmeDevelopment": "https://github.com/rakuyoMo/Flotilla#development"
+    }
   }
 ]

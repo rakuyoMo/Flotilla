@@ -50,7 +50,7 @@ Sources/Flotilla/       App 源码
   Rendering/            组图标渲染、App 图标的透明与色调处理
   StatusBar/            状态栏图标与菜单
   Settings/             设置窗口
-  Resources/            五种语言的 Localizable.strings、InfoPlist.strings 与白天、夜间两版 App 图标母版，不参与编译；
+  Resources/            八种语言的 Localizable.strings、InfoPlist.strings 与白天、夜间两版 App 图标母版，不参与编译；
                         由打包脚本拷入 .app，图标母版转成 icns；官网的 App 图标与 favicon 也由图标母版生成
   Panel/                Dock 上展开的面板
   Dock/                 stub 生成、Dock 偏好读写与 tile 同步
@@ -71,7 +71,7 @@ docs/resources/         README 的头图 readme-header-<en|zh>-<light|dark>.png�
                         帆船画稿 sailing-ship-*.png；
                         官网组装时从这里取截图与帆船画稿，并由浅色头图生成分享图
 website/                官网源码：pages/ 下是页面模板，locales/ 下是语言清单 languages.json 与每种语言一份的文案 <语言代码>.json，
-                        组装时生成每种语言的页面，英文在根目录，简体中文、繁体中文、日文、韩文分别在 zh/ zh-hant/ ja/ ko/；
+                        组装时生成每种语言的页面，英文在根目录，简体中文、繁体中文、日文、韩文、德文、法文、西班牙文分别在 zh/ zh-hant/ ja/ ko/ de/ fr/ es/；
                         404.html 是 404 页的模板，只生成站点根目录的一份，带着每种语言的文案；
                         assets/ 下是样式与脚本，位图在组装时生成，不进仓库
 .github/workflows/      GitHub Actions：ci.yml 检查与构建，release-notes.yml 检查 release PR 的更新说明，release.yml 发布新版本，pages.yml 组装并部署官网
@@ -283,7 +283,7 @@ README-ZH.md            README.md 的简体中文版，与它同步修改
 - 新增一种语言不用改生成脚本、模板、样式与页面脚本：语言菜单、`hreflang`、跳转、404 页与更新日志都按语言清单生成，繁体中文、日文、韩文的字体与排版已在样式里备好。要做的是：
   1. 在语言清单登记一项：语言代码与 `Sources/Flotilla/Resources/` 下的 `.lproj` 同名；目录用小写的语言代码加 `/`，如 `zh-hant/` `ja/` `ko/`，简体中文保持 `zh/`，README-ZH 与已发布的更新清单都链到它；`links` 照已有的语言写全
   2. 截图与分享图：`imageLanguage` 繁体中文用 `zh`，其余用 `en`
-  3. 新建 `locales/<语言代码>.json`，键与 `en.json` 一致：繁体由简体中文改写，其余由英文翻译；术语与该语言的 `Localizable.strings` 一致，App 名照 `InfoPlist.strings`；简繁中文按 “中文行文”，日文、韩文的引号等照各自 `Localizable.strings` 的用法
+  3. 新建 `locales/<语言代码>.json`，键与 `en.json` 一致：繁体由简体中文改写，其余由英文翻译；术语与该语言的 `Localizable.strings` 一致，App 名照 `InfoPlist.strings`；简繁中文按 “中文行文”，日文、韩文的引号等照各自 `Localizable.strings` 的用法，德文、法文的不换行空格照 “更新说明” 的写法
   4. 把 `Scripts/embed-release-notes.swift` 里这种语言的更新日志页改成它自己的页面
 
 ## 发布流程
@@ -334,7 +334,7 @@ README-ZH.md            README.md 的简体中文版，与它同步修改
 
 ## 更新说明
 
-每个版本的更新说明放在 `docs/release-notes/X.Y.Z/`，每种语言一份：`en.md` `zh-Hans.md` `zh-Hant.md` `ja.md` `ko.md`，与 `Sources/Flotilla/Resources/` 下的 `.lproj` 同名。
+每个版本的更新说明放在 `docs/release-notes/X.Y.Z/`，每种语言一份：`en.md` `zh-Hans.md` `zh-Hant.md` `ja.md` `ko.md` `de.md` `fr.md` `es.md`，与 `Sources/Flotilla/Resources/` 下的 `.lproj` 同名。
 
 - `mise run appcast` 把每份说明嵌进签名的更新清单，App 的更新窗口按用户的语言显示其中一份
 - `en.md` 同时是 GitHub Release 的正文；官网的英文更新日志显示 Release 正文，其它语言显示同名的说明，没有时退回英文
@@ -348,9 +348,10 @@ README-ZH.md            README.md 的简体中文版，与它同步修改
 - 不写顶层标题：更新窗口、GitHub、官网都会显示版本号
 - 按类别分节，节标题用 `###`，取下表中该语言的叫法，只保留有内容的节；每条列表项写一个改动
 - Markdown 只用 `###` 标题、无序列表、粗体、链接
-- App 名照各语言的 `InfoPlist.strings`：`en` `ko` 写 Flotilla，`zh-Hans` 写 “归帆”，`zh-Hant` 写 “歸帆”，`ja` 写 “帰帆”
+- App 名照各语言的 `InfoPlist.strings`：`en` `ko` `de` `fr` `es` 写 Flotilla，`zh-Hans` 写 “归帆”，`zh-Hant` 写 “歸帆”，`ja` 写 “帰帆”
 - 界面上的叫法与该语言的 `Localizable.strings` 一致
 - `zh-Hans` `zh-Hant` 按 “中文行文” 一节；`ja` `ko` 的引号等写法照各自 `Localizable.strings` 的现有用法
+- `de` `fr` `es` 与 `en` 一样用粗体标出界面上的叫法；`de` 的 `…` 之前，`fr` 的 `:` `;` `!` `?` 之前与 `« »` 之内，用不换行空格（U+00A0），免得它们被折到行首
 
 | 语言 | 新增 | 改进 | 修复 |
 |---|---|---|---|
@@ -359,6 +360,9 @@ README-ZH.md            README.md 的简体中文版，与它同步修改
 | `zh-Hant` | 新增 | 改進 | 修正 |
 | `ja` | 新機能 | 改善 | 修正 |
 | `ko` | 새 기능 | 개선 | 수정 |
+| `de` | Neu | Verbessert | Behoben |
+| `fr` | Nouveautés | Améliorations | Corrections |
+| `es` | Novedades | Mejoras | Correcciones |
 
 ## 分支命名
 

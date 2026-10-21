@@ -1,0 +1,71 @@
+/* 主菜单 */
+"mainMenu.quit" = "Flotilla beenden";
+"mainMenu.edit" = "Bearbeiten";
+"mainMenu.undo" = "Widerrufen";
+"mainMenu.redo" = "Wiederholen";
+"mainMenu.cut" = "Ausschneiden";
+"mainMenu.copy" = "Kopieren";
+"mainMenu.paste" = "Einsetzen";
+"mainMenu.selectAll" = "Alles auswählen";
+
+/* 状态栏图标的无障碍描述：旁白读出的 App 名 */
+"statusBar.iconDescription" = "Flotilla";
+
+/* 关于面板 */
+"about.menuTitle" = "Über Flotilla";
+"about.website" = "Offizielle Website";
+
+/* 设置窗口 */
+"settings.menuTitle" = "Einstellungen …";
+"settings.windowTitle" = "Einstellungen";
+
+/* 设置窗口的组区 */
+"groups.sectionTitle" = "Gruppen";
+"groups.newGroup" = "Neue Gruppe";
+"groups.untitledGroup" = "Unbenannte Gruppe";
+"groups.add" = "Hinzufügen …";
+"groups.addApps" = "Apps hinzufügen …";
+"groups.addFiles" = "Dateien hinzufügen …";
+"groups.addWebPage" = "Webseite hinzufügen …";
+"groups.webPageAlert.message" = "Webseite hinzufügen";
+"groups.webPageAlert.editMessage" = "Webseite bearbeiten";
+"groups.webPageAlert.informative" = "Gib die Adresse der Webseite ein. Der Titel ist optional.";
+"groups.webPageAlert.addressPlaceholder" = "Adresse";
+"groups.webPageAlert.titlePlaceholder" = "Titel (optional)";
+"groups.webPageAlert.fetchingTitle" = "Titel wird geladen …";
+"groups.webPageAlert.add" = "Hinzufügen";
+"groups.webPageAlert.save" = "Sichern";
+"groups.webPageAlert.cancel" = "Abbrechen";
+"groups.notOnDock" = "Nicht im Dock";
+"groups.addToDock" = "Zum Dock hinzufügen";
+"groups.showInFinder" = "Im Finder anzeigen";
+"groups.openInDefaultBrowser" = "Im Standardbrowser öffnen";
+"groups.editWebPage" = "Bearbeiten …";
+"groups.remove" = "Löschen";
+
+/* 设置窗口的通用区 */
+"general.sectionTitle" = "Allgemein";
+"general.previewIconCount" = "Symbole im Gruppensymbol:";
+"general.finderFolders" = "Finder-Ordner:";
+"general.showHiddenFiles" = "Unsichtbare Dateien anzeigen";
+"general.accessibility" = "Zugriff auf Bedienungshilfen:";
+"general.accessibilityGranted" = "Erlaubt";
+"general.accessibilityNotGranted" = "Nicht erlaubt";
+"general.openSystemSettings" = "Systemeinstellungen öffnen";
+
+/* 设置窗口的更新区 */
+"updates.sectionTitle" = "Softwareupdate";
+"updates.checkForUpdates" = "Nach Updates suchen …";
+"updates.automaticChecks" = "Automatisch nach Updates suchen";
+"updates.automaticInstallation" = "Updates automatisch laden und beim Beenden installieren";
+"updates.checkFrequency" = "Suchintervall:";
+"updates.hourly" = "Stündlich";
+"updates.daily" = "Täglich";
+"updates.weekly" = "Wöchentlich";
+"updates.lastCheck" = "Letzte Suche:";
+"updates.neverChecked" = "Nie";
+
+/* 展开面板 */
+"panel.back" = "Zurück";
+"panel.openInFinder" = "Im Finder öffnen";
+"panel.remove" = "Entfernen";

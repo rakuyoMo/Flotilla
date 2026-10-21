@@ -1,0 +1,11 @@
+/* App 名：访达与 Dock 显示 CFBundleDisplayName，App 菜单显示 CFBundleName */
+"CFBundleDisplayName" = "Flotilla";
+"CFBundleName" = "Flotilla";
+
+/* 隐私授权框里的用途说明 */
+"NSDesktopFolderUsageDescription" = "Flotilla doit lire le contenu des dossiers du Finder pour les déployer dans son panneau du Dock.";
+"NSDocumentsFolderUsageDescription" = "Flotilla doit lire le contenu des dossiers du Finder pour les déployer dans son panneau du Dock.";
+"NSDownloadsFolderUsageDescription" = "Flotilla doit lire le contenu des dossiers du Finder pour les déployer dans son panneau du Dock.";
+"NSFileProviderDomainUsageDescription" = "Flotilla doit lire le contenu des dossiers du Finder pour les déployer dans son panneau du Dock.";
+"NSNetworkVolumesUsageDescription" = "Flotilla doit lire le contenu des dossiers du Finder pour les déployer dans son panneau du Dock.";
+"NSRemovableVolumesUsageDescription" = "Flotilla doit lire le contenu des dossiers du Finder pour les déployer dans son panneau du Dock.";

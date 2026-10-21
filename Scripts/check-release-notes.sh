@@ -11,7 +11,7 @@ cd "$(dirname "$0")/.."
 
 # 与 Sources/Flotilla/Resources/ 下的 .lproj 同名，App 支持的每种语言各一份说明
 # Scripts/embed-release-notes.swift 里有同一组语言，两边同步修改
-readonly LANGUAGES=(en zh-Hans zh-Hant ja ko)
+readonly LANGUAGES=(en zh-Hans zh-Hant ja ko de fr es)
 
 if [[ $# -ne 1 ]]; then
     echo "错误：需要恰好一个参数，用法：./Scripts/check-release-notes.sh X.Y.Z" >&2

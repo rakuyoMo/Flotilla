@@ -1,0 +1,71 @@
+/* 主菜单 */
+"mainMenu.quit" = "Salir de Flotilla";
+"mainMenu.edit" = "Edición";
+"mainMenu.undo" = "Deshacer";
+"mainMenu.redo" = "Rehacer";
+"mainMenu.cut" = "Cortar";
+"mainMenu.copy" = "Copiar";
+"mainMenu.paste" = "Pegar";
+"mainMenu.selectAll" = "Seleccionar todo";
+
+/* 状态栏图标的无障碍描述：旁白读出的 App 名 */
+"statusBar.iconDescription" = "Flotilla";
+
+/* 关于面板 */
+"about.menuTitle" = "Acerca de Flotilla";
+"about.website" = "Sitio web oficial";
+
+/* 设置窗口 */
+"settings.menuTitle" = "Ajustes…";
+"settings.windowTitle" = "Ajustes";
+
+/* 设置窗口的组区 */
+"groups.sectionTitle" = "Grupos";
+"groups.newGroup" = "Nuevo grupo";
+"groups.untitledGroup" = "Grupo sin título";
+"groups.add" = "Añadir…";
+"groups.addApps" = "Añadir apps…";
+"groups.addFiles" = "Añadir archivos…";
+"groups.addWebPage" = "Añadir página web…";
+"groups.webPageAlert.message" = "Añadir página web";
+"groups.webPageAlert.editMessage" = "Editar página web";
+"groups.webPageAlert.informative" = "Introduce la dirección de la página web. El título es opcional.";
+"groups.webPageAlert.addressPlaceholder" = "Dirección";
+"groups.webPageAlert.titlePlaceholder" = "Título (opcional)";
+"groups.webPageAlert.fetchingTitle" = "Obteniendo título…";
+"groups.webPageAlert.add" = "Añadir";
+"groups.webPageAlert.save" = "Guardar";
+"groups.webPageAlert.cancel" = "Cancelar";
+"groups.notOnDock" = "No está en el Dock";
+"groups.addToDock" = "Añadir al Dock";
+"groups.showInFinder" = "Mostrar en el Finder";
+"groups.openInDefaultBrowser" = "Abrir en el navegador por omisión";
+"groups.editWebPage" = "Editar…";
+"groups.remove" = "Eliminar";
+
+/* 设置窗口的通用区 */
+"general.sectionTitle" = "General";
+"general.previewIconCount" = "Iconos mostrados en el icono del grupo:";
+"general.finderFolders" = "Carpetas del Finder:";
+"general.showHiddenFiles" = "Mostrar archivos ocultos";
+"general.accessibility" = "Permiso de accesibilidad:";
+"general.accessibilityGranted" = "Concedido";
+"general.accessibilityNotGranted" = "No concedido";
+"general.openSystemSettings" = "Abrir Ajustes del Sistema";
+
+/* 设置窗口的更新区 */
+"updates.sectionTitle" = "Actualización de software";
+"updates.checkForUpdates" = "Buscar actualizaciones…";
+"updates.automaticChecks" = "Buscar actualizaciones automáticamente";
+"updates.automaticInstallation" = "Descargar actualizaciones automáticamente e instalarlas al salir";
+"updates.checkFrequency" = "Frecuencia de búsqueda:";
+"updates.hourly" = "Cada hora";
+"updates.daily" = "Cada día";
+"updates.weekly" = "Cada semana";
+"updates.lastCheck" = "Última búsqueda:";
+"updates.neverChecked" = "Nunca";
+
+/* 展开面板 */
+"panel.back" = "Atrás";
+"panel.openInFinder" = "Abrir en el Finder";
+"panel.remove" = "Eliminar";

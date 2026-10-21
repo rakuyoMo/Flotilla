@@ -19,6 +19,9 @@ let languages: [(code: String, releasesPage: String)] = [
     ("zh-Hant", "https://flotilla.rakuyo.dev/zh-hant/releases/"),
     ("ja", "https://flotilla.rakuyo.dev/ja/releases/"),
     ("ko", "https://flotilla.rakuyo.dev/ko/releases/"),
+    ("de", "https://flotilla.rakuyo.dev/de/releases/"),
+    ("fr", "https://flotilla.rakuyo.dev/fr/releases/"),
+    ("es", "https://flotilla.rakuyo.dev/es/releases/"),
 ]
 
 // 参数依次为清单路径与说明目录

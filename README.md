@@ -64,7 +64,7 @@ The app's name follows your system language: 归帆 in Simplified Chinese, 歸�
 
 - **Runs in the background**: Flotilla runs in the menu bar and stays out of the Dock, even when a panel is open. Panels don't take focus away from your current app
 
-- **Five languages**: English, Simplified Chinese, Traditional Chinese, Japanese, and Korean. The app uses your system language, or English if that language isn't supported
+- **Eight languages**: English, Simplified Chinese, Traditional Chinese, Japanese, Korean, German, French, and Spanish. The app uses your system language, or English if that language isn't supported
 
 <p align="center">
   <picture>
