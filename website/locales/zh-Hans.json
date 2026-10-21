@@ -503,5 +503,14 @@
       "latest": "最新",
       "prerelease": "预发布"
     }
+  },
+
+  "notFound": {
+    "meta": {
+      "title": "找不到页面 —— 归帆"
+    },
+
+    "title": "找不到这个页面",
+    "backToHome": "返回首页"
   }
 }

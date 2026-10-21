@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="{{@lang}}">
 <head>
   <meta charset="utf-8">
 
@@ -11,7 +11,9 @@
   <!-- GitHub Pages 在任意不存在的路径下返回本页，相对路径一律从站点根目录算起 -->
   <base href="/">
 
-  <title>Page not found — Flotilla</title>
+  {{@headScript}}
+
+  <title data-text="notFound.meta.title">{{notFound.meta.title}}</title>
 
   <meta
     name="color-scheme"
@@ -70,6 +72,7 @@
       <a
         class="brand"
         href="./"
+        data-home
       >
         <picture>
           <source
@@ -85,7 +88,7 @@
           >
         </picture>
 
-        <span>Flotilla</span>
+        <span data-text="common.appName">{{common.appName}}</span>
       </a>
 
       <div
@@ -109,14 +112,18 @@
 
       <p class="not-found-code">404</p>
 
-      <h1 class="not-found-title">Page not found</h1>
+      <h1
+        class="not-found-title"
+        data-text="notFound.title"
+      >{{notFound.title}}</h1>
 
       <div class="not-found-actions">
         <a
           class="button button-primary"
           href="./"
+          data-home
         >
-          Back to home
+          <span data-text="notFound.backToHome">{{notFound.backToHome}}</span>
           <svg
             class="icon"
             aria-hidden="true"

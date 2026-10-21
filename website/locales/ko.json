@@ -503,5 +503,14 @@
       "latest": "최신",
       "prerelease": "시험판"
     }
+  },
+
+  "notFound": {
+    "meta": {
+      "title": "페이지를 찾을 수 없음 — Flotilla"
+    },
+
+    "title": "페이지를 찾을 수 없습니다",
+    "backToHome": "홈으로 돌아가기"
   }
 }

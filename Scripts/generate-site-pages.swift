@@ -1,4 +1,5 @@
-// 按 website/locales/ 里的语言清单与各语言文案，把 website/pages/ 下的页面模板生成每种语言的页面
+// 按 website/locales/ 里的语言清单与各语言文案，把 website/pages/ 下的页面模板生成每种语言的页面，
+// 再把 website/404.html 生成站点根目录唯一的一份 404 页，由页内脚本按访客的语言就地换上对应的文案
 // 由 Scripts/site.sh 调用；全部页面先在内存里生成，校验都通过后才写盘，出错时不留下半套页面
 // 用法：swift Scripts/generate-site-pages.swift <website 目录> <输出目录>
 //
@@ -37,8 +38,9 @@ typealias Placeholder = (
     inAttribute: Bool
 )
 
-/// 一个页面模板：`path` 是相对 pages/ 的路径，也是每种语言目录下的输出路径
-typealias Template = (path: String, content: String, placeholders: [Placeholder])
+/// 一个模板：`file` 是源文件相对 website 目录的路径，报错时用；`path` 是输出路径：
+/// 页面模板是相对 pages/ 的路径，在每种语言的目录下；404 页是 `404.html`，在站点根目录
+typealias Template = (file: String, path: String, content: String, placeholders: [Placeholder])
 
 // MARK: - Language
 
@@ -75,20 +77,33 @@ generatePages(
 
 // MARK: - Generating
 
-/// 读入语言清单、各语言文案与页面模板，校验通过后生成每种语言的全部页面，写进输出目录
+/// 读入语言清单、各语言文案、页面模板与 404 页模板，校验通过后生成每种语言的全部页面与 404 页，写进输出目录
 func generatePages(websiteDirectory: String, outputDirectory: String) {
     let localesDirectory = "\(websiteDirectory)/locales"
 
-    // 1. 读入语言清单、每种语言的文案与全部页面模板
+    // 1. 读入语言清单、每种语言的文案、全部页面模板与 404 页模板
     let languages = readLanguages(at: "\(localesDirectory)/languages.json")
     let texts = readTexts(of: languages, in: localesDirectory)
     let templates = readTemplates(in: "\(websiteDirectory)/pages")
 
-    // 2. 校验占位符、文案的键与链接的名称，问题一次列全
+    // GitHub Pages 在任意不存在的路径下都返回站点根目录的 404.html，所以 404 页不分语言目录，只有这一份
+    let notFoundContent = readText(at: "\(websiteDirectory)/404.html")
+
+    let notFound: Template = (
+        file: "404.html",
+        path: "404.html",
+        content: notFoundContent,
+        placeholders: placeholders(in: notFoundContent)
+    )
+
+    // 2. 校验占位符、文案的键、链接的名称与 404 页里换文案的元素，问题一次列全
+    let allTemplates = templates + [notFound]
+
     stopIfNeeded(
-        checkPlaceholders(in: templates)
-            + checkTextKeys(of: languages, texts: texts, templates: templates)
-            + checkLinks(of: languages, templates: templates)
+        checkPlaceholders(in: allTemplates)
+            + checkTextKeys(of: languages, texts: texts, templates: allTemplates)
+            + checkLinks(of: languages, templates: allTemplates)
+            + checkTextTargets(in: notFound)
     )
 
     // 3. 在内存里生成全部页面，属性值里不合规的值一并列出
@@ -100,14 +115,39 @@ func generatePages(websiteDirectory: String, outputDirectory: String) {
             let page = render(
                 template,
                 language: language,
-                languages: languages,
-                texts: texts[language.code] ?? [:]
+                texts: texts[language.code] ?? [:],
+                computed: computedValues(for: language, languages: languages, page: template.path)
             )
 
             pages.append((language.directory + template.path, page.content))
             problems += page.problems
         }
     }
+
+    // 404 页按默认语言生成，`<head>` 里换成就地切换语言的脚本，带着每种语言的这页文案
+    let defaultLanguage = languages[0]
+
+    var notFoundValues = computedValues(
+        for: defaultLanguage,
+        languages: languages,
+        page: notFound.path
+    )
+
+    notFoundValues["headScript"] = notFoundScript(
+        languages: languages,
+        texts: texts,
+        template: notFound
+    )
+
+    let notFoundPage = render(
+        notFound,
+        language: defaultLanguage,
+        texts: texts[defaultLanguage.code] ?? [:],
+        computed: notFoundValues
+    )
+
+    pages.append((notFound.path, notFoundPage.content))
+    problems += notFoundPage.problems
 
     stopIfNeeded(problems)
 
@@ -121,11 +161,9 @@ func generatePages(websiteDirectory: String, outputDirectory: String) {
 func render(
     _ template: Template,
     language: Language,
-    languages: [Language],
-    texts: [String: String]
+    texts: [String: String],
+    computed: [String: String]
 ) -> (content: String, problems: [String]) {
-    let computed = computedValues(for: language, languages: languages, page: template.path)
-
     var content = ""
     var problems: [String] = []
     var position = template.content.startIndex
@@ -139,7 +177,7 @@ func render(
         // 属性值以 `"` 包裹，值里的 `"` 或换行会截断属性，不能原样插入
         if placeholder.inAttribute, let value, value.contains("\"") || value.contains("\n") {
             problems.append(
-                "\(language.code) 的 {{\(name)}} 用在 pages/\(template.path) 第 \(placeholder.line) 行的属性值里，不能含 \" 或换行"
+                "\(language.code) 的 {{\(name)}} 用在 \(template.file) 第 \(placeholder.line) 行的属性值里，不能含 \" 或换行"
             )
         }
 
@@ -163,7 +201,7 @@ func render(
 /// - `ogLocale`、`imageLanguage`：语言清单里的同名字段
 /// - `languageName`：语言菜单里当前语言的名称
 /// - `languageOptions`：语言菜单的选项
-/// - `headScript`：`<head>` 里先于渲染执行的脚本
+/// - `headScript`：`<head>` 里先于渲染执行的语言脚本；404 页换成 `notFoundScript(languages:texts:template:)` 生成的脚本
 /// - `links.名称`：语言清单里这种语言的链接
 func computedValues(
     for language: Language,
@@ -292,7 +330,100 @@ func languageOption(_ language: Language, href: String, isCurrent: Bool) -> Stri
     return parts.joined(separator: "\n")
 }
 
-/// `<head>` 里先于渲染执行的脚本：标记脚本可用，再算出目标语言，与本页语言不同就跳到目标语言的同一页面，保留锚点
+/// 普通页面 `<head>` 里的语言脚本：目标语言与本页不同时，跳到目标语言的同一页面，保留锚点
+///
+/// 目标语言的取法见 `languageScript(comment:declarations:)`
+func headScript(languages: [Language], prefix: String, pagePath: String) -> String {
+    // 每种语言的代码与本页在这种语言下的相对地址，按语言清单的顺序写成脚本里的数组
+    let pages = languages
+        .map { language in
+            let href = relativePath(prefix: prefix, language: language, pagePath: pagePath)
+            return "{ code: \"\(language.code)\", href: \"\(href)\" },"
+        }
+        .joined(separator: "\n")
+
+    return languageScript(
+        comment: "按选过的语言或浏览器的首选语言跳到对应语言的同一页面；先于渲染执行，避免先闪一下本页",
+        declarations: """
+            // 每种语言的代码与本页在这种语言下的地址，第一项是默认语言
+            const pages = [
+              \(indented(pages, by: "  "))
+            ];
+
+            // 目标语言与本页不同时，跳到那种语言的同一页面，保留锚点
+            const switchTo = (page) => {
+              if (page.code !== document.documentElement.lang) {
+                location.replace(page.href + location.hash);
+              }
+            };
+            """
+    )
+}
+
+/// 404 页 `<head>` 里的语言脚本：目标语言与本页不同时，就地换上目标语言的文案，链接改到目标语言的首页
+///
+/// GitHub Pages 在任意不存在的路径下都返回这一份 404 页，跳到别处会丢掉访客打开的地址，所以不跳转：
+/// 带 `data-text` 的元素换成这个文案键在目标语言里的文案，带 `data-home` 的链接改到目标语言的首页；
+/// 目标语言的取法见 `languageScript(comment:declarations:)`
+func notFoundScript(
+    languages: [Language],
+    texts: [String: [String: String]],
+    template: Template
+) -> String {
+    let used = Set(template.placeholders.map(\.name).filter(isTextKey))
+
+    // 每种语言的代码、首页的地址与这页用到的文案，按语言清单的顺序写成脚本里的数组；
+    // 文案写成 JSON：引号与换行都已转义，`/` 也转义成 `\/`，文案里的 `</script>` 不会提前结束脚本
+    let pages = languages
+        .map { language in
+            let home = relativePath(prefix: "", language: language, pagePath: "")
+            let pageTexts = (texts[language.code] ?? [:]).filter { used.contains($0.key) }
+
+            guard let data = try? JSONSerialization.data(withJSONObject: pageTexts, options: .sortedKeys) else {
+                fail("\(language.code) 的 404 页文案写不成 JSON")
+            }
+
+            let json = String(decoding: data, as: UTF8.self)
+            return "{ code: \"\(language.code)\", home: \"\(home)\", texts: \(json) },"
+        }
+        .joined(separator: "\n")
+
+    return languageScript(
+        comment: "按选过的语言或浏览器的首选语言，就地换上对应语言的文案",
+        declarations: """
+            // 每种语言的代码、首页的地址与本页的文案，第一项是默认语言
+            const pages = [
+              \(indented(pages, by: "  "))
+            ];
+
+            // 目标语言与本页不同时，换上那种语言的文案，链接改到那种语言的首页
+            const switchTo = (page) => {
+              if (page.code === document.documentElement.lang) {
+                return;
+              }
+
+              document.documentElement.lang = page.code;
+
+              // 本脚本先于正文执行，等正文解析完再换
+              document.addEventListener("DOMContentLoaded", () => {
+                document.querySelectorAll("[data-text]").forEach((element) => {
+                  element.innerHTML = page.texts[element.dataset.text];
+                });
+
+                document.querySelectorAll("[data-home]").forEach((link) => {
+                  link.href = page.home;
+                });
+              });
+            };
+            """
+    )
+}
+
+/// `<head>` 里先于渲染执行的语言脚本：标记脚本可用，算出目标语言，交给 `switchTo` 切换过去
+///
+/// `declarations` 是一段脚本，须定义两个常量：
+/// - `pages`：每种语言一项，按语言清单的顺序排列，第一项是默认语言；每项都有语言代码 `code`
+/// - `switchTo`：切换到目标语言，参数是 `pages` 里目标语言的那一项
 ///
 /// 目标语言依次取：
 /// - 这次在语言菜单里选的语言：语言菜单的链接带来的 `lang` 参数；记进 `localStorage` 的 `flotilla.language`，
@@ -303,83 +434,65 @@ func languageOption(_ language: Language, href: String, isCurrent: Bool) -> Stri
 ///
 /// `lang` 参数不是语言清单里的代码时，当作没有这次的选择，原样留在地址里
 ///
-/// 没有这次的选择、读取 `localStorage` 又抛错时不跳转：这时不知道选过的语言，按系统语言跳转会把选了别的语言的人带回去
-func headScript(languages: [Language], prefix: String, pagePath: String) -> String {
-    // 每种语言的代码与本页在这种语言下的相对地址，按语言清单的顺序写成脚本里的数组
-    let pages = languages
-        .map { language in
-            let href = relativePath(prefix: prefix, language: language, pagePath: pagePath)
-            return "{ code: \"\(language.code)\", href: \"\(href)\" },"
+/// 没有这次的选择、读取 `localStorage` 又抛错时不切换：这时不知道选过的语言，按系统语言切换会把选了别的语言的人换回去
+func languageScript(comment: String, declarations: String) -> String {
+    """
+    <!-- \(comment) -->
+    <script>
+      (() => {
+        document.documentElement.classList.add("js");
+
+        \(indented(declarations, by: "    "))
+
+        // 地址里的 lang 参数是语言清单里的代码时，就是这次在语言菜单里选的语言
+        const params = new URLSearchParams(location.search);
+        const chosen = pages.find((page) => page.code === params.get("lang"));
+
+        if (chosen) {
+          try {
+            localStorage.setItem("flotilla.language", chosen.code);
+          } catch {
+            // 存不进去时只是以后记不住，这次照样按它选
+          }
+
+          // 从地址里去掉 lang 参数，保留其它参数与锚点
+          params.delete("lang");
+
+          const search = params.toString();
+
+          history.replaceState(
+            history.state,
+            "",
+            location.pathname + (search ? "?" + search : "") + location.hash
+          );
+
+          switchTo(chosen);
+          return;
         }
-        .joined(separator: "\n")
 
-    return """
-        <!-- 按选过的语言或浏览器的首选语言跳到对应语言的同一页面；先于渲染执行，避免先闪一下本页 -->
-        <script>
-          (() => {
-            document.documentElement.classList.add("js");
+        // 读取 localStorage 抛错时不知道选过的语言，不切换：按系统语言切换会把选了别的语言的人换回去
+        let code;
 
-            // 每种语言的代码与本页在这种语言下的地址，第一项是默认语言
-            const pages = [
-              \(indented(pages, by: "      "))
-            ];
+        try {
+          code = localStorage.getItem("flotilla.language");
+        } catch {
+          return;
+        }
 
-            // 目标语言与本页不同时，跳到那种语言的同一页面，保留锚点
-            const switchTo = (page) => {
-              if (page.code !== document.documentElement.lang) {
-                location.replace(page.href + location.hash);
-              }
-            };
+        // 在语言菜单里选过的语言；值不在清单里时，当作没选过
+        const saved = pages.find((page) => page.code === code);
 
-            // 地址里的 lang 参数是语言清单里的代码时，就是这次在语言菜单里选的语言
-            const params = new URLSearchParams(location.search);
-            const chosen = pages.find((page) => page.code === params.get("lang"));
+        // 浏览器的首选语言：只看第一项，补全文字后按 “语言 + 文字” 比对；
+        // 标签无效或浏览器不支持 Intl.Locale 时，当作没有匹配
+        const preferred = \(indented(preferredPageScript(), by: "    "));
 
-            if (chosen) {
-              try {
-                localStorage.setItem("flotilla.language", chosen.code);
-              } catch {
-                // 存不进去时只是以后记不住，这次照样按它选
-              }
-
-              // 从地址里去掉 lang 参数，保留其它参数与锚点
-              params.delete("lang");
-
-              const search = params.toString();
-
-              history.replaceState(
-                history.state,
-                "",
-                location.pathname + (search ? "?" + search : "") + location.hash
-              );
-
-              switchTo(chosen);
-              return;
-            }
-
-            // 读取 localStorage 抛错时不知道选过的语言，留在本页：按系统语言跳转会把选了别的语言的人带回去
-            let code;
-
-            try {
-              code = localStorage.getItem("flotilla.language");
-            } catch {
-              return;
-            }
-
-            // 在语言菜单里选过的语言；值不在清单里时，当作没选过
-            const saved = pages.find((page) => page.code === code);
-
-            // 浏览器的首选语言：只看第一项，补全文字后按 “语言 + 文字” 比对；
-            // 标签无效或浏览器不支持 Intl.Locale 时，当作没有匹配
-            const preferred = \(indented(preferredPageScript(), by: "    "));
-
-            switchTo(saved ?? preferred ?? pages[0]);
-          })();
-        </script>
-        """
+        switchTo(saved ?? preferred ?? pages[0]);
+      })();
+    </script>
+    """
 }
 
-/// 跳转脚本里的一个表达式：浏览器首选语言在 `pages` 里对应的那一项，没有匹配时为 `undefined`
+/// 语言脚本里的一个表达式：浏览器首选语言在 `pages` 里对应的那一项，没有匹配时为 `undefined`
 func preferredPageScript() -> String {
     """
     (() => {
@@ -414,7 +527,7 @@ func checkPlaceholders(in templates: [Template]) -> [String] {
 
     for template in templates {
         for placeholder in template.placeholders where !isKnownPlaceholder(placeholder.name) {
-            problems.append("pages/\(template.path) 第 \(placeholder.line) 行：未知的占位符 {{\(placeholder.name)}}")
+            problems.append("\(template.file) 第 \(placeholder.line) 行：未知的占位符 {{\(placeholder.name)}}")
         }
 
         // 去掉全部占位符后仍有 `{{` 或 `}}` 的行，是写坏了的占位符
@@ -430,7 +543,7 @@ func checkPlaceholders(in templates: [Template]) -> [String] {
             .filter { $0.element.contains("{{") || $0.element.contains("}}") }
 
         for line in brokenLines {
-            problems.append("pages/\(template.path) 第 \(line.offset + 1) 行：未知的占位符，`{{` 与 `}}` 不成对")
+            problems.append("\(template.file) 第 \(line.offset + 1) 行：未知的占位符，`{{` 与 `}}` 不成对")
         }
     }
 
@@ -476,6 +589,24 @@ func checkLinks(of languages: [Language], templates: [Template]) -> [String] {
         return describe(used.subtracting(provided), as: "\(field) 缺少模板用到的链接")
             + describe(provided.subtracting(used), as: "\(field) 里有模板没用到的链接")
     }
+}
+
+/// 校验 404 页的文案键与 `data-text` 一一对应：页内脚本按 `data-text` 换文案，只带着这页占位符用到的键
+///
+/// 指向别的键的 `data-text` 会换成 undefined；没有 `data-text` 标出的文案，换语言时不会跟着换
+func checkTextTargets(in template: Template) -> [String] {
+    let used = Set(template.placeholders.map(\.name).filter(isTextKey))
+
+    // 每个 `data-text="` 与随后第一个 `"` 之间的内容
+    let targets = Set(
+        template.content
+            .components(separatedBy: "data-text=\"")
+            .dropFirst()
+            .map { segment in String(segment.prefix { $0 != "\"" }) }
+    )
+
+    return describe(targets.subtracting(used), as: "\(template.file) 的 data-text 指向这页没用到的键")
+        + describe(used.subtracting(targets), as: "\(template.file) 里这些键没有 data-text 标出，换语言时不会跟着换")
 }
 
 /// 占位符的名称是否可用：`@` 开头的须是已知的名称或 `links.名称`，其余须是文案键
@@ -653,7 +784,7 @@ func readTemplates(in directory: String) -> [Template] {
 
     return paths.map { path in
         let content = readText(at: "\(directory)/\(path)")
-        return (path, content, placeholders(in: content))
+        return ("pages/\(path)", path, content, placeholders(in: content))
     }
 }
 
