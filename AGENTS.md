@@ -320,6 +320,13 @@ README-ZH.md            README.md 的简体中文版，与它同步修改
 - App 的更新窗口按用户的语言显示这一版的更新说明
 - “已是最新版本” 提示框里的 “版本历史记录” 按用户的语言打开官网上这种语言的更新日志页
 
+更新签名：
+
+- 更新包与更新清单都用 Sparkle 的 Ed25519 私钥签名；私钥须与 Info.plist 的 `SUPublicEDKey` 配对，由 Sparkle 的 `generate_keys` 工具管理
+- CI 从仓库 secret `SPARKLE_PRIVATE_KEY` 读取私钥，本机从钥匙串的 `com.rakuyo.flotilla` 账户读取
+- App 从最新 Release 附带的 `appcast.xml` 读取更新清单，下载后先验证签名，再解压安装
+- 在本机先运行 `mise run bundle`，再运行 `mise run appcast`，在 `build/updates/` 生成更新包与签名的更新清单
+
 标题以 `release:` 开头（不区分大小写）的 PR 合并后，以下任一情况都会让发布失败：
 
 - 标题不是完整的 `release: X.Y.Z`
