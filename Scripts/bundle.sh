@@ -36,7 +36,7 @@ readonly SPARKLE_FRAMEWORK="$APP_PATH/Contents/Frameworks/Sparkle.framework"
 ditto "$SPARKLE_ARTIFACT/Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework" "$SPARKLE_FRAMEWORK"
 cp "$SPARKLE_ARTIFACT/LICENSE" "$APP_PATH/Contents/Resources/Sparkle-LICENSE.txt"
 
-# 五种语言的界面文字、App 名与隐私授权框里的用途说明
+# 各语言的界面文字、App 名与隐私授权框里的用途说明
 cp -R "Sources/$APP_NAME/Resources/"*.lproj "$APP_PATH/Contents/Resources/"
 
 # App 图标：白天版与夜间版的母版各生成一份 icns；

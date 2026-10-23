@@ -9,7 +9,7 @@ final class SettingsWindowController: NSWindowController {
     /// 内容区四边的边距
     static let contentInset: CGFloat = 20
 
-    /// 内容区的最小尺寸：容纳五种语言的按钮行，并为组列表、通用与更新设置留足高度
+    /// 内容区的最小尺寸：容纳每种语言的按钮行，并为组列表、通用与更新设置留足高度
     static let minimumContentSize = NSSize(width: 570, height: 660)
 
     /// 组区，在窗口上部，随窗口高度伸缩

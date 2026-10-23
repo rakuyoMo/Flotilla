@@ -6,7 +6,7 @@ import Testing
 
 // MARK: - UpdateSettingsViewControllerTests
 
-/// 更新控件必须真正写回 Sparkle，并在自动检查关闭后禁用依赖项；五种语言都要完整显示
+/// 更新控件必须真正写回 Sparkle，并在自动检查关闭后禁用依赖项；每种语言都要完整显示
 @MainActor
 final class UpdateSettingsViewControllerTests {
     /// 隔离的 App 包目录，Sparkle 以包标识区分持久化设置
