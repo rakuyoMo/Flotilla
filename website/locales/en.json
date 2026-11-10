@@ -120,24 +120,9 @@
         "moreOptions": "Right-click or Control-click an item for more options"
       },
 
-      "alongsideApps": {
-        "title": "Groups alongside your apps",
-        "description": "Each top-level group appears on the left side of the Dock with its own name and icon."
-      },
-
-      "mixedItems": {
-        "title": "Apps, files, and web pages",
-        "description": "Keep apps, files, folders, and web pages together. Files open in their default app, and web pages open in your default browser."
-      },
-
       "nestedGroups": {
         "title": "Groups within groups",
         "description": "You can add groups inside other groups. Open a subgroup to browse it, then use the back button to return."
-      },
-
-      "gridView": {
-        "title": "Grid view",
-        "description": "Groups open in a grid above the Dock, aligned with their icons."
       },
 
       "iconPreviews": {
@@ -195,14 +180,15 @@
           "scope": "It changes only its own entries in <code>persistent-apps</code>, the group icons on the left side of the Dock. Other icons and Dock settings stay as they are."
         },
 
-        "dockRestart": {
-          "title": "The Dock restarts after each change",
-          "description": "After a change to the Dock preferences, Flotilla ends the Dock process. macOS automatically restarts it so the change can take effect."
-        },
-
         "backup": {
           "title": "Backed up before changes",
           "description": "Each time Flotilla launches, it exports a full backup of <code>com.apple.dock</code> before making its first change. It keeps the five most recent backups."
+        },
+
+        "dockRestart": {
+          "title": "The Dock restarts after each change",
+          "description": "After a change to the Dock preferences, Flotilla ends the Dock process. macOS automatically restarts it so the change can take effect.",
+          "triggers": "Group previews and switches between light and dark appearance also update the icons, so they trigger a Dock restart too."
         },
 
         "data": {
@@ -280,27 +266,10 @@
         "question": "Why might I need to enable Accessibility again after an update?"
       },
 
-      "dockRestart": {
-        "question": "Why does the Dock restart?",
-        "reason": "Flotilla changes the Dock preferences to add or update group icons. It then ends the Dock process, and macOS automatically restarts it so the change can take effect.",
-        "triggers": "Group previews and switches between light and dark appearance also update the icons, so they trigger a Dock restart too."
-      },
-
       "removeIcon": {
         "question": "How do I remove a group icon from the Dock and add it back?",
         "remove": "Drag the group icon out of the Dock to remove it.",
         "addBack": "The group stays in the settings window, marked <strong>Not in Dock</strong>, and won’t return to the Dock automatically. To bring the icon back, right-click the group and choose <strong>Add to Dock</strong>."
-      },
-
-      "requirements": {
-        "question": "Which Macs does Flotilla run on?",
-        "answer": "Flotilla runs on Macs with Apple silicon and macOS 15 or later."
-      },
-
-      "languages": {
-        "question": "Which languages does Flotilla support?",
-        "answer": "English, Simplified Chinese, Traditional Chinese, Japanese, Korean, German, French, and Spanish. The app uses your system language, or English if that language isn’t supported.",
-        "appName": "The app’s name follows your system language too: 归帆 in Simplified Chinese, 歸帆 in Traditional Chinese, 帰帆 in Japanese, and Flotilla in other languages."
       }
     },
 

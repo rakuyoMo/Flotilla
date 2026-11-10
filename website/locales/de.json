@@ -120,24 +120,9 @@
         "moreOptions": "Klicke mit der rechten Maustaste oder bei gedrückter ctrl-Taste auf ein Objekt, um weitere Optionen zu sehen"
       },
 
-      "alongsideApps": {
-        "title": "Gruppen neben deinen Apps",
-        "description": "Jede Gruppe der obersten Ebene erscheint links im Dock, mit eigenem Namen und Symbol."
-      },
-
-      "mixedItems": {
-        "title": "Apps, Dateien und Webseiten",
-        "description": "Bewahre Apps, Dateien, Ordner und Webseiten zusammen auf. Dateien öffnen sich in ihrer Standard-App, Webseiten in deinem Standardbrowser."
-      },
-
       "nestedGroups": {
         "title": "Gruppen in Gruppen",
         "description": "Du kannst Gruppen in andere Gruppen einfügen. Öffne eine Untergruppe, um sie zu durchsuchen, und kehre dann mit der Zurück-Taste zurück."
-      },
-
-      "gridView": {
-        "title": "Gitteransicht",
-        "description": "Gruppen öffnen sich als Gitter über dem Dock, ausgerichtet an ihren Symbolen."
       },
 
       "iconPreviews": {
@@ -195,14 +180,15 @@
           "scope": "Geändert werden nur die eigenen Einträge in <code>persistent-apps</code>, also die Gruppensymbole links im Dock. Andere Symbole und Dock-Einstellungen bleiben, wie sie sind."
         },
 
-        "dockRestart": {
-          "title": "Das Dock startet nach jeder Änderung neu",
-          "description": "Nach einer Änderung an den Dock-Einstellungen beendet Flotilla den Dock-Prozess. macOS startet ihn automatisch neu, damit die Änderung wirksam wird."
-        },
-
         "backup": {
           "title": "Sicherung vor Änderungen",
           "description": "Bei jedem Start exportiert Flotilla vor der ersten Änderung eine vollständige Sicherung von <code>com.apple.dock</code>. Die fünf neuesten Sicherungen bleiben erhalten."
+        },
+
+        "dockRestart": {
+          "title": "Das Dock startet nach jeder Änderung neu",
+          "description": "Nach einer Änderung an den Dock-Einstellungen beendet Flotilla den Dock-Prozess. macOS startet ihn automatisch neu, damit die Änderung wirksam wird.",
+          "triggers": "Auch Änderungen an der Vorschau einer Gruppe und der Wechsel zwischen hellem und dunklem Erscheinungsbild aktualisieren die Symbole und lösen daher ebenfalls einen Neustart des Docks aus."
         },
 
         "data": {
@@ -280,27 +266,10 @@
         "question": "Warum muss ich die Bedienungshilfen nach einem Update eventuell erneut aktivieren?"
       },
 
-      "dockRestart": {
-        "question": "Warum startet das Dock neu?",
-        "reason": "Flotilla ändert die Dock-Einstellungen, um Gruppensymbole hinzuzufügen oder zu aktualisieren. Anschließend beendet Flotilla den Dock-Prozess, und macOS startet ihn automatisch neu, damit die Änderung wirksam wird.",
-        "triggers": "Auch Änderungen an der Vorschau einer Gruppe und der Wechsel zwischen hellem und dunklem Erscheinungsbild aktualisieren die Symbole und lösen daher ebenfalls einen Neustart des Docks aus."
-      },
-
       "removeIcon": {
         "question": "Wie entferne ich ein Gruppensymbol aus dem Dock und füge es wieder hinzu?",
         "remove": "Ziehe das Gruppensymbol aus dem Dock, um es zu entfernen.",
         "addBack": "Die Gruppe bleibt im Einstellungsfenster erhalten, ist dort mit <strong>Nicht im Dock</strong> markiert und kehrt nicht automatisch ins Dock zurück. Um das Symbol zurückzuholen, klicke mit der rechten Maustaste auf die Gruppe und wähle <strong>Zum Dock hinzufügen</strong>."
-      },
-
-      "requirements": {
-        "question": "Auf welchen Macs läuft Flotilla?",
-        "answer": "Flotilla läuft auf Macs mit Apple Chip und macOS 15 oder neuer."
-      },
-
-      "languages": {
-        "question": "Welche Sprachen unterstützt Flotilla?",
-        "answer": "Englisch, Chinesisch (vereinfacht), Chinesisch (traditionell), Japanisch, Koreanisch, Deutsch, Französisch und Spanisch. Die App verwendet deine Systemsprache oder Englisch, wenn diese Sprache nicht unterstützt wird.",
-        "appName": "Auch der Name der App folgt deiner Systemsprache: 归帆 auf Chinesisch (vereinfacht), 歸帆 auf Chinesisch (traditionell), 帰帆 auf Japanisch und Flotilla in allen anderen Sprachen."
       }
     },
 

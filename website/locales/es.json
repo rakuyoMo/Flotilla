@@ -120,24 +120,9 @@
         "moreOptions": "Haz clic con el botón derecho o con la tecla Control pulsada en un ítem para ver más opciones"
       },
 
-      "alongsideApps": {
-        "title": "Grupos junto a tus apps",
-        "description": "Cada grupo de nivel superior aparece en el lado izquierdo del Dock con su propio nombre e icono."
-      },
-
-      "mixedItems": {
-        "title": "Apps, archivos y páginas web",
-        "description": "Reúne apps, archivos, carpetas y páginas web. Los archivos se abren en su app por omisión y las páginas web, en tu navegador por omisión."
-      },
-
       "nestedGroups": {
         "title": "Grupos dentro de grupos",
         "description": "Puedes añadir grupos dentro de otros grupos. Abre un subgrupo para explorarlo y usa el botón Atrás para volver."
-      },
-
-      "gridView": {
-        "title": "Vista en cuadrícula",
-        "description": "Los grupos se abren en una cuadrícula sobre el Dock, alineados con sus iconos."
       },
 
       "iconPreviews": {
@@ -195,14 +180,15 @@
           "scope": "Solo cambia sus propias entradas en <code>persistent-apps</code>, es decir, los iconos de grupo del lado izquierdo del Dock. Los demás iconos y ajustes del Dock no se modifican."
         },
 
-        "dockRestart": {
-          "title": "El Dock se reinicia tras cada cambio",
-          "description": "Tras un cambio en las preferencias del Dock, Flotilla termina el proceso del Dock. macOS lo reinicia automáticamente para que el cambio surta efecto."
-        },
-
         "backup": {
           "title": "Copia de seguridad antes de los cambios",
           "description": "Cada vez que se abre, Flotilla exporta una copia de seguridad completa de <code>com.apple.dock</code> antes de hacer su primer cambio. Conserva las cinco copias más recientes."
+        },
+
+        "dockRestart": {
+          "title": "El Dock se reinicia tras cada cambio",
+          "description": "Tras un cambio en las preferencias del Dock, Flotilla termina el proceso del Dock. macOS lo reinicia automáticamente para que el cambio surta efecto.",
+          "triggers": "Los cambios en la vista previa de un grupo y el paso del aspecto claro al oscuro también actualizan los iconos, así que también provocan un reinicio del Dock."
         },
 
         "data": {
@@ -280,27 +266,10 @@
         "question": "¿Por qué puede que tenga que volver a activar la accesibilidad después de una actualización?"
       },
 
-      "dockRestart": {
-        "question": "¿Por qué se reinicia el Dock?",
-        "reason": "Flotilla cambia las preferencias del Dock para añadir o actualizar los iconos de grupo. Después termina el proceso del Dock y macOS lo reinicia automáticamente para que el cambio surta efecto.",
-        "triggers": "Los cambios en la vista previa de un grupo y el paso del aspecto claro al oscuro también actualizan los iconos, así que también provocan un reinicio del Dock."
-      },
-
       "removeIcon": {
         "question": "¿Cómo quito el icono de un grupo del Dock y lo vuelvo a añadir?",
         "remove": "Arrastra el icono del grupo fuera del Dock para quitarlo.",
         "addBack": "El grupo sigue en la ventana de ajustes, marcado como <strong>No está en el Dock</strong>, y no vuelve al Dock automáticamente. Para recuperar el icono, haz clic con el botón derecho en el grupo y elige <strong>Añadir al Dock</strong>."
-      },
-
-      "requirements": {
-        "question": "¿En qué Mac funciona Flotilla?",
-        "answer": "Flotilla funciona en Mac con chip de Apple y macOS 15 o posterior."
-      },
-
-      "languages": {
-        "question": "¿Qué idiomas admite Flotilla?",
-        "answer": "Inglés, chino simplificado, chino tradicional, japonés, coreano, alemán, francés y español. La app usa el idioma del sistema, o el inglés si ese idioma no es compatible.",
-        "appName": "El nombre de la app también sigue el idioma del sistema: 归帆 en chino simplificado, 歸帆 en chino tradicional, 帰帆 en japonés y Flotilla en los demás idiomas."
       }
     },
 

@@ -120,24 +120,9 @@
         "moreOptions": "항목을 오른쪽 클릭하거나 Control-클릭하면 더 많은 옵션이 표시됩니다"
       },
 
-      "alongsideApps": {
-        "title": "앱 옆에 놓이는 그룹",
-        "description": "각 최상위 그룹은 고유한 이름과 아이콘으로 Dock 왼쪽에 표시됩니다."
-      },
-
-      "mixedItems": {
-        "title": "앱, 파일, 웹 페이지",
-        "description": "앱, 파일, 폴더, 웹 페이지를 한곳에 모아 둘 수 있습니다. 파일은 기본 앱에서 열리고, 웹 페이지는 기본 브라우저에서 열립니다."
-      },
-
       "nestedGroups": {
         "title": "그룹 안의 그룹",
         "description": "그룹 안에 다른 그룹을 추가할 수 있습니다. 하위 그룹을 열어 둘러본 다음, 뒤로 버튼으로 돌아갈 수 있습니다."
-      },
-
-      "gridView": {
-        "title": "격자 모양 보기",
-        "description": "그룹은 Dock 위에 격자 모양으로 열리며, 그룹 아이콘에 맞춰 정렬됩니다."
       },
 
       "iconPreviews": {
@@ -195,14 +180,15 @@
           "scope": "변경하는 것은 <code>persistent-apps</code>에 있는 Flotilla 자신의 항목, 즉 Dock 왼쪽의 그룹 아이콘뿐입니다. 다른 아이콘과 Dock 설정은 그대로 유지됩니다."
         },
 
-        "dockRestart": {
-          "title": "변경할 때마다 Dock 재시작",
-          "description": "Dock 환경설정을 변경한 후 Flotilla는 Dock 프로세스를 종료합니다. 그러면 macOS가 자동으로 Dock을 다시 시작하여 변경 사항이 적용됩니다."
-        },
-
         "backup": {
           "title": "변경 전에 백업",
           "description": "Flotilla는 실행될 때마다 첫 변경을 하기 전에 <code>com.apple.dock</code>의 전체 백업을 내보냅니다. 가장 최근의 백업 5개를 보관합니다."
+        },
+
+        "dockRestart": {
+          "title": "변경할 때마다 Dock 재시작",
+          "description": "Dock 환경설정을 변경한 후 Flotilla는 Dock 프로세스를 종료합니다. 그러면 macOS가 자동으로 Dock을 다시 시작하여 변경 사항이 적용됩니다.",
+          "triggers": "그룹 미리보기가 바뀔 때와 라이트 및 다크 화면 모드 간에 전환할 때도 아이콘이 업데이트되므로, 이때도 Dock이 다시 시작됩니다."
         },
 
         "data": {
@@ -280,27 +266,10 @@
         "question": "업데이트 후 손쉬운 사용 권한을 다시 켜야 할 수 있는 이유는 무엇인가요?"
       },
 
-      "dockRestart": {
-        "question": "Dock이 다시 시작되는 이유는 무엇인가요?",
-        "reason": "Flotilla는 그룹 아이콘을 추가하거나 업데이트하기 위해 Dock 환경설정을 변경합니다. 그런 다음 Dock 프로세스를 종료하면 macOS가 자동으로 Dock을 다시 시작하여 변경 사항이 적용됩니다.",
-        "triggers": "그룹 미리보기가 바뀔 때와 라이트 및 다크 화면 모드 간에 전환할 때도 아이콘이 업데이트되므로, 이때도 Dock이 다시 시작됩니다."
-      },
-
       "removeIcon": {
         "question": "Dock에서 그룹 아이콘을 제거하고 다시 추가하려면 어떻게 하나요?",
         "remove": "그룹 아이콘을 Dock 밖으로 드래그하면 제거됩니다.",
         "addBack": "그룹은 설정 윈도우에 남아 <strong>Dock에 없음</strong>으로 표시되며, Dock에 자동으로 돌아오지 않습니다. 아이콘을 다시 표시하려면 그룹을 오른쪽 클릭하고 <strong>Dock에 추가</strong>를 선택하십시오."
-      },
-
-      "requirements": {
-        "question": "어떤 Mac에서 Flotilla를 사용할 수 있나요?",
-        "answer": "Flotilla는 Apple 실리콘을 탑재하고 macOS 15 이상을 실행하는 Mac에서 사용할 수 있습니다."
-      },
-
-      "languages": {
-        "question": "Flotilla는 어떤 언어를 지원하나요?",
-        "answer": "영어, 중국어(간체), 중국어(번체), 일본어, 한국어, 독일어, 프랑스어, 스페인어를 지원합니다. 앱은 시스템 언어로 표시되며, 지원하지 않는 언어에서는 영어로 표시됩니다.",
-        "appName": "앱 이름도 시스템 언어를 따릅니다. 중국어(간체)에서는 归帆, 중국어(번체)에서는 歸帆, 일본어에서는 帰帆, 그 밖의 언어에서는 Flotilla로 표시됩니다."
       }
     },
 

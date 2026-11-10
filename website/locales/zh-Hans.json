@@ -117,24 +117,9 @@
         "moreOptions": "右键点击或按住 Control 点击一项，查看更多操作"
       },
 
-      "alongsideApps": {
-        "title": "和应用并排显示",
-        "description": "每个顶层组都有自己的名称和图标，和应用并排显示在 Dock 左侧。"
-      },
-
-      "mixedItems": {
-        "title": "应用、文件和网页",
-        "description": "应用、文件、文件夹和网页可以放在一起。文件用默认应用打开，网页用默认浏览器打开。"
-      },
-
       "nestedGroups": {
         "title": "组里还能分组",
         "description": "组里可以继续创建子组，点击进入，用返回按钮回到上一级。"
-      },
-
-      "gridView": {
-        "title": "原生风格的面板",
-        "description": "组会在 Dock 上方以网格展开，面板与组图标对齐。"
       },
 
       "iconPreviews": {
@@ -192,14 +177,15 @@
           "scope": "改动仅涉及 <code>persistent-apps</code> 中归帆自己的条目，也就是 Dock 左侧的组图标。其它图标和 Dock 设置不受影响。"
         },
 
-        "dockRestart": {
-          "title": "Dock 会短暂重启",
-          "description": "修改 Dock 偏好后，归帆会结束 Dock 进程。macOS 随即自动重启 Dock，让改动生效。"
-        },
-
         "backup": {
           "title": "改动前会先备份",
           "description": "每次启动归帆后，首次修改 Dock 偏好之前，都会先导出完整的 <code>com.apple.dock</code> 备份，保留最近的 5 份。"
+        },
+
+        "dockRestart": {
+          "title": "Dock 会短暂重启",
+          "description": "修改 Dock 偏好后，归帆会结束 Dock 进程。macOS 随即自动重启 Dock，让改动生效。",
+          "triggers": "组内预览变化、系统切换浅色或深色外观时，组图标也需要更新，因此 Dock 同样会重启。"
         },
 
         "data": {
@@ -276,27 +262,10 @@
         "question": "更新后，为什么可能需要重新授权？"
       },
 
-      "dockRestart": {
-        "question": "Dock 为什么会重启？",
-        "reason": "添加或更新组图标后，归帆需要重启 Dock 才能让改动显示出来。它会先结束 Dock 进程，再由 macOS 自动重启。",
-        "triggers": "组内预览变化、系统切换浅色或深色外观时，组图标也需要更新，因此 Dock 同样会重启。"
-      },
-
       "removeIcon": {
         "question": "怎么移除 Dock 上的组图标？还能加回来吗？",
         "remove": "直接把组图标拖出 Dock，就能移除。",
         "addBack": "组会保留在设置窗口里，并标记为 “不在 Dock 上”，不会自动加回。需要时，右键点击这个组，选择 “添加到 Dock” 就能恢复图标。"
-      },
-
-      "requirements": {
-        "question": "支持哪些 Mac？",
-        "answer": "归帆支持搭载 Apple 芯片、运行 macOS 15 或更高版本的 Mac。"
-      },
-
-      "languages": {
-        "question": "支持哪些语言？",
-        "answer": "支持英文、简体中文、繁体中文、日文、韩文、德文、法文和西班牙文，自动跟随系统语言。其它语言环境下显示英文。",
-        "appName": "应用名称也会随系统语言变化：简体中文显示 “归帆”，繁体中文显示 “歸帆”，日文显示 “帰帆”，其它语言显示 “Flotilla”。"
       }
     },
 

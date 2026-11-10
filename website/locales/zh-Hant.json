@@ -117,24 +117,9 @@
         "moreOptions": "在項目上點按右鍵，或按住 Control 鍵並按一下，查看更多操作"
       },
 
-      "alongsideApps": {
-        "title": "和 App 並排顯示",
-        "description": "每個頂層組都有自己的名稱和圖像，和 App 並排顯示在 Dock 左側。"
-      },
-
-      "mixedItems": {
-        "title": "App、檔案和網頁",
-        "description": "App、檔案、檔案夾和網頁可以放在一起。檔案用預設 App 打開，網頁用預設瀏覽器打開。"
-      },
-
       "nestedGroups": {
         "title": "組裡還能分組",
         "description": "組裡可以繼續建立子組，按一下進入，用返回按鈕回到上一層。"
-      },
-
-      "gridView": {
-        "title": "原生風格的面板",
-        "description": "組會在 Dock 上方以格狀展開，面板與組圖像對齊。"
       },
 
       "iconPreviews": {
@@ -192,14 +177,15 @@
           "scope": "改動僅涉及 <code>persistent-apps</code> 中歸帆自己的項目，也就是 Dock 左側的組圖像。其他圖像和 Dock 設定不受影響。"
         },
 
-        "dockRestart": {
-          "title": "Dock 會短暫重新啟動",
-          "description": "修改 Dock 偏好設定後，歸帆會結束 Dock 程序。macOS 隨即自動重新啟動 Dock，讓改動生效。"
-        },
-
         "backup": {
           "title": "改動前會先備份",
           "description": "每次啟動歸帆後，首次修改 Dock 偏好設定之前，都會先匯出完整的 <code>com.apple.dock</code> 備份，保留最近的 5 份。"
+        },
+
+        "dockRestart": {
+          "title": "Dock 會短暫重新啟動",
+          "description": "修改 Dock 偏好設定後，歸帆會結束 Dock 程序。macOS 隨即自動重新啟動 Dock，讓改動生效。",
+          "triggers": "組內預覽變化、系統切換淺色或深色外觀時，組圖像也需要更新，因此 Dock 同樣會重新啟動。"
         },
 
         "data": {
@@ -276,27 +262,10 @@
         "question": "更新後，為什麼可能需要重新授權？"
       },
 
-      "dockRestart": {
-        "question": "Dock 為什麼會重新啟動？",
-        "reason": "加入或更新組圖像後，歸帆需要重新啟動 Dock 才能讓改動顯示出來。它會先結束 Dock 程序，再由 macOS 自動重新啟動。",
-        "triggers": "組內預覽變化、系統切換淺色或深色外觀時，組圖像也需要更新，因此 Dock 同樣會重新啟動。"
-      },
-
       "removeIcon": {
         "question": "怎麼移除 Dock 上的組圖像？還能加回來嗎？",
         "remove": "直接把組圖像拖出 Dock，就能移除。",
         "addBack": "組會保留在設定視窗裡，並標示為 “不在 Dock 上”，不會自動加回。需要時，在這個組上點按右鍵，選擇 “加入 Dock” 就能恢復圖像。"
-      },
-
-      "requirements": {
-        "question": "支援哪些 Mac？",
-        "answer": "歸帆支援搭載 Apple 晶片、執行 macOS 15 或以上版本的 Mac。"
-      },
-
-      "languages": {
-        "question": "支援哪些語言？",
-        "answer": "支援英文、簡體中文、繁體中文、日文、韓文、德文、法文和西班牙文，自動跟隨系統語言。其他語言環境下顯示英文。",
-        "appName": "App 名稱也會隨系統語言變化：簡體中文顯示 “归帆”，繁體中文顯示 “歸帆”，日文顯示 “帰帆”，其他語言顯示 “Flotilla”。"
       }
     },
 

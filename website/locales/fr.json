@@ -120,24 +120,9 @@
         "moreOptions": "Cliquez sur un élément avec le bouton droit ou en maintenant la touche Contrôle enfoncée pour afficher d’autres options"
       },
 
-      "alongsideApps": {
-        "title": "Des groupes à côté de vos apps",
-        "description": "Chaque groupe de premier niveau apparaît dans la partie gauche du Dock, avec son propre nom et sa propre icône."
-      },
-
-      "mixedItems": {
-        "title": "Apps, fichiers et pages web",
-        "description": "Réunissez apps, fichiers, dossiers et pages web. Les fichiers s’ouvrent dans leur app par défaut et les pages web dans votre navigateur par défaut."
-      },
-
       "nestedGroups": {
         "title": "Des groupes dans des groupes",
         "description": "Vous pouvez placer des groupes dans d’autres groupes. Ouvrez un sous-groupe pour le parcourir, puis revenez avec le bouton Retour."
-      },
-
-      "gridView": {
-        "title": "Présentation en grille",
-        "description": "Les groupes s’ouvrent en grille au-dessus du Dock, alignés sur leur icône."
       },
 
       "iconPreviews": {
@@ -195,14 +180,15 @@
           "scope": "Seules ses propres entrées dans <code>persistent-apps</code> sont modifiées, c’est-à-dire les icônes de groupe à gauche du Dock. Les autres icônes et les réglages du Dock restent inchangés."
         },
 
-        "dockRestart": {
-          "title": "Le Dock redémarre après chaque modification",
-          "description": "Après une modification des préférences du Dock, Flotilla met fin au processus du Dock. macOS le redémarre automatiquement pour que la modification prenne effet."
-        },
-
         "backup": {
           "title": "Sauvegarde avant modification",
           "description": "À chaque lancement, Flotilla exporte une sauvegarde complète de <code>com.apple.dock</code> avant d’effectuer sa première modification. Les cinq sauvegardes les plus récentes sont conservées."
+        },
+
+        "dockRestart": {
+          "title": "Le Dock redémarre après chaque modification",
+          "description": "Après une modification des préférences du Dock, Flotilla met fin au processus du Dock. macOS le redémarre automatiquement pour que la modification prenne effet.",
+          "triggers": "Les modifications de l’aperçu d’un groupe et le passage de l’apparence claire à l’apparence sombre mettent aussi à jour les icônes, et entraînent donc également un redémarrage du Dock."
         },
 
         "data": {
@@ -280,27 +266,10 @@
         "question": "Pourquoi devrais-je accorder à nouveau l’autorisation d’accessibilité après une mise à jour ?"
       },
 
-      "dockRestart": {
-        "question": "Pourquoi le Dock redémarre-t-il ?",
-        "reason": "Flotilla modifie les préférences du Dock pour ajouter ou mettre à jour les icônes de groupe. Elle met ensuite fin au processus du Dock, et macOS le redémarre automatiquement pour que la modification prenne effet.",
-        "triggers": "Les modifications de l’aperçu d’un groupe et le passage de l’apparence claire à l’apparence sombre mettent aussi à jour les icônes, et entraînent donc également un redémarrage du Dock."
-      },
-
       "removeIcon": {
         "question": "Comment retirer l’icône d’un groupe du Dock et la remettre ?",
         "remove": "Faites glisser l’icône du groupe hors du Dock pour la retirer.",
         "addBack": "Le groupe reste dans la fenêtre des réglages, marqué <strong>Absent du Dock</strong>, et ne revient pas automatiquement dans le Dock. Pour remettre l’icône, cliquez sur le groupe avec le bouton droit et choisissez <strong>Ajouter au Dock</strong>."
-      },
-
-      "requirements": {
-        "question": "Sur quels Mac Flotilla fonctionne-t-elle ?",
-        "answer": "Flotilla fonctionne sur les Mac équipés d’une puce Apple et de macOS 15 ou version ultérieure."
-      },
-
-      "languages": {
-        "question": "Quelles langues Flotilla prend-elle en charge ?",
-        "answer": "Anglais, chinois simplifié, chinois traditionnel, japonais, coréen, allemand, français et espagnol. L’app utilise la langue de votre système, ou l’anglais si cette langue n’est pas prise en charge.",
-        "appName": "Le nom de l’app suit aussi la langue de votre système : 归帆 en chinois simplifié, 歸帆 en chinois traditionnel, 帰帆 en japonais et Flotilla dans les autres langues."
       }
     },
 
