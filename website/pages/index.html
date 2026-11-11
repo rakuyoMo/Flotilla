@@ -1363,30 +1363,6 @@
               <svg
                 class="icon"
                 aria-hidden="true"
-              ><use href="#i-dock"/></svg>
-            </span>
-
-            <h3>{{home.features.alongsideApps.title}}</h3>
-            <p>{{home.features.alongsideApps.description}}</p>
-          </li>
-
-          <li class="feature-card reveal">
-            <span class="icon-box icon-box-sky">
-              <svg
-                class="icon"
-                aria-hidden="true"
-              ><use href="#i-items"/></svg>
-            </span>
-
-            <h3>{{home.features.mixedItems.title}}</h3>
-            <p>{{home.features.mixedItems.description}}</p>
-          </li>
-
-          <li class="feature-card reveal">
-            <span class="icon-box icon-box-sun">
-              <svg
-                class="icon"
-                aria-hidden="true"
               ><use href="#i-nested"/></svg>
             </span>
 
@@ -1399,18 +1375,6 @@
               <svg
                 class="icon"
                 aria-hidden="true"
-              ><use href="#i-grid"/></svg>
-            </span>
-
-            <h3>{{home.features.gridView.title}}</h3>
-            <p>{{home.features.gridView.description}}</p>
-          </li>
-
-          <li class="feature-card reveal">
-            <span class="icon-box icon-box-sun">
-              <svg
-                class="icon"
-                aria-hidden="true"
               ><use href="#i-group-icon"/></svg>
             </span>
 
@@ -1419,7 +1383,7 @@
           </li>
 
           <li class="feature-card reveal">
-            <span class="icon-box icon-box-sky">
+            <span class="icon-box icon-box-sun">
               <svg
                 class="icon"
                 aria-hidden="true"
@@ -1431,7 +1395,7 @@
           </li>
 
           <li class="feature-card reveal">
-            <span class="icon-box icon-box-sun">
+            <span class="icon-box icon-box-sky">
               <svg
                 class="icon"
                 aria-hidden="true"
@@ -1443,7 +1407,7 @@
           </li>
 
           <li class="feature-card reveal">
-            <span class="icon-box icon-box-sky">
+            <span class="icon-box icon-box-sun">
               <svg
                 class="icon"
                 aria-hidden="true"
@@ -1455,7 +1419,7 @@
           </li>
 
           <li class="feature-card reveal">
-            <span class="icon-box icon-box-sun">
+            <span class="icon-box icon-box-sky">
               <svg
                 class="icon"
                 aria-hidden="true"
@@ -1877,11 +1841,11 @@
                 <svg
                   class="icon"
                   aria-hidden="true"
-                ><use href="#i-refresh"/></svg>
-                {{home.howItWorks.changes.dockRestart.title}}
+                ><use href="#i-archive"/></svg>
+                {{home.howItWorks.changes.backup.title}}
               </h4>
 
-              <p>{{home.howItWorks.changes.dockRestart.description}}</p>
+              <p>{{home.howItWorks.changes.backup.description}}</p>
             </li>
 
             <li class="change-card reveal">
@@ -1889,12 +1853,12 @@
                 <svg
                   class="icon"
                   aria-hidden="true"
-                ><use href="#i-archive"/></svg>
-                {{home.howItWorks.changes.backup.title}}
+                ><use href="#i-refresh"/></svg>
+                {{home.howItWorks.changes.dockRestart.title}}
               </h4>
 
-              <p>{{home.howItWorks.changes.backup.description}}</p>
-              <p><code>~/Library/<wbr>Application Support/<wbr>Flotilla/<wbr>Backups/<wbr>com.apple.dock-&lt;yyyyMMdd-HHmmss&gt;.plist</code></p>
+              <p>{{home.howItWorks.changes.dockRestart.description}}</p>
+              <p>{{home.howItWorks.changes.dockRestart.triggers}}</p>
             </li>
 
             <li class="change-card reveal">
@@ -2157,21 +2121,6 @@
 
           <details class="faq-item reveal">
             <summary>
-              {{home.faq.dockRestart.question}}
-              <svg
-                class="icon faq-chevron"
-                aria-hidden="true"
-              ><use href="#i-chevron-down"/></svg>
-            </summary>
-
-            <div class="faq-answer">
-              <p>{{home.faq.dockRestart.reason}}</p>
-              <p>{{home.faq.dockRestart.triggers}}</p>
-            </div>
-          </details>
-
-          <details class="faq-item reveal">
-            <summary>
               {{home.faq.removeIcon.question}}
               <svg
                 class="icon faq-chevron"
@@ -2182,35 +2131,6 @@
             <div class="faq-answer">
               <p>{{home.faq.removeIcon.remove}}</p>
               <p>{{home.faq.removeIcon.addBack}}</p>
-            </div>
-          </details>
-
-          <details class="faq-item reveal">
-            <summary>
-              {{home.faq.requirements.question}}
-              <svg
-                class="icon faq-chevron"
-                aria-hidden="true"
-              ><use href="#i-chevron-down"/></svg>
-            </summary>
-
-            <div class="faq-answer">
-              <p>{{home.faq.requirements.answer}}</p>
-            </div>
-          </details>
-
-          <details class="faq-item reveal">
-            <summary>
-              {{home.faq.languages.question}}
-              <svg
-                class="icon faq-chevron"
-                aria-hidden="true"
-              ><use href="#i-chevron-down"/></svg>
-            </summary>
-
-            <div class="faq-answer">
-              <p>{{home.faq.languages.answer}}</p>
-              <p>{{home.faq.languages.appName}}</p>
             </div>
           </details>
         </div>
