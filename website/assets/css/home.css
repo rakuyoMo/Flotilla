@@ -1,4 +1,4 @@
-/* 首页的样式：hero、简介、功能、工作原理、开源与参与、常见问题与收尾的下载区 */
+/* 首页的样式：hero、简介、功能、工作原理、开源与参与与常见问题 */
 
 /* ==========================================
    设计 token
@@ -750,67 +750,4 @@
   .faq-header {
     position: static;
   }
-}
-
-/* ==========================================
-   收尾的下载区
-   ========================================== */
-
-.closing {
-  padding-top: 0;
-}
-
-.closing-card {
-  position: relative;
-  display: grid;
-  justify-items: center;
-  gap: 24px;
-  padding: clamp(56px, 8vw, 104px) 24px;
-  border: 1px solid var(--color-border);
-  border-radius: 36px;
-  background:
-    radial-gradient(
-      circle at 50% 0%,
-      var(--orb-glow),
-      transparent 55%
-    ),
-    linear-gradient(
-      180deg,
-      var(--sky-top) 0%,
-      var(--sky-middle) 60%,
-      var(--color-bg-sunken) 100%
-    );
-  text-align: center;
-  overflow: clip;
-}
-
-.closing-icon {
-  width: 128px;
-  height: 128px;
-  filter: drop-shadow(0 18px 28px rgb(22 36 60 / 22%));
-}
-
-.closing-title {
-  font-size: clamp(2.25rem, 1.4rem + 3.4vw, 4rem);
-  font-weight: 800;
-  line-height: 1.05;
-  letter-spacing: -0.04em;
-  text-wrap: balance;
-}
-
-.closing-title:is(:lang(zh), :lang(ja), :lang(ko)) {
-  font-weight: 760;
-  line-height: 1.25;
-  letter-spacing: 0.01em;
-}
-
-.closing-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 12px;
-}
-
-.closing .meta-line {
-  justify-content: center;
 }
