@@ -16,6 +16,10 @@
       "label": "언어 선택"
     },
 
+    "appearance": {
+      "label": "라이트/다크 화면 모드 전환"
+    },
+
     "viewOnGitHub": "GitHub에서 보기",
 
     "requirements": {

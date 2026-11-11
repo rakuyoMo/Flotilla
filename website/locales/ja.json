@@ -16,6 +16,10 @@
       "label": "言語を選択"
     },
 
+    "appearance": {
+      "label": "ライト／ダークの外観モードを切り替え"
+    },
+
     "viewOnGitHub": "GitHubで見る",
 
     "requirements": {

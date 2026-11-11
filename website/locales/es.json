@@ -16,6 +16,10 @@
       "label": "Seleccionar idioma"
     },
 
+    "appearance": {
+      "label": "Cambiar entre aspecto claro y oscuro"
+    },
+
     "viewOnGitHub": "Ver en GitHub",
 
     "requirements": {
