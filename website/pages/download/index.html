@@ -71,7 +71,7 @@
 
   <meta
     property="og:image"
-    content="{{@siteURL}}assets/img/og-{{@imageLanguage}}.png"
+    content="{{@siteURL}}assets/img/og-{{@imageLanguage}}.jpg"
   >
 
   <meta
@@ -81,7 +81,7 @@
 
   <meta
     property="og:image:height"
-    content="480"
+    content="630"
   >
 
   <meta
@@ -286,60 +286,6 @@
         fill="currentColor"
         stroke="none"
       />
-    </symbol>
-
-    <symbol
-      id="i-pull-request"
-      viewBox="0 0 24 24"
-    >
-      <circle
-        cx="6.5"
-        cy="6"
-        r="2.25"
-      />
-
-      <circle
-        cx="6.5"
-        cy="18"
-        r="2.25"
-      />
-
-      <circle
-        cx="17.5"
-        cy="18"
-        r="2.25"
-      />
-
-      <path d="M6.5 8.25v7.5"/>
-      <path d="M17.5 15.75V9.5a3 3 0 0 0-3-3H11"/>
-      <path d="m13 4-2.5 2.5L13 9"/>
-    </symbol>
-
-    <symbol
-      id="i-terminal"
-      viewBox="0 0 24 24"
-    >
-      <rect
-        x="3"
-        y="4.5"
-        width="18"
-        height="15"
-        rx="3"
-      />
-
-      <path d="m7.5 10 2.5 2-2.5 2"/>
-      <path d="M12.5 14.5h4"/>
-    </symbol>
-
-    <symbol
-      id="i-scale"
-      viewBox="0 0 24 24"
-    >
-      <path d="M12 4v16"/>
-      <path d="M8 20h8"/>
-      <path d="M5 7.5h14"/>
-      <path d="M5 7.5 2.75 13a2.5 2.5 0 0 0 4.5 0Z"/>
-      <path d="M19 7.5 16.75 13a2.5 2.5 0 0 0 4.5 0Z"/>
     </symbol>
 
     <symbol
@@ -647,37 +593,6 @@
     </symbol>
 
     <symbol
-      id="i-shield"
-      viewBox="0 0 24 24"
-    >
-      <path d="M12 3 4.5 6v5.5c0 4.5 3.2 8.2 7.5 9.5 4.3-1.3 7.5-5 7.5-9.5V6Z"/>
-      <path d="m9 12 2.2 2.2L15.5 10"/>
-    </symbol>
-
-    <symbol
-      id="i-accessibility"
-      viewBox="0 0 24 24"
-    >
-      <circle
-        cx="12"
-        cy="12"
-        r="9"
-      />
-
-      <circle
-        cx="12"
-        cy="7.5"
-        r="1.25"
-        fill="currentColor"
-        stroke="none"
-      />
-
-      <path d="M7.5 10h9"/>
-      <path d="M12 10v4"/>
-      <path d="m9.5 18 2.5-4 2.5 4"/>
-    </symbol>
-
-    <symbol
       id="i-sail"
       viewBox="0 0 24 24"
     >
@@ -974,18 +889,6 @@
 
               <a
                 class="button button-primary"
-                href="#build"
-                data-when="none"
-              >
-                <svg
-                  class="icon"
-                  aria-hidden="true"
-                ><use href="#i-terminal"/></svg>
-                {{common.buildFromSource}}
-              </a>
-
-              <a
-                class="button button-secondary"
                 href="https://github.com/rakuyoMo/Flotilla"
                 data-when="none"
               >
@@ -1405,6 +1308,17 @@
           <figure class="feature-media get-started-media reveal">
             <picture>
               <source
+                srcset="{{@assets}}img/screenshot-settings-{{@imageLanguage}}-dark.avif"
+                type="image/avif"
+                media="(prefers-color-scheme: dark)"
+              >
+
+              <source
+                srcset="{{@assets}}img/screenshot-settings-{{@imageLanguage}}-light.avif"
+                type="image/avif"
+              >
+
+              <source
                 srcset="{{@assets}}img/screenshot-settings-{{@imageLanguage}}-dark.png"
                 media="(prefers-color-scheme: dark)"
               >
@@ -1418,101 +1332,6 @@
               >
             </picture>
           </figure>
-        </div>
-      </div>
-    </section>
-
-    <section
-      class="section build"
-      id="build"
-      aria-labelledby="build-title"
-    >
-      <div class="container">
-        <header class="section-header reveal">
-          <p class="eyebrow">{{download.build.eyebrow}}</p>
-
-          <h2
-            class="section-title"
-            id="build-title"
-          >{{download.build.title}}</h2>
-
-          <p class="lead">{{common.buildRequirements}}</p>
-        </header>
-
-        <div class="build-grid">
-          <ul class="requirements reveal">
-            <li class="requirement">
-              <span class="icon-box icon-box-sky">
-                <svg
-                  class="icon"
-                  aria-hidden="true"
-                ><use href="#i-terminal"/></svg>
-              </span>
-
-              <div>
-                <h3>{{download.build.commandLineTools.title}}</h3>
-                <p>{{download.build.commandLineTools.description}}</p>
-              </div>
-            </li>
-
-            <li class="requirement">
-              <span class="icon-box icon-box-sun">
-                <svg
-                  class="icon"
-                  aria-hidden="true"
-                ><use href="#i-route"/></svg>
-              </span>
-
-              <div>
-                <h3><a href="https://mise.jdx.dev">mise</a></h3>
-                <p>{{download.build.mise.description}}</p>
-              </div>
-            </li>
-          </ul>
-
-          <div class="build-commands reveal">
-            <div class="code-block">
-              <pre><code>git clone https://github.com/rakuyoMo/Flotilla.git
-cd Flotilla
-
-<span class="code-comment"># {{download.build.commands.bundleComment}}</span>
-mise run bundle
-
-<span class="code-comment"># {{download.build.commands.openComment}}</span>
-open build/Flotilla.app</code></pre>
-
-              <button
-                class="copy-button"
-                type="button"
-                data-copy
-                data-copied-label="{{download.copyButton.copied}}"
-              >
-                <svg
-                  class="icon"
-                  aria-hidden="true"
-                ><use href="#i-copy"/></svg>
-                {{download.copyButton.label}}
-              </button>
-            </div>
-
-            <ul class="build-notes">
-              <li>{{download.build.notes.ldWarning}}</li>
-              <li>{{download.build.notes.quitInstalled}}</li>
-            </ul>
-
-            <p>
-              <a
-                class="card-link"
-                href="{{@links.readmeDevelopment}}"
-              >
-                {{download.build.readme}}
-                <svg
-                  class="icon"
-                  aria-hidden="true"
-                ><use href="#i-arrow-right"/></svg>
-              </a>
-            </p>
-          </div>
         </div>
       </div>
     </section>
@@ -1574,7 +1393,7 @@ open build/Flotilla.app</code></pre>
     </div>
 
     <div class="container footer-bottom">
-      <p>Copyright ©️ 2026 <a href="https://github.com/rakuyoMo">Rakuyo</a>. All rights reserved.</p>
+      <p>Copyright © 2026 <a href="https://github.com/rakuyoMo">Rakuyo</a></p>
 
       <details class="language-menu">
         <summary

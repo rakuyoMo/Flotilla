@@ -17,7 +17,6 @@
     },
 
     "viewOnGitHub": "View on GitHub",
-    "buildFromSource": "Build from source",
 
     "requirements": {
       "macOS": "macOS 15 or later",
@@ -29,7 +28,7 @@
     "downloadStarted": "Download started",
 
     "noReleases": {
-      "message": "Flotilla hasn’t been released yet. You can build it from source, or watch the project on GitHub to hear when it is.",
+      "message": "Flotilla hasn’t been released yet. Watch the project on GitHub to hear when it is.",
       "watchHint": "To hear about new versions, choose <strong>Watch › Custom › Releases</strong> on GitHub."
     },
 
@@ -46,8 +45,6 @@
       "slower": "It takes a little longer to appear after you click"
     },
 
-    "buildRequirements": "You’ll need the Xcode Command Line Tools and mise. You don’t need the full Xcode app.",
-
     "footer": {
       "tagline": "Keep your Dock organized.",
       "label": "Footer",
@@ -60,7 +57,7 @@
   "home": {
     "meta": {
       "title": "Flotilla — Keep your Dock organized.",
-      "description": "Group apps, files, folders, and web pages in your Mac’s Dock."
+      "description": "Group apps, files, folders, and web pages in your Mac’s Dock. Free and open source, for Macs with Apple silicon running macOS 15 or later."
     },
 
     "hero": {
@@ -153,27 +150,10 @@
 
     "howItWorks": {
       "eyebrow": "How it works",
-      "title": "How does a group get into the Dock?",
+      "title": "What does Flotilla change on your Mac?",
       "lead": "The left side of the Dock only takes apps, so Flotilla gives each top-level group a placeholder app with the group’s name and icon, and adds that to the Dock.",
 
-      "click": {
-        "title": "You click a group icon",
-        "description": "The Dock launches that group’s placeholder app."
-      },
-
-      "openURL": {
-        "title": "The placeholder opens a <code>flotilla://</code> URL",
-        "description": "That’s how it lets Flotilla know. It then quits, without bringing any other app to the front."
-      },
-
-      "panel": {
-        "title": "Flotilla opens or closes the panel",
-        "description": "If Flotilla isn’t running, macOS launches it first. Anything you drop onto a group icon reaches Flotilla through the placeholder too."
-      },
-
       "changes": {
-        "title": "What does Flotilla change on your Mac?",
-
         "dockIcons": {
           "title": "Only its own group icons",
           "preferences": "Flotilla adds group icons by editing the Dock preferences (<code>com.apple.dock</code>).",
@@ -220,28 +200,6 @@
       "issues": {
         "title": "Report a problem",
         "description": "Something not working? Open an issue on GitHub."
-      },
-
-      "contribute": {
-        "title": "Contribute",
-        "description": "Before opening a pull request, make sure <code>mise run swift:lint</code> and <code>swift test</code> both pass.",
-        "guidelines": [
-          "Branch names, commit messages, and other conventions are in",
-          "<a href=\"https://github.com/rakuyoMo/Flotilla/blob/main/AGENTS.md\">AGENTS.md</a>,",
-          "and",
-          "<a href=\"https://github.com/rakuyoMo/Flotilla/tree/main/docs/requirements\">docs/requirements</a>",
-          "describes how each feature should work. Both are written in Chinese."
-        ]
-      },
-
-      "build": {
-        "title": "Build from source",
-        "link": "Build instructions"
-      },
-
-      "license": {
-        "description": "Flotilla is licensed under the GNU General Public License v3.0.",
-        "link": "License"
       }
     },
 
@@ -406,32 +364,6 @@
       },
 
       "readme": "The full guide is in the README"
-    },
-
-    "build": {
-      "eyebrow": "Build from source",
-      "title": "Build instructions",
-
-      "commandLineTools": {
-        "title": "Xcode Command Line Tools 26 or later",
-        "description": "Version 26 comes with Swift 6.2 and the macOS 26 SDK. The panel uses <code>NSGlassEffectView</code>, which needs that SDK to build."
-      },
-
-      "mise": {
-        "description": "Runs the build commands defined in <code>mise.toml</code>."
-      },
-
-      "commands": {
-        "bundleComment": "Build the release version, bundle it as build/Flotilla.app, and ad-hoc sign it",
-        "openComment": "Launch the bundled app"
-      },
-
-      "notes": {
-        "ldWarning": "You can ignore the two <code>ld: warning: search path ... not found</code> warnings during the build. They point to directories the Command Line Tools don’t include.",
-        "quitInstalled": "Only one copy of Flotilla can run at a time, so quit your installed Flotilla before launching <code>build/Flotilla.app</code>."
-      },
-
-      "readme": "Tests, code style, and more are in the README"
     }
   },
 

@@ -424,17 +424,6 @@ code {
   letter-spacing: 0;
 }
 
-.subsection-title {
-  font-size: clamp(1.5rem, 1.2rem + 1vw, 2rem);
-  font-weight: 720;
-  line-height: 1.25;
-  letter-spacing: -0.018em;
-}
-
-:is(:lang(zh), :lang(ja), :lang(ko)) .subsection-title {
-  letter-spacing: 0;
-}
-
 .lead {
   max-width: var(--measure);
   color: var(--color-text-secondary);
@@ -1300,10 +1289,6 @@ html.js .code-block pre {
   background: none;
   font-size: inherit;
   overflow-wrap: normal;
-}
-
-.code-comment {
-  color: var(--color-code-comment);
 }
 
 .code-prompt {

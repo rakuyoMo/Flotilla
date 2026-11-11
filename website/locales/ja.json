@@ -17,7 +17,6 @@
     },
 
     "viewOnGitHub": "GitHubで見る",
-    "buildFromSource": "ソースからビルド",
 
     "requirements": {
       "macOS": "macOS 15以降",
@@ -29,7 +28,7 @@
     "downloadStarted": "ダウンロードを<wbr>開始しました",
 
     "noReleases": {
-      "message": "帰帆はまだリリースされていません。ソースからビルドできるほか、GitHubでリリースの通知を受け取ることもできます。",
+      "message": "帰帆はまだリリースされていません。GitHubでリリースの通知を受け取れます。",
       "watchHint": "新しいバージョンの通知を受け取るには、GitHubで<strong>Watch › Custom › Releases</strong>を選びます。"
     },
 
@@ -46,8 +45,6 @@
       "slower": "クリックしてからパネルが開くまで、少し時間がかかります"
     },
 
-    "buildRequirements": "Xcode Command Line Toolsとmiseが必要です。Xcode本体はインストールしなくてかまいません。",
-
     "footer": {
       "tagline": "Dockを、すっきり整理。",
       "label": "フッター",
@@ -60,7 +57,7 @@
   "home": {
     "meta": {
       "title": "帰帆 — Dockを、すっきり整理。",
-      "description": "MacのDockで、アプリ、ファイル、フォルダ、Webページをグループにまとめられます。"
+      "description": "MacのDockで、アプリ、ファイル、フォルダ、Webページをグループにまとめられます。無料のオープンソースで、Appleシリコンを搭載し、macOS 15以降を実行しているMacで使えます。"
     },
 
     "hero": {
@@ -150,27 +147,10 @@
 
     "howItWorks": {
       "eyebrow": "仕組み",
-      "title": "グループは<wbr>どうやって<wbr>Dockに入るのか？",
+      "title": "帰帆は<wbr>Macの何を<wbr>変更するのか？",
       "lead": "Dockの左側にはアプリしか置けません。そこで帰帆は、最上位のグループごとにプレースホルダアプリを作り、グループの名前とアイコンを付けてDockに追加します。",
 
-      "click": {
-        "title": "グループアイコンを<wbr>クリック",
-        "description": "Dockが、そのグループのプレースホルダアプリを起動します。"
-      },
-
-      "openURL": {
-        "title": "プレースホルダが<wbr><code>flotilla://</code>の<wbr>URLを開く",
-        "description": "このURLで帰帆に知らせると、プレースホルダはそのまま終了します。ほかのアプリが前面に出ることはありません。"
-      },
-
-      "panel": {
-        "title": "帰帆が<wbr>パネルを開閉",
-        "description": "帰帆が起動していなければ、先にmacOSが起動します。グループアイコンにドロップした項目も、プレースホルダを通じて帰帆に渡されます。"
-      },
-
       "changes": {
-        "title": "帰帆は<wbr>Macの何を<wbr>変更するのか？",
-
         "dockIcons": {
           "title": "変更するのは<wbr>自分のグループアイコンだけ",
           "preferences": "帰帆は、Dockの環境設定（<code>com.apple.dock</code>）を書き換えてグループアイコンを追加します。",
@@ -217,22 +197,6 @@
       "issues": {
         "title": "問題を報告",
         "description": "うまく動かないときは、GitHub Issuesで知らせてください。"
-      },
-
-      "contribute": {
-        "title": "開発に参加",
-        "description": "プルリクエストを送る前に、<code>mise run swift:lint</code>と<code>swift test</code>がどちらも通ることを確認してください。",
-        "guidelines": "ブランチ名やコミットメッセージなどの決まりは<a href=\"https://github.com/rakuyoMo/Flotilla/blob/main/AGENTS.md\">AGENTS.md</a>に、各機能の仕様は<a href=\"https://github.com/rakuyoMo/Flotilla/tree/main/docs/requirements\">docs/requirements</a>にあります。どちらも中国語です。"
-      },
-
-      "build": {
-        "title": "ソースから<wbr>ビルド",
-        "link": "ビルド手順"
-      },
-
-      "license": {
-        "description": "帰帆は、GNU General Public License v3.0のもとで公開しています。",
-        "link": "ライセンス"
       }
     },
 
@@ -394,32 +358,6 @@
       },
 
       "readme": "詳しい使い方はREADMEにあります"
-    },
-
-    "build": {
-      "eyebrow": "ソースからビルド",
-      "title": "ビルド手順",
-
-      "commandLineTools": {
-        "title": "Xcode Command Line Tools 26以降",
-        "description": "バージョン26には、Swift 6.2とmacOS 26 SDKが含まれています。パネルに<code>NSGlassEffectView</code>を使っているため、ビルドにはこのSDKが必要です。"
-      },
-
-      "mise": {
-        "description": "<code>mise.toml</code>に定義されたビルドコマンドの実行に使います。"
-      },
-
-      "commands": {
-        "bundleComment": "リリース版をビルドし、build/Flotilla.appにまとめてアドホック署名する",
-        "openComment": "まとめたアプリを起動する"
-      },
-
-      "notes": {
-        "ldWarning": "ビルド中に出る2つの<code>ld: warning: search path ... not found</code>という警告は、無視してかまいません。Command Line Toolsに含まれていないディレクトリを指しているだけです。",
-        "quitInstalled": "帰帆は同時に1つしか起動できないため、<code>build/Flotilla.app</code>を起動する前に、インストール済みの帰帆を終了してください。"
-      },
-
-      "readme": "テストやコードスタイルなどはREADMEへ"
     }
   },
 

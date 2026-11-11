@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# 组装官网到 build/site/：由模板与各语言文案生成页面与 404 页，拷入样式、脚本，从母版生成位图，
-# 取 GitHub 上的全部 Release 与各语言的更新说明写成 releases.json
+# 组装官网到 build/site/：由模板与各语言文案生成页面、404 页、站点地图与 robots.txt，拷入样式、脚本，
+# 从母版生成位图，取 GitHub 上的全部 Release 与各语言的更新说明写成 releases.json
 
 set -euo pipefail
 
@@ -21,8 +21,26 @@ readonly ICON_DARK="Sources/Flotilla/Resources/AppIconDark.png"
 # README 的头图、截图与帆船画稿
 readonly RESOURCE_DIR="docs/resources"
 
+# 用 sips 把一张图片转成另一种格式，并核对结果确实是这种格式
+#
+# 参数依次为目标格式、质量、输出路径，其余原样传给 sips。
+# 格式与质量排在其它参数之前：排在 `--padColor` 之后时 sips 不理会它们，照样以 0 退出，写出的却是原来的格式
+convert_image() {
+    local format="$1"
+    local quality="$2"
+    local output="$3"
+    shift 3
+
+    sips -s format "$format" -s formatOptions "$quality" "$@" --out "$output" > /dev/null
+
+    if [[ "$(sips -g format "$output" | awk '/format:/ { print $2 }')" != "$format" ]]; then
+        echo "错误：$output 不是 $format 格式" >&2
+        exit 1
+    fi
+}
+
 # 1. 清空并重建产物目录，按 website/pages/ 的模板与 website/locales/ 的文案生成每种语言的页面，
-#    由 website/404.html 生成 404 页，再拷入样式、脚本；模板与文案的源文件不进产物
+#    由 website/404.html 生成 404 页，并生成站点地图与 robots.txt，再拷入样式、脚本；模板与文案的源文件不进产物
 rm -rf "$SITE_DIR"
 mkdir -p "$SITE_DIR"
 swift Scripts/generate-site-pages.swift website "$SITE_DIR"
@@ -52,24 +70,37 @@ sips -z 32 32 "$ICON_LIGHT" \
 sips -z 32 32 "$ICON_DARK" \
     --out "$IMAGE_DIR/favicon-dark.png" > /dev/null
 
-# 截图原样拷贝
+# 截图原样拷贝，各转一张 AVIF：页面优先用体积小得多的 AVIF，浏览器不支持时用原图
 cp "$RESOURCE_DIR"/screenshot-* "$IMAGE_DIR/"
 
-# 社交分享图：英文页、中文页各用自己语言的浅色头图，缩到 1200 px 宽
-sips --resampleWidth 1200 "$RESOURCE_DIR/readme-header-en-light.png" \
-    --out "$IMAGE_DIR/og-en.png" > /dev/null
+for SCREENSHOT in "$RESOURCE_DIR"/screenshot-*; do
+    NAME="$(basename "$SCREENSHOT")"
 
-sips --resampleWidth 1200 "$RESOURCE_DIR/readme-header-zh-light.png" \
-    --out "$IMAGE_DIR/og-zh.png" > /dev/null
+    convert_image avif 70 "$IMAGE_DIR/${NAME%.*}.avif" "$SCREENSHOT"
+done
 
-# 帆船画稿：浅色用日、深色用月，转成 JPEG 并缩到 1000 px 宽
-sips --resampleWidth 1000 -s format jpeg -s formatOptions 72 \
-    "$RESOURCE_DIR/sailing-ship-sun-brush.png" \
-    --out "$IMAGE_DIR/sailing-ship-sun.jpg" > /dev/null
+# 社交分享图：英文页、中文页各用自己语言的浅色头图，缩到 1200 px 宽，
+# 上下补上页面的底色，凑成各平台的大图卡片通用的 1200 × 630，免得两侧被裁掉
+for LANGUAGE in en zh; do
+    convert_image jpeg 80 "$IMAGE_DIR/og-$LANGUAGE.jpg" \
+        --resampleWidth 1200 \
+        --padToHeightWidth 630 1200 \
+        --padColor FDF9F0 \
+        "$RESOURCE_DIR/readme-header-$LANGUAGE-light.png"
+done
 
-sips --resampleWidth 1000 -s format jpeg -s formatOptions 72 \
-    "$RESOURCE_DIR/sailing-ship-crescent-moon-brush.png" \
-    --out "$IMAGE_DIR/sailing-ship-moon.jpg" > /dev/null
+# 帆船画稿：浅色用日、深色用月，缩到 1000 px 宽，各转成 AVIF 与浏览器不支持 AVIF 时用的 JPEG
+convert_image avif 70 "$IMAGE_DIR/sailing-ship-sun.avif" \
+    --resampleWidth 1000 "$RESOURCE_DIR/sailing-ship-sun-brush.png"
+
+convert_image jpeg 72 "$IMAGE_DIR/sailing-ship-sun.jpg" \
+    --resampleWidth 1000 "$RESOURCE_DIR/sailing-ship-sun-brush.png"
+
+convert_image avif 70 "$IMAGE_DIR/sailing-ship-moon.avif" \
+    --resampleWidth 1000 "$RESOURCE_DIR/sailing-ship-crescent-moon-brush.png"
+
+convert_image jpeg 72 "$IMAGE_DIR/sailing-ship-moon.jpg" \
+    --resampleWidth 1000 "$RESOURCE_DIR/sailing-ship-crescent-moon-brush.png"
 
 # 3. 取 GitHub 上的全部 Release，整理成页面用到的字段
 

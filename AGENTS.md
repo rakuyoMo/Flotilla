@@ -61,9 +61,9 @@ Scripts/appcast.sh      更新清单脚本：压缩打包好的 App，生成嵌�
 Scripts/bundle.sh       打包脚本：组装 .app 并签名
 Scripts/check-release-notes.sh  检查某个版本的更新说明是否齐全，发版脚本、更新清单脚本与两个 workflow 共用
 Scripts/embed-release-notes.swift  把每种语言的更新说明与更新日志页链接嵌进更新清单，由 appcast.sh 调用
-Scripts/generate-site-pages.swift  官网页面生成脚本：按语言清单与各语言文案，把页面模板生成每种语言的页面，并生成 404 页，由 site.sh 调用
+Scripts/generate-site-pages.swift  官网页面生成脚本：按语言清单与各语言文案，把页面模板生成每种语言的页面，并生成 404 页、站点地图与 robots.txt，由 site.sh 调用
 Scripts/release.sh      发版脚本：改版本号，连同这一版的更新说明开 release PR
-Scripts/site.sh         官网组装脚本：生成页面与 404 页、拷入样式脚本、生成位图、取 Release 数据与各语言的更新说明，输出到 build/site/
+Scripts/site.sh         官网组装脚本：生成页面、404 页、站点地图与 robots.txt，拷入样式脚本、生成位图、取 Release 数据与各语言的更新说明，输出到 build/site/
 docs/release-notes/     每个版本的更新说明：X.Y.Z/ 下每种语言一份 <语言>.md，见 “更新说明”
 docs/requirements/      需求文档：00 为总览，01–13 为按实现顺序拆分的阶段
 docs/resources/         README 的头图 readme-header-<en|zh>-<light|dark>.png：英文、中文各一套，各有浅色、深色两版；
@@ -239,14 +239,18 @@ README-ZH.md            README.md 的简体中文版，与它同步修改
   - `assets/` 原样拷贝
 - 模板里的占位符有两类，由 `Scripts/generate-site-pages.swift` 替换：
   - `{{home.hero.title}}`：文案，按 HTML 原样插入，可带 `<strong>` `<code>` `<wbr>` 等行内标记；多行的文案在文案文件里写成字符串数组，不写缩进，插入时续行补上占位符所在行的缩进
-  - `{{@lang}}`：`@` 开头，按语言清单与页面算出的值或片段，如语言代码、到站点根目录的相对路径、`hreflang` 备选链接、语言菜单、`<head>` 里的跳转脚本；可用的名称见脚本里的 `computedValues`
+  - `{{@lang}}`：`@` 开头，按语言清单与页面算出的值或片段，如语言代码、到站点根目录的相对路径、`hreflang` 备选链接、语言菜单、`<head>` 里的跳转脚本、首页的结构化数据；可用的名称见脚本里的 `computedValues`
   - 模板用到而某种语言缺少的键、文案文件里模板没用到的键、语言清单与文案文件对不上、未知的占位符、用在属性值里的值含 `"` 或换行、404 页的文案键与 `data-text` 对不上，都会报错，不生成任何页面
 - 各语言不同的链接写在语言清单每一项的 `links` 里，模板里写作 `{{@links.名称}}`，如 README 与其中章节的链接
-  - 它们不放文案文件：翻译只改文案文件，繁体由简体改写时也不会把 `README-ZH.md#开发` 这样的锚点转成繁体而失效
+  - 它们不放文案文件：翻译只改文案文件，繁体由简体改写时也不会把 `README-ZH.md` 里的中文锚点转成繁体而失效
   - 随语言换、又和句子一起翻译的链接留在文案里，如 Apple 支持文章的链接与文章标题
 - `mise run site:build` 运行 `Scripts/site.sh`，组装到 `build/site/`：
   - 按模板与文案生成每种语言的页面与 404 页，拷入 `assets/`；模板与文案的源文件不进产物
-  - 用 `sips` 从 App 图标母版生成图标与 favicon，从 `docs/resources/` 的浅色头图生成分享图、把帆船画稿转成 JPEG，截图原样拷入
+  - 生成 `sitemap.xml` 与 `robots.txt`：站点地图列出每种语言的每个页面，地址与页面的 canonical 相同，404 页不在其中
+  - 用 `sips` 从 App 图标母版生成图标与 favicon；截图与帆船画稿各有 AVIF 与原格式两份，页面优先用 AVIF，浏览器不支持时用原格式：
+    - 截图原样拷入，各转一张 AVIF
+    - 帆船画稿缩到 1000 px 宽，转成 AVIF 与 JPEG
+  - 分享图由 `docs/resources/` 的浅色头图生成：缩到 1200 px 宽，上下补上页面的底色，凑成 1200 × 630 的 JPEG
   - 用 `gh api` 取 GitHub 上的全部 Release，整理成 `build/site/releases.json`；`gh` 要先登录
   - `releases.json` 里每个版本的正文按语言代码分开：`en` 是 Release 的正文；语言清单里的其它语言取 `docs/release-notes/<版本号>/<语言代码>.md`，用 `gh api markdown` 渲染成 HTML，没有这份说明的版本不写这种语言
 - 页面运行时只读同源的 `releases.json`，不请求 GitHub API；读不到时退回到指向 GitHub Releases 的链接
@@ -268,6 +272,8 @@ README-ZH.md            README.md 的简体中文版，与它同步修改
 
 - 改结构改 `pages/` 下的模板与 `404.html`；改文案时，每种语言的文案文件同步改，各文件的键保持一致
 - 页面上的事实以 README 为准，文案能照搬就照搬
+- 官网写给使用 App 的人看：从源码构建、参与贡献、代码规范这类写给开发者的内容不放官网，留在 README 里
+- 首页的结构化数据按 schema.org 的 `SoftwareApplication` 生成，名称、简介与系统版本要求取自这种语言的文案，对应的文案键见生成脚本里的 `structuredDataTexts`
 - 站内链接一律用相对路径；每页在 `<html data-root>` 上声明自己到站点根目录的相对路径，脚本据此拼地址
   - `404.html` 会在任意不存在的路径下返回，用 `<base href="/">` 固定相对路径的起点
 - 语言选择由每页 `<head>` 里的跳转脚本先于渲染完成：
@@ -280,7 +286,7 @@ README-ZH.md            README.md 的简体中文版，与它同步修改
   - 404 页按同样的规则选语言，但不跳转，就地换成目标语言：GitHub Pages 在任意不存在的路径下都返回站点根目录这一份，跳走会丢掉访客打开的地址
     - 页面按默认语言生成，`<head>` 里的脚本带着每种语言的这页文案，等正文解析完再换
     - 带 `data-text` 的元素换成这个文案键在目标语言里的文案，带 `data-home` 的链接改到目标语言的首页；这页的每个文案键都要用 `data-text` 标出
-- 新增一种语言不用改生成脚本、模板、样式与页面脚本：语言菜单、`hreflang`、跳转、404 页与更新日志都按语言清单生成，繁体中文、日文、韩文的字体与排版已在样式里备好。要做的是：
+- 新增一种语言不用改生成脚本、模板、样式与页面脚本：语言菜单、`hreflang`、跳转、404 页、站点地图、结构化数据与更新日志都按语言清单生成，繁体中文、日文、韩文的字体与排版已在样式里备好。要做的是：
   1. 在语言清单登记一项：语言代码与 `Sources/Flotilla/Resources/` 下的 `.lproj` 同名；目录用小写的语言代码加 `/`，如 `zh-hant/` `ja/` `ko/`，简体中文保持 `zh/`，README-ZH 与已发布的更新清单都链到它；`links` 照已有的语言写全
   2. 截图与分享图：`imageLanguage` 繁体中文用 `zh`，其余用 `en`
   3. 新建 `locales/<语言代码>.json`，键与 `en.json` 一致：繁体由简体中文改写，其余由英文翻译；术语与该语言的 `Localizable.strings` 一致，App 名照 `InfoPlist.strings`；简繁中文按 “中文行文”，日文、韩文的引号等照各自 `Localizable.strings` 的用法，德文、法文的不换行空格照 “更新说明” 的写法
