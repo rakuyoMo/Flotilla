@@ -29,24 +29,24 @@
     "downloadStarted": "Téléchargement lancé",
 
     "noReleases": {
-      "message": "Aucune version n’a encore été publiée. Vous pouvez compiler Flotilla depuis les sources ou vous abonner aux notifications de version sur GitHub.",
-      "watchHint": "Pour être informé des nouvelles versions, choisissez <strong>Watch › Custom › Releases</strong> sur GitHub."
+      "message": "Flotilla n’a pas encore été publiée. Vous pouvez la compiler depuis les sources, ou suivre le projet sur GitHub pour être prévenu de sa sortie.",
+      "watchHint": "Pour être prévenu des nouvelles versions, choisissez <strong>Watch › Custom › Releases</strong> sur GitHub."
     },
 
-    "getReleaseNotifications": "Recevoir les notifications de version",
-    "firstLaunchBlocked": "Flotilla n’a pas été notarisée par Apple, c’est pourquoi macOS la bloque la première fois que vous essayez de l’ouvrir. L’alerte indique qu’Apple ne peut pas confirmer qu’elle ne contient pas de logiciel malveillant.",
+    "getReleaseNotifications": "Être prévenu des nouvelles versions",
+    "firstLaunchBlocked": "Flotilla n’a pas été authentifiée par Apple : macOS la bloque donc à la première ouverture, en indiquant qu’Apple ne peut pas vérifier qu’elle ne contient pas de logiciel malveillant.",
 
     "accessibility": {
-      "settingsPath": "Vous pouvez l’accorder dans <strong>Réglages Système › Confidentialité et sécurité › Accessibilité</strong>. Sous macOS 27, accédez à <strong>Confidentialité et sécurité › Contrôle de l’appareil et accès aux données</strong>.",
-      "reenable": "Comme Flotilla utilise une signature ad hoc, vous devrez peut-être accorder à nouveau cette autorisation après une mise à jour."
+      "settingsPath": "Vous pouvez l’accorder dans <strong>Réglages Système › Confidentialité et sécurité › Accessibilité</strong>. Sous macOS 27, cette page s’appelle <strong>Confidentialité et sécurité › Contrôle de l’appareil et accès aux données</strong>.",
+      "reenable": "Flotilla est signée ad hoc : il faudra peut-être accorder à nouveau cette autorisation après une mise à jour."
     },
 
     "withoutAccessibility": {
-      "nearPointer": "Le panneau apparaît près du pointeur et peut ne pas être parfaitement aligné avec l’icône du groupe",
-      "slower": "Le panneau met un peu plus de temps à s’ouvrir après un clic"
+      "nearPointer": "Le panneau s’ouvre près du pointeur et n’est pas forcément aligné sur l’icône du groupe",
+      "slower": "Il met un peu plus de temps à apparaître après le clic"
     },
 
-    "buildRequirements": "Pour compiler Flotilla, il faut les Xcode Command Line Tools et mise. L’app Xcode complète n’est pas nécessaire.",
+    "buildRequirements": "Il vous faut les Xcode Command Line Tools et mise. L’app Xcode complète n’est pas nécessaire.",
 
     "footer": {
       "tagline": "Gardez votre Dock bien rangé.",
@@ -74,24 +74,24 @@
     "about": {
       "eyebrow": "Présentation",
       "statement": [
-        "<span class=\"about-statement-muted\">Les dossiers du Dock se trouvent à droite.</span>",
-        "Flotilla vous permet de regrouper vos apps à gauche."
+        "<span class=\"about-statement-muted\">Les dossiers du Dock ne peuvent se placer qu’à droite.</span>",
+        "Flotilla place des groupes à gauche, à côté de vos apps."
       ],
 
       "groups": {
         "title": "Les groupes de Flotilla",
-        "position": "Dans la section des apps, à gauche"
+        "position": "À gauche, à côté de vos apps"
       },
 
       "dockFolders": {
         "title": "Les dossiers du Dock",
-        "position": "Uniquement du côté droit"
+        "position": "Uniquement à droite"
       },
 
       "highlights": {
-        "noFolders": "Regrouper ne déplace ni vos apps ni vos fichiers, et vous n’avez aucun dossier à créer sur le disque.",
-        "mixedItems": "Apps, fichiers, dossiers du Finder et pages web peuvent tous partager le même groupe.",
-        "nativeGrid": "Cliquez sur l’icône d’un groupe pour ouvrir une grille qui a la même apparence et les mêmes animations que les dossiers intégrés du Dock."
+        "noFolders": "Regrouper ne déplace ni vos apps ni vos fichiers, et il n’y a aucun dossier à créer sur le disque.",
+        "mixedItems": "Apps, fichiers, dossiers et pages web peuvent tous aller dans le même groupe.",
+        "nativeGrid": "Cliquez sur l’icône d’un groupe : il s’ouvre dans une grille, avec la même apparence et les mêmes animations qu’un dossier du Dock."
       }
     },
 
@@ -100,137 +100,137 @@
       "title": "Organisez apps, fichiers et pages web.",
 
       "folders": {
-        "title": "Parcourir les dossiers dans le panneau",
-        "description": "Les dossiers s’ouvrent dans le même panneau, avec des miniatures des fichiers. Pour passer au Finder, choisissez <strong>Afficher</strong> à la fin de la grille.",
-        "backButton": "Utilisez le bouton Retour pour remonter d’un niveau",
-        "hiddenFiles": "Activez <strong>Afficher les fichiers masqués</strong> dans les réglages",
+        "title": "Parcourir les dossiers sans quitter le panneau",
+        "description": "Comme une pile du Dock, un dossier s’ouvre directement dans le panneau, avec les miniatures des fichiers. Pour le voir plutôt dans le Finder, cliquez sur <strong>Afficher</strong> à la fin de la grille.",
+        "backButton": "Le bouton Retour vous fait remonter d’un niveau",
+        "hiddenFiles": "Activez <strong>Afficher les fichiers masqués</strong> dans les réglages pour voir aussi les fichiers masqués",
         "screenshotAlt": "Le dossier « Wallpapers » ouvert dans le panneau, avec des miniatures d’images et « Open in Finder » à la fin"
       },
 
       "dragAndDrop": {
         "title": "Glisser-déposer",
-        "description": "Déposez des apps, des fichiers ou des dossiers sur l’icône d’un groupe dans le Dock ou sur un groupe dans la fenêtre des réglages. Vous pouvez aussi déposer des pages web dans la fenêtre des réglages."
+        "description": "Déposez des apps, des fichiers ou des dossiers sur l’icône d’un groupe dans le Dock, ou sur un groupe dans la fenêtre des réglages, pour les y ajouter. Les pages web se glissent depuis votre navigateur dans la fenêtre des réglages."
       },
 
       "settings": {
         "title": "Gérer les groupes dans la fenêtre des réglages",
         "add": "Cliquez sur <strong>Ajouter…</strong> pour choisir des apps, des fichiers, des dossiers ou des pages web",
         "rename": "Double-cliquez sur un groupe pour le renommer",
-        "reorder": "Faites glisser des éléments dans la liste pour les réorganiser ou les déplacer dans un autre groupe",
-        "moreOptions": "Cliquez sur un élément avec le bouton droit ou en maintenant la touche Contrôle enfoncée pour afficher d’autres options"
+        "reorder": "Faites glisser les éléments pour les réorganiser ou les déplacer dans un autre groupe",
+        "moreOptions": "Cliquez sur un élément avec le bouton droit, ou en maintenant la touche Contrôle enfoncée, pour afficher d’autres options"
       },
 
       "nestedGroups": {
         "title": "Des groupes dans des groupes",
-        "description": "Vous pouvez placer des groupes dans d’autres groupes. Ouvrez un sous-groupe pour le parcourir, puis revenez avec le bouton Retour."
+        "description": "Un groupe peut en contenir d’autres. Un sous-groupe s’ouvre dans le même panneau, et le bouton Retour vous ramène au niveau supérieur."
       },
 
       "iconPreviews": {
-        "title": "Aperçus dans l’icône du groupe",
-        "description": "L’icône du groupe présente un aperçu des premiers éléments, jusqu’à quatre. Vous pouvez modifier ce nombre dans les réglages. Son arrière-plan suit l’apparence claire ou sombre de votre Mac."
+        "title": "Aperçu dans l’icône du groupe",
+        "description": "L’icône du groupe affiche ses premiers éléments, jusqu’à quatre. Vous pouvez changer ce nombre dans les réglages. Son arrière-plan suit l’apparence claire ou sombre du système."
       },
 
       "reorderAndRemove": {
         "title": "Réorganiser et supprimer",
-        "description": "Faites glisser les éléments du panneau pour les réorganiser. Pour en supprimer un, faites-le glisser hors du panneau, attendez que <strong>Supprimer</strong> apparaisse, puis relâchez-le."
+        "description": "Faites glisser les éléments dans le panneau pour les réorganiser. Pour en supprimer un, faites-le glisser hors du panneau et relâchez-le quand <strong>Supprimer</strong> apparaît."
       },
 
       "tracking": {
-        "title": "Garde la trace de vos éléments",
-        "description": "Les apps et les fichiers s’ouvrent toujours depuis un groupe après avoir été déplacés ou renommés. Après la mise à jour d’une app, Flotilla ouvre la version nouvellement installée."
+        "title": "Ne perd pas vos éléments de vue",
+        "description": "Les apps et les fichiers s’ouvrent toujours après avoir été déplacés ou renommés. Et quand une app est mise à jour, c’est la nouvelle version qui s’ouvre."
       },
 
       "background": {
-        "title": "Fonctionne en arrière-plan",
-        "description": "Flotilla s’exécute dans la barre des menus et n’apparaît pas dans le Dock, même lorsqu’un panneau est ouvert. Les panneaux ne retirent pas le focus à l’app que vous utilisez."
+        "title": "Une app de la barre des menus",
+        "description": "Flotilla s’exécute dans la barre des menus et n’ajoute donc pas sa propre icône au Dock. L’ouverture d’un panneau ne retire pas le focus à l’app que vous utilisez."
       },
 
       "languages": {
         "title": "Huit langues",
-        "description": "Anglais, chinois simplifié, chinois traditionnel, japonais, coréen, allemand, français et espagnol. L’app utilise la langue de votre système, ou l’anglais si cette langue n’est pas prise en charge."
+        "description": "Anglais, chinois simplifié, chinois traditionnel, japonais, coréen, allemand, français et espagnol. Flotilla suit la langue de votre système et s’affiche en anglais pour toutes les autres."
       }
     },
 
     "howItWorks": {
       "eyebrow": "Fonctionnement",
       "title": "Comment un groupe arrive-t-il dans le Dock ?",
-      "lead": "Pour donner une place à un groupe dans la section des apps du Dock, Flotilla crée une app de substitution pour chaque groupe de premier niveau et l’ajoute au Dock avec le nom et l’icône du groupe.",
+      "lead": "La partie gauche du Dock n’accepte que des apps. Flotilla crée donc, pour chaque groupe de premier niveau, une app de substitution qui porte le nom et l’icône du groupe, et l’ajoute au Dock.",
 
       "click": {
-        "title": "Cliquez sur l’icône d’un groupe",
+        "title": "Vous cliquez sur l’icône d’un groupe",
         "description": "Le Dock lance l’app de substitution de ce groupe."
       },
 
       "openURL": {
         "title": "L’app de substitution ouvre une URL <code>flotilla://</code>",
-        "description": "Elle utilise cette URL pour prévenir Flotilla, puis se ferme sans faire passer une autre app au premier plan."
+        "description": "C’est ainsi qu’elle prévient Flotilla. Elle se ferme ensuite, sans faire passer d’autre app au premier plan."
       },
 
       "panel": {
         "title": "Flotilla ouvre ou ferme le panneau",
-        "description": "Si Flotilla n’est pas ouverte, macOS la lance d’abord. L’app de substitution transmet aussi à Flotilla les éléments déposés sur l’icône du groupe."
+        "description": "Si Flotilla n’est pas ouverte, macOS la lance d’abord. Ce que vous déposez sur l’icône d’un groupe parvient aussi à Flotilla par l’app de substitution."
       },
 
       "changes": {
         "title": "Que modifie Flotilla sur votre Mac ?",
 
         "dockIcons": {
-          "title": "Uniquement les icônes de groupe de Flotilla",
-          "preferences": "Flotilla gère les icônes de groupe au moyen des préférences du Dock (<code>com.apple.dock</code>).",
-          "scope": "Seules ses propres entrées dans <code>persistent-apps</code> sont modifiées, c’est-à-dire les icônes de groupe à gauche du Dock. Les autres icônes et les réglages du Dock restent inchangés."
+          "title": "Uniquement ses propres icônes de groupe",
+          "preferences": "Flotilla ajoute les icônes de groupe en modifiant les préférences du Dock (<code>com.apple.dock</code>).",
+          "scope": "Elle ne touche qu’à ses propres entrées dans <code>persistent-apps</code>, la section des apps du Dock, et laisse vos autres icônes et les réglages du Dock tels quels."
         },
 
         "backup": {
-          "title": "Sauvegarde avant modification",
-          "description": "À chaque lancement, Flotilla exporte une sauvegarde complète de <code>com.apple.dock</code> avant d’effectuer sa première modification. Les cinq sauvegardes les plus récentes sont conservées."
+          "title": "Une sauvegarde avant toute modification",
+          "description": "À chaque lancement, Flotilla sauvegarde <code>com.apple.dock</code> avant sa première modification. Les cinq sauvegardes les plus récentes sont conservées."
         },
 
         "dockRestart": {
-          "title": "Le Dock redémarre après chaque modification",
-          "description": "Après une modification des préférences du Dock, Flotilla met fin au processus du Dock. macOS le redémarre automatiquement pour que la modification prenne effet.",
-          "triggers": "Les modifications de l’aperçu d’un groupe et le passage de l’apparence claire à l’apparence sombre mettent aussi à jour les icônes, et entraînent donc également un redémarrage du Dock."
+          "title": "Le Dock redémarre un instant",
+          "description": "Pour appliquer une modification, Flotilla met fin au processus du Dock, et macOS le redémarre.",
+          "triggers": "La mise à jour d’une icône de groupe demande aussi un redémarrage, par exemple quand les premiers éléments d’un groupe changent ou que votre Mac passe de l’apparence claire à l’apparence sombre."
         },
 
         "data": {
           "title": "Données et réglages",
-          "location": "Les données sont stockées dans <code>~/Library/<wbr>Application Support/<wbr>Flotilla</code> :",
-          "groups": "<code>folders.json</code> : les données des groupes",
+          "location": "Flotilla conserve ses données dans <code>~/Library/<wbr>Application Support/<wbr>Flotilla</code> :",
+          "groups": "<code>folders.json</code> : vos groupes",
           "dockTiles": "<code>DockTiles/</code> : les apps de substitution des groupes de premier niveau",
           "backups": "<code>Backups/</code> : les sauvegardes des préférences du Dock",
-          "settings": "Les réglages sont stockés dans le domaine de préférences <code>com.rakuyo.flotilla</code>."
+          "settings": "Les réglages sont enregistrés dans le domaine de préférences <code>com.rakuyo.flotilla</code>."
         },
 
         "network": {
           "title": "Accès au réseau",
-          "description": "Flotilla se connecte à Internet pour récupérer les titres des pages, et pour rechercher et télécharger les mises à jour depuis GitHub Releases. La recherche automatique peut être désactivée dans la section Mise à jour de logiciels des réglages."
+          "description": "Flotilla ne se connecte à Internet que pour récupérer le titre d’une page web quand vous l’ajoutez ou la modifiez, et pour rechercher et télécharger les mises à jour depuis GitHub Releases. Vous pouvez désactiver la recherche automatique dans la section <strong>Mise à jour de logiciels</strong> des réglages."
         }
       }
     },
 
     "openSource": {
       "eyebrow": "Open source",
-      "title": "Code et discussions sur GitHub.",
-      "lead": "Flotilla est gratuite et open source. Sur GitHub, vous pouvez parcourir le code, signaler un problème ou aider au développement.",
+      "title": "Le code et les discussions sont sur GitHub.",
+      "lead": "Flotilla est gratuite et open source. Lisez le code, signalez un problème ou participez au développement sur GitHub.",
 
       "follow": {
         "title": "Suivre le projet",
-        "description": "Si vous aimez Flotilla, donnez-lui une étoile sur GitHub. Pour être informé des nouvelles versions, choisissez <strong>Watch › Custom › Releases</strong>."
+        "description": "Si Flotilla vous plaît, une étoile sur GitHub est toujours la bienvenue. Pour être prévenu des nouvelles versions, choisissez <strong>Watch › Custom › Releases</strong>."
       },
 
       "issues": {
         "title": "Signaler un problème",
-        "description": "Quelque chose ne fonctionne pas ? Vous pouvez le signaler dans les GitHub Issues."
+        "description": "Quelque chose ne fonctionne pas ? Signalez-le dans les GitHub Issues."
       },
 
       "contribute": {
         "title": "Contribuer",
-        "description": "Avant d’ouvrir une pull request, exécutez <code>mise run swift:lint</code> et <code>swift test</code>, et vérifiez que les deux réussissent.",
+        "description": "Avant d’ouvrir une pull request, vérifiez que <code>mise run swift:lint</code> et <code>swift test</code> réussissent tous les deux.",
         "guidelines": [
-          "Les règles de contribution se trouvent dans",
-          "<a href=\"https://github.com/rakuyoMo/Flotilla/blob/main/AGENTS.md\">AGENTS.md</a>",
-          "et les exigences des fonctionnalités dans",
-          "<a href=\"https://github.com/rakuyoMo/Flotilla/tree/main/docs/requirements\">docs/requirements</a> ;",
-          "les deux sont rédigés en chinois."
+          "Les noms de branches, les messages de commit et les autres conventions sont décrits dans",
+          "<a href=\"https://github.com/rakuyoMo/Flotilla/blob/main/AGENTS.md\">AGENTS.md</a>,",
+          "et le comportement attendu de chaque fonctionnalité dans",
+          "<a href=\"https://github.com/rakuyoMo/Flotilla/tree/main/docs/requirements\">docs/requirements</a>.",
+          "Les deux sont rédigés en chinois."
         ]
       },
 
@@ -248,28 +248,28 @@
     "faq": {
       "eyebrow": "FAQ",
       "title": "Installer et utiliser Flotilla",
-      "readmeBefore": "Pour en savoir plus, consultez le",
+      "readmeBefore": "Vous trouverez plus de détails dans le",
       "readmeAfter": ".",
 
       "blocked": {
-        "question": "Pourquoi macOS bloque-t-il Flotilla la première fois que je l’ouvre ?",
-        "openAnyway": "Cliquez sur <strong>Terminé</strong>, puis ouvrez <strong>Réglages Système › Confidentialité et sécurité</strong> et cliquez sur <strong>Ouvrir quand même</strong> sous <strong>Sécurité</strong>. Le bouton reste disponible pendant une heure après votre tentative d’ouverture de Flotilla.",
+        "question": "Pourquoi macOS bloque-t-il Flotilla à la première ouverture ?",
+        "openAnyway": "Cliquez sur <strong>Terminé</strong>, ouvrez <strong>Réglages Système › Confidentialité et sécurité</strong>, puis cliquez sur <strong>Ouvrir quand même</strong> sous <strong>Sécurité</strong>. Ce bouton n’apparaît que pendant une heure après votre tentative d’ouverture de Flotilla.",
         "guideLink": "Voir le guide d’installation →"
       },
 
       "withoutAccessibility": {
         "question": "Puis-je utiliser Flotilla sans l’autorisation d’accessibilité ?",
-        "answer": "Oui, avec deux différences :"
+        "answer": "Oui, à deux différences près :"
       },
 
       "reenable": {
-        "question": "Pourquoi devrais-je accorder à nouveau l’autorisation d’accessibilité après une mise à jour ?"
+        "question": "Pourquoi faut-il parfois accorder à nouveau l’autorisation d’accessibilité après une mise à jour ?"
       },
 
       "removeIcon": {
-        "question": "Comment retirer l’icône d’un groupe du Dock et la remettre ?",
-        "remove": "Faites glisser l’icône du groupe hors du Dock pour la retirer.",
-        "addBack": "Le groupe reste dans la fenêtre des réglages, marqué <strong>Absent du Dock</strong>, et ne revient pas automatiquement dans le Dock. Pour remettre l’icône, cliquez sur le groupe avec le bouton droit et choisissez <strong>Ajouter au Dock</strong>."
+        "question": "Comment retirer l’icône d’un groupe du Dock, et puis-je la remettre ?",
+        "remove": "Il suffit de faire glisser l’icône du groupe hors du Dock.",
+        "addBack": "Cela ne retire que l’icône. Le groupe reste dans la fenêtre des réglages, marqué <strong>Absent du Dock</strong>, et ne revient pas tout seul dans le Dock. Pour le remettre, cliquez dessus avec le bouton droit et choisissez <strong>Ajouter au Dock</strong>."
       }
     },
 
@@ -289,7 +289,7 @@
   "download": {
     "meta": {
       "title": "Télécharger Flotilla",
-      "description": "Téléchargez Flotilla pour regrouper des apps dans votre Dock. Pour les Mac équipés d’une puce Apple et de macOS 15 ou version ultérieure, avec de l’aide pour l’installation, le premier lancement et les autorisations."
+      "description": "Téléchargez Flotilla et regroupez les apps de votre Dock. Pour les Mac dotés d’une puce Apple, sous macOS 15 ou version ultérieure. Avec les étapes pour l’installer, l’ouvrir la première fois et accorder les autorisations."
     },
 
     "hero": {
@@ -303,14 +303,14 @@
       "notReleased": "Pas encore publiée",
 
       "fallback": {
-        "title": "La dernière version",
-        "description": "Téléchargez le dernier fichier <code>Flotilla-X.Y.Z.zip</code> depuis la page Releases sur GitHub."
+        "title": "Dernière version",
+        "description": "Téléchargez le dernier fichier <code>Flotilla-X.Y.Z.zip</code> depuis GitHub Releases."
       },
 
       "download": "Télécharger",
       "downloadAgain": "Télécharger à nouveau",
-      "openReleases": "Ouvrir les Releases",
-      "nextSteps": "Suivez ensuite les étapes d’installation ci-dessous",
+      "openReleases": "Ouvrir GitHub Releases",
+      "nextSteps": "Suivez ensuite les étapes ci-dessous pour l’installer",
       "allVersions": "Voir toutes les versions"
     },
 
@@ -320,26 +320,26 @@
 
       "unzip": {
         "title": "Décompresser et placer dans Applications",
-        "description": "Double-cliquez sur le fichier <code>Flotilla-X.Y.Z.zip</code> téléchargé pour le décompresser, puis faites glisser <code>Flotilla.app</code> dans le dossier Applications.",
-        "note": "Le Finder affiche le nom de l’app dans la langue de votre système, par exemple 归帆 en chinois simplifié.",
+        "description": "Double-cliquez sur le fichier <code>Flotilla-X.Y.Z.zip</code> téléchargé pour le décompresser, puis faites glisser <code>Flotilla.app</code> dans votre dossier Applications.",
+        "note": "Le Finder affiche le nom de l’app dans la langue de votre système. En chinois simplifié, par exemple, elle s’appelle 归帆.",
         "applications": "Applications"
       },
 
       "firstLaunch": {
-        "title": "L’ouvrir pour la première fois",
-        "dismiss": "Cliquez sur <strong>Terminé</strong> pour fermer l’alerte, puis suivez ces étapes pour ouvrir Flotilla :",
+        "title": "La première ouverture",
+        "dismiss": "Cliquez sur <strong>Terminé</strong>, puis :",
         "openSettings": "Ouvrez <strong>Réglages Système › Confidentialité et sécurité</strong>",
-        "openAnyway": "Faites défiler jusqu’à <strong>Sécurité</strong>, repérez le message indiquant que Flotilla a été bloquée et cliquez sur <strong>Ouvrir quand même</strong>",
+        "openAnyway": "Faites défiler jusqu’à <strong>Sécurité</strong>, repérez le message concernant Flotilla et cliquez sur <strong>Ouvrir quand même</strong>",
         "openAnywayNote": "Ce bouton n’apparaît que pendant une heure après votre tentative d’ouverture de Flotilla",
-        "password": "Confirmez avec votre mot de passe de session lorsque vous y êtes invité",
-        "done": "Vous pouvez maintenant ouvrir Flotilla normalement.",
-        "terminal": "Si vous préférez le Terminal, exécutez cette commande pour supprimer l’attribut de quarantaine, puis ouvrez Flotilla :",
+        "password": "Confirmez avec votre mot de passe de session",
+        "done": "Flotilla s’ouvre ensuite normalement.",
+        "terminal": "Si vous préférez le Terminal, supprimez plutôt l’attribut de quarantaine avec cette commande, puis ouvrez Flotilla :",
 
         "why": {
           "question": "Pourquoi macOS bloque-t-il Flotilla ?",
-          "answer": "Flotilla utilise une signature ad hoc et n’a pas été notarisée par Apple. Cela déclenche une alerte de sécurité de macOS au premier lancement.",
+          "answer": "Flotilla est signée ad hoc et n’a pas été authentifiée par Apple : macOS affiche donc une alerte de sécurité à la première ouverture.",
           "appleGuide": [
-            "Pour en savoir plus sur ces vérifications et sur la façon d’autoriser l’ouverture d’une app, consultez le guide d’Apple",
+            "Apple explique ces vérifications, et comment ouvrir malgré tout une app bloquée, dans l’article",
             "<a href=\"https://support.apple.com/fr-fr/102445\">Ouvrir des apps en toute sécurité sur votre Mac</a>."
           ]
         },
@@ -353,18 +353,18 @@
 
       "accessibility": {
         "title": "Accorder l’autorisation d’accessibilité",
-        "purpose": "L’autorisation d’accessibilité permet à Flotilla de lire l’interface du Dock afin de :",
-        "locate": "Repérer l’icône du groupe pour y aligner le panneau",
+        "purpose": "Flotilla se sert de l’autorisation d’accessibilité pour lire l’interface du Dock, ce qui lui permet de :",
+        "locate": "Repérer l’icône du groupe et y aligner le panneau",
         "openOnRelease": "Ouvrir le panneau dès que vous relâchez le bouton de la souris, comme un dossier du Dock",
-        "prompt": "Si l’autorisation n’a pas été accordée, macOS vous la demande la première fois que vous cliquez sur l’icône d’un groupe après chaque lancement de Flotilla.",
+        "prompt": "Tant que vous ne l’avez pas accordée, macOS vous la demande après chaque lancement, au premier clic sur l’icône d’un groupe.",
 
         "optional": {
-          "title": "Cela fonctionne aussi sans",
+          "title": "Flotilla fonctionne aussi sans",
           "differences": "Il n’y a que deux différences :"
         },
 
         "reenable": {
-          "title": "Vous devrez peut-être l’accorder à nouveau"
+          "title": "Il faudra peut-être l’accorder à nouveau"
         },
 
         "mock": {
@@ -374,12 +374,12 @@
 
       "files": {
         "title": "Fichiers et dossiers",
-        "description": "La première fois que vous ouvrez avec Flotilla un dossier situé dans Documents, Bureau, Téléchargements ou un autre emplacement protégé, macOS vous demande l’accès. Flotilla a besoin de votre autorisation pour lire et afficher le contenu du dossier."
+        "description": "La première fois que vous ouvrez, depuis un panneau, un dossier situé dans Documents, Bureau, Téléchargements ou un emplacement similaire, macOS vous demande si Flotilla peut y accéder. Flotilla ne peut en afficher le contenu qu’une fois l’accès autorisé."
       }
     },
 
     "copyButton": {
-      "copied": "Commande copiée — collez-la dans le Terminal pour l’exécuter",
+      "copied": "Copié. Collez la commande dans le Terminal pour l’exécuter",
       "label": "Copier"
     },
 
@@ -391,18 +391,18 @@
       "create": {
         "title": "Créer un groupe",
         "newGroup": "Sous <strong>Groupes</strong>, cliquez sur <strong>Nouveau groupe</strong>, saisissez un nom et appuyez sur Retour",
-        "newGroupNote": "Le Dock redémarre brièvement, puis affiche l’icône du groupe dans la section des apps, à gauche",
+        "newGroupNote": "Le Dock redémarre un instant, puis l’icône du groupe apparaît à côté de vos apps",
         "add": "Sélectionnez le groupe, cliquez sur <strong>Ajouter…</strong> et choisissez <strong>Ajouter des apps…</strong>, <strong>Ajouter des fichiers…</strong> ou <strong>Ajouter une page web…</strong>",
-        "drop": "Vous pouvez aussi déposer des apps, des fichiers ou des dossiers sur un groupe dans la fenêtre des réglages ou sur son icône dans le Dock. Les pages web, faites-les glisser depuis votre navigateur sur un groupe de la fenêtre des réglages"
+        "drop": "Vous pouvez aussi faire glisser des apps, des fichiers et des dossiers sur un groupe dans la fenêtre des réglages, ou sur son icône dans le Dock. Les pages web se glissent depuis votre navigateur dans la fenêtre des réglages"
       },
 
       "panel": {
         "title": "Utiliser le panneau",
-        "open": "Cliquez sur l’icône d’un groupe dans le Dock, puis sélectionnez l’app, le fichier ou la page web à ouvrir",
-        "browse": "Cliquez sur un sous-groupe ou un dossier pour l’ouvrir. Utilisez le bouton Retour pour remonter d’un niveau",
-        "close": "Cliquez à nouveau sur l’icône du groupe, cliquez en dehors du panneau ou appuyez sur Échap pour le fermer",
-        "reorder": "Faites glisser des éléments au sein d’un groupe pour changer leur ordre",
-        "remove": "Pour supprimer un élément, faites-le glisser hors du panneau, attendez que <strong>Supprimer</strong> apparaisse, puis relâchez-le"
+        "open": "Cliquez sur l’icône d’un groupe dans le Dock, puis sur l’app, le fichier ou la page web à ouvrir",
+        "browse": "Cliquez sur un sous-groupe ou un dossier pour l’ouvrir, et utilisez le bouton Retour pour remonter d’un niveau",
+        "close": "Pour fermer le panneau, cliquez à nouveau sur l’icône du groupe, cliquez en dehors du panneau ou appuyez sur Échap",
+        "reorder": "Faites glisser les éléments pour les réorganiser",
+        "remove": "Pour supprimer un élément, faites-le glisser hors du panneau et relâchez-le quand <strong>Supprimer</strong> apparaît"
       },
 
       "readme": "Le guide complet se trouve dans le README"
@@ -414,7 +414,7 @@
 
       "commandLineTools": {
         "title": "Xcode Command Line Tools 26 ou version ultérieure",
-        "description": "La version 26 comprend Swift 6.2 et le SDK macOS 26. Le panneau utilise <code>NSGlassEffectView</code>, ce SDK est donc nécessaire pour compiler Flotilla."
+        "description": "La version 26 est fournie avec Swift 6.2 et le SDK macOS 26. Le panneau utilise <code>NSGlassEffectView</code>, qui a besoin de ce SDK pour être compilé."
       },
 
       "mise": {
@@ -427,8 +427,8 @@
       },
 
       "notes": {
-        "ldWarning": "Vous pouvez ignorer les deux avertissements <code>ld: warning: search path ... not found</code> pendant la compilation. Ils concernent des répertoires qui ne font pas partie des Command Line Tools.",
-        "quitInstalled": "Quittez la copie installée de Flotilla avant de lancer <code>build/Flotilla.app</code>. Si une copie est déjà ouverte, en lancer une autre ne fait qu’activer celle qui est ouverte."
+        "ldWarning": "Vous pouvez ignorer les deux avertissements <code>ld: warning: search path ... not found</code> pendant la compilation. Ils renvoient à des répertoires que les Command Line Tools ne contiennent pas.",
+        "quitInstalled": "Une seule copie de Flotilla peut être ouverte à la fois : quittez donc la copie installée avant de lancer <code>build/Flotilla.app</code>."
       },
 
       "readme": "Tests, style de code et plus encore dans le README"
@@ -438,12 +438,12 @@
   "releases": {
     "meta": {
       "title": "Notes de version de Flotilla",
-      "description": "Parcourez les notes de version, les dates de publication et les liens de téléchargement de Flotilla."
+      "description": "Ce qui a changé dans chaque version de Flotilla, avec les dates de publication et les liens de téléchargement."
     },
 
     "hero": {
       "title": "Notes de version",
-      "lead": "Découvrez ce qui a changé dans chaque version et téléchargez celle dont vous avez besoin.",
+      "lead": "Découvrez ce qui a changé dans chaque version et téléchargez celle qu’il vous faut.",
       "atomFeed": "Flux Atom"
     },
 
@@ -453,7 +453,7 @@
 
     "fallback": {
       "title": "Les notes de version sont sur GitHub",
-      "description": "Rendez-vous sur GitHub Releases pour lire les notes de chaque version et en télécharger une copie.",
+      "description": "Vous trouverez les notes et les téléchargements de chaque version sur GitHub Releases.",
       "openReleases": "Ouvrir GitHub Releases"
     },
 

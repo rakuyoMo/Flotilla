@@ -29,24 +29,24 @@
     "downloadStarted": "已开始下载",
 
     "noReleases": {
-      "message": "目前还没有发布版本。可以从源码构建，或在 GitHub 上订阅发布通知。",
-      "watchHint": "想收到新版本通知，可以在 GitHub 上选择 “Watch › Custom › Releases”。"
+      "message": "归帆还没有发布过版本。可以先从源码构建，或者到 GitHub 上订阅新版本通知。",
+      "watchHint": "想在新版本发布时收到通知，到 GitHub 上选 “Watch › Custom › Releases” 就行。"
     },
 
     "getReleaseNotifications": "订阅新版本通知",
-    "firstLaunchBlocked": "归帆尚未经过 Apple 公证，所以第一次打开时，macOS 会拦截它，并提示无法验证它是否包含恶意软件。",
+    "firstLaunchBlocked": "归帆没有经过 Apple 公证，第一次打开时会被 macOS 拦下，提示 Apple 无法验证它是否包含恶意软件。",
 
     "accessibility": {
-      "settingsPath": "可以在 “系统设置 › 隐私与安全性 › 辅助功能” 中开启；macOS 27 里对应的是 “隐私与安全 › 设备控制和数据访问”。",
+      "settingsPath": "可以在 “系统设置 › 隐私与安全性 › 辅助功能” 里为归帆开启。macOS 27 里这一页是 “隐私与安全 › 设备控制和数据访问”。",
       "reenable": "归帆使用 ad-hoc 签名，更新后可能需要重新开启这项权限。"
     },
 
     "withoutAccessibility": {
-      "nearPointer": "面板会出现在点击时的鼠标位置附近，可能无法准确对齐组图标",
-      "slower": "点击后，面板展开会稍慢一些"
+      "nearPointer": "面板会出现在鼠标附近，不一定对得准组图标",
+      "slower": "点击之后，面板展开得慢一些"
     },
 
-    "buildRequirements": "构建需要 Xcode Command Line Tools 和 mise，不用安装完整的 Xcode。",
+    "buildRequirements": "需要 Xcode Command Line Tools 和 mise，不用安装完整的 Xcode。",
 
     "footer": {
       "tagline": "Dock 太挤？给应用分个组就清爽了。",
@@ -73,22 +73,22 @@
 
     "about": {
       "eyebrow": "简介",
-      "statement": "<span class=\"about-statement-muted\">Dock 自带的文件夹放在右侧。</span>归帆让你在左侧给应用分组。",
+      "statement": "<span class=\"about-statement-muted\">Dock 自带的文件夹只能放在右侧。</span>有了归帆，左侧的应用也能分组。",
 
       "groups": {
         "title": "归帆的组",
-        "position": "放在左侧的应用区域"
+        "position": "在左侧，和应用排在一起"
       },
 
       "dockFolders": {
-        "title": "原生 Dock 文件夹",
+        "title": "Dock 自带的文件夹",
         "position": "只能放在右侧"
       },
 
       "highlights": {
-        "noFolders": "分组不会移动原来的应用和文件，也不需要在磁盘上新建文件夹。",
-        "mixedItems": "应用、文件、访达里的文件夹和网页，都可以放在同一个组里。",
-        "nativeGrid": "点击组图标，组里的内容会以网格形式展开，外观和动画与 Dock 自带的文件夹一致。"
+        "noFolders": "原来的应用和文件不会被移动，也不用在磁盘上新建文件夹。",
+        "mixedItems": "应用、文件、文件夹和网页，都能放进同一个组。",
+        "nativeGrid": "点击组图标，里面的内容以网格展开，外观和动画都和 Dock 自带的文件夹一样。"
       }
     },
 
@@ -98,136 +98,131 @@
 
       "folders": {
         "title": "在面板里<wbr>浏览文件夹",
-        "description": "文件夹可以直接在当前面板里展开，并显示文件缩略图。点击网格末尾的 “在访达中打开” 可以切换到访达。",
-        "backButton": "点击返回按钮，回到上一层",
-        "hiddenFiles": "在设置里开启 “显示隐藏文件”",
+        "description": "文件夹像 Dock 叠放那样，直接在面板里展开，还会显示文件缩略图。想去访达里看，点击网格末尾的 “在访达中打开”。",
+        "backButton": "点返回按钮，回到上一层",
+        "hiddenFiles": "在设置里开启 “显示隐藏文件”，就能看到隐藏文件",
         "screenshotAlt": "面板中打开了 “壁纸” 文件夹，显示图片缩略图，末尾有 “在访达中打开”"
       },
 
       "dragAndDrop": {
         "title": "拖放添加",
-        "description": "把应用、文件或文件夹拖到 Dock 上的组图标，或拖到设置窗口里的组。网页也可以拖到设置窗口里添加。"
+        "description": "把应用、文件或文件夹拖到 Dock 上的组图标，或者拖到设置窗口里的组上，就加进去了。网页可以从浏览器拖到设置窗口里。"
       },
 
       "settings": {
         "title": "在设置窗口里管理组",
-        "add": "点击 “添加…”，选择应用、文件、文件夹或网页",
-        "rename": "双击组即可重命名",
-        "reorder": "拖动列表中的项目，调整顺序或移到其它组",
-        "moreOptions": "右键点击或按住 Control 点击一项，查看更多操作"
+        "add": "点击 “添加…”，选择要加入的应用、文件、文件夹或网页",
+        "rename": "双击组，给它改个名字",
+        "reorder": "拖动项目，调整顺序或移到别的组",
+        "moreOptions": "右键点击或按住 Control 点击某一项，还有更多操作"
       },
 
       "nestedGroups": {
         "title": "组里还能分组",
-        "description": "组里可以继续创建子组，点击进入，用返回按钮回到上一级。"
+        "description": "组里可以再建子组。点击子组，它就在同一个面板里打开；点返回按钮，回到上一级。"
       },
 
       "iconPreviews": {
-        "title": "预览组内图标",
-        "description": "组图标会显示前几项的图标，最多 4 个，数量可在设置中调整。底板随系统切换浅色和深色外观。"
+        "title": "组图标预览",
+        "description": "组图标上显示组里前几项的图标，最多 4 个，数量可以在设置里调整。底板的深浅跟随系统外观。"
       },
 
       "reorderAndRemove": {
         "title": "拖动排序和移除",
-        "description": "在面板里拖动项目可以排序。要移除某一项，把它拖出面板，等 “移除” 提示出现后松手。"
+        "description": "在面板里拖动项目，就能调整顺序。想移除哪一项，把它拖出面板，等 “移除” 出现后松手。"
       },
 
       "tracking": {
-        "title": "移动或改名后仍能打开",
-        "description": "移动或改名后，应用和文件仍能从组里打开。应用更新后也会打开已安装的新版本。"
+        "title": "不会跟丢",
+        "description": "应用和文件移动或改名后，照样能从组里打开。应用更新后，打开的也是新版本。"
       },
 
       "background": {
-        "title": "在后台运行",
-        "description": "归帆在菜单栏运行。展开面板时不会抢走当前应用的焦点，也不会在 Dock 上多出归帆的图标。"
+        "title": "菜单栏应用",
+        "description": "归帆在菜单栏运行，不会在 Dock 上多出自己的图标。展开面板时，也不会抢走当前应用的焦点。"
       },
 
       "languages": {
         "title": "支持八种语言",
-        "description": "支持英文、简体中文、繁体中文、日文、韩文、德文、法文和西班牙文，自动跟随系统语言。其它语言环境下显示英文。"
+        "description": "英文、简体中文、繁体中文、日文、韩文、德文、法文和西班牙文，跟随系统语言显示。系统用的是其它语言时，显示英文。"
       }
     },
 
     "howItWorks": {
       "eyebrow": "工作原理",
-      "title": "组是怎样放进 Dock 的？",
-      "lead": "为了让组能出现在 Dock 的应用区域，归帆会为每个顶层组生成一个占位 App，再把它加入 Dock，使用组的名称和图标。",
+      "title": "组是怎么放进 Dock 的？",
+      "lead": "Dock 左侧只能放应用，所以归帆会为每个顶层组生成一个占位 App，再用组的名称和图标把它加进 Dock。",
 
       "click": {
         "title": "点击组图标",
-        "description": "Dock 会启动这个组对应的占位 App。"
+        "description": "Dock 启动这个组的占位 App。"
       },
 
       "openURL": {
         "title": "占位 App 打开 <code>flotilla://</code> URL",
-        "description": "它通过这个 URL 通知归帆，然后退出，不会把其它应用带到前台。"
+        "description": "它用这个 URL 通知归帆，然后自己退出，不会把别的应用带到前台。"
       },
 
       "panel": {
         "title": "归帆展开或收起面板",
-        "description": "如果归帆还没运行，系统会先启动它。拖到组图标上的内容也由占位 App 转交给归帆。"
+        "description": "归帆没在运行的话，系统会先把它启动起来。拖到组图标上的东西，也由占位 App 转交给归帆。"
       },
 
       "changes": {
-        "title": "归帆会在 Mac 上做哪些改动？",
+        "title": "归帆会对 Mac 做哪些改动？",
 
         "dockIcons": {
-          "title": "只管理归帆的组图标",
-          "preferences": "归帆通过修改 Dock 偏好（<code>com.apple.dock</code>）来管理组图标。",
-          "scope": "改动仅涉及 <code>persistent-apps</code> 中归帆自己的条目，也就是 Dock 左侧的组图标。其它图标和 Dock 设置不受影响。"
+          "title": "只动自己的组图标",
+          "preferences": "归帆通过修改 Dock 偏好（<code>com.apple.dock</code>）来添加组图标。",
+          "scope": "它只改 <code>persistent-apps</code>（Dock 左侧的应用区域）里自己的条目，其它图标和 Dock 设置都不受影响。"
         },
 
         "backup": {
-          "title": "改动前会先备份",
-          "description": "每次启动归帆后，首次修改 Dock 偏好之前，都会先导出完整的 <code>com.apple.dock</code> 备份，保留最近的 5 份。"
+          "title": "改动前先备份",
+          "description": "每次启动后第一次修改之前，归帆都会先备份 <code>com.apple.dock</code>，保留最新的 5 份。"
         },
 
         "dockRestart": {
           "title": "Dock 会短暂重启",
-          "description": "修改 Dock 偏好后，归帆会结束 Dock 进程。macOS 随即自动重启 Dock，让改动生效。",
-          "triggers": "组内预览变化、系统切换浅色或深色外观时，组图标也需要更新，因此 Dock 同样会重启。"
+          "description": "每次修改后，归帆会结束 Dock 进程，由 macOS 自动重启 Dock，让改动生效。",
+          "triggers": "组图标更新时也要重启，比如组里的前几项变了，或者系统在浅色、深色外观之间切换。"
         },
 
         "data": {
           "title": "数据与设置",
-          "location": "数据保存在 <code>~/Library/<wbr>Application Support/<wbr>Flotilla</code>：",
+          "location": "数据都保存在 <code>~/Library/<wbr>Application Support/<wbr>Flotilla</code>：",
           "groups": "<code>folders.json</code>：组的数据",
-          "dockTiles": "<code>DockTiles/</code>：各个顶层组对应的占位 App",
+          "dockTiles": "<code>DockTiles/</code>：各个顶层组的占位 App",
           "backups": "<code>Backups/</code>：Dock 偏好的备份",
           "settings": "设置保存在偏好设置域 <code>com.rakuyo.flotilla</code>。"
         },
 
         "network": {
           "title": "联网",
-          "description": "归帆在添加或编辑网页时联网获取标题，也会连接 GitHub Release 检查和下载更新。自动检查可在 “软件更新” 设置中关闭。"
+          "description": "归帆只在两种情况下联网：添加或编辑网页时获取网页标题，以及从 GitHub Release 检查和下载更新。自动检查可以在设置的 “软件更新” 里关闭。"
         }
       }
     },
 
     "openSource": {
       "eyebrow": "开源与参与",
-      "title": "代码和讨论都在 GitHub。",
-      "lead": "归帆免费开源。你可以在 GitHub 上查看代码、反馈问题，也可以参与开发。",
+      "title": "代码和讨论都在 GitHub 上。",
+      "lead": "归帆免费开源。想看代码、反馈问题，或者一起开发，都欢迎来 GitHub。",
 
       "follow": {
-        "title": "关注项目和新版本",
-        "description": "喜欢归帆的话，可以在 GitHub 上点个 Star。想收到新版本通知，选择 “Watch › Custom › Releases” 即可。"
+        "title": "关注项目",
+        "description": "喜欢归帆的话，欢迎到 GitHub 点个 Star。想在新版本发布时收到通知，选 “Watch › Custom › Releases”。"
       },
 
       "issues": {
         "title": "反馈问题",
-        "description": "遇到问题了？欢迎到 GitHub Issues 提交反馈。"
+        "description": "遇到问题了？到 GitHub Issues 提一个就行。"
       },
 
       "contribute": {
         "title": "参与贡献",
-        "description": "提交 PR 前，请运行 <code>mise run swift:lint</code> 和 <code>swift test</code>，确认都能通过。",
-        "guidelines": [
-          "分支命名和提交信息等约定见",
-          "<a href=\"https://github.com/rakuyoMo/Flotilla/blob/main/AGENTS.md\">AGENTS.md</a>，各项功能的具体要求见",
-          "<a href=\"https://github.com/rakuyoMo/Flotilla/tree/main/docs/requirements\">docs/requirements</a>",
-          "中的需求文档。"
-        ]
+        "description": "提交 PR 前，请确认 <code>mise run swift:lint</code> 和 <code>swift test</code> 都能通过。",
+        "guidelines": "分支命名、提交信息等约定见 <a href=\"https://github.com/rakuyoMo/Flotilla/blob/main/AGENTS.md\">AGENTS.md</a>，各项功能的具体要求见 <a href=\"https://github.com/rakuyoMo/Flotilla/tree/main/docs/requirements\">docs/requirements</a>。"
       },
 
       "build": {
@@ -244,28 +239,28 @@
     "faq": {
       "eyebrow": "常见问题",
       "title": "安装和使用",
-      "readmeBefore": "详细说明见",
+      "readmeBefore": "更详细的说明见",
       "readmeAfter": "。",
 
       "blocked": {
-        "question": "第一次打开时，为什么被 macOS 拦住了？",
-        "openAnyway": "点击 “完成” 后，打开 “系统设置 › 隐私与安全性”，在 “安全性” 中点击 “仍要打开”。这个按钮会在尝试打开归帆后的一小时内显示。",
+        "question": "第一次打开，为什么被 macOS 拦下了？",
+        "openAnyway": "点击 “完成” 关掉提示，打开 “系统设置 › 隐私与安全性”，在 “安全性” 里点击 “仍要打开”。这个按钮只在尝试打开归帆后的一小时内出现。",
         "guideLink": "查看安装指南 →"
       },
 
       "withoutAccessibility": {
-        "question": "不开启辅助功能权限，也能用吗？",
-        "answer": "可以，但会有两点区别："
+        "question": "不开辅助功能权限，也能用吗？",
+        "answer": "能用，只是有两点不一样："
       },
 
       "reenable": {
-        "question": "更新后，为什么可能需要重新授权？"
+        "question": "更新之后，为什么可能要重新开启辅助功能权限？"
       },
 
       "removeIcon": {
-        "question": "怎么移除 Dock 上的组图标？还能加回来吗？",
-        "remove": "直接把组图标拖出 Dock，就能移除。",
-        "addBack": "组会保留在设置窗口里，并标记为 “不在 Dock 上”，不会自动加回。需要时，右键点击这个组，选择 “添加到 Dock” 就能恢复图标。"
+        "question": "怎么把组图标从 Dock 上移除？还能加回来吗？",
+        "remove": "把组图标拖出 Dock 就行。",
+        "addBack": "这样只会移除图标。组仍留在设置窗口里，标为 “不在 Dock 上”，不会自动回到 Dock；要加回来，右键点击这个组，选择 “添加到 Dock”。"
       }
     },
 
@@ -273,7 +268,7 @@
       "close": "关闭",
 
       "steps": {
-        "unzip": "解压后，把 <code>Flotilla.app</code> 拖到 “应用程序”",
+        "unzip": "解压后，把 <code>Flotilla.app</code> 拖进 “应用程序”",
         "openAnyway": "在 “隐私与安全性” 里点击 “仍要打开”",
         "accessibility": "在系统设置里开启辅助功能权限"
       },
@@ -285,7 +280,7 @@
   "download": {
     "meta": {
       "title": "下载归帆",
-      "description": "下载归帆，给 Dock 上的应用分组。支持 Apple 芯片和 macOS 15 或更高版本，这里有安装、首次打开和权限设置的说明。"
+      "description": "下载归帆，在 Dock 上给应用分组。需要搭载 Apple 芯片、运行 macOS 15 或更高版本的 Mac。安装、第一次打开和权限设置的步骤都在这里。"
     },
 
     "hero": {
@@ -296,17 +291,17 @@
 
     "card": {
       "label": "下载",
-      "notReleased": "尚未发布",
+      "notReleased": "还没有发布",
 
       "fallback": {
         "title": "最新版本",
-        "description": "前往 GitHub Releases 下载最新版的 <code>Flotilla-X.Y.Z.zip</code>。"
+        "description": "到 GitHub Releases 下载最新的 <code>Flotilla-X.Y.Z.zip</code>。"
       },
 
       "download": "下载",
       "downloadAgain": "重新下载",
       "openReleases": "打开 Releases 页面",
-      "nextSteps": "接下来，按下面的步骤安装",
+      "nextSteps": "接着按下面的步骤安装",
       "allVersions": "查看所有版本"
     },
 
@@ -315,33 +310,29 @@
       "title": "安装和首次设置。",
 
       "unzip": {
-        "title": "解压后放入 “应用程序”",
-        "description": "双击下载好的 <code>Flotilla-X.Y.Z.zip</code> 解压，把 <code>Flotilla.app</code> 拖到 “应用程序” 文件夹。",
-        "note": "访达会按系统语言显示应用名称，简体中文下显示为 “归帆”。",
+        "title": "解压后拖进 “应用程序”",
+        "description": "双击下载好的 <code>Flotilla-X.Y.Z.zip</code> 解压，把 <code>Flotilla.app</code> 拖进 “应用程序” 文件夹。",
+        "note": "访达按系统语言显示应用名称，简体中文下显示的是 “归帆”。",
         "applications": "应用程序"
       },
 
       "firstLaunch": {
         "title": "第一次打开",
-        "dismiss": "点击 “完成” 关闭提示，再按下面的步骤允许打开：",
+        "dismiss": "点击 “完成” 关掉提示，然后：",
         "openSettings": [
           "打开 “系统设置 › 隐私与安全性”",
           "<span class=\"list-note\">macOS 27 里这一页是 “隐私与安全”</span>"
         ],
         "openAnyway": "向下滚动到 “安全性”，找到归帆被阻止的提示，点击 “仍要打开”",
-        "openAnywayNote": "这个按钮只在尝试打开归帆之后的一小时内出现",
-        "password": "按提示输入登录密码确认",
-        "done": "之后就能正常打开归帆。",
-        "terminal": "如果习惯用终端，也可以运行下面的命令，移除隔离属性后再打开归帆：",
+        "openAnywayNote": "这个按钮只在尝试打开归帆后的一小时内出现",
+        "password": "输入登录密码确认",
+        "done": "之后就能正常打开归帆了。",
+        "terminal": "习惯用终端的话，也可以先运行下面的命令移除隔离属性，再打开归帆：",
 
         "why": {
           "question": "为什么 macOS 会拦下归帆？",
-          "answer": "归帆使用 ad-hoc 签名，尚未经过 Apple 公证，因此首次打开时会触发 macOS 的安全提示。",
-          "appleGuide": [
-            "关于 macOS 的安全检查和打开方式，可以参阅 Apple 的说明：",
-            "<a href=\"https://support.apple.com/zh-cn/102445\">在 Mac 上安全地打开 App</a>",
-            "。"
-          ]
+          "answer": "归帆使用 ad-hoc 签名，没有经过 Apple 公证，所以第一次打开时会触发 macOS 的安全提示。",
+          "appleGuide": "这些安全检查是怎么回事、被拦下的应用怎么打开，Apple 有一篇说明：<a href=\"https://support.apple.com/zh-cn/102445\">在 Mac 上安全地打开 App</a>。"
         },
 
         "mock": {
@@ -353,18 +344,18 @@
 
       "accessibility": {
         "title": "开启辅助功能权限",
-        "purpose": "辅助功能权限让归帆能够读取 Dock 的界面信息，用于：",
-        "locate": "确定组图标的位置，让面板准确对齐",
-        "openOnRelease": "和 Dock 自带的文件夹一样，在松开鼠标时立即展开面板",
-        "prompt": "尚未授权时，每次启动归帆后首次点击组图标，系统都会提示授权。",
+        "purpose": "归帆借助辅助功能权限读取 Dock 的界面，这样才能：",
+        "locate": "找到组图标的位置，让面板对准它",
+        "openOnRelease": "像 Dock 自带的文件夹那样，松开鼠标就展开面板",
+        "prompt": "没有授权时，每次启动归帆后第一次点击组图标，系统都会弹出授权提示。",
 
         "optional": {
-          "title": "不开启也能使用",
-          "differences": "只是会有两点区别："
+          "title": "不开也能用",
+          "differences": "只是有两点不一样："
         },
 
         "reenable": {
-          "title": "更新后可能需要重新开启"
+          "title": "更新后可能要重新开启"
         },
 
         "mock": {
@@ -374,7 +365,7 @@
 
       "files": {
         "title": "文件与文件夹",
-        "description": "第一次在面板中打开 “文稿” “桌面” “下载” 等位置的文件夹时，macOS 会询问是否允许访问。允许后，归帆才能读取并显示里面的内容。"
+        "description": "第一次在面板里打开 “文稿” “桌面” “下载” 等位置的文件夹时，macOS 会问是否允许归帆访问。允许之后，归帆才能读取并显示里面的内容。"
       }
     },
 
@@ -386,23 +377,23 @@
     "getStarted": {
       "eyebrow": "快速上手",
       "title": "创建第一个组。",
-      "lead": "点击菜单栏的帆船图标，选择 “设置…” 来管理组。同一菜单里还有 “退出归帆”。",
+      "lead": "点击菜单栏里的帆船图标，选择 “设置…” 来管理组。“退出归帆” 也在这个菜单里。",
 
       "create": {
         "title": "新建组",
         "newGroup": "在 “组” 下点击 “新建组”，输入名称后按回车",
-        "newGroupNote": "Dock 会短暂重启，然后在左侧的应用区域显示组图标",
-        "add": "选中这个组，点击 “添加…”，选择 “添加 App…” “添加文件…” 或 “添加网页…”",
-        "drop": "也可以把应用、文件或文件夹拖到设置窗口里的组，或 Dock 上的组图标。网页则从浏览器拖到设置窗口里的组"
+        "newGroupNote": "Dock 会短暂重启，然后组图标出现在左侧的应用区域",
+        "add": "选中组，点击 “添加…”，再选 “添加 App…” “添加文件…” 或 “添加网页…”",
+        "drop": "也可以把应用、文件和文件夹拖到设置窗口里的组上，或拖到 Dock 上的组图标；网页可以从浏览器拖到设置窗口里"
       },
 
       "panel": {
         "title": "使用面板",
-        "open": "点击 Dock 上的组图标展开面板，再点击要打开的应用、文件或网页",
-        "browse": "点击子组或文件夹进入，点击返回按钮回到上一级",
-        "close": "再次点击组图标、点击面板外，或按 Esc，都能收起面板",
-        "reorder": "拖动组内的项目来调整顺序",
-        "remove": "要移除某一项，把它拖出面板，等 “移除” 出现后再松手"
+        "open": "点击 Dock 上的组图标展开面板，再点击想打开的应用、文件或网页",
+        "browse": "点击子组或文件夹进入，点返回按钮回到上一级",
+        "close": "再点一次组图标、点击面板外面，或者按 Esc，都能收起面板",
+        "reorder": "拖动项目，调整顺序",
+        "remove": "想移除哪一项，把它拖出面板，等 “移除” 出现后松手"
       },
 
       "readme": "完整的使用说明见 README"
@@ -414,11 +405,11 @@
 
       "commandLineTools": {
         "title": "Xcode Command Line Tools 26 或更高版本",
-        "description": "26 版包含 Swift 6.2 和 macOS 26 SDK。面板使用了 <code>NSGlassEffectView</code>，构建时需要这个 SDK。"
+        "description": "26 版带有 Swift 6.2 和 macOS 26 SDK。面板用到了 <code>NSGlassEffectView</code>，构建时需要这个 SDK。"
       },
 
       "mise": {
-        "description": "用来运行 <code>mise.toml</code> 中定义的构建命令。"
+        "description": "用来运行 <code>mise.toml</code> 里定义的构建命令。"
       },
 
       "commands": {
@@ -427,8 +418,8 @@
       },
 
       "notes": {
-        "ldWarning": "构建时会出现两条 <code>ld: warning: search path ... not found</code> 警告，可以忽略。它们指向的是 Command Line Tools 没有提供的目录。",
-        "quitInstalled": "启动 <code>build/Flotilla.app</code> 前，请先退出已安装的归帆。如果已有归帆在运行，再次启动只会激活原来的实例。"
+        "ldWarning": "构建时出现的两条 <code>ld: warning: search path ... not found</code> 警告可以忽略，它们指向的是 Command Line Tools 里本来就没有的目录。",
+        "quitInstalled": "同一时间只能运行一个归帆，所以启动 <code>build/Flotilla.app</code> 之前，先退出已安装的归帆。"
       },
 
       "readme": "测试、代码规范等更多内容见 README"
@@ -438,12 +429,12 @@
   "releases": {
     "meta": {
       "title": "归帆更新日志",
-      "description": "查看归帆各个版本的更新内容、发布日期和下载链接。"
+      "description": "归帆每个版本的更新内容、发布日期和下载链接。"
     },
 
     "hero": {
       "title": "更新日志",
-      "lead": "查看各版本的更新内容和发布日期，下载需要的版本。",
+      "lead": "看看每个版本更新了什么，也可以下载需要的版本。",
       "atomFeed": "Atom 订阅"
     },
 
@@ -453,12 +444,12 @@
 
     "fallback": {
       "title": "更新日志在 GitHub 上",
-      "description": "你可以前往 GitHub Releases 查看各个版本的更新内容，并下载安装包。",
+      "description": "各个版本的更新内容和安装包，都可以在 GitHub Releases 上找到。",
       "openReleases": "打开 GitHub Releases"
     },
 
     "empty": {
-      "title": "还没有发布"
+      "title": "还没有发布过版本"
     },
 
     "toc": {
@@ -468,7 +459,7 @@
 
     "entry": {
       "copyLink": "复制这个版本的链接",
-      "linkCopied": "已复制链接",
+      "linkCopied": "链接已复制",
       "latest": "最新",
       "prerelease": "预发布"
     }
