@@ -247,7 +247,7 @@
   }
 
   /**
-   * 取代码块里要复制的命令：去掉注释与空行，粘贴进 zsh 时不会把注释当成命令执行。
+   * 取代码块里要复制的命令：去掉空行与行尾的空白。
    *
    * @param {Element | null} block 代码块元素
    * @returns {string} 一行一条命令
@@ -259,10 +259,7 @@
       return "";
     }
 
-    const copy = code.cloneNode(true);
-    copy.querySelectorAll(".code-comment").forEach((node) => node.remove());
-
-    return copy.textContent
+    return code.textContent
       .split("\n")
       .map((line) => line.trimEnd())
       .filter((line) => line.trim() !== "")

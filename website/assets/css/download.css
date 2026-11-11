@@ -1,4 +1,4 @@
-/* 下载页的样式：下载卡片、安装三步与示意、快速上手、从源码构建 */
+/* 下载页的样式：下载卡片、安装三步与示意、快速上手 */
 
 /* ==========================================
    设计 token
@@ -856,70 +856,5 @@ html[data-release="none"] .download-card-actions {
 @media (max-width: 639px) {
   .guide {
     padding: 22px 22px 26px;
-  }
-}
-
-/* ==========================================
-   从源码构建
-   ========================================== */
-
-.build {
-  background: var(--color-bg-sunken);
-}
-
-/* 两项要求并排在上，命令占满整行，长注释不必折行 */
-.build-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 24px;
-}
-
-.requirements {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-  list-style: none;
-}
-
-.requirement {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-  padding: 22px 24px 24px;
-  border: 1px solid var(--color-border);
-  border-radius: 22px;
-  background: var(--color-bg-raised);
-}
-
-.requirement h3 {
-  font-size: 1.0625rem;
-  font-weight: 680;
-  line-height: 1.45;
-}
-
-.requirement p {
-  margin-top: 4px;
-  color: var(--color-text-secondary);
-  font-size: 0.9375rem;
-}
-
-.build-commands {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 20px;
-}
-
-.build-notes {
-  display: grid;
-  gap: 10px;
-  max-width: var(--measure);
-  padding-left: 1.2em;
-  color: var(--color-text-secondary);
-  font-size: 0.9375rem;
-}
-
-@media (max-width: 767px) {
-  .requirements {
-    grid-template-columns: minmax(0, 1fr);
   }
 }

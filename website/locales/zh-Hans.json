@@ -17,7 +17,6 @@
     },
 
     "viewOnGitHub": "在 GitHub 上查看",
-    "buildFromSource": "从源码构建",
 
     "requirements": {
       "macOS": "macOS 15 或更高版本",
@@ -29,7 +28,7 @@
     "downloadStarted": "已开始下载",
 
     "noReleases": {
-      "message": "归帆还没有发布过版本。可以先从源码构建，或者到 GitHub 上订阅新版本通知。",
+      "message": "归帆还没有发布过版本。可以到 GitHub 上订阅新版本通知。",
       "watchHint": "想在新版本发布时收到通知，到 GitHub 上选 “Watch › Custom › Releases” 就行。"
     },
 
@@ -46,8 +45,6 @@
       "slower": "点击之后，面板展开得慢一些"
     },
 
-    "buildRequirements": "需要 Xcode Command Line Tools 和 mise，不用安装完整的 Xcode。",
-
     "footer": {
       "tagline": "Dock 太挤？给应用分个组就清爽了。",
       "label": "页脚导航",
@@ -60,7 +57,7 @@
   "home": {
     "meta": {
       "title": "归帆 —— Dock 太挤？给应用分个组就清爽了。",
-      "description": "在 Dock 上给应用分组，文件、文件夹和网页也能放进去。"
+      "description": "在 Dock 上给应用分组，文件、文件夹和网页也能放进去。免费开源，需要搭载 Apple 芯片、运行 macOS 15 或更高版本的 Mac。"
     },
 
     "hero": {
@@ -150,27 +147,10 @@
 
     "howItWorks": {
       "eyebrow": "工作原理",
-      "title": "组是怎么放进 Dock 的？",
+      "title": "归帆会对 Mac 做哪些改动？",
       "lead": "Dock 左侧只能放应用，所以归帆会为每个顶层组生成一个占位 App，再用组的名称和图标把它加进 Dock。",
 
-      "click": {
-        "title": "点击组图标",
-        "description": "Dock 启动这个组的占位 App。"
-      },
-
-      "openURL": {
-        "title": "占位 App 打开 <code>flotilla://</code> URL",
-        "description": "它用这个 URL 通知归帆，然后自己退出，不会把别的应用带到前台。"
-      },
-
-      "panel": {
-        "title": "归帆展开或收起面板",
-        "description": "归帆没在运行的话，系统会先把它启动起来。拖到组图标上的东西，也由占位 App 转交给归帆。"
-      },
-
       "changes": {
-        "title": "归帆会对 Mac 做哪些改动？",
-
         "dockIcons": {
           "title": "只动自己的组图标",
           "preferences": "归帆通过修改 Dock 偏好（<code>com.apple.dock</code>）来添加组图标。",
@@ -217,22 +197,6 @@
       "issues": {
         "title": "反馈问题",
         "description": "遇到问题了？到 GitHub Issues 提一个就行。"
-      },
-
-      "contribute": {
-        "title": "参与贡献",
-        "description": "提交 PR 前，请确认 <code>mise run swift:lint</code> 和 <code>swift test</code> 都能通过。",
-        "guidelines": "分支命名、提交信息等约定见 <a href=\"https://github.com/rakuyoMo/Flotilla/blob/main/AGENTS.md\">AGENTS.md</a>，各项功能的具体要求见 <a href=\"https://github.com/rakuyoMo/Flotilla/tree/main/docs/requirements\">docs/requirements</a>。"
-      },
-
-      "build": {
-        "title": "从源码构建",
-        "link": "构建步骤"
-      },
-
-      "license": {
-        "description": "归帆以 GNU General Public License v3.0 许可证发布。",
-        "link": "许可证"
       }
     },
 
@@ -397,32 +361,6 @@
       },
 
       "readme": "完整的使用说明见 README"
-    },
-
-    "build": {
-      "eyebrow": "从源码构建",
-      "title": "构建步骤",
-
-      "commandLineTools": {
-        "title": "Xcode Command Line Tools 26 或更高版本",
-        "description": "26 版带有 Swift 6.2 和 macOS 26 SDK。面板用到了 <code>NSGlassEffectView</code>，构建时需要这个 SDK。"
-      },
-
-      "mise": {
-        "description": "用来运行 <code>mise.toml</code> 里定义的构建命令。"
-      },
-
-      "commands": {
-        "bundleComment": "编译 release 版本，打包为 build/Flotilla.app 并 ad-hoc 签名",
-        "openComment": "启动打包好的 App"
-      },
-
-      "notes": {
-        "ldWarning": "构建时出现的两条 <code>ld: warning: search path ... not found</code> 警告可以忽略，它们指向的是 Command Line Tools 里本来就没有的目录。",
-        "quitInstalled": "同一时间只能运行一个归帆，所以启动 <code>build/Flotilla.app</code> 之前，先退出已安装的归帆。"
-      },
-
-      "readme": "测试、代码规范等更多内容见 README"
     }
   },
 

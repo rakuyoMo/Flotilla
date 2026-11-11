@@ -1,5 +1,6 @@
 // 按 website/locales/ 里的语言清单与各语言文案，把 website/pages/ 下的页面模板生成每种语言的页面，
-// 再把 website/404.html 生成站点根目录唯一的一份 404 页，由页内脚本按访客的语言就地换上对应的文案
+// 再把 website/404.html 生成站点根目录唯一的一份 404 页，由页内脚本按访客的语言就地换上对应的文案，
+// 并生成列出全部页面的站点地图 sitemap.xml 与 robots.txt
 // 由 Scripts/site.sh 调用；全部页面先在内存里生成，校验都通过后才写盘，出错时不留下半套页面
 // 用法：swift Scripts/generate-site-pages.swift <website 目录> <输出目录>
 //
@@ -26,6 +27,14 @@ let computedNames: Set = [
     "languageName",
     "languageOptions",
     "headScript",
+    "structuredData",
+]
+
+/// 结构化数据里取自文案的属性：schema.org 的属性名 → 文案键，依次是 App 名、首页的简介与系统版本要求
+let structuredDataTexts = [
+    "name": "common.appName",
+    "description": "home.meta.description",
+    "operatingSystem": "common.requirements.macOS",
 ]
 
 /// 模板里的一个占位符：`range` 是含 `{{` `}}` 的整段，`name` 是两者之间的内容，
@@ -77,7 +86,8 @@ generatePages(
 
 // MARK: - Generating
 
-/// 读入语言清单、各语言文案、页面模板与 404 页模板，校验通过后生成每种语言的全部页面与 404 页，写进输出目录
+/// 读入语言清单、各语言文案、页面模板与 404 页模板，校验通过后生成每种语言的全部页面、404 页、
+/// 站点地图与 robots.txt，写进输出目录
 func generatePages(websiteDirectory: String, outputDirectory: String) {
     let localesDirectory = "\(websiteDirectory)/locales"
 
@@ -111,12 +121,14 @@ func generatePages(websiteDirectory: String, outputDirectory: String) {
     var problems: [String] = []
 
     for language in languages {
+        let languageTexts = texts[language.code] ?? [:]
+
         for template in templates {
             let page = render(
                 template,
                 language: language,
-                texts: texts[language.code] ?? [:],
-                computed: computedValues(for: language, languages: languages, page: template.path)
+                texts: languageTexts,
+                computed: computedValues(for: language, languages: languages, page: template.path, texts: languageTexts)
             )
 
             pages.append((language.directory + template.path, page.content))
@@ -126,11 +138,13 @@ func generatePages(websiteDirectory: String, outputDirectory: String) {
 
     // 404 页按默认语言生成，`<head>` 里换成就地切换语言的脚本，带着每种语言的这页文案
     let defaultLanguage = languages[0]
+    let defaultTexts = texts[defaultLanguage.code] ?? [:]
 
     var notFoundValues = computedValues(
         for: defaultLanguage,
         languages: languages,
-        page: notFound.path
+        page: notFound.path,
+        texts: defaultTexts
     )
 
     notFoundValues["headScript"] = notFoundScript(
@@ -142,7 +156,7 @@ func generatePages(websiteDirectory: String, outputDirectory: String) {
     let notFoundPage = render(
         notFound,
         language: defaultLanguage,
-        texts: texts[defaultLanguage.code] ?? [:],
+        texts: defaultTexts,
         computed: notFoundValues
     )
 
@@ -151,10 +165,13 @@ func generatePages(websiteDirectory: String, outputDirectory: String) {
 
     stopIfNeeded(problems)
 
-    // 4. 全部生成成功后才写盘
+    // 4. 全部生成成功后才写盘：页面之外，还有站点地图与 robots.txt
     for page in pages {
         write(page.content, to: "\(outputDirectory)/\(page.path)")
     }
+
+    write(sitemap(languages: languages, templates: templates), to: "\(outputDirectory)/sitemap.xml")
+    write(robots(), to: "\(outputDirectory)/robots.txt")
 }
 
 /// 用一种语言的文案与算出的值替换模板里的占位符，返回生成的页面，以及属性值里含 `"` 或换行的值
@@ -202,16 +219,15 @@ func render(
 /// - `languageName`：语言菜单里当前语言的名称
 /// - `languageOptions`：语言菜单的选项
 /// - `headScript`：`<head>` 里先于渲染执行的语言脚本；404 页换成 `notFoundScript(languages:texts:template:)` 生成的脚本
+/// - `structuredData`：首页的结构化数据，内容取自 `texts`，即这种语言的文案
 /// - `links.名称`：语言清单里这种语言的链接
 func computedValues(
     for language: Language,
     languages: [Language],
-    page: String
+    page: String,
+    texts: [String: String]
 ) -> [String: String] {
-    // 页面在语言目录下的地址，省略末尾的 `index.html`，如 `releases/`
-    let pagePath = page.hasSuffix("index.html")
-        ? String(page.dropLast("index.html".count))
-        : page
+    let pagePath = pageAddress(of: page)
 
     // 语言目录与页面路径里每有一层目录，回到站点根目录就要多退一层
     let depth = (language.directory + page).count { $0 == "/" }
@@ -240,6 +256,8 @@ func computedValues(
             prefix: prefix,
             pagePath: pagePath
         ),
+
+        "structuredData": structuredData(texts: texts, url: siteURL + language.directory),
     ]
 
     for (name, url) in language.links {
@@ -249,7 +267,65 @@ func computedValues(
     return values
 }
 
+/// 站点地图：每种语言的每个页面一条，地址与页面的 canonical 相同；404 页不在其中
+func sitemap(languages: [Language], templates: [Template]) -> String {
+    let entries = languages
+        .flatMap { language in
+            templates.map { "  <url><loc>\(siteURL + language.directory + pageAddress(of: $0.path))</loc></url>" }
+        }
+        .joined(separator: "\n")
+
+    return """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+        \(entries)
+        </urlset>
+
+        """
+}
+
+/// robots.txt：全站都允许抓取，并给出站点地图的地址
+func robots() -> String {
+    """
+    User-agent: *
+    Allow: /
+
+    Sitemap: \(siteURL)sitemap.xml
+
+    """
+}
+
 // MARK: - Fragments
+
+/// 首页的结构化数据：一段 JSON-LD 脚本，按 schema.org 的 `SoftwareApplication` 向搜索引擎描述这个 App
+///
+/// 名称、简介与系统版本要求取这种语言的文案，见 `structuredDataTexts`；
+/// 写成 JSON：引号与换行都已转义，`/` 也转义成 `\/`，文案里的 `</script>` 不会提前结束脚本
+func structuredData(texts: [String: String], url: String) -> String {
+    var application: [String: Any] = [
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "url": url,
+        "applicationCategory": "DesktopEnhancementApplication",
+        "offers": ["@type": "Offer", "price": 0],
+    ]
+
+    for (property, key) in structuredDataTexts {
+        application[property] = texts[key]
+    }
+
+    let options: JSONSerialization.WritingOptions = [.prettyPrinted, .sortedKeys]
+
+    guard let data = try? JSONSerialization.data(withJSONObject: application, options: options) else {
+        fail("结构化数据写不成 JSON")
+    }
+
+    return """
+        <script type="application/ld+json">
+          \(indented(String(decoding: data, as: UTF8.self), by: "  "))
+        </script>
+        """
+}
 
 /// 每种语言与 `x-default` 的 `hreflang` 备选链接，`x-default` 指向默认语言，即语言清单的第一项
 func alternateLinks(languages: [Language], pagePath: String) -> String {
@@ -513,6 +589,13 @@ func preferredPageScript() -> String {
     """
 }
 
+/// 页面在语言目录下的地址：省略末尾的 `index.html`，如 `releases/index.html` 的地址是 `releases/`
+func pageAddress(of page: String) -> String {
+    page.hasSuffix("index.html")
+        ? String(page.dropLast("index.html".count))
+        : page
+}
+
 /// 从本页到某种语言的同一页面的相对地址；目标就是站点根目录时写作 `./`
 func relativePath(prefix: String, language: Language, pagePath: String) -> String {
     let path = prefix + language.directory + pagePath
@@ -550,7 +633,8 @@ func checkPlaceholders(in templates: [Template]) -> [String] {
     return problems
 }
 
-/// 校验每种语言的文案与模板用到的文案键一一对应：缺的、多的都列出语言与键
+/// 校验每种语言的文案与用到的文案键一一对应：缺的、多的都列出语言与键；
+/// 用到的键是模板里的，加上结构化数据取用的
 func checkTextKeys(
     of languages: [Language],
     texts: [String: [String: String]],
@@ -562,12 +646,13 @@ func checkTextKeys(
             .map(\.name)
             .filter(isTextKey)
     )
+    .union(structuredDataTexts.values)
 
     return languages.flatMap { language in
         let file = "locales/\(language.code).json"
         let provided = Set(texts[language.code]?.keys.map(\.self) ?? [])
 
-        return describe(used.subtracting(provided), as: "\(file) 缺少模板用到的键")
+        return describe(used.subtracting(provided), as: "\(file) 缺少用到的键")
             + describe(provided.subtracting(used), as: "\(file) 里有模板没用到的键")
     }
 }
@@ -874,7 +959,7 @@ func readText(at path: String) -> String {
     }
 }
 
-/// 把页面写到指定路径，所在目录不存在时先创建
+/// 把生成的内容写到指定路径，所在目录不存在时先创建
 func write(_ content: String, to path: String) {
     let url = URL(fileURLWithPath: path)
 

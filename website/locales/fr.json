@@ -17,7 +17,6 @@
     },
 
     "viewOnGitHub": "Voir sur GitHub",
-    "buildFromSource": "Compiler depuis les sources",
 
     "requirements": {
       "macOS": "macOS 15 ou version ultérieure",
@@ -29,7 +28,7 @@
     "downloadStarted": "Téléchargement lancé",
 
     "noReleases": {
-      "message": "Flotilla n’a pas encore été publiée. Vous pouvez la compiler depuis les sources, ou suivre le projet sur GitHub pour être prévenu de sa sortie.",
+      "message": "Flotilla n’a pas encore été publiée. Suivez le projet sur GitHub pour être prévenu de sa sortie.",
       "watchHint": "Pour être prévenu des nouvelles versions, choisissez <strong>Watch › Custom › Releases</strong> sur GitHub."
     },
 
@@ -46,8 +45,6 @@
       "slower": "Il met un peu plus de temps à apparaître après le clic"
     },
 
-    "buildRequirements": "Il vous faut les Xcode Command Line Tools et mise. L’app Xcode complète n’est pas nécessaire.",
-
     "footer": {
       "tagline": "Gardez votre Dock bien rangé.",
       "label": "Pied de page",
@@ -60,7 +57,7 @@
   "home": {
     "meta": {
       "title": "Flotilla — Gardez votre Dock bien rangé.",
-      "description": "Regroupez des apps, des fichiers, des dossiers et des pages web dans le Dock de votre Mac."
+      "description": "Regroupez des apps, des fichiers, des dossiers et des pages web dans le Dock de votre Mac. Gratuite et open source, pour les Mac dotés d’une puce Apple, sous macOS 15 ou version ultérieure."
     },
 
     "hero": {
@@ -153,27 +150,10 @@
 
     "howItWorks": {
       "eyebrow": "Fonctionnement",
-      "title": "Comment un groupe arrive-t-il dans le Dock ?",
+      "title": "Que modifie Flotilla sur votre Mac ?",
       "lead": "La partie gauche du Dock n’accepte que des apps. Flotilla crée donc, pour chaque groupe de premier niveau, une app de substitution qui porte le nom et l’icône du groupe, et l’ajoute au Dock.",
 
-      "click": {
-        "title": "Vous cliquez sur l’icône d’un groupe",
-        "description": "Le Dock lance l’app de substitution de ce groupe."
-      },
-
-      "openURL": {
-        "title": "L’app de substitution ouvre une URL <code>flotilla://</code>",
-        "description": "C’est ainsi qu’elle prévient Flotilla. Elle se ferme ensuite, sans faire passer d’autre app au premier plan."
-      },
-
-      "panel": {
-        "title": "Flotilla ouvre ou ferme le panneau",
-        "description": "Si Flotilla n’est pas ouverte, macOS la lance d’abord. Ce que vous déposez sur l’icône d’un groupe parvient aussi à Flotilla par l’app de substitution."
-      },
-
       "changes": {
-        "title": "Que modifie Flotilla sur votre Mac ?",
-
         "dockIcons": {
           "title": "Uniquement ses propres icônes de groupe",
           "preferences": "Flotilla ajoute les icônes de groupe en modifiant les préférences du Dock (<code>com.apple.dock</code>).",
@@ -220,28 +200,6 @@
       "issues": {
         "title": "Signaler un problème",
         "description": "Quelque chose ne fonctionne pas ? Signalez-le dans les GitHub Issues."
-      },
-
-      "contribute": {
-        "title": "Contribuer",
-        "description": "Avant d’ouvrir une pull request, vérifiez que <code>mise run swift:lint</code> et <code>swift test</code> réussissent tous les deux.",
-        "guidelines": [
-          "Les noms de branches, les messages de commit et les autres conventions sont décrits dans",
-          "<a href=\"https://github.com/rakuyoMo/Flotilla/blob/main/AGENTS.md\">AGENTS.md</a>,",
-          "et le comportement attendu de chaque fonctionnalité dans",
-          "<a href=\"https://github.com/rakuyoMo/Flotilla/tree/main/docs/requirements\">docs/requirements</a>.",
-          "Les deux sont rédigés en chinois."
-        ]
-      },
-
-      "build": {
-        "title": "Compiler depuis les sources",
-        "link": "Instructions de compilation"
-      },
-
-      "license": {
-        "description": "Flotilla est distribuée sous la licence GNU General Public License v3.0.",
-        "link": "Licence"
       }
     },
 
@@ -406,32 +364,6 @@
       },
 
       "readme": "Le guide complet se trouve dans le README"
-    },
-
-    "build": {
-      "eyebrow": "Compiler depuis les sources",
-      "title": "Instructions de compilation",
-
-      "commandLineTools": {
-        "title": "Xcode Command Line Tools 26 ou version ultérieure",
-        "description": "La version 26 est fournie avec Swift 6.2 et le SDK macOS 26. Le panneau utilise <code>NSGlassEffectView</code>, qui a besoin de ce SDK pour être compilé."
-      },
-
-      "mise": {
-        "description": "Exécute les commandes de compilation définies dans <code>mise.toml</code>."
-      },
-
-      "commands": {
-        "bundleComment": "Compiler la version de publication, l’empaqueter dans build/Flotilla.app et la signer ad hoc",
-        "openComment": "Lancer l’app empaquetée"
-      },
-
-      "notes": {
-        "ldWarning": "Vous pouvez ignorer les deux avertissements <code>ld: warning: search path ... not found</code> pendant la compilation. Ils renvoient à des répertoires que les Command Line Tools ne contiennent pas.",
-        "quitInstalled": "Une seule copie de Flotilla peut être ouverte à la fois : quittez donc la copie installée avant de lancer <code>build/Flotilla.app</code>."
-      },
-
-      "readme": "Tests, style de code et plus encore dans le README"
     }
   },
 

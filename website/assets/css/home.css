@@ -13,8 +13,6 @@
   --art-sun: var(--sun);
   --art-sea: #2E9FD0;
   --art-folder: #7CCBF4;
-  --art-cursor-fill: var(--ink);
-  --art-cursor-stroke: #FFFFFF;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -26,8 +24,6 @@
     --art-sun: var(--sun);
     --art-sea: #3D86CC;
     --art-folder: #5DA9E6;
-    --art-cursor-fill: #F5F7FC;
-    --art-cursor-stroke: #031536;
   }
 }
 
@@ -521,168 +517,6 @@
   background: var(--color-bg-sunken);
 }
 
-.how-steps {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 20px;
-  list-style: none;
-}
-
-.how-step {
-  display: grid;
-  align-content: start;
-  gap: 12px;
-  padding: 16px 16px 28px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-large);
-  background: var(--color-bg-raised);
-  box-shadow: var(--shadow-card);
-}
-
-.how-step h3,
-.how-step p {
-  padding-inline: 12px;
-}
-
-.how-step h3 {
-  font-size: 1.1875rem;
-  font-weight: 680;
-  line-height: 1.4;
-}
-
-.how-step p {
-  color: var(--color-text-secondary);
-  font-size: 1rem;
-}
-
-.how-number {
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  margin: 8px 12px 0;
-  border-radius: 50%;
-  background: var(--color-button-bg);
-  color: var(--color-button-text);
-  font-size: 0.875rem;
-  font-weight: 700;
-}
-
-.how-art {
-  width: 100%;
-  height: auto;
-  border-radius: 16px;
-  background:
-    linear-gradient(180deg, var(--color-tint-sky), transparent),
-    var(--color-bg-sunken);
-}
-
-.art-dock {
-  fill: var(--art-dock);
-  stroke: var(--color-border-strong);
-  stroke-width: 1.25;
-}
-
-.art-muted {
-  fill: var(--art-muted);
-}
-
-.art-sky {
-  fill: var(--art-sky);
-}
-
-.art-sun {
-  fill: var(--art-sun);
-}
-
-.art-sea {
-  fill: var(--art-sea);
-}
-
-.art-group {
-  fill: var(--art-surface);
-  stroke: var(--sun);
-  stroke-width: 2.5;
-}
-
-.art-ripple {
-  fill: none;
-  stroke: var(--sun);
-  stroke-width: 2;
-  opacity: 0.55;
-  transform-box: fill-box;
-  transform-origin: center;
-}
-
-.art-cursor {
-  fill: var(--art-cursor-fill);
-  stroke: var(--art-cursor-stroke);
-  stroke-width: 1.5;
-  stroke-linejoin: round;
-}
-
-.art-pill {
-  fill: var(--color-button-bg);
-}
-
-.art-pill-text {
-  fill: var(--color-button-text);
-  font-family: var(--font-mono);
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.art-arrow {
-  fill: none;
-  stroke: var(--color-text-secondary);
-  stroke-width: 2.5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.art-placeholder {
-  fill: var(--art-surface);
-  stroke: var(--color-border-strong);
-  stroke-width: 1.5;
-  stroke-dasharray: 5 4;
-}
-
-.art-panel {
-  fill: var(--art-surface);
-  stroke: var(--color-border-strong);
-  stroke-width: 1.25;
-}
-
-/* 点击 tile 时的涟漪 */
-@media (prefers-reduced-motion: no-preference) {
-  .art-ripple {
-    animation: ripple 2.6s var(--ease-out) infinite;
-  }
-}
-
-@keyframes ripple {
-  from {
-    opacity: 0.7;
-    transform: scale(0.6);
-  }
-
-  to {
-    opacity: 0;
-    transform: scale(1.25);
-  }
-}
-
-.mac-changes {
-  margin-top: clamp(72px, 9vw, 120px);
-}
-
-.mac-changes-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 28px;
-}
-
 .change-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -704,7 +538,7 @@
   grid-column: span 2;
 }
 
-.change-card h4 {
+.change-card h3 {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -714,7 +548,7 @@
   line-height: 1.4;
 }
 
-.change-card h4 .icon {
+.change-card h3 .icon {
   width: 22px;
   height: 22px;
   color: var(--color-link);
@@ -734,11 +568,6 @@
 }
 
 @media (max-width: 1023px) {
-  .how-steps {
-    grid-template-columns: minmax(0, 1fr);
-    max-width: 560px;
-  }
-
   .change-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -844,22 +673,6 @@
   margin-top: 4px;
 }
 
-.github-card-wide {
-  grid-column: 1 / -1;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 20px;
-}
-
-.github-card-wide h3 {
-  margin-top: 0;
-}
-
-.github-card-body {
-  display: grid;
-  gap: 6px;
-}
-
 @media (max-width: 1023px) {
   /* 窄屏：画稿移到区块顶部居中，向下淡入底色 */
   .open-source {
@@ -899,11 +712,6 @@
 @media (max-width: 639px) {
   .github-grid {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .github-card-wide {
-    grid-template-columns: minmax(0, 1fr);
-    justify-items: start;
   }
 }
 

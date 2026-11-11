@@ -214,8 +214,9 @@
       list.append(renderRelease(template, release, release === latest));
     }
 
-    renderNavigation(releases);
+    // 先显示条目再生成目录：目录按条目的位置高亮当前版本，条目隐藏时量不到位置
     document.querySelector("[data-release-content]").hidden = false;
+    renderNavigation(releases);
 
     // 锚点的百分号编码不合法时解码会抛错，这时不跳，免得整页被当成读取失败
     let targetId;
