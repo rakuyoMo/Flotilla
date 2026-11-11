@@ -16,6 +16,10 @@
       "label": "选择语言"
     },
 
+    "appearance": {
+      "label": "切换浅色或深色外观"
+    },
+
     "viewOnGitHub": "在 GitHub 上查看",
 
     "requirements": {

@@ -123,6 +123,9 @@
     href="{{@assets}}css/download.css"
   >
 
+  <!-- 外观切换要在首次绘制前生效，所以同步加载，不加 defer -->
+  <script src="{{@assets}}js/appearance.js"></script>
+
   <script
     src="{{@assets}}js/site.js"
     defer
@@ -223,6 +226,33 @@
 
       <path d="M3 12h18"/>
       <path d="M12 3c2.5 2.6 3.75 5.6 3.75 9s-1.25 6.4-3.75 9c-2.5-2.6-3.75-5.6-3.75-9S9.5 5.6 12 3Z"/>
+    </symbol>
+
+    <symbol
+      id="i-sun"
+      viewBox="0 0 24 24"
+    >
+      <circle
+        cx="12"
+        cy="12"
+        r="4.5"
+      />
+
+      <path d="M12 5.4V2.4"/>
+      <path d="M12 18.6v3"/>
+      <path d="M5.4 12H2.4"/>
+      <path d="M18.6 12h3"/>
+      <path d="M7.33 7.33 5.21 5.21"/>
+      <path d="M16.67 16.67 18.79 18.79"/>
+      <path d="M16.67 7.33 18.79 5.21"/>
+      <path d="M7.33 16.67 5.21 18.79"/>
+    </symbol>
+
+    <symbol
+      id="i-moon"
+      viewBox="0 0 24 24"
+    >
+      <path d="M20.75 13.4a8.75 8.75 0 1 1-9.9-8.65 6.85 6.85 0 0 0 9.9 8.65Z"/>
     </symbol>
 
     <symbol
@@ -700,6 +730,24 @@
             {{@languageOptions}}
           </ul>
         </details>
+
+        <button
+          class="appearance-switch"
+          type="button"
+          data-appearance-toggle
+        >
+          <svg
+            class="icon appearance-sun"
+            aria-hidden="true"
+          ><use href="#i-sun"/></svg>
+
+          <svg
+            class="icon appearance-moon"
+            aria-hidden="true"
+          ><use href="#i-moon"/></svg>
+
+          <span class="appearance-label">{{common.appearance.label}}</span>
+        </button>
       </div>
 
       <a
