@@ -43,7 +43,7 @@
   --color-glass: rgb(253 249 240 / 74%);
   --color-glass-strong: rgb(255 253 248 / 84%);
 
-  /* 天空：各页顶部与首页收尾区的渐变，日的柔光与海浪 */
+  /* 天空：各页顶部的渐变，日的柔光与海浪 */
   --sky-top: #C2E9FD;
   --sky-middle: #E6F6FD;
   --sky-bottom: var(--color-bg);
