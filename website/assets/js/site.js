@@ -94,7 +94,7 @@
     });
 
     // 与 CSS 里收起菜单的断点一致
-    const wide = window.matchMedia("(min-width: 900px)");
+    const wide = window.matchMedia("(min-width: 1100px)");
 
     wide.addEventListener("change", (event) => {
       if (event.matches) {
