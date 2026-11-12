@@ -1221,8 +1221,11 @@ html:not([data-appearance]) .appearance-switch {
   white-space: nowrap;
 }
 
-/* 窄屏：链接与语言切换收进菜单按钮，展开后在导航下方铺开 */
-@media (max-width: 899px) {
+/*
+  窄屏：链接与语言切换收进菜单按钮，展开后在导航下方铺开；
+  断点比其它版式的 899 px 宽：导航文案最长的法文，一行排开要 1022 px，别的平台的字体还要再宽一些
+*/
+@media (max-width: 1099px) {
   /*
     菜单按钮在 DOM 里紧挨在菜单之前，展开后按 Tab 先进入菜单；
     视觉上与 DOM 同序：菜单按钮推到右侧，下载按钮在它后面、排在最右
